@@ -5,6 +5,7 @@ const lvDem=()=>Math.min(.3,.01*(((S&&S.lv)||1)-1));
 const lvEnergy=()=>Math.floor((((S&&S.lv)||1)-1)/5)*10;
 function addXp(n){
   if(!S||n<=0)return;
+  n*=1+perk('xp')*.1;
   S.lv=S.lv||1;S.xp=(S.xp||0)+n;
   while(S.xp>=XP_NEED(S.lv)){
     S.xp-=XP_NEED(S.lv);S.lv++;

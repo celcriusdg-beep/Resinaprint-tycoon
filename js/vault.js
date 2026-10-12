@@ -24,7 +24,7 @@ const vaultOf=s=>s.vault||(s.vault=newVault());
 const rarName=(i,cls)=>`<b class="rn r${i} ${cls||''}" aria-label="${RARITIES[i].n}">${[...RARITIES[i].n].map((c,j)=>`<i class="c" aria-hidden="true" style="--i:${j}">${c}</i>`).join('')}</b>`;
 function vaultAdd(s,lv){const v=vaultOf(s);v.chests.push({lv,big:lv%5===0})}
 function vaultRoll(ch){
-  const v=vaultOf(S),luck=Math.min(1.2,.03*ch.lv)+(ch.big?.8:0);
+  const v=vaultOf(S),luck=Math.min(1.2,.03*ch.lv)+(ch.big?.8:0)+perk('luck')*.1;
   const w=RARITIES.map((r,i)=>r.w*(1+luck*i));let min=ch.big?1:0;
   if(v.pity>=9)min=Math.max(min,3);
   const tot=w.reduce((a,b)=>a+b,0);let x=Math.random()*tot,k=0;

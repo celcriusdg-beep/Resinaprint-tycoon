@@ -1,0 +1,75 @@
+/* Rebirth (2.4): restart the company from the hok and keep Resin Shards, a permanent currency for perks. */
+const REBIRTH_MIN=1000000;
+const PERKS=[
+  {id:'head',n:'Head start',base:2,max:10,d:l=>`Start every run with +${fmt(500*l)} cash`,ico:'€'},
+  {id:'dem',n:'Brand heat',base:3,max:10,d:l=>`+${l*3}% demand for everything`,ico:'↗'},
+  {id:'xp',n:'Quick study',base:2,max:10,d:l=>`Studio XP +${l*10}%`,ico:'★'},
+  {id:'luck',n:'Shard luck',base:3,max:10,d:l=>`Chests roll rarer rewards (+${l*10}% luck)`,ico:'✦'},
+  {id:'rsn',n:'Resin contacts',base:2,max:10,d:l=>`Resin costs ${l*2}% less`,ico:'◍'},
+  {id:'spd',n:'Tuned printers',base:3,max:10,d:l=>`Prints ${l*2}% faster`,ico:'⚡'},
+  {id:'en',n:'Second wind',base:2,max:10,d:l=>`+${l*10} max energy`,ico:'♥'},
+  {id:'keys',n:'Vault keys',base:4,max:5,d:l=>`Start every run with ${l} free chest${l===1?'':'s'}`,ico:'⌂'},
+  {id:'gain',n:'Shard hunter',base:5,max:10,d:l=>`+${l*10}% Resin Shards on rebirth`,ico:'◆'}
+];
+const newReb=()=>({shards:0,total:0,count:0,perks:{},history:[]});
+const rebOf=s=>s.reb||(s.reb=newReb());
+function perk(id){return (S&&S.reb&&S.reb.perks[id])||0}
+const rebDem=()=>perk('dem')*.03;
+const perkCost=(P,l)=>Math.round(P.base*Math.pow(1.5,l));
+/* Resin Shard: black matter with a purple glow */
+const shardSvg=(px,cls)=>`<svg class="shard ${cls||''}" viewBox="0 0 48 64" width="${px}" height="${Math.round(px*64/48)}" aria-hidden="true"><defs><linearGradient id="shg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a1a48"/><stop offset=".45" stop-color="#07050d"/><stop offset="1" stop-color="#150b28"/></linearGradient><linearGradient id="shf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9a8ff" stop-opacity=".85"/><stop offset="1" stop-color="#7a3bff" stop-opacity="0"/></linearGradient></defs><polygon points="24,2 41,21 35,59 24,62 12,57 7,23" fill="url(#shg)" stroke="#a46bff" stroke-width="1.6" stroke-linejoin="round"/><polygon points="24,2 41,21 24,26" fill="url(#shf)" opacity=".7"/><polygon points="24,26 41,21 35,59 24,62" fill="#000" opacity=".45"/><polygon points="7,23 24,26 24,62 12,57" fill="#7a3bff" opacity=".2"/><path d="M24 2 24 62M7 23 24 26 41 21" stroke="#b98aff" stroke-width=".7" opacity=".65" fill="none"/><circle cx="19" cy="22" r="1.6" fill="#fff" opacity=".8"/></svg>`;
+const shardN=n=>`<span class="shardn">${shardSvg(14)}<b class="num">${n}</b></span>`;
+function shardGain(s){
+  s=s||S;const v=value(s);
+  return Math.max(0,Math.floor((Math.pow(Math.max(0,v)/100000,.6)+(s.lv||1)/5)*(1+((s.reb&&s.reb.perks.gain)||0)*.1)));
+}
+const canRebirth=()=>S.started&&!S.over&&value(S)>=REBIRTH_MIN;
+function doRebirth(){
+  const old=S,gain=shardGain(old),keep=rebOf(old);
+  keep.shards+=gain;keep.total+=gain;keep.count++;
+  keep.history.push({n:keep.count,day:old.day,value:Math.round(value(old)),sold:old.sold,lv:old.lv,shards:gain});
+  if(keep.history.length>30)keep.history.shift();
+  S=fresh();
+  S.started=true;S.lastT=Date.now();S.reb=keep;S.vault=old.vault;S.theme=old.theme;S.diff=old.diff;S.seenVer=old.seenVer;
+  S.cash+=500*perk('head');
+  for(let i=0;i<perk('keys');i++)vaultAdd(S,1);
+  refreshOffers();newTrend();lastHTML='';
+  log(`Rebirth ${keep.count}: a new company rises from the ashes. You carry ${keep.shards} Resin Shards.`,'amber');
+  return gain;
+}
+Object.assign(A,{
+  rebirth(){
+    if(!canRebirth())return toast(`Reach a company worth ${fmt(REBIRTH_MIN)} first`);
+    const g=shardGain();
+    confirmBox('Rebirth Resinaprint?',`You start over in the hok with ${fmt(800+500*perk('head'))} and keep your Resin Shards, perks and vault. You will earn ${g} Resin Shard${g===1?'':'s'}. Everything else (cash, printers, staff, stores, upgrades) is reset.`,()=>{
+      const gain=doRebirth();tab='empire';sub.empire='rebirth';
+      pending=[{f:()=>{}}];
+      modal(`<div class="vreveal" style="--rc:#9d6bff"><div class="vshow" style="animation-delay:.1s"><div class="kicker">Rebirth ${rebOf(S).count}</div><div style="display:grid;place-items:center;margin:6px 0 4px">${shardSvg(96,'big')}</div><div class="vname" style="margin-bottom:6px"><b class="rn rp" aria-label="Resin Shards">${[...'Resin Shards'].map((c,j)=>`<i class="c" aria-hidden="true" style="--i:${j}">${c===' '?'&nbsp;':c}</i>`).join('')}</b></div><p style="text-align:center;margin:0 0 4px">+${gain} earned · ${rebOf(S).shards} to spend</p></div></div><div class="acts" style="margin-top:12px"><button class="btn primary" data-choice="0">Spend them in Empire › Rebirth</button></div>`);
+    });
+  },
+  perk(d){
+    const P=PERKS.find(x=>x.id===d.k),R=rebOf(S),l=perk(P.id);
+    if(l>=P.max)return;const c=perkCost(P,l);
+    if(R.shards<c)return toast('Not enough Resin Shards');
+    R.shards-=c;R.perks[P.id]=l+1;toast(`${P.n} level ${l+1}`);
+  }
+});
+function rebirthView(){
+  const R=rebOf(S),v=value(S),ok=canRebirth(),g=shardGain();
+  let h=label('Rebirth',`${R.count} rebirth${R.count===1?'':'s'} · ${R.total} shards earned`)+
+  `<div class="card shardcard"><div class="shardhero">${shardSvg(84,'big')}<div class="grow"><div class="s">Resin Shards</div><div class="shardbig num">${R.shards}</div></div></div>
+  <div class="s" style="margin-top:12px">Rebirth to start a fresh company in the hok. You keep your Resin Shards, perks and vault, and the next run is stronger.</div>
+  <div style="margin-top:12px">${bar(Math.min(100,v/REBIRTH_MIN*100),'var(--uv)')}<div class="kv"><span>Company worth <b>${fmt(v)}</b> of <b>${fmt(REBIRTH_MIN)}</b></span></div></div>
+  <div class="opts"><button class="btn primary" data-a="rebirth" ${ok?'':'disabled'}>${ok?`Rebirth · +${g} shard${g===1?'':'s'}`:'Not ready yet'}</button></div></div>`;
+  h+=label('Perks','permanent, they survive every rebirth')+`<div class="group">`;
+  for(const P of PERKS){const l=perk(P.id),max=l>=P.max,c=perkCost(P,l);
+    h+=`<div class="item"><div class="perkico">${P.ico}</div><div class="grow"><div class="t">${P.n} <span class="chip uv">Lv ${l}/${P.max}</span></div><div class="s">${l?P.d(l):'Not owned'}${max?'':` <span class="f">→ ${P.d(l+1)}</span>`}</div></div>${max?'<span class="chip good">Max</span>':`<button class="btn sm shardbtn" data-a="perk" data-k="${P.id}" ${R.shards<c?'disabled':''}>${shardSvg(11)} ${c}</button>`}</div>`}
+  h+='</div>';
+  if(R.history.length)h+=label('Past companies')+`<div class="group">`+R.history.slice().reverse().map(x=>item(`Run ${x.n}`,`Day ${x.day} · worth ${fmt(x.value)} · ${x.sold} sold · level ${x.lv}`,`<span class="num">${shardN('+'+x.shards)}</span>`)).join('')+'</div>';
+  return h;
+}
+function rebirthCard(){
+  if(!canRebirth())return '';
+  return `<div class="card vcta shardcard" style="margin-top:16px"><div>${shardSvg(40,'big')}</div><div class="grow"><div class="t">Rebirth is ready</div><div class="s">Start over stronger and earn ${shardGain()} Resin Shards.</div></div><button class="btn sm primary" data-a="goRebirth">See</button></div>`;
+}
+A.goRebirth=()=>{tab='empire';sub.empire='rebirth'};

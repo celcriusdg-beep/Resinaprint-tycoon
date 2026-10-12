@@ -314,3 +314,23 @@ nav button.on::before{opacity:1;transform:none}
 .vrow .vart svg{width:100%;height:100%;display:block}
 .vrow .vl{flex:none;color:var(--muted)}
 .vrow.big b{flex:1;text-align:right}
+
+/* ===== 2.4 Rebirth: Resin Shards, black matter with a purple glow ===== */
+.shard{display:inline-block;vertical-align:-2px;filter:drop-shadow(0 0 4px rgba(157,107,255,.9)) drop-shadow(0 0 10px rgba(122,59,255,.55));animation:sh-glow 2.8s ease-in-out infinite}
+.shard.big{filter:drop-shadow(0 0 8px rgba(157,107,255,.95)) drop-shadow(0 0 22px rgba(122,59,255,.7));animation:sh-glow 2.8s ease-in-out infinite,sh-float 4s ease-in-out infinite}
+@keyframes sh-glow{0%,100%{filter:drop-shadow(0 0 3px rgba(157,107,255,.7)) drop-shadow(0 0 8px rgba(122,59,255,.4))}50%{filter:drop-shadow(0 0 7px rgba(190,140,255,1)) drop-shadow(0 0 20px rgba(140,70,255,.8))}}
+@keyframes sh-float{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-5px) rotate(3deg)}}
+.shardn{display:inline-flex;align-items:center;gap:4px;color:#d3b8ff;text-shadow:0 0 8px rgba(157,107,255,.8)}
+.shardn .shard{animation:none}
+.shardcard{background:radial-gradient(90% 120% at 0% 0%,rgba(122,59,255,.28),transparent 60%),linear-gradient(180deg,#0b0813,#05040a);border-color:rgba(157,107,255,.45);box-shadow:0 10px 30px rgba(0,0,0,.4),0 0 28px rgba(122,59,255,.22)}
+.shardhero{display:flex;align-items:center;gap:16px}
+.shardbig{font-family:var(--f-display);font-size:42px;line-height:1.05;color:#e0ccff;text-shadow:0 0 14px rgba(157,107,255,.9),0 0 34px rgba(122,59,255,.6)}
+.perkico{width:38px;height:38px;flex:none;border-radius:12px;display:grid;place-items:center;background:#07050d;color:#c9a8ff;border:1px solid rgba(157,107,255,.5);box-shadow:0 0 12px rgba(122,59,255,.35),inset 0 0 10px rgba(122,59,255,.25);font-size:17px}
+#mShard{background:#07050d;border:1px solid rgba(157,107,255,.45);box-shadow:0 0 10px rgba(122,59,255,.3)}
+@media (prefers-reduced-motion:reduce){.shard,.shard.big{animation:none}}
+
+.rn.rp .c{color:#d9bcff;text-shadow:0 0 6px #9d6bff,0 0 18px rgba(122,59,255,.9),0 0 38px rgba(90,30,220,.7);animation:v-halo 2.8s ease-in-out infinite;animation-delay:calc(var(--i)*.12s)}
+.shardbtn{background:#07050d;color:#e0ccff;border:1px solid rgba(157,107,255,.6);box-shadow:0 0 12px rgba(122,59,255,.35)}
+.shardbtn:disabled{box-shadow:none}
+#mShard{background:#07050d;border:1px solid rgba(157,107,255,.45);box-shadow:0 0 10px rgba(122,59,255,.3);margin-left:4px;background-image:none}
+@media (prefers-reduced-motion:reduce){.rn.rp .c{animation:none}}

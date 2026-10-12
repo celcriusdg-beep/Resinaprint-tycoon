@@ -71,7 +71,7 @@ function vStudio(){
   if(!S.biz.kvk&&S.sold>=3)h+=`<div class="card" style="margin-top:16px"><div class="t" style="font-weight:800">Make it official</div><div class="s" style="margin-top:4px">Register at the KvK to hire staff, rent a studio, take business contracts and sell on marketplaces. It costs ${fmt(KVK_FEE)}.</div><div class="opts"><button class="btn sm primary" data-a="kvk" ${S.cash<KVK_FEE?'disabled':''}>Register ${fmt(KVK_FEE)}</button></div></div>`;
   if(S.biz.vatDue)h+=`<div class="card" style="margin-top:16px"><div class="t" style="font-weight:800">BTW return due</div><div class="s" style="margin-top:4px">${S.biz.vatDue.amt>=0?'Pay '+fmt(S.biz.vatDue.amt):'You get '+fmt(-S.biz.vatDue.amt)+' back'}. File it within ${Math.max(0,S.biz.vatDue.by-S.day)} days or you get a fine.</div><div class="opts"><button class="btn sm primary" data-a="vat">File now</button></div></div>`;
   h+=marketChips();
-  h+=vaultCard();
+  h+=vaultCard()+rebirthCard();
   h+=item('Do everything','Collect, wash, finish, pack and reply as far as your energy goes',`<button class="btn sm primary" data-a="doAll">Do all</button>`).replace('class="item"','class="item card" style="margin-top:16px"');
   h+=questCard();
   h+=label('Workbench',WASHERS[S.washer].name)+`<div class="card">
@@ -234,7 +234,7 @@ function companyView(){
   return h;
 }
 function vEmpire(){
-  let h=segs('empire',[['stores','Stores'],['upgrades','Upgrades'],['media','Media'],['company','Company'],['goals','Goals',sub.empire!=='goals'?Math.min(S.unread,99):0],['vault','Vault',vaultOf(S).chests.length],['more','More']]);
+  let h=segs('empire',[['stores','Stores'],['upgrades','Upgrades'],['media','Media'],['company','Company'],['goals','Goals',sub.empire!=='goals'?Math.min(S.unread,99):0],['vault','Vault',vaultOf(S).chests.length],['rebirth','Rebirth',canRebirth()&&sub.empire!=='rebirth'?1:0],['more','More']]);
   if(sub.empire==='stores'){
     const closed=Object.keys(STORES).filter(k=>!S.stores[k]),opened=Object.keys(STORES).filter(k=>S.stores[k]);
     if(opened.length){h+=label('Your stores',`rent ${fmt(rent()-space().rent)}/week`)+`<div class="stack">`;
@@ -261,6 +261,8 @@ function vEmpire(){
     h+=saleCard()+socialView()+label('Campaigns')+`<div class="group">`;
     for(const C of CAMPAIGNS){const cd=S.cds[C.id]||0,lock=(C.minRating&&S.rating<C.minRating)||(C.minSold&&S.sold<C.minSold)||(C.minHype&&S.hype<C.minHype)||(C.kvk&&!S.biz.kvk)||(C.needCh&&!S.ch[C.needCh]);h+=item(`${C.name} <span class="chip uv">+${C.hype}</span>`,C.desc,`<button class="btn sm ${C.cost?'primary':'uv'}" data-a="camp" data-k="${C.id}" ${cd||lock||S.cash<C.cost?'disabled':''}>${cd?`in ${cd} d`:C.cost?fmt(C.cost):`Post ${en(C.energy)}`}</button>`)}
     h+='</div>';
+  }else if(sub.empire==='rebirth'){
+    h+=rebirthView();
   }else if(sub.empire==='vault'){
     h+=vaultView();
   }else if(sub.empire==='more'){
@@ -288,6 +290,7 @@ function render(){
   const eb=document.getElementById('mEnergyBar');eb.style.width=clamp(S.energy/maxE()*100,0,100)+'%';eb.style.background=S.energy<20?'var(--bad)':S.energy<50?'var(--warn)':'var(--good)';
   setT(document.getElementById('mRating'),S.rating.toFixed(2)+'★');
   setT(document.getElementById('mHype'),String(Math.round(S.hype)));renderLv();
+  {const sh=document.getElementById('mShard'),n=rebOf(S).shards;sh.hidden=!(n>0);if(n>0)setH(sh,shardN(n))}
   if(tab==='empire'&&sub.empire==='goals')S.unread=0;
   const badge={orders:S.dms.length,empire:S.unread};
   document.querySelectorAll('#tabs button').forEach(b=>{b.classList.toggle('on',b.dataset.tab===tab);let d=b.querySelector('.dot');const n=badge[b.dataset.tab]||0;if(n){if(!d){b.insertAdjacentHTML('beforeend','<span class="dot"></span>');d=b.querySelector('.dot')}d.textContent=n>9?'9+':n}else if(d)d.remove()});
