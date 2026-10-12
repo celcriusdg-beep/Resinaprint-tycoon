@@ -19,6 +19,7 @@ js/progression.js   studio level, trends, difficulty, themes, Empire › More
 js/viewer3d.js      WebGL 3D viewer
 js/views.js         Studio / Orders / Buy / Team / Empire screens and render()
 js/main.js          event wiring and start
+js/vault.js         2.2 Vault: level-up chests, 10 rarities (Common to Ethern), reveal screen
 js/pwa.js           registers the offline service worker (not game logic)
 sw.js               offline cache
 manifest.webmanifest, icons/   installable app (home screen icon, full screen)
@@ -40,6 +41,8 @@ It then opens full screen with its own icon and works offline. Progress saves au
 that device's browser storage.
 
 ## Equivalence test
+
+The test compares against the original 2.1 game, so it applies to the first commit (the pure split). From 2.2 on the copy intentionally differs (Vault).
 
 `node tests/compare.mjs [days]` runs the original and the copy side by side in a 390 px Chromium
 with seeded randomness and a frozen clock, plays the same scripted days, and compares full game

@@ -1,9 +1,14 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='2.1';
-const PATCH_TITLE='Resinaprint 2.1 · 3D Update';
+const VERSION='2.2';
+const PATCH_TITLE='Resinaprint 2.2 · Vault Update';
 const PATCH=[
- {h:'New',i:[
+ {h:'New in 2.2',i:[
+  '<b>The Vault.</b> Every level-up now earns a chest. Open it in Empire › Vault (or from the Studio tab) for cash, energy, hype, resin and temporary demand boosts.',
+  '<b>10 rarities.</b> Common, Uncommon, Rare, Epic, Legendary, Mythic, Divine, Celestial, Cosmic and finally <b>Ethern</b>. The rarer it is, the wilder it looks. A higher studio level means better luck, and every 5th level gives a crate with better odds.',
+  'Saves from before 2.2 get a chest for each level you already reached.'
+ ]},
+ {h:'New in 2.1',i:[
   '<b>3D view.</b> Tap any printer or figure picture (the little 3D badge) to open it in 3D. Drag to turn it around. Printers glow while they print, figures stand on a glowing base.',
   '<b>Auto-deliver contracts.</b> Each contract has an Auto-deliver button. Your stock stays held for it and it is sent the moment all figures are ready.',
   '<b>Everything from 2.0:</b>',

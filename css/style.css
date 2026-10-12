@@ -238,3 +238,73 @@ nav button.on::before{opacity:1;transform:none}
 .art.v3{cursor:pointer}.art.v3::after{content:"3D";position:absolute;right:3px;bottom:3px;z-index:2;padding:1px 5px;border-radius:7px;background:rgba(0,0,0,.6);color:#fff;font:700 8.5px var(--f-num);letter-spacing:.04em}
 .v3d{position:relative;height:min(52vh,380px);margin:6px -8px 0;border-radius:22px;overflow:hidden;background:radial-gradient(70% 60% at 50% 62%,color-mix(in srgb,var(--uv) 30%,transparent),transparent 70%),linear-gradient(180deg,#0d0c16,#171426);border:1px solid var(--hair)}
 .v3d canvas{width:100%;height:100%;display:block;cursor:grab}.v3d canvas:active{cursor:grabbing}.v3fb{position:absolute;inset:0;padding:30px}.v3fb svg{width:100%;height:100%}
+
+/* ===== 2.2 Vault: rarity letter styles, chest reveal ===== */
+.rn{display:inline-block;font-family:var(--f-display);font-weight:400;letter-spacing:.04em;white-space:nowrap}
+.rn .c{display:inline-block;font-style:normal}
+/* 0 Common: plain */
+.r0{color:#b4b0c4}
+/* 1 Uncommon: soft green glow */
+.r1{color:#6ee7a8;text-shadow:0 0 8px rgba(110,231,168,.5)}
+/* 2 Rare: blue glow */
+.r2{color:#6fb7ff;text-shadow:0 0 6px rgba(111,183,255,.8),0 0 16px rgba(80,150,255,.5)}
+/* 3 Epic: purple, letters pulse in turn */
+.r3 .c{color:#c9a2ff;text-shadow:0 0 12px rgba(170,110,255,.85);animation:v-pulse 2.2s ease-in-out infinite;animation-delay:calc(var(--i)*.14s)}
+@keyframes v-pulse{0%,100%{opacity:.65;transform:scale(1)}50%{opacity:1;transform:scale(1.12)}}
+/* 4 Legendary: gold, a shine sweeps across the letters */
+.r4 .c{color:#ffd45e;text-shadow:0 0 10px #ffb300,0 0 24px rgba(255,170,0,.55);animation:v-shine 2.4s linear infinite;animation-delay:calc(var(--i)*.13s)}
+@keyframes v-shine{0%,60%,100%{color:#ffc93a;filter:brightness(1)}75%{color:#fff;filter:brightness(1.7)}}
+/* 5 Mythic: fire, letters flicker upwards */
+.r5 .c{color:#ff7a45;text-shadow:0 -3px 8px #ff3b1f,0 0 16px rgba(255,90,20,.85),0 -8px 22px rgba(255,200,40,.5);animation:v-flame 1s ease-in-out infinite alternate;animation-delay:calc(var(--i)*-.17s)}
+@keyframes v-flame{from{transform:translateY(0) scale(1);filter:hue-rotate(-10deg)}to{transform:translateY(-3px) scale(1.07);filter:hue-rotate(18deg) brightness(1.25)}}
+/* 6 Divine: white-gold halo, wide letters, rays */
+.r6{letter-spacing:.12em}
+.r6 .c{color:#fff8dc;text-shadow:0 0 5px #fff,0 0 14px #ffe08a,0 0 32px rgba(255,215,110,.85);animation:v-halo 2.6s ease-in-out infinite;animation-delay:calc(var(--i)*.1s)}
+@keyframes v-halo{0%,100%{text-shadow:0 0 5px #fff,0 0 12px #ffe08a,0 0 26px rgba(255,215,110,.6)}50%{text-shadow:0 0 8px #fff,0 0 22px #ffe08a,0 0 48px rgba(255,215,110,1),0 0 70px rgba(255,255,255,.5)}}
+/* 7 Celestial: cyan to violet wave, letters float */
+.r7 .c{color:#7ff3ff;text-shadow:0 0 10px rgba(80,230,255,.9),0 0 26px rgba(150,120,255,.6);animation:v-wave 2.2s ease-in-out infinite,v-hue 5s linear infinite;animation-delay:calc(var(--i)*.15s),calc(var(--i)*.3s)}
+@keyframes v-wave{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes v-hue{0%,100%{filter:hue-rotate(0)}50%{filter:hue-rotate(70deg)}}
+/* 8 Cosmic: galaxy colours cycle, letters twinkle and tilt */
+.r8 .c{color:#e07dff;text-shadow:0 0 8px #a53bff,0 0 22px rgba(255,80,220,.8),0 0 40px rgba(60,40,255,.7);animation:v-cosmic 3.2s linear infinite;animation-delay:calc(var(--i)*-.35s)}
+@keyframes v-cosmic{0%{filter:hue-rotate(0) brightness(1);transform:rotate(-3deg) scale(1)}25%{filter:hue-rotate(80deg) brightness(1.6);transform:rotate(2deg) scale(1.14)}50%{filter:hue-rotate(160deg) brightness(1);transform:rotate(-2deg) scale(1)}75%{filter:hue-rotate(240deg) brightness(1.5);transform:rotate(3deg) scale(1.12)}100%{filter:hue-rotate(360deg) brightness(1);transform:rotate(-3deg) scale(1)}}
+/* 9 Ethern: living rainbow, wave, glitch flashes, sparkles */
+.r9{position:relative;letter-spacing:.1em}
+.r9 .c{color:hsl(calc(var(--i)*52),100%,72%);text-shadow:0 0 8px currentColor,0 0 22px currentColor,0 0 44px rgba(255,255,255,.55);animation:v-eth 2.4s ease-in-out infinite,v-ethhue 3s linear infinite;animation-delay:calc(var(--i)*.11s),calc(var(--i)*-.25s)}
+@keyframes v-eth{0%,100%{transform:translateY(0) scale(1)}30%{transform:translateY(-6px) scale(1.2) skewX(-6deg)}34%{transform:translate(2px,-5px) scale(1.2) skewX(8deg)}38%{transform:translateY(-6px) scale(1.2)}60%{transform:translateY(2px) scale(.95)}}
+@keyframes v-ethhue{from{filter:hue-rotate(0)}to{filter:hue-rotate(360deg)}}
+.r9::before,.r9::after{content:"✦";position:absolute;color:#fff;text-shadow:0 0 8px #fff,0 0 18px #ff9ae8;font-size:.55em;animation:v-spark 1.6s ease-in-out infinite}
+.r9::before{left:-.9em;top:-.35em}
+.r9::after{right:-.9em;bottom:-.2em;animation-delay:.8s}
+@keyframes v-spark{0%,100%{opacity:0;transform:scale(.3) rotate(0)}50%{opacity:1;transform:scale(1.2) rotate(90deg)}}
+
+/* rarity cards in the Vault */
+.vrar{--rc:#b4b0c4;border-color:color-mix(in srgb,var(--rc) 45%,transparent);box-shadow:0 10px 28px rgba(0,0,0,.26),inset 0 0 0 1px color-mix(in srgb,var(--rc) 18%,transparent)}
+.vrar.r3-bg,.vrar.r4-bg{box-shadow:0 10px 28px rgba(0,0,0,.26),0 0 22px color-mix(in srgb,var(--rc) 25%,transparent)}
+.vrar.r5-bg,.vrar.r6-bg,.vrar.r7-bg{background:linear-gradient(180deg,color-mix(in srgb,var(--rc) 14%,transparent),transparent 70%),var(--card);box-shadow:0 10px 28px rgba(0,0,0,.26),0 0 30px color-mix(in srgb,var(--rc) 35%,transparent)}
+.vrar.r8-bg,.vrar.r9-bg{background:linear-gradient(135deg,rgba(150,60,255,.22),rgba(255,80,200,.12) 50%,rgba(60,120,255,.2)),var(--card);box-shadow:0 10px 28px rgba(0,0,0,.26),0 0 36px color-mix(in srgb,var(--rc) 45%,transparent)}
+.vrar.r9-bg{border:1px solid transparent;background:linear-gradient(var(--card),var(--card)) padding-box,conic-gradient(from var(--ang,0deg),#ff5a8f,#ffd45e,#5bd6a6,#6fb7ff,#c39bff,#ff5a8f) border-box;animation:v-spin 4s linear infinite}
+@property --ang{syntax:"<angle>";inherits:false;initial-value:0deg}
+@keyframes v-spin{to{--ang:360deg}}
+.vrow2{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.vname{font-size:34px;line-height:1.2;text-align:center;margin:6px 0 14px}
+.vname.sm{font-size:21px;text-align:left;margin:0}
+.vcta{display:flex;align-items:center;gap:14px}
+.vchest{width:84px;flex:none}
+.vchest svg{width:100%;display:block;filter:drop-shadow(0 6px 14px rgba(255,160,40,.35))}
+.vchest.sm{width:54px}
+
+/* opening reveal: chest shakes and bursts, then the rarity appears */
+.vreveal{position:relative;text-align:center;min-height:300px;--rc:#b4b0c4;border-radius:20px;overflow:hidden;padding:10px 0}
+.vreveal::before{content:"";position:absolute;inset:-30%;background:radial-gradient(circle,color-mix(in srgb,var(--rc) 55%,transparent) 0,transparent 55%);opacity:0;animation:v-burst 1.6s .75s ease-out forwards}
+@keyframes v-burst{0%{opacity:0;transform:scale(.3)}25%{opacity:1}100%{opacity:.55;transform:scale(1)}}
+.vreveal .vchest{position:absolute;left:50%;top:70px;width:120px;margin-left:-60px;animation:v-shake .75s ease-in-out,v-gone .3s .75s forwards}
+@keyframes v-shake{0%,100%{transform:rotate(0)}15%{transform:rotate(-9deg) scale(1.05)}30%{transform:rotate(9deg) scale(1.08)}45%{transform:rotate(-12deg) scale(1.12)}60%{transform:rotate(12deg) scale(1.15)}80%{transform:rotate(-6deg) scale(1.2)}}
+@keyframes v-gone{to{opacity:0;transform:scale(1.9)}}
+.vshow{position:relative;opacity:0;animation:v-in .5s .8s cubic-bezier(.2,.9,.3,1.2) forwards}
+@keyframes v-in{from{opacity:0;transform:translateY(16px) scale(.8)}to{opacity:1;transform:none}}
+.vgot{display:grid;gap:6px;text-align:left}
+.vrow{display:flex;justify-content:space-between;gap:10px;background:rgba(255,255,255,.06);border:1px solid color-mix(in srgb,var(--rc) 40%,transparent);border-radius:12px;padding:9px 13px;font-size:14px;opacity:0;animation:v-in .4s calc(1.1s + var(--d)*.12s) both}
+.vrow span{color:var(--muted)}
+.vrow b{text-align:right}
+@media (prefers-reduced-motion:reduce){.rn .c,.r9::before,.r9::after,.vrar.r9-bg,.vreveal::before,.vreveal .vchest,.vshow,.vrow{animation:none!important}.vshow,.vrow{opacity:1}.vreveal .vchest{display:none}.vreveal{min-height:0}}

@@ -1,9 +1,9 @@
 /* Offline support. Game files: network first (updates arrive when online), cache as fallback.
    Google Fonts: cache first. Bump VERSION when the file list changes. */
-const VERSION = 'resinaprint-2.1-1';
+const VERSION = 'resinaprint-2.2-1';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'css/style.css',
   'js/data.js', 'js/state.js', 'js/simulation.js', 'js/actions.js', 'js/expansions.js', 'js/art.js', 'js/images.js',
-  'js/patch-notes.js', 'js/progression.js', 'js/viewer3d.js', 'js/views.js', 'js/main.js', 'js/pwa.js',
+  'js/patch-notes.js', 'js/progression.js', 'js/vault.js', 'js/viewer3d.js', 'js/views.js', 'js/main.js', 'js/pwa.js',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

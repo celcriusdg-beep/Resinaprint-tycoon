@@ -10,7 +10,8 @@ function addXp(n){
     S.xp-=XP_NEED(S.lv);S.lv++;
     const rw=40*S.lv;earn('Level rewards',rw);S.hype+=2;
     log(`Studio level ${S.lv}! +${fmt(rw)}${S.lv%5===0?' and +10 max energy':''}. Demand bonus is now +${Math.round(lvDem()*100)}%.`,'good');
-    if(!simulating&&!awayMode)toast(`Level ${S.lv}! +${fmt(rw)}`);
+    vaultAdd(S,S.lv);log(`A ${S.lv%5===0?'vault crate':'chest'} is waiting in Empire › Vault.`,'amber');
+    if(!simulating&&!awayMode)toast(`Level ${S.lv}! +${fmt(rw)} and a chest`);
   }
 }
 function levelDay(){
