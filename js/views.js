@@ -128,9 +128,10 @@ function vBuy(){
   const price=(a,k,cost,dis,extra='')=>`<button class="btn sm primary" data-a="${a}" data-k="${k}" ${extra} ${dis?'disabled':''}>${fmt(cost)}</button>`;
   if(sub.buy==='printers'){
     h+=`<div style="margin-top:12px">${segs('pg',PGROUPS.map((n,i)=>[String(i),n])).replace('margin-top:18px','')}</div>`;
+    if(+sub.pg===4)h+=`<div class="card" style="margin-top:14px"><div class="t">Laboratorium</div><div class="s" style="margin-top:4px">Beyond PolyJet and injection moulding. Every Laboratorium printer makes every product without moulds or washing, in huge batches, with almost no failures and a quality bonus. Needs an industrial unit, the 3-phase power connection and the Laboratorium wing (Buy › Space).</div></div>`;
     h+=label(PGROUPS[+sub.pg]+' printers',`${S.printers.length} of ${space().printers} spots`)+`<div class="group">`;
     for(const t in PRINTERS){const D=PRINTERS[t];if(D.grp!==+sub.pg)continue;const lk=printerLock(D);
-      const kind=D.inj?'Injection moulding':D.pj?'PolyJet':D.fam==='carbon'?'Carbon DLS':D.form?'Cartridge':'Open vat';
+      const kind=D.lab?'Next-gen':D.inj?'Injection moulding':D.pj?'PolyJet':D.fam==='carbon'?'Carbon DLS':D.form?'Cartridge':'Open vat';
       h+=itemArt(artBox(printerArt(t),'','',['p',t]),D.name,lk?`<span class="f">${lk}</span>`:`${kind} · ${TIERS[D.tier]} · ${D.slots} slots · ${D.speed}× · ${Math.round(D.fail*1000)/10}% fail`,price('buyPrinter',t,D.cost,!!lk||S.cash<D.cost||S.printers.length>=space().printers))}
     h+='</div>';
   }else if(sub.buy==='resin'){

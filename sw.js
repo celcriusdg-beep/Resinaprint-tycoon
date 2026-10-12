@@ -1,6 +1,6 @@
 /* Offline support. Game files: network first (updates arrive when online), cache as fallback.
    Google Fonts: cache first. Bump VERSION when the file list changes. */
-const VERSION = 'resinaprint-2.2-2';
+const VERSION = 'resinaprint-2.3-1';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'css/style.css',
   'js/data.js', 'js/state.js', 'js/simulation.js', 'js/actions.js', 'js/expansions.js', 'js/art.js', 'js/images.js',
   'js/patch-notes.js', 'js/progression.js', 'js/vault.js', 'js/viewer3d.js', 'js/views.js', 'js/main.js', 'js/pwa.js',

@@ -1,6 +1,6 @@
 /* Simulation: production, delivery, messages, contracts, live clock, staff AI, company admin, random events. */
 /* ---------- production ---------- */
-const units=(p,k=p.prod)=>{const D=PRINTERS[p.type];let n=Math.floor(D.slots/PRODUCTS[k].size);if(!D.form&&D.vat)n=Math.min(n,Math.floor(D.vat/(PRODUCTS[k].ml*resinMult())));return Math.max(1,n)};
+const units=(p,k=p.prod)=>{const D=PRINTERS[p.type];let n=Math.floor(D.slots/PRODUCTS[k].size);if(D.lab)n=Math.min(n,150);if(!D.form&&D.vat)n=Math.min(n,Math.floor(D.vat/(PRODUCTS[k].ml*resinMult())));return Math.max(1,n)};
 const jobMl=p=>Math.ceil(units(p)*PRODUCTS[p.prod].ml*resinMult());
 function jobHours(p){const D=PRINTERS[p.type];return PRODUCTS[p.prod].h/(D.speed*(S.up.slicer?1.12:1)*(S.up.rails?1.1:1)*(S.up.tune?1.15:1)*(RESINS[p.resin].fast||1))}
 function whyNot(p,k){
@@ -19,7 +19,7 @@ function autoProd(p){
   for(const k of ks){const sh=Math.max(need(k)-pipe(k),S.stop[k]?0:(S.target[k]||0)-S.stock[k]-pipe(k));if(sh>bs){bs=sh;best=k}}
   if(best)return best;
   let b2=null,s2=0;
-  for(const k of ks){if(!S.listed[k]||(!S.always[k]&&S.stock[k]+pipe(k)>=units(p,k)*3+10))continue;let sc=demand(k)*S.prices[k]/(PRODUCTS[k].effort+.5);if(S.always[k])sc/=1+(S.stock[k]+pipe(k))/40;if(sc>s2){s2=sc;b2=k}}
+  for(const k of ks){if(!S.listed[k]||(!S.always[k]&&S.stock[k]+pipe(k)>=(PRINTERS[p.type].lab?Math.min(units(p,k),40):units(p,k))*3+10))continue;let sc=demand(k)*S.prices[k]/(PRODUCTS[k].effort+.5);if(S.always[k])sc/=1+(S.stock[k]+pipe(k))/40;if(sc>s2){s2=sc;b2=k}}
   return b2;
 }
 function startJob(p,auto){
@@ -33,17 +33,17 @@ function startJob(p,auto){
   else{if(p.vat<ml){if(!auto)toast('Vat too low. Refill it first');return false}p.vat-=ml}
   S.biz.waste+=D.inj?ml*.02:ml;
   const h=jobHours(p);
-  p.job={prod:p.prod,units:units(p),left:h,total:h,q:RESINS[p.resin].q,rf:RESINS[p.resin].fail};p.state='printing';return true;
+  p.job={prod:p.prod,units:units(p),left:h,total:h,q:RESINS[p.resin].q+(D.q||0),rf:RESINS[p.resin].fail};p.state='printing';return true;
 }
 function endJob(p){
   const D=PRINTERS[p.type],j=p.job;
   let ch=D.fail+j.rf+(p.cond<40?(40-p.cond)/100:0);if(S.up.supports&&!D.inj)ch*=.6;ch*=failMult();
   if(S.up.aircon)ch*=.9;if(S.up.clean&&(D.fam==='form'||D.fam==='carbon'||D.pj))ch*=.8;if(p.sc)ch*=.8;
   p.cond=Math.max(0,p.cond-D.wear*r(.8,1.2)*wearMult()*(p.sc?.6:1));
-  if(Math.random()<Math.max(0,ch)){p.state='failed';S.rep.failed++;log(D.inj||D.pj?`${short(p)}: the batch was rejected. Clean the machine before the next run.`:`${short(p)}: print failed, the supports let go. Clean the vat before the next print.`,'bad')}
+  if(Math.random()<Math.max(0,ch)){p.state='failed';S.rep.failed++;log(D.inj||D.pj||D.lab?`${short(p)}: the batch was rejected. Clean the machine before the next run.`:`${short(p)}: print failed, the supports let go. Clean the vat before the next print.`,'bad')}
   else p.state='done';
 }
-function collect(p){const D=PRINTERS[p.type],j=p.job;if(D.inj||D.pj)S.cured[j.prod]+=j.units;else S.unwashed[j.prod]+=j.units;S.qual[j.prod]=S.qual[j.prod]*.6+(j.q+qualBonus())*.4;qInc('printed',j.units);S.rep.printed+=j.units;p.state='idle';p.job=null}
+function collect(p){const D=PRINTERS[p.type],j=p.job;if(D.inj||D.pj||D.lab)S.cured[j.prod]+=j.units;else S.unwashed[j.prod]+=j.units;S.qual[j.prod]=S.qual[j.prod]*.6+(j.q+qualBonus())*.4;qInc('printed',j.units);S.rep.printed+=j.units;p.state='idle';p.job=null}
 function clean(p){p.state='idle';p.job=null}
 function refill(p){const D=PRINTERS[p.type];const have=S.resin[p.resin]||0;const take=Math.min(D.vat-p.vat,have);if(take<=0)return false;S.resin[p.resin]-=take;p.vat+=take;return true}
 const serviceFee=p=>p.sc?0:Math.round(PRINTERS[p.type].fix*(ofTrait('engineer','efficient')?.8:1));

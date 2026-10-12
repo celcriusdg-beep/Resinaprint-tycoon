@@ -128,8 +128,8 @@ const E0={start:()=>4,collect:()=>3,refill:()=>S.up.feeder?0:2,clean:()=>6,servi
 const E=Object.fromEntries(Object.keys(E0).map(k=>[k,()=>{const v=E0[k]();return v>0?Math.max(1,Math.round(v*ecm())):0}]));
 const season=()=>SEASONS[Math.floor(((S.day-1)%YEAR)/28)];
 const chanMult=()=>Object.keys(S.ch).filter(k=>S.ch[k]).reduce((a,k)=>a+CHANNELS[k].w,0);
-const wearName=D=>D.inj?'Screw barrel':D.pj?'Printhead set':D.form?'Resin tank':'FEP film';
-const wearNew=D=>D.inj?'New screw':D.pj?'New printheads':D.form?'New tank':'New FEP';
+const wearName=D=>D.lab?'Core module':D.inj?'Screw barrel':D.pj?'Printhead set':D.form?'Resin tank':'FEP film';
+const wearNew=D=>D.lab?'New core':D.inj?'New screw':D.pj?'New printheads':D.form?'New tank':'New FEP';
 const amt=(k,ml)=>RESINS[k].fam==='inj'?(ml/1000).toFixed(1)+' kg':L(ml);
 const energyBill=()=>Math.round(S.printers.reduce((a,p)=>{const D=PRINTERS[p.type];return a+(D.pow||[2,5,10,150][D.tier])},0)*(S.up.solar?.6:1)*(1-Math.min(.6,upv('pow'))));
 const wasteCost=()=>S.printers.length?Math.round(4+S.biz.waste/1000*3*(S.up.recycle?.4:1)):0;

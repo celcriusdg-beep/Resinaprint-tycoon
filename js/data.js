@@ -22,8 +22,8 @@ const PRODUCTS={
   kaisa:{name:"Kai'Sa statue 1/4 (League of Legends)",ml:1500,size:40,h:18,ref:499,effort:10,ship:15,base:.07,tier:2,req:'licensing',royalty:.15,official:1,col:'#b58cf0'}
 };
 const PKEYS=Object.keys(PRODUCTS);
-const TIERS=['Small','Medium','Large','Industrial'];
-const PGROUPS=['Desktop','Pro','Large','Industrial'];
+const TIERS=['Small','Medium','Large','Industrial','Laboratory'];
+const PGROUPS=['Desktop','Pro','Large','Industrial','Laboratorium'];
 const mkP=(name,grp,cost,slots,speed,fail,wear,tier,fix,ws,o)=>Object.assign({name,grp,cost,slots,speed,fail,wear,tier,vat:0,form:false,fix,ws,fam:'vat'},o);
 const PRINTERS={
   mars:mkP('Elegoo Mars 4 Ultra',0,250,16,1,.10,4,0,15,0,{vat:500}),
@@ -52,10 +52,19 @@ const PRINTERS={
   pj850:mkP('Stratasys J850 Prime (PolyJet)',3,215000,300,4.2,.012,.7,3,2000,4,{form:true,fam:'pj',req:'power3',pow:260,pj:1}),
   baby:mkP('Babyplast 6/10P (injection)',3,14500,30,7,.02,1,1,400,2,{form:true,fam:'inj',inj:1,req:'power3',pow:90}),
   arburg:mkP('Arburg Allrounder 270 A (injection)',3,78000,140,9,.015,.9,1,1200,3,{form:true,fam:'inj',inj:1,req:'power3',pow:260}),
-  engel:mkP('Engel e-mac 180 (injection)',3,142000,280,11,.012,.8,1,2200,4,{form:true,fam:'inj',inj:1,req:'power3',pow:420})
+  engel:mkP('Engel e-mac 180 (injection)',3,142000,280,11,.012,.8,1,2200,4,{form:true,fam:'inj',inj:1,req:'power3',pow:420}),
+  /* Laboratorium: beyond PolyJet and injection moulding. Make every product, no moulds, no washing, huge batches, near-zero failures. */
+  aurora:mkP('Aurora Photonic Forge',4,320000,360,14,.008,.5,4,3000,4,{form:true,fam:'lab',lab:1,req:'labwing',pow:600,q:.05}),
+  helix:mkP('Helix Volumetric V1',4,480000,440,20,.007,.4,4,3600,4,{form:true,fam:'lab',lab:1,req:'labwing',pow:800,q:.08}),
+  nebula:mkP('Nebula Holo-Press',4,700000,540,27,.006,.35,4,4500,4,{form:true,fam:'lab',lab:1,req:'labwing',pow:1000,q:.12}),
+  chronos:mkP('Chronos Time-Lattice',4,1000000,660,36,.005,.3,4,6000,4,{form:true,fam:'lab',lab:1,req:'labwing',pow:1300,q:.15}),
+  valkyrie:mkP('Valkyrie Quantum Caster',4,1600000,820,46,.004,.25,4,8000,5,{form:true,fam:'lab',lab:1,req:'labwing',pow:1700,q:.2}),
+  leviathan:mkP('Leviathan Mega-Forge',4,2500000,1500,40,.004,.2,4,12000,5,{form:true,fam:'lab',lab:1,req:'labwing',pow:2400,q:.18}),
+  singularity:mkP('Singularity Nano-Assembler',4,4200000,1150,72,.002,.15,4,18000,5,{form:true,fam:'lab',lab:1,req:'labwing',pow:3200,q:.28}),
+  omega:mkP('Omega Genesis Engine',4,8000000,2000,105,.001,.1,4,30000,5,{form:true,fam:'lab',lab:1,req:'labwing',pow:5000,q:.4})
 };
-const FAMS={vat:'Resin for open vat printers',form:'Formlabs cartridges',carbon:'Carbon cartridges',pj:'Stratasys PolyJet cartridges',mjp:'3D Systems cartridges',inj:'Injection moulding pellets'};
-const DEFRES={vat:'estd',form:'fgrey',carbon:'crpu',pj:'vpw',mjp:'mjr',inj:'pabs'};
+const FAMS={vat:'Resin for open vat printers',form:'Formlabs cartridges',carbon:'Carbon cartridges',pj:'Stratasys PolyJet cartridges',mjp:'3D Systems cartridges',inj:'Injection moulding pellets',lab:'Laboratorium feedstock'};
+const DEFRES={vat:'estd',form:'fgrey',carbon:'crpu',pj:'vpw',mjp:'mjr',inj:'pabs',lab:'labq'};
 const mkR=(name,fam,pack,cost,q,fail,note,o)=>Object.assign({name,fam,pack,cost,q,fail,note,form:fam!=='vat'},o);
 const RESINS={
   estd:mkR('Elegoo Standard 2.0','vat','1 kg bottle',30,0,0,'Cheap all-rounder'),
@@ -91,7 +100,11 @@ const RESINS={
   mjf:mkR('3D Systems VisiJet Flex','mjp','2 kg cartridge',700,.42,0,'Flexible plastic',{vol:2000}),
   pabs:mkR('ABS pellets','inj','25 kg bag',60,-.02,0,'Standard moulding plastic',{vol:25000}),
   ppp:mkR('Polypropylene pellets','inj','25 kg bag',45,-.08,0,'Cheapest. Softer, duller finish',{vol:25000}),
-  ppetg:mkR('PETG pellets','inj','25 kg bag',55,.05,-.005,'Glossy and tough',{vol:25000})
+  ppetg:mkR('PETG pellets','inj','25 kg bag',55,.05,-.005,'Glossy and tough',{vol:25000}),
+  labq:mkR('Quantum Photopolymer','lab','20 L drum',900,.6,-.015,'Laboratorium standard feedstock',{vol:20000}),
+  labc:mkR('Chrono Accelerant Resin','lab','20 L drum',1300,.55,-.015,'Prints 50% faster',{vol:20000,fast:1.5}),
+  labn:mkR('Aether Nano-Resin','lab','20 L drum',1700,.8,-.02,'Atom-fine detail, collectors pay more',{vol:20000}),
+  labv:mkR('Void-Matter Feedstock','lab','20 L drum',2800,1,-.03,'Flawless parts, 30% faster',{vol:20000,fast:1.3})
 };
 const WASHERS={
   bucket:{name:'IPA bucket + UV lamp',cap:4,cost:0,ws:0},
@@ -278,6 +291,7 @@ const UPGRADES=[
   mkU('hrsys','team','HR system',4000,'Wages 5% lower.',{wag:.05},{req:()=>S.staff.length>=4,reqText:'Hire four people first'}),
   mkU('academy','team','Resinaprint Academy',15000,'Experience 30% faster, wages 5% lower.',{xp:.3,wag:.05},{req:()=>S.staff.length>=6,reqText:'Hire six people first'})
 ];
+UPGRADES.push({id:'labwing',cat:'site',name:'Laboratorium wing',cost:200000,desc:'A clean, shielded research wing. Unlocks the 8 Laboratorium printers in Buy › Printers.',req:()=>S.ws>=4&&!!S.up.power3,reqText:'Needs an industrial unit and the 3-phase power connection'});
 const UCATS=[['energy','Energy'],['prod','Production'],['sales','Sales'],['team','Team'],['biz','Business']];
 
 const CAMPAIGNS=[
@@ -311,6 +325,7 @@ const MILESTONES=[
   {id:'inj',t:'Own an injection moulding machine',f:s=>s.printers.some(p=>PRINTERS[p.type].inj)},
   {id:'campus',t:'Move into the production campus',f:s=>s.ws>=5},
   {id:'v250',t:'Company worth €250.000',f:s=>value(s)>=250000},
+  {id:'lab',t:'Own a Laboratorium printer',f:s=>s.printers.some(p=>PRINTERS[p.type].lab)},
   {id:'v1m',t:'Company worth €1.000.000',f:s=>value(s)>=1000000}
 ];
 

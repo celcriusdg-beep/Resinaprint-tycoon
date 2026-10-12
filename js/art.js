@@ -29,7 +29,15 @@ const PLOOK={
  pj850:{k:'pj',b:'#d5d9df',h:'#9ab8d6',a:'#2f6fd6',w:58,big:1},
  baby:{k:'inj',b:'#8fa3b8',h:'#e8742a',a:'#c9ced6',w:34,sm:1},
  arburg:{k:'inj',b:'#d8372f',h:'#2b2f38',a:'#c9ced6',w:54},
- engel:{k:'inj',b:'#2e9b5a',h:'#e9ecef',a:'#c9ced6',w:58}
+ engel:{k:'inj',b:'#2e9b5a',h:'#e9ecef',a:'#c9ced6',w:58},
+ aurora:{k:'lab',b:'#1c1f33',h:'#7fd6ff',a:'#ffb347',w:46,v:0},
+ helix:{k:'lab',b:'#171a2b',h:'#7fffd4',a:'#38e8a0',w:44,v:1},
+ nebula:{k:'lab',b:'#1d1530',h:'#d46bff',a:'#ff6ad5',w:46,v:2},
+ chronos:{k:'lab',b:'#221d14',h:'#ffd45e',a:'#fff3b0',w:46,v:3},
+ valkyrie:{k:'lab',b:'#171d33',h:'#9db7ff',a:'#e8f0ff',w:48,v:4},
+ leviathan:{k:'lab',b:'#2a1712',h:'#ff6a3d',a:'#ffb347',w:56,v:5},
+ singularity:{k:'lab',b:'#120f22',h:'#b58cff',a:'#ffffff',w:48,v:6},
+ omega:{k:'lab',b:'#1a1022',h:'#ff9ae8',a:'#ffffff',w:54,v:7}
 };
 function printerArt(k){
   const L=PLOOK[k]||PLOOK.mars;let g='';const x0=(64-(L.w||40))/2,w=L.w||40;
@@ -52,6 +60,16 @@ function printerArt(k){
   }else if(L.k==='form'){
     const t=L.t,y0=58-t-6;
     g=`<rect x="${x0}" y="${y0}" width="${w}" height="${t+6}" rx="6" fill="${L.b}" stroke="#c4c6d0" stroke-width="1.4"/><rect x="${x0+2}" y="${y0+2}" width="${w-4}" height="${t*.42}" rx="5" fill="${L.h}"/><rect x="${x0+6}" y="${y0+t*.42+8}" width="${w-12}" height="${t*.3}" rx="2.5" fill="#1d2027"/><rect x="${x0+8}" y="${y0+t*.42+10}" width="${w-16}" height="${t*.3-4}" rx="1.5" fill="${L.a}" fill-opacity=".85"/><rect x="${64/2-6}" y="${y0+t+1}" width="12" height="2.2" rx="1" fill="#c4c6d0"/>`;
+  }else if(L.k==='lab'){
+    const id='l'+(_g++),v=L.v||0,ch=40+Math.min(8,v)*1.5,y0=58-ch,cw=w*.46,cx=32;
+    g=`<defs><linearGradient id="c${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".4" stop-color="${L.h}"/><stop offset="1" stop-color="${L.a}"/></linearGradient><radialGradient id="r${id}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="${L.h}" stop-opacity=".7"/><stop offset="1" stop-color="${L.h}" stop-opacity="0"/></radialGradient></defs>`+
+      `<circle cx="32" cy="${y0+ch*.45}" r="${w*.62}" fill="url(#r${id})"/>`+
+      `<rect x="${x0}" y="${y0+ch-10}" width="${w}" height="10" rx="3" fill="${L.b}" stroke="${L.h}" stroke-opacity=".6" stroke-width="1"/>`+
+      `<rect x="${x0+3}" y="${y0}" width="4.5" height="${ch-9}" rx="2" fill="${L.b}"/><rect x="${x0+w-7.5}" y="${y0}" width="4.5" height="${ch-9}" rx="2" fill="${L.b}"/>`+
+      `<rect x="${cx-cw/2}" y="${y0+3}" width="${cw}" height="${ch-13}" rx="${cw/2}" fill="url(#c${id})"/>`+
+      [0,1,2].slice(0,2+v%2).map(n=>`<ellipse cx="${cx}" cy="${y0+9+n*(ch-24)/2}" rx="${w*.38}" ry="3.2" fill="none" stroke="${L.a}" stroke-width="1.5" opacity=".9"/>`).join('')+
+      (v>=5?`<circle cx="${x0+2}" cy="${y0+8}" r="2.4" fill="${L.a}"/><circle cx="${x0+w-2}" cy="${y0+16}" r="2.4" fill="${L.a}"/>`:'')+
+      `<circle cx="${cx}" cy="${y0+2}" r="${v>=6?4:2.6}" fill="${L.a}"/><rect x="${x0+6}" y="${y0+ch-7}" width="${w*.3}" height="3" rx="1.5" fill="${L.h}"/>`;
   }else if(L.k==='pj'){
     const hh=L.big?46:40,y0=58-hh;
     g=`<rect x="${x0}" y="${y0}" width="${w}" height="${hh}" rx="3" fill="${L.b}" stroke="#aab1bb" stroke-width="1.4"/><rect x="${x0+4}" y="${y0+5}" width="${(w-12)/2}" height="${hh-17}" rx="2" fill="${L.h}" fill-opacity=".7"/><rect x="${x0+8+(w-12)/2}" y="${y0+5}" width="${(w-12)/2}" height="${hh-17}" rx="2" fill="${L.h}" fill-opacity=".7"/><rect x="${x0+4}" y="${y0+hh-9}" width="${w*.28}" height="5" rx="1.2" fill="#2b2f38"/><rect x="${x0+w-14}" y="${y0+hh-9}" width="10" height="5" rx="1.2" fill="${L.a}"/><rect x="${x0+w*.4}" y="${y0-4}" width="${w*.2}" height="4" rx="1" fill="#2b2f38"/>`;

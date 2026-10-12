@@ -11,6 +11,12 @@ const RARITIES=[
   {n:'Cosmic',w:.2,cash:50,hype:150,res:5,e:1,col:'#d46bff',boost:[1.4,6],rate:.06},
   {n:'Ethern',w:.05,cash:80,hype:250,res:6,e:1,col:'#ff9ae8',boost:[1.6,7],rate:.1}
 ];
+/* chest items beyond cash: a printer and/or a free upgrade, by rarity */
+const VAULT_PRINTER=[0,.08,.12,.15,.2,.25,.35,.45,.6,1];
+const VAULT_UPGRADE=[0,.15,.25,.3,.35,.4,.45,.5,.6,.8];
+const VAULT_UPMAX=[0,300,900,3000,10000,30000,90000,250000,600000,1500000];
+const vaultPool=i=>{const P=g=>Object.keys(PRINTERS).filter(k=>PRINTERS[k].grp===g&&!PRINTERS[k].inj),LAB=P(4);
+  return [[],P(0).slice(0,3),P(0),P(1),P(2),P(2).concat(P(3)),P(3),P(3).concat(LAB.slice(0,2)),LAB.slice(0,5),LAB.slice(3)][i]};
 const VAULT_RESIN=['estd','siraya','siraya','ssculpt','ssculpt','ssculpt','prusa'];
 const newVault=()=>({chests:[],opened:0,found:RARITIES.map(()=>0),pity:0,best:0});
 const vaultOf=s=>s.vault||(s.vault=newVault());
@@ -35,6 +41,18 @@ function vaultGive(i,lv){
   S.hype+=R.hype;got.push({k:'hype',t:'Hype',v:'+'+R.hype});
   if(R.res){const key=VAULT_RESIN[Math.min(i,VAULT_RESIN.length-1)];S.resin[key]=(S.resin[key]||0)+1000*R.res;got.push({k:'resin',t:'Resin',v:`${R.res} × ${RESINS[key].name}`})}
   if(R.boost&&(!boostMult()||R.boost[0]>boostMult())){S.boost={m:R.boost[0],until:S.abs+R.boost[1]*24};got.push({k:'boost',t:'Demand boost',v:`+${Math.round((R.boost[0]-1)*100)}% for ${R.boost[1]} days`})}
+  if(Math.random()<VAULT_PRINTER[i]){
+    const pool=vaultPool(i),k=pool[Math.floor(Math.random()*pool.length)],D=PRINTERS[k];
+    if(S.printers.length<space().printers){
+      addPrinter(k);const p=S.printers[S.printers.length-1];
+      if(!D.form)p.vat=D.vat;else S.resin[DEFRES[D.fam]]=(S.resin[DEFRES[D.fam]]||0)+(RESINS[DEFRES[D.fam]].vol||1000)*2;
+      got.push({k:'printer',t:'Printer',v:D.name,art:printerArt(k),big:1});
+    }else{const v=Math.round(D.cost*.5);earn('Vault rewards',v);got.push({k:'printer',t:'Printer (no room, sold)',v:D.name+' '+'+'+fmt(v),art:printerArt(k),big:1})}
+  }
+  if(Math.random()<VAULT_UPGRADE[i]){
+    const ok=UPGRADES.filter(u=>!S.up[u.id]&&u.cost<=VAULT_UPMAX[i]&&u.cost>=VAULT_UPMAX[i]/12&&(!u.req||u.req()));
+    if(ok.length){const U=ok[Math.floor(Math.random()*ok.length)];S.up[U.id]=true;if(U.e)S.energy+=U.e;got.push({k:'upgrade',t:'Free upgrade',v:U.name})}
+  }
   if(R.rate){S.rating=clamp(S.rating+R.rate,1,5);got.push({k:'rating',t:'Rating',v:'+'+R.rate.toFixed(2)+'★'})}
   return got;
 }
@@ -48,7 +66,7 @@ function showVaultReveal(i,lv,got,big,left){
     <div class="vshow">
       <div class="kicker">${big?'Vault crate':'Level '+lv+' chest'}</div>
       <div class="vname">${rarName(i)}</div>
-      <div class="vgot">${got.map((g,j)=>`<div class="vrow" style="--d:${j}"><span>${g.t}</span><b class="num">${g.v}</b></div>`).join('')}</div>
+      <div class="vgot">${got.map((g,j)=>`<div class="vrow ${g.big?'big':''}" style="--d:${j}">${g.art?`<span class="vart">${g.art}</span>`:''}<span class="vl">${g.t}</span><b class="num">${g.v}</b></div>`).join('')}</div>
     </div>
     </div><div class="acts" style="margin-top:16px">${left?`<button class="btn primary" data-choice="1">Open next chest (${left} left)</button>`:''}<button class="btn ${left?'ghost':'primary'}" data-choice="0">${left?'Later':'Collect'}</button></div>`);
 }
@@ -70,6 +88,6 @@ function vaultView(){
   const v=vaultOf(S),n=v.chests.length,tw=RARITIES.reduce((a,x)=>a+x.w,0);
   let h=label('Vault',`${v.opened} opened · best ${RARITIES[v.best].n}`)+`<div class="card vcta"><div class="vchest sm ${v.chests.some(c=>c.big)?'big':''}">${CHEST_SVG(v.chests.some(c=>c.big))}</div><div class="grow"><div class="t">${n?`${n} ${n>1?'chests':'chest'} ready`:'No chests right now'}</div><div class="s">${n?'Every level-up earns one. Every 5th level it is a crate with better odds.':`Next chest at level ${S.lv+1}. Every 5th level you get a crate with better odds.`}</div></div><button class="btn sm primary" data-a="openChest" ${n?'':'disabled'}>Open</button></div>`;
   h+=label('Rarities',`higher level = better luck · guaranteed Epic+ every 10 chests`)+`<div class="stack">`;
-  RARITIES.forEach((R,i)=>{h+=`<div class="card vrar r${i}-bg" style="--rc:${R.col}"><div class="vrow2"><div class="vname sm">${rarName(i)}</div><span class="chip">${(R.w/tw*100).toFixed(R.w<1?2:1)}% base</span></div><div class="s" style="margin-top:6px">Cash ×${R.cash} · hype +${R.hype} · ${R.res?R.res+' resin bottle'+(R.res>1?'s':''):'no resin'}${R.boost?` · +${Math.round((R.boost[0]-1)*100)}% demand ${R.boost[1]} d`:''}${R.rate?` · +${R.rate.toFixed(2)}★`:''}</div><div class="kv"><span>Found <b>${v.found[i]||0}</b></span></div></div>`});
+  RARITIES.forEach((R,i)=>{h+=`<div class="card vrar r${i}-bg" style="--rc:${R.col}"><div class="vrow2"><div class="vname sm">${rarName(i)}</div><span class="chip">${(R.w/tw*100).toFixed(R.w<1?2:1)}% base</span></div><div class="s" style="margin-top:6px">Cash ×${R.cash} · hype +${R.hype} · ${R.res?R.res+' resin bottle'+(R.res>1?'s':''):'no resin'}${R.boost?` · +${Math.round((R.boost[0]-1)*100)}% demand ${R.boost[1]} d`:''}${R.rate?` · +${R.rate.toFixed(2)}★`:''}${VAULT_PRINTER[i]?` · ${Math.round(VAULT_PRINTER[i]*100)}% printer`:''}${VAULT_UPGRADE[i]?` · ${Math.round(VAULT_UPGRADE[i]*100)}% free upgrade`:''}</div><div class="kv"><span>Found <b>${v.found[i]||0}</b></span></div></div>`});
   return h+'</div>';
 }

@@ -235,13 +235,26 @@ function buildPrinter3(k){
     S.box(w,H,d,b,{xf:V3.T(0,y0+H/2,0)});
     for(const sx of [-1,1])S.box(w*.4,H*.58,.05,h,{xf:V3.T(sx*w*.24,y0+H*.58,d/2+.01),alpha:.7});
     S.box(w*.3,.3,.05,dark,{xf:V3.T(-w*.28,y0+H*.15,d/2+.01)});S.box(w*.15,.22,.04,a,{xf:V3.T(w*.3,y0+H*.15,d/2+.02),unlit:true,em:.9,anim:2});S.box(w*.3,.3,.3,dark,{xf:V3.T(0,y0+H+.15,0)});
+  }else if(kind==='lab'){
+    const v=L.v||0,H=3.6+v*.18,d=w*.8,cr=.42+(v>=5?.14:0);
+    S.cyl(w*.85,w*.9,.14,rgb('#0d0e16'),{xf:V3.T(0,y0-.1,0)});
+    S.torus(w*.8,.04,a,{xf:V3.T(0,y0+.06,0),unlit:true,em:1.2,add:true,anim:2});
+    S.box(w*.9,.5,d,b,{xf:V3.T(0,y0+.3,0)});
+    for(const sx of [-1,1]){S.box(.34,H,.34,b,{xf:V3.T(sx*w*.46,y0+.55+H/2,-d*.3)});S.box(.12,H*.9,.12,h,{xf:V3.T(sx*w*.46,y0+.55+H/2,-d*.3+.2),unlit:true,em:.9,anim:2})}
+    S.cyl(cr,cr,H*.85,h,{xf:V3.T(0,y0+.55,0),unlit:true,em:1,anim:2,nu:22,alpha:.85});
+    S.cyl(cr*.45,cr*.45,H*.9,rgb('#ffffff'),{xf:V3.T(0,y0+.55,0),unlit:true,em:1.4,anim:2});
+    const nr=2+v%3;
+    for(let n=0;n<nr;n++)S.torus(w*.34+n*.05,.045,a,{xf:V3.T(0,y0+.9+n*(H*.7)/(nr),0),unlit:true,em:1.1,add:true,anim:1});
+    S.sph(0,y0+.6+H*.9,0,.22+(v>=6?.12:0),.22+(v>=6?.12:0),.22+(v>=6?.12:0),a,{unlit:true,em:1.4,anim:2});
+    if(v>=5)for(let n=0;n<4;n++){const ag=n*Math.PI/2;S.sph(Math.cos(ag)*w*.55,y0+1.4+n*.35,Math.sin(ag)*w*.55,.16,.16,.16,h,{unlit:true,em:1.2,anim:2})}
+    S.box(w*.5,.07,d*.4,rgb('#14151a'),{xf:V3.T(0,y0+.58,d*.35)});
   }else{
     const sm=L.sm,len=w,H=sm?1.3:1.7;
     S.box(len,H*.55,1.5,b,{xf:V3.T(0,y0+H*.28,0)});S.box(len*.2,H*.8,1.3,rgb('#c9ced6'),{xf:V3.T(len*.34,y0+H*.9,0)});
     S.cyl(.32,.32,len*.5,rgb('#e8742a'),{xf:V3.mul(V3.T(-len*.05,y0+H*.95,0),V3.RZ(Math.PI/2))});S.cyl(.5,.12,.6,rgb('#aab1bb'),{xf:V3.T(-len*.18,y0+H*.95+.3,0)});
     S.box(len*.14,H*.5,1.1,rgb('#6b7686'),{xf:V3.T(-len*.35,y0+H*.9,0)});S.box(.8,.5,.04,dark,{xf:V3.T(len*.1,y0+H*.3,.76)});S.box(.6,.3,.03,a,{xf:V3.T(len*.1,y0+H*.3,.78),unlit:true,em:.9,anim:2});
   }
-  S.particles(50,w*.7,3.5,'#b58cff');
+  S.particles(kind==='lab'?90:50,w*.7,kind==='lab'?5.5:3.5,kind==='lab'?L.h:'#b58cff');
   return S.done();
 }
 /* ---- modal ---- */
