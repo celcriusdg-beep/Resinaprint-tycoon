@@ -1,8 +1,13 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='2.4';
-const PATCH_TITLE='Resinaprint 2.4 · Rebirth Update';
+const VERSION='2.5';
+const PATCH_TITLE='Resinaprint 2.5 · World Update';
 const PATCH=[
+ {h:'New in 2.5',i:[
+  '<b>A 3D world.</b> Every time you rebirth you pick a new country on a spinnable globe: Netherlands, Japan, USA, Germany, UK, Brazil, Australia or South Korea.',
+  '<b>Every country plays differently.</b> Demand, rent, wages, shipping, resin and tax change, and each country loves certain figures. The first time you open a new country you earn bonus Resin Shards.',
+  '<b>Branches.</b> Your old company stays open, earns passive income every day and gives a permanent perk. See the whole map in Empire › Rebirth › World.'
+ ]},
  {h:'New in 2.4',i:[
   '<b>Rebirth.</b> Once your company is worth €1.000.000 you can rebirth: start again in the hok and earn <b>Resin Shards</b>, glowing black-matter crystals that never go away.',
   '<b>Perks.</b> Spend shards in Empire › Rebirth on permanent perks: head start cash, demand, XP, chest luck, cheaper resin, faster prints, energy, free starting chests and more shards.',

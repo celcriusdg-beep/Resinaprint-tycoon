@@ -77,7 +77,7 @@ function startViewer(cv,sc,opt){
   const pb=sc.pts&&sc.pts.n?buf(sc.pts.d):null;
   const U=(p,n)=>gl.getUniformLocation(p,n),A=(p,n)=>gl.getAttribLocation(p,n);
   const ctr=[(sc.min[0]+sc.max[0])/2,(sc.min[1]+sc.max[1])/2,(sc.min[2]+sc.max[2])/2],rad=Math.hypot(sc.max[0]-sc.min[0],sc.max[1]-sc.min[1],sc.max[2]-sc.min[2])/2;
-  let ry=0.6,rp=.2,drag=false,lx=0,ly=0,auto=true,t0=performance.now(),alive=true,idle=0;
+  let ry=opt.ry!==undefined?opt.ry:0.6,rp=opt.rp!==undefined?opt.rp:.2,drag=false,lx=0,ly=0,auto=opt.auto!==false,t0=performance.now(),alive=true,idle=0;
   cv.style.touchAction='none';
   cv.addEventListener('pointerdown',e=>{drag=true;auto=false;lx=e.clientX;ly=e.clientY;try{cv.setPointerCapture(e.pointerId)}catch(_){}});
   cv.addEventListener('pointermove',e=>{if(!drag)return;ry+=(e.clientX-lx)*.012;rp=Math.max(-.2,Math.min(.9,rp+(e.clientY-ly)*.006));lx=e.clientX;ly=e.clientY});
@@ -85,11 +85,11 @@ function startViewer(cv,sc,opt){
   const accent=rgb(opt.accent||'#ffb547');
   function frame(){
     if(!alive||!cv.isConnected){alive=false;return}
-    const t=(performance.now()-t0)/1000;if(!drag&&!auto&&performance.now()-idle>2500)auto=true;if(auto)ry+=.008;
+    const t=(performance.now()-t0)/1000;if(!drag&&!auto&&opt.auto!==false&&performance.now()-idle>2500)auto=true;if(auto)ry+=.008;
     const dpr=Math.min(window.devicePixelRatio||1,2),w=Math.max(10,Math.round(cv.clientWidth*dpr)),h=Math.max(10,Math.round(cv.clientHeight*dpr));
     if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h}
     gl.viewport(0,0,w,h);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);
-    const dist=rad*2.45,eye=[0,ctr[1]+dist*Math.sin(rp)+rad*.15,dist*Math.cos(rp)];
+    const dist=rad*(opt.zoom||2.45),eye=[0,ctr[1]+dist*Math.sin(rp)+rad*.15,dist*Math.cos(rp)];
     const VP=V3.mul(V3.persp(.7,w/h,.1,100),V3.look(eye,[0,ctr[1],0])),M=V3.mul(V3.T(0,0,0),V3.RY(ry));
     gl.useProgram(P);
     const l={vp:U(P,'uVP'),m:U(P,'uM'),off:U(P,'uOff'),cam:U(P,'uCam'),al:U(P,'uAlpha'),em:U(P,'uEm'),un:U(P,'uUnlit'),rim:U(P,'uRim'),gl:U(P,'uGlow'),pu:U(P,'uPulse')};

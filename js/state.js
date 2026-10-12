@@ -17,7 +17,7 @@ let S;
 const newRep=s=>({day:s.day,cash0:s.cash,rating0:s.rating,hype0:s.hype,earn:{},spend:{},you:{},team:{},printed:0,failed:0,finished:0,shipped:0,newOrders:0,cancelled:0,ignored:0,delivered:0,lost:0,damaged:0,hours:0,events:[]});
 const newBiz=()=>({kvk:false,kor:false,form:'none',vatOut:0,vatIn:0,vatDue:null,yrRev:0,yrNext:YEAR+1,qNext:QUARTER+1,taxBase:0,wkInc:0,wkExp:0,waste:0,perm:{},ins:false,korCd:0,warned:false});
 function fresh(){
-  const s={reb:newReb(),vault:newVault(),lv:1,xp:0,cdSeen:0,soldBy:{},trend:null,diff:'normal',theme:'amber',seenVer:VERSION,always:{},target:{},autoP:{},quest:null,revs:[],sale:null,crunch:false,pre:{},stop:{},clear:{},soc:{},boost:null,wom:0,lastBig:0,grant:false,v:2,day:1,hour:8,cash:800,energy:200,rating:3.5,reviews:0,hype:5,ws:0,washer:'bucket',
+  const s={country:'nl',reb:newReb(),vault:newVault(),lv:1,xp:0,cdSeen:0,soldBy:{},trend:null,diff:'normal',theme:'amber',seenVer:VERSION,always:{},target:{},autoP:{},quest:null,revs:[],sale:null,crunch:false,pre:{},stop:{},clear:{},soc:{},boost:null,wom:0,lastBig:0,grant:false,v:2,day:1,hour:8,cash:800,energy:200,rating:3.5,reviews:0,hype:5,ws:0,washer:'bucket',
     resin:{estd:1000},prices:{},listed:{},qual:{},unwashed:{},cured:{},stock:{},
     printers:[{id:1,type:'mars',resin:'estd',vat:300,cond:90,prod:'chibi',state:'idle',job:null,auto:true,sc:false}],
     orders:[{id:2,p:'desk',age:0,dest:'nl',ch:'web'},{id:3,p:'chibi',age:0,dest:'nl',ch:'web'}],dms:[],offers:[],contracts:[],staff:[],stores:{},up:{},cds:{},shift:{},
@@ -33,7 +33,7 @@ function patch(s){
   const old=!s.biz;
   if(!s.lv){s.lv=1;let xp=s.sold||0;while(xp>=XP_NEED(s.lv)){xp-=XP_NEED(s.lv);s.lv++}s.xp=xp}
   if(!s.vault){s.vault=newVault();for(let l=2;l<=Math.min(s.lv,13);l++)vaultAdd(s,l)}
-  if(!s.reb)s.reb=newReb();
+  if(!s.reb)s.reb=newReb();s.reb.branches=s.reb.branches||{};s.country=s.country||'nl';
   s.xp=s.xp||0;s.cdSeen=s.cdSeen===undefined?(s.contractsDone||0):s.cdSeen;s.soldBy=s.soldBy||{};s.diff=s.diff||'normal';s.theme=s.theme||'amber';if(s.seenVer===undefined)s.seenVer='';if(s.trend===undefined)s.trend=null;
   if(!s.rep)s.rep=newRep(s);
   s.drinks=s.drinks||0;s.m=s.m||0;s.abs=s.abs||0;s.lastT=s.lastT||Date.now();s.paused=false;s.repDue=false;s.warnDay=s.warnDay||0;
@@ -91,18 +91,18 @@ const nid=()=>S.nextId++;
 const upv=k=>{let a=0;for(const u of UPGRADES)if(S.up[u.id]&&u[k])a+=u[k];return a};
 const regen=()=>{const night=S.hour>=23||S.hour<7;let r=10+upv('rg');if(night)r*=1.5+upv('nr');if(S.energy<15)r*=1+upv('low');return r};
 const ecm=()=>1-Math.min(.6,upv('ec'));
-const space=()=>{const b=SPACES[S.ws];return{...b,printers:b.printers+(S.up.racks?2:0)+(S.up.mezz?4:0)+upv('sp'),staff:b.staff+(S.up.mezz?4:0)+(S.up.office?3:0)+upv('st')}};
-const maxE=()=>200+lvEnergy()+perk('en')*10+UPGRADES.reduce((a,u)=>a+(S.up[u.id]&&u.e?u.e:0),0);
+const space=()=>{const b=SPACES[S.ws];return{...b,rent:Math.round(b.rent*cm('rent')),printers:b.printers+(S.up.racks?2:0)+(S.up.mezz?4:0)+upv('sp'),staff:b.staff+(S.up.mezz?4:0)+(S.up.office?3:0)+upv('st')}};
+const maxE=()=>200+lvEnergy()+perk('en')*10+(hasBranch('au')?10:0)+UPGRADES.reduce((a,u)=>a+(S.up[u.id]&&u.e?u.e:0),0);
 const studioStaff=()=>S.staff.filter(s=>s.role!=='clerk');
 const countRole=k=>S.staff.filter(s=>s.role===k).length;
-const wages=()=>Math.round(S.staff.reduce((a,s)=>a+s.wage,0)*(S.up.night?1.2:1)*(S.crunch?1.4:1)*(1-Math.min(.3,upv('wag')))*diffM().wage);
+const wages=()=>Math.round(S.staff.reduce((a,s)=>a+s.wage,0)*(S.up.night?1.2:1)*(S.crunch?1.4:1)*(1-Math.min(.3,upv('wag')))*diffM().wage*cm('wage'));
 const shift=()=>S.up.night?[6,22]:[8,18];
 const shiftLen=()=>{const a=shift();return a[1]-a[0]};
 const skill=s=>(1+.2*((s.lvl||1)-1))*(s.trait==='quick'?1.25:1);
 const ofRole=r=>S.staff.filter(s=>s.role===r);
 const ofTrait=(r,t)=>ofRole(r).filter(s=>s.trait===t).length;
 const sumRole=(r,f)=>ofRole(r).reduce((a,s)=>a+f(s),0);
-const printRate=()=>1+Math.min(.6,sumRole('tech',s=>.04*skill(s)))+Math.min(.5,upv('spd'))+perk('spd')*.02+(S.crunch?.25:0);
+const printRate=()=>1+Math.min(.6,sumRole('tech',s=>.04*skill(s)))+Math.min(.5,upv('spd'))+perk('spd')*.02+(hasBranch('kr')?.03:0)+(S.crunch?.25:0);
 const failMult=()=>Math.max(.4,1-sumRole('tech',s=>.03*((s.lvl||1)-1)+(s.trait==='careful'?.12:0)))*(1-Math.min(.5,upv('fail')))*diffM().fail;
 const resinMult=()=>(1-Math.min(.25,.12*ofTrait('tech','efficient')))*(1-Math.min(.2,upv('rsn')));
 const qualBonus=()=>Math.min(.35,upv('qual')+sumRole('post',s=>.01*((s.lvl||1)-1)+(s.trait==='careful'?.04:0))+sumRole('painter',s=>.01*((s.lvl||1)-1)+(s.trait==='careful'?.04:0))+sumRole('inspector',s=>.03*skill(s)));
@@ -115,14 +115,14 @@ const photoMult=()=>1+Math.min(.2,sumRole('photographer',s=>.05*skill(s)*(s.trai
 const logiSave=()=>Math.min(.3,sumRole('logistics',s=>.07*skill(s)*(s.trait==='efficient'?1.3:1)));
 const lossMult=()=>Math.pow(.75,ofRole('logistics').length)*(ofTrait('logistics','careful')?.8:1)*(1-Math.min(.6,upv('loss')));
 const dmgMult=()=>Math.pow(.7,ofRole('inspector').length)*(ofTrait('inspector','careful')?.8:1)*(1-Math.min(.6,upv('dmg')));
-const wearMult=()=>Math.pow(.75,ofRole('engineer').length)*(ofTrait('engineer','careful')?.85:1)*(1-Math.min(.5,upv('wear')));
-const salesMult=()=>1+Math.min(.5,upv('pay')+sumRole('salesrep',s=>.05*skill(s)*(s.trait==='careful'?1.4:1)));
+const wearMult=()=>Math.pow(.75,ofRole('engineer').length)*(ofTrait('engineer','careful')?.85:1)*(1-Math.min(.5,upv('wear')))*(hasBranch('de')?.95:1);
+const salesMult=()=>1+Math.min(.5,upv('pay')+(hasBranch('us')?.04:0)+sumRole('salesrep',s=>.05*skill(s)*(s.trait==='careful'?1.4:1)));
 const rent=()=>space().rent+Object.keys(S.stores).filter(k=>S.stores[k].open).reduce((a,k)=>a+STORES[k].rent,0);
 const maxTier=()=>S.printers.reduce((a,p)=>Math.max(a,PRINTERS[p.type].tier),-1);
 const unlocked=k=>!PRODUCTS[k].req||S.up[PRODUCTS[k].req];
 const makeable=k=>unlocked(k)&&PRODUCTS[k].tier<=maxTier();
 const sellable=k=>S.listed[k]&&makeable(k);
-const resinPrice=k=>RESINS[k].cost*(S.up.bulk?.8:1)*S.mk.resin*(1-perk('rsn')*.02);
+const resinPrice=k=>RESINS[k].cost*(S.up.bulk?.8:1)*S.mk.resin*(1-perk('rsn')*.02-(hasBranch('br')?.04:0))*cm('resin');
 const mf=s=>.5+s.mood/200;
 const short=p=>PRINTERS[p.type].name.replace(/^(Elegoo|Anycubic|Phrozen|Formlabs|Creality|Stratasys|3D Systems|Prusa|Carbon|Nexa3D|Asiga|Engel|Arburg|Babyplast) /,'').replace(/ \((PolyJet|injection)\)/,'')+' #'+p.id;
 const E0={start:()=>4,collect:()=>3,refill:()=>S.up.feeder?0:2,clean:()=>6,service:()=>8,pack:()=>S.up.label?2:3,dm:()=>S.up.inbox?1:2,deliver:()=>6,restock:()=>5,shift:()=>40};
@@ -140,7 +140,7 @@ function demand(k){
   const Pd=PRODUCTS[k];
   let d=Pd.base*(1+S.hype/50)*Math.pow(S.rating/4.5,3)*Math.pow(Pd.ref*designMult()/S.prices[k],2.2)*(1+Math.log10(1+S.sold)/2);
   if(S.up.lightbox)d*=1.1; if(S.up.theme)d*=1.15; if(S.up.franchise)d*=1.5; if(S.up.ip)d*=1.1;
-  d*=saleMult()*earlyBoost()*socDem()*boostMult()*(1+Math.min(.8,upv('dem')))*photoMult()*season().m*S.mk.comp*chanMult()*trendMult(k)*(1+lvDem())*diffM().dem*(1+rebDem());
+  d*=saleMult()*earlyBoost()*socDem()*boostMult()*(1+Math.min(.8,upv('dem')))*photoMult()*season().m*S.mk.comp*chanMult()*trendMult(k)*(1+lvDem())*diffM().dem*(1+rebDem())*cm('dem')*(1+ctryFav(k));
   return d;
 }
 function need(k){return S.orders.filter(o=>o.p===k).length+S.contracts.filter(c=>c.p===k).reduce((a,c)=>a+c.qty,0)-S.stock[k]}

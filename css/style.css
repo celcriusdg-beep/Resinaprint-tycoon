@@ -334,3 +334,11 @@ nav button.on::before{opacity:1;transform:none}
 .shardbtn:disabled{box-shadow:none}
 #mShard{background:#07050d;border:1px solid rgba(157,107,255,.45);box-shadow:0 0 10px rgba(122,59,255,.3);margin-left:4px;background-image:none}
 @media (prefers-reduced-motion:reduce){.rn.rp .c{animation:none}}
+
+/* ===== 2.5 World ===== */
+.ctrys{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:10px -2px 0;padding:2px}
+.ctry{flex:none;display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:12px;border:1px solid var(--hair);background:var(--card2);font-weight:800;font-size:12.5px;color:var(--muted);white-space:nowrap}
+.ctry span{font-size:16px}
+.ctry.open{border-color:rgba(255,181,71,.5)}
+.ctry.on{background:linear-gradient(135deg,rgba(157,107,255,.35),rgba(122,59,255,.2));border-color:#b58cff;color:var(--ink);box-shadow:0 0 14px rgba(122,59,255,.4)}
+#wglobe{height:min(40vh,300px);margin-top:4px}

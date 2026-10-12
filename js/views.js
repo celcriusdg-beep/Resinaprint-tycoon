@@ -58,6 +58,7 @@ const chip=(t,c)=>`<span class="chip ${c||''}">${t}</span>`;
 function marketChips(){
   const c=[],se=season();
   c.push(chip(`${se.n} ×${se.m}`,se.m>1?'good':se.m<1?'bad':''));
+  c.push(chip(`${ctryOf().f} ${ctryOf().n}`,'uv'));
   if(Math.abs(S.mk.resin-1)>.03)c.push(chip(`Resin ${S.mk.resin>1?'+':''}${Math.round((S.mk.resin-1)*100)}%`,S.mk.resin>1?'bad':'good'));
   if(S.mk.comp<.97)c.push(chip(`Competitors −${Math.round((1-S.mk.comp)*100)}%`,'bad'));
   if(S.trend&&S.trend.up)c.push(chip(`Trending: ${PRODUCTS[S.trend.up].short||PRODUCTS[S.trend.up].name} +45%`,'good'));

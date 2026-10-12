@@ -62,7 +62,7 @@ function packableIdx(){return S.orders.findIndex(o=>freeStock(o.p)>0)}
 function pickDest(){let x=Math.random(),a=0;for(const k in DESTS){a+=DESTS[k].w;if(x<a)return k}return 'nl'}
 function pickChan(){const ks=Object.keys(CHANNELS).filter(k=>S.ch[k]);let x=Math.random()*ks.reduce((a,k)=>a+CHANNELS[k].w,0);for(const k of ks){x-=CHANNELS[k].w;if(x<=0)return k}return 'web'}
 function carrierFor(dest){let id=S.ship[dest]||'postnl';if(!S.car[id]||(CARRIERS[id].nl&&dest!=='nl'))id='postnl';return id}
-function parcelCost(p,dest,cid){const C=CARRIERS[cid],D=DESTS[dest];let c=PRODUCTS[p].ship*C.mult*D.cost;c*=1-logiSave();c*=1-Math.min(.3,upv('shp'));if(S.up.dock)c*=.9;c-=shipSave();return Math.max(.5,c)+(C.fee||0)}
+function parcelCost(p,dest,cid){const C=CARRIERS[cid],D=DESTS[dest];let c=PRODUCTS[p].ship*C.mult*D.cost;c*=1-logiSave();c*=1-Math.min(.3,upv('shp'));c*=cm('ship')*(1-(hasBranch('nl')?.05:0));if(S.up.dock)c*=.9;c-=shipSave();return Math.max(.5,c)+(C.fee||0)}
 function ship(o,counter){
   const Pd=PRODUCTS[o.p],price=S.prices[o.p]*(saleOn()?1-S.sale.off:1);
   S.stock[o.p]--;
@@ -213,7 +213,7 @@ function incomeTax(base){
   let t;
   if(S.biz.form==='bv')t=Math.min(base,3850)*.19+Math.max(0,base-3850)*.258;
   else{const x=Math.max(0,base-70);t=Math.min(x,700)*.19+Math.max(0,x-700)*.37}
-  return Math.round(t*(1-Math.min(.3,upv('tax')))*(1-Math.min(.2,sumRole('accountant',s=>.04*skill(s)))));
+  return Math.round(t*cm('tax')*(1-Math.min(.3,upv('tax')))*(1-Math.min(.2,sumRole('accountant',s=>.04*skill(s)))));
 }
 function weekly(){
   const L=[];
