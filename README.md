@@ -19,12 +19,25 @@ js/progression.js   studio level, trends, difficulty, themes, Empire › More
 js/viewer3d.js      WebGL 3D viewer
 js/views.js         Studio / Orders / Buy / Team / Empire screens and render()
 js/main.js          event wiring and start
+js/pwa.js           registers the offline service worker (not game logic)
+sw.js               offline cache
+manifest.webmanifest, icons/   installable app (home screen icon, full screen)
 ```
 
 The files are plain (non-module) scripts loaded in order, so they share one global scope exactly
 like the original `<script>` did, and the game still works from `file://`. The JS is the original
 code byte for byte, cut at its own section markers. The save key (`resinaprint-tycoon-v2`) is
 unchanged, so existing saves keep working.
+
+## Install on your phone
+
+Host the folder (e.g. GitHub Pages: Settings → Pages → Deploy from a branch → this branch, `/ (root)`),
+open the link, then:
+- **iPhone (Safari):** Share → Add to Home Screen.
+- **Android (Chrome):** menu ⋮ → Install app / Add to Home screen.
+
+It then opens full screen with its own icon and works offline. Progress saves automatically in
+that device's browser storage.
 
 ## Equivalence test
 

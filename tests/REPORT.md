@@ -21,7 +21,7 @@ Live clock (60 s real time) state identical: true; game hour after: 12
 30-min away report identical: true; state after report identical: true
 Reload resumes from save — original: true, copy: true
 Rendered screens compared (HTML): 25, differing: 0
-Screenshots compared: 14, pixel-identical: 13 (differ: end-empire)
+Screenshots compared: 14, pixel-identical: 13 (differ: 3d-printer)
 3D models + SVG pictures compared: 92, differing: 0
 Visible pixel difference per screenshot (%): intro 0, start-studio 0, start-orders 0, start-buy 0, start-team 0, start-empire 0, away-report 0, end-studio 0, end-orders 0, end-buy 0, end-team 0, end-empire 0, 3d-printer 0, 3d-figure 0
 WebGL 3D view rendered — original: {"3d-printer":true,"3d-figure":true}, copy: {"3d-printer":true,"3d-figure":true}
