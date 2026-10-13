@@ -6,6 +6,7 @@ const PATCH=[
  {h:'New in 3.0',i:[
   '<b>Inventory.</b> Usable items now drop from chests and daily goals. Open them in Empire › Items (or from the Studio tab) and tap Use.',
   '14 items: service kit (a free FEP, tank or screw), double espresso, hot meal, time skip ticket, express wash pass, shipping label book, demand ticket, viral post pack, free sale pass, training manual, staff course voucher, painter\'s masterclass, lucky charm and workshop day.',
+  '<b>Contract stock is now really reserved.</b> Manga store walk-ins, wholesale offers, giveaways, replacements and event losses no longer take figures that are held for a contract.',
   'Everyone gets one service kit to start. Items stay when you rebirth or restart. Free upgrades from chests are still permanent and show as active.'
  ]},
  {h:'New in 2.9',i:[

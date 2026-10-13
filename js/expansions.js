@@ -248,7 +248,7 @@ function badEvents(){
   b.push(()=>{S.mk.comp=clamp(S.mk.comp-.06,.8,1.05);S.hype=Math.max(0,S.hype-10);notice('Copycat seller',"A shop started selling look-alikes cheaper than you. Demand dipped.",'Ouch')});
   b.push(()=>{S.rating=clamp(S.rating-.1,1,5);S.hype=Math.max(0,S.hype-10);notice('Review bombing','A rival group left a pile of fake one-star reviews. Rating dropped.','Ouch')});
   b.push(()=>{const a=hit(ri(8,40));spend('Admin',a);notice('Bank fee increase',`Your bank charged an unexpected fee of ${fmt(a)}.`,'Ouch')});
-  b.push(()=>{const ks=PKEYS.filter(k=>S.stock[k]>0);if(!ks.length)return;const k=pick(ks),n=Math.min(2,S.stock[k]);S.stock[k]-=n;notice('Parcels went missing at the counter',`${n} ${PRODUCTS[k].name.toLowerCase()}${n>1?'s':''} disappeared from your pick-up shelf.`,'Ouch')});
+  b.push(()=>{const ks=PKEYS.filter(k=>freeStock(k)>0);if(!ks.length)return;const k=pick(ks),n=Math.min(2,freeStock(k));S.stock[k]-=n;notice('Parcels went missing at the counter',`${n} ${PRODUCTS[k].name.toLowerCase()}${n>1?'s':''} disappeared from your pick-up shelf.`,'Ouch')});
   b.push(()=>choice('Refund request','A customer says the figure is not what they expected and wants their money back.',[
     {l:'Refund it',ok:()=>listed().length>0,f:()=>{const k=pick(listed()),a=S.prices[k];spend('Refunds',a);log(`You refunded ${fmt(a)}. The customer left a kind review.`,'amber');review(4.5)}},
     {l:'Refuse',f:()=>{S.rating=clamp(S.rating-.07,1,5);log('You refused the refund and the customer complained online.','bad')}}]));
@@ -285,9 +285,9 @@ function bigOffers(){
   if(S.sold>=60)o.push(()=>choice('Anime festival sponsor',`A big festival asks for a sponsor. You get your logo on every banner and sell from a table.`,[
     {l:'Sponsor for €1,500',ok:()=>S.cash>=1500,f:()=>{spend('Marketing',1500);const s=sellStock(30);S.hype+=100;S.boost={m:1.2,until:S.abs+72};log(`Festival sponsor: sold ${s} figures, hype +100.`,'good')}},{l:'Not this year',f:()=>{}}]));
   if(st>=10)o.push(()=>choice('Streaming premiere event',`StreamBox invites you to a premiere party. You hand out 8 figures for free in return for lots of press.`,[
-    {l:'Hand them out',ok:()=>PKEYS.reduce((a,k)=>a+S.stock[k],0)>=8,f:()=>{let n=8;for(const k of PKEYS)while(n>0&&S.stock[k]>0){S.stock[k]--;n--}S.hype+=90;soc('instagram').f+=800;soc('tiktok').f+=800;log('Premiere party: great press, 8 figures given away. Hype +90.','good')}},{l:'Decline',f:()=>{}}]));
+    {l:'Hand them out',ok:()=>PKEYS.reduce((a,k)=>a+freeStock(k),0)>=8,f:()=>{let n=8;for(const k of PKEYS)while(n>0&&freeStock(k)>0){S.stock[k]--;n--}S.hype+=90;soc('instagram').f+=800;soc('tiktok').f+=800;log('Premiere party: great press, 8 figures given away. Hype +90.','good')}},{l:'Decline',f:()=>{}}]));
   if(S.sold>=150&&PKEYS.some(k=>S.stock[k]>=3))o.push(()=>choice('Museum exhibition',`A museum in Leeuwarden wants to display your work for a month and pays an exhibit fee.`,[
-    {l:'Lend 3 figures',ok:()=>PKEYS.some(k=>S.stock[k]>=3),f:()=>{const k=PKEYS.find(k=>S.stock[k]>=3);S.stock[k]-=3;earn('Sponsorships',800);S.hype+=45;S.rating=clamp(S.rating+.05,1,5);log('Museum exhibition: paid 800, hype +45.','good')}},{l:'Decline',f:()=>{}}]));
+    {l:'Lend 3 figures',ok:()=>PKEYS.some(k=>freeStock(k)>=3),f:()=>{const k=PKEYS.find(k=>freeStock(k)>=3);S.stock[k]-=3;earn('Sponsorships',800);S.hype+=45;S.rating=clamp(S.rating+.05,1,5);log('Museum exhibition: paid 800, hype +45.','good')}},{l:'Decline',f:()=>{}}]));
   if(S.sold>=200&&S.biz.kvk)o.push(()=>choice('Game studio sponsorship',`An indie game studio pays €2,000 if you feature their characters in a limited campaign.`,[
     {l:'Accept',f:()=>{earn('Sponsorships',2000);S.hype+=30;log('Game studio sponsorship: +€2,000.','good')}},{l:'Decline',f:()=>{}}]));
   return o;

@@ -48,7 +48,7 @@ const A={
     if(C.energy&&!useE(C.energy))return;if(C.cost)spend('Marketing',C.cost);S.hype+=C.hype;S.cds[C.id]=C.cd;did('Campaigns run');
     if(C.fol)for(const k in C.fol)soc(k).f+=C.fol[k];
     if(C.boost)S.boost={m:C.boost.m,until:S.abs+C.boost.days*24};
-    if(C.gift){const k=PKEYS.filter(k=>S.stock[k]>0).sort((a,b)=>PRODUCTS[a].ref-PRODUCTS[b].ref)[0];S.stock[k]--;log(`You gave away a ${PRODUCTS[k].name.toLowerCase()}.`,'amber')}
+    if(C.gift){const k=PKEYS.filter(k=>freeStock(k)>0).sort((a,b)=>PRODUCTS[a].ref-PRODUCTS[b].ref)[0];S.stock[k]--;log(`You gave away a ${PRODUCTS[k].name.toLowerCase()}.`,'amber')}
     if(C.sell){const s=sellStock(C.sell);log(`${C.name}: sold ${s} figures.`,'good')}
     if(C.id==='con'){const s=sellStock(25);log(`Con booth: sold ${s} figures in one weekend.`,'good')}else log(`${C.name} is live. Hype +${C.hype}.`,'good');toast(`${C.name} live`)},
   upgrade(d){const U=UPGRADES.find(u=>u.id===d.k);if(S.cash<U.cost)return toast('Not enough cash');spend('Upgrades',U.cost);S.up[U.id]=true;if(U.e)S.energy+=U.e;log(`Upgrade bought: ${U.name}.`,'good');toast(U.name)},

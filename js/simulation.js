@@ -109,8 +109,8 @@ function newDM(){
 function dmText(d){return{where:'Hi! Where is my order? It has been a few days.',broken:`My ${PRODUCTS[d.p].name.toLowerCase()} arrived with a snapped-off part.`,lost:`My ${PRODUCTS[d.p].name.toLowerCase()} never arrived and the tracking has not moved for days.`,custom:'Could you print my original character? I can send you the 3D file.',question:d.q}[d.kind]}
 function dmOpts(d){
   if(d.kind==='where')return[{l:'Send tracking + apology',f:()=>review(4.7)}];
-  if(d.kind==='broken')return[{l:'Send a replacement',ok:()=>S.stock[d.p]>0,f:()=>{S.stock[d.p]--;review(5)}},{l:`Refund 30% (${fmt(S.prices[d.p]*.3)})`,f:()=>{spend('Refunds',S.prices[d.p]*.3);review(4.1)}}];
-  if(d.kind==='lost')return[{l:'Send a replacement',ok:()=>S.stock[d.p]>0,f:()=>{S.stock[d.p]--;spend('Shipping',PRODUCTS[d.p].ship);review(4.6)}},{l:`Refund ${fmt(d.price)}`,f:()=>{spend('Refunds',d.price);review(3.4)}}];
+  if(d.kind==='broken')return[{l:'Send a replacement',ok:()=>freeStock(d.p)>0,f:()=>{S.stock[d.p]--;review(5)}},{l:`Refund 30% (${fmt(S.prices[d.p]*.3)})`,f:()=>{spend('Refunds',S.prices[d.p]*.3);review(4.1)}}];
+  if(d.kind==='lost')return[{l:'Send a replacement',ok:()=>freeStock(d.p)>0,f:()=>{S.stock[d.p]--;spend('Shipping',PRODUCTS[d.p].ship);review(4.6)}},{l:`Refund ${fmt(d.price)}`,f:()=>{spend('Refunds',d.price);review(3.4)}}];
   if(d.kind==='custom'){const k=makeable('premium')?'premium':'desk';return[{l:`Quote ${fmt(d.amt)}`,ok:()=>S.contracts.length<4,f:()=>{S.contracts.push({id:nid(),client:'Custom commission',p:k,qty:1,pay:d.amt,due:S.day+6});log(`Accepted a custom commission for ${fmt(d.amt)}. One ${PRODUCTS[k].name.toLowerCase()} due in 6 days.`,'good')}},{l:'Decline politely',f:()=>{}}]}
   return[{l:'Answer',f:()=>{S.hype+=1;review(4.8)}}];
 }
@@ -310,7 +310,7 @@ function storesDay(){
     st.stock-=sold;
     if(sold){earn('Store sales',sold*D.sell);S.revenue+=sold*D.sell}
     st.last=sold*D.sell;
-    if(st.merged&&k==='manga'){const walk=poisson(D.traffic*mult*.06);let f=0;for(let i=0;i<walk;i++){const ks=PKEYS.filter(p=>S.stock[p]>0&&S.listed[p]);if(!ks.length)break;ship({p:pick(ks),age:0},true);f++}if(f)log(`${f} figure${f>1?'s':''} sold at the manga store counter.`,'good')}
+    if(st.merged&&k==='manga'){const walk=poisson(D.traffic*mult*.06);let f=0;for(let i=0;i<walk;i++){const ks=PKEYS.filter(p=>freeStock(p)>0&&S.listed[p]);if(!ks.length)break;ship({p:pick(ks),age:0},true);f++}if(f)log(`${f} figure${f>1?'s':''} sold at the manga store counter.`,'good')}
     if(D.spoil)st.stock=Math.floor(st.stock*.3);
     const cap=D.capB*st.level;
     if(clerks.length&&st.stock<cap*.4){const want=Math.floor(cap*.8)-st.stock,c=want*D.unit;if(S.cash>c+500){spend('Store stock',c);st.stock+=want}}
@@ -370,15 +370,15 @@ function randomEvent(){
     {l:'Buy it (€450)',ok:()=>S.cash>=450&&S.printers.length<space().printers,f:()=>{spend('Printers',450);addPrinter('saturn');log('Bought a refurbished Saturn 4 Ultra.','good')}},{l:'Skip',f:()=>{}}]));
   ev.push(()=>choice('Convention invite','An organiser offers you a last-minute booth at an anime con for €800. You sell from stock and get a big hype boost.',[
     {l:'Book the booth (€800)',ok:()=>S.cash>=800,f:()=>{spend('Marketing',800);S.hype+=55;const s=sellStock(15);log(`Con booth: sold ${s} figures and gained a lot of followers.`,'good')}},{l:'Skip it',f:()=>{}}]));
-  const tot=PKEYS.reduce((a,k)=>a+S.stock[k],0);
+  const tot=PKEYS.reduce((a,k)=>a+freeStock(k),0);
   if(tot>=5)ev.push(()=>choice('Wholesale offer','A webshop wants to buy your whole finished stock at 65% of your prices.',[
-    {l:'Sell it all',ok:()=>PKEYS.some(k=>S.stock[k]>0),f:()=>{const now=PKEYS.reduce((a,k)=>a+S.stock[k],0),val=Math.round(PKEYS.reduce((a,k)=>a+S.stock[k]*S.prices[k],0)*.65);PKEYS.forEach(k=>{addXp(S.stock[k]*productXp(k));S.stock[k]=0});earn('Wholesale',val);S.revenue+=val;S.sold+=now;log(`Sold ${now} items wholesale for ${fmt(val)}.`,'amber')}},{l:'Keep them',f:()=>{}}]));
+    {l:'Sell it all',ok:()=>PKEYS.some(k=>freeStock(k)>0),f:()=>{const now=PKEYS.reduce((a,k)=>a+freeStock(k),0),val=Math.round(PKEYS.reduce((a,k)=>a+freeStock(k)*S.prices[k],0)*.65);PKEYS.forEach(k=>{const n=freeStock(k);addXp(n*productXp(k));S.stock[k]-=n});earn('Wholesale',val);S.revenue+=val;S.sold+=now;log(`Sold ${now} items wholesale for ${fmt(val)}.`,'amber')}},{l:'Keep them',f:()=>{}}]));
   if(S.staff.length){const s=pick(S.staff);ev.push(()=>choice('Raise request',`${s.name} asks for a raise of €15 a day.`,[
     {l:'Give the raise',f:()=>{s.wage+=15;s.mood=clamp(s.mood+30,0,100);log(`${s.name} got a raise and is motivated.`,'good')}},
     {l:'Not now',f:()=>{s.mood=clamp(s.mood-25,0,100);log(`${s.name} is disappointed about the raise.`,'amber')}}]))}
-  const fk=PKEYS.filter(k=>S.stock[k]>0).sort((a,b)=>PRODUCTS[b].ref-PRODUCTS[a].ref)[0];
+  const fk=PKEYS.filter(k=>freeStock(k)>0).sort((a,b)=>PRODUCTS[b].ref-PRODUCTS[a].ref)[0];
   if(fk)ev.push(()=>choice('Influencer DM',`A cosplayer with 80k followers asks for a free ${PRODUCTS[fk].name.toLowerCase()} to review.`,[
-    {l:'Send one free',ok:()=>S.stock[fk]>0,f:()=>{S.stock[fk]--;S.hype+=Math.round(15+PRODUCTS[fk].ref/6);log('The review video is out. Hype is climbing.','good')}},{l:'Decline',f:()=>{}}]));
+    {l:'Send one free',ok:()=>freeStock(fk)>0,f:()=>{S.stock[fk]--;S.hype+=Math.round(15+PRODUCTS[fk].ref/6);log('The review video is out. Hype is climbing.','good')}},{l:'Decline',f:()=>{}}]));
   if(S.sold>=20)ev.push(()=>{const cost=S.biz.ins?150:1200;choice('Skin reaction claim',`A customer says they got a rash from handling an uncured part and wants ${fmt(1200)}.${S.biz.ins?' Your insurance covers it, you pay the €150 excess.':''}`,[
     {l:`Settle (${fmt(cost)})`,f:()=>{spend('Claims',cost);log('You settled a skin reaction claim.','amber')}},
     {l:'Fight it',f:()=>{if(Math.random()<(S.biz.ins?.7:.4)){log('The claim was dismissed.','good')}else{spend('Claims',cost*1.6);S.rating=Math.max(1,S.rating-.05);log('You lost the claim and paid extra costs.','bad')}}}])});
