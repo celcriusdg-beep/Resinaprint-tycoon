@@ -1,8 +1,11 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='2.6';
-const PATCH_TITLE='Resinaprint 2.6 · New Look';
+const VERSION='2.7';
+const PATCH_TITLE='Resinaprint 2.7 · Real Photos';
 const PATCH=[
+ {h:'New in 2.7',i:[
+  '<b>Real photos.</b> Printers and figures now show official product photos. The Laboratorium printers keep their drawings.'
+ ]},
  {h:'New in 2.6',i:[
   '<b>New look.</b> Flatter and warmer: solid colours, chunky buttons, a plain bottom tab bar and new fonts.',
   'The fonts now come with the game, so it looks the same offline.'

@@ -49,9 +49,8 @@ with seeded randomness and a frozen clock, plays the same scripted days, and com
 state, every rendered screen, 3D geometry, screenshots, the live clock, the away report and
 save/reload. Latest result: `tests/REPORT.md`; side-by-side screenshots: `tests/screenshots/`.
 
-## Official photos (local only)
+## Official photos
 
-`assets/official/` holds manufacturer and licensor photos for the printers and figures. The folder is
-git-ignored, and `js/official.js` / `sw-assets.js` are marked skip-worktree locally, so the public repo
-only has empty maps and the game falls back to the drawn pictures. To rebuild the maps after changing
-photos: `python3 tools/make-official-map.py`.
+`assets/official/` holds manufacturer and licensor photos for the printers and figures. `js/official.js`
+and `sw-assets.js` list them (rebuild with `python3 tools/make-official-map.py`). If a photo is missing,
+the game falls back to the drawn picture.
