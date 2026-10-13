@@ -1,8 +1,14 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='2.8';
-const PATCH_TITLE='Resinaprint 2.8 · Restart & Cutouts';
+const VERSION='2.9';
+const PATCH_TITLE='Resinaprint 2.9 · Energy Revamp';
 const PATCH=[
+ {h:'New in 2.9',i:[
+  '<b>Faster energy.</b> Base regen is up from 10 to 18 an hour, and every studio level adds +0.5% regen.',
+  '<b>Percentage upgrades.</b> 19 new upgrades in Empire › Upgrades › Energy raise max energy and regen by a percentage, from +5% up to +50%. They stack.',
+  '<b>Better drinks.</b> 3 energy drinks a day, and each gives 15% of your max energy (at least 30). New upgrades add more drinks and make them stronger.',
+  'Empire › Upgrades › Energy shows a breakdown of your max energy, regen and drinks.'
+ ]},
  {h:'New in 2.8',i:[
   '<b>Restart options.</b> Empire › More now has Restart this run (keeps shards, perks, branches and the vault) and Delete everything (asks twice).',
   'Going bankrupt no longer wipes your shards, perks or vault.',

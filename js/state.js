@@ -89,10 +89,10 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 window.addEventListener('pagehide',()=>flushCloud());
 const nid=()=>S.nextId++;
 const upv=k=>{let a=0;for(const u of UPGRADES)if(S.up[u.id]&&u[k])a+=u[k];return a};
-const regen=()=>{const night=S.hour>=23||S.hour<7;let r=10+upv('rg');if(night)r*=1.5+upv('nr');if(S.energy<15)r*=1+upv('low');return r};
+const regen=()=>{const night=S.hour>=23||S.hour<7;let r=regenDay();if(night)r*=1.5+upv('nr');if(S.energy<15)r*=1+upv('low');return r};
 const ecm=()=>1-Math.min(.6,upv('ec'));
 const space=()=>{const b=SPACES[S.ws];return{...b,rent:Math.round(b.rent*cm('rent')),printers:b.printers+(S.up.racks?2:0)+(S.up.mezz?4:0)+upv('sp'),staff:b.staff+(S.up.mezz?4:0)+(S.up.office?3:0)+upv('st')}};
-const maxE=()=>200+lvEnergy()+perk('en')*10+(hasBranch('au')?10:0)+UPGRADES.reduce((a,u)=>a+(S.up[u.id]&&u.e?u.e:0),0);
+const maxE=()=>Math.round(flatMaxE()*(1+pctMaxE()));
 const studioStaff=()=>S.staff.filter(s=>s.role!=='clerk');
 const countRole=k=>S.staff.filter(s=>s.role===k).length;
 const wages=()=>Math.round(S.staff.reduce((a,s)=>a+s.wage,0)*(S.up.night?1.2:1)*(S.crunch?1.4:1)*(1-Math.min(.3,upv('wag')))*diffM().wage*cm('wage'));

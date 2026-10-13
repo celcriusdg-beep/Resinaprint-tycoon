@@ -20,7 +20,7 @@ const A={
   finish(){const k=nextFinish();if(!k)return;if(!useE(finishE(k)))return;finishOne(k);did('Figures finished');toast(`${PRODUCTS[k].name} finished`)},
   pack(){if(packableIdx()<0)return;if(useE(E.pack())&&packOne()){did('Orders packed');toast('Order shipped')}},
   packAll(){let n=0;while(packableIdx()>=0&&S.energy>=E.pack()){S.energy-=E.pack();packOne();n++}if(n)did('Orders packed',n);toast(n?`Shipped ${n} orders`:'You are too tired')},
-  drink(){if(S.drinks>=2+upv('dr'))return toast('That is enough coffee for today');if(S.cash<4)return toast('Not enough cash');spend('Energy drinks',4);S.drinks++;S.energy=Math.min(maxE()+40,S.energy+30);toast('+30 energy')},
+  drink(){if(S.drinks>=drinkMax())return toast('That is enough coffee for today');if(S.cash<4)return toast('Not enough cash');const a=drinkAmt();spend('Energy drinks',4);S.drinks++;S.energy=Math.min(Math.round(maxE()*1.2),S.energy+a);toast(`+${a} energy`)},
   price(d){S.prices[d.k]=Math.max(1,Math.round(S.prices[d.k]*(d.d>0?1.1:1/1.1)))},
   pre(d){const P=S.pre[d.k]||(S.pre[d.k]={on:false,cap:5,ltd:false});P.on=!P.on;if(!P.on)P.ltd=false;toast(P.on?`Pre-orders open (max ${P.cap})`:'Pre-orders closed')},
   limited(d){const P=S.pre[d.k]||(S.pre[d.k]={on:false,cap:10,ltd:false});if(P.ltd){P.ltd=false;P.on=false;return toast('Limited run cancelled')}P.ltd=true;P.on=true;if(P.cap<5)P.cap=10;toast(`Limited run: ${P.cap} figures`)},

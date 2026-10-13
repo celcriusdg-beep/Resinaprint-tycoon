@@ -208,7 +208,7 @@ function preRow(k){
   ${P.on?`<div class="stepper"><button class="btn sm" data-a="preCap" data-k="${k}" data-d="-1" aria-label="Fewer">−</button><b>${P.cap}</b><button class="btn sm" data-a="preCap" data-k="${k}" data-d="1" aria-label="More">+</button></div>`:''}
   <button class="btn sm ${P.on&&!P.ltd?'primary':'ghost'}" data-a="pre" data-k="${k}">${P.on&&!P.ltd?'Close pre-order':'Pre-order'}</button>
   <button class="btn sm ${P.ltd?'primary':'ghost'}" data-a="limited" data-k="${k}">${P.ltd?'Stop limited':'Limited run'}</button></div>`}
-function upgradeItems(cat){return UPGRADES.filter(u=>u.cat===cat).map(U=>{const own=S.up[U.id],ok=!U.req||U.req();return item(U.name,own||ok?U.desc:`<span class="f">${U.reqText}</span>`,own?'<span class="chip good">Owned</span>':`<button class="btn sm primary" data-a="upgrade" data-k="${U.id}" ${!ok||S.cash<U.cost?'disabled':''}>${fmt(U.cost)}</button>`)}).join('')}
+function upgradeItems(cat){return UPGRADES.filter(u=>u.cat===cat).sort((a,b)=>cat==='energy'?a.cost-b.cost:0).map(U=>{const own=S.up[U.id],ok=!U.req||U.req();return item(U.name,own||ok?U.desc:`<span class="f">${U.reqText}</span>`,own?'<span class="chip good">Owned</span>':`<button class="btn sm primary" data-a="upgrade" data-k="${U.id}" ${!ok||S.cash<U.cost?'disabled':''}>${fmt(U.cost)}</button>`)}).join('')}
 function companyView(){
   const b=S.biz;let h='';
   const formName=b.kvk?(b.form==='bv'?'BV':'Eenmanszaak'):'Hobby seller';
@@ -254,7 +254,7 @@ function vEmpire(){
       h+='</div>'}
   }else if(sub.empire==='upgrades'){
     const UC=UCATS.find(c=>c[0]===sub.up)||UCATS[0],own=UPGRADES.filter(u=>u.cat===UC[0]&&S.up[u.id]).length,tot=UPGRADES.filter(u=>u.cat===UC[0]).length;
-    h+=segs('up',UCATS)+label(UC[1],UC[0]==='energy'?`max ${maxE()} · regen ${regen().toFixed(1)}/h`:`${own} of ${tot} owned`)+`<div class="group">${upgradeItems(UC[0])}</div>`;
+    h+=segs('up',UCATS)+label(UC[1],UC[0]==='energy'?`max ${maxE()} · regen ${regen().toFixed(1)}/h`:`${own} of ${tot} owned`)+(UC[0]==='energy'?energyCard():'')+`<div class="group">${upgradeItems(UC[0])}</div>`;
   }else if(sub.empire==='media'){
     h+=label('Sales channels','where customers find you')+`<div class="group">`;
     for(const k in CHANNELS){const C=CHANNELS[k],on=S.ch[k];h+=item(C.name,k==='web'?'Your own Shopify store':`${C.note}`,on?chip('Live','good'):`<button class="btn sm primary" data-a="channel" data-k="${k}" ${S.cash<C.cost||(C.kvk&&!S.biz.kvk)?'disabled':''}>${C.cost?fmt(C.cost):'Start'}</button>`)}
@@ -304,7 +304,7 @@ function render(){
   const pd=7-((S.day-1)%7);setH(document.getElementById('mPay'),`Payday <b>${pd===1?'tonight':'in '+pd+' d'}</b>`);
   const w=document.getElementById('waitBtn'),c2=skipCost(2);setH(w,`+2 h<small>${fmt(c2)}</small>`);w.disabled=S.cash<c2;
   const pb=document.getElementById('pauseBtn');setH(pb,S.paused?PLAY:PAUSE);pb.classList.toggle('on',!!S.paused);
-  document.getElementById('drinkBtn').disabled=S.drinks>=2;
+  document.getElementById('drinkBtn').disabled=S.drinks>=drinkMax();
   setT(document.getElementById('mEnergy'),`${Math.round(S.energy)}/${maxE()}`);
   const eb=document.getElementById('mEnergyBar');eb.style.width=clamp(S.energy/maxE()*100,0,100)+'%';eb.style.background=S.energy<20?'var(--bad)':S.energy<50?'var(--warn)':'var(--good)';
   setT(document.getElementById('mRating'),S.rating.toFixed(2)+'★');
