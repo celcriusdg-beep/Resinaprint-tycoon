@@ -1,17 +1,21 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='2.5';
-const PATCH_TITLE='Resinaprint 2.5 · World Update';
+const VERSION='2.6';
+const PATCH_TITLE='Resinaprint 2.6 · New Look';
 const PATCH=[
+ {h:'New in 2.6',i:[
+  '<b>New look.</b> Flatter and warmer: solid colours, chunky buttons, a plain bottom tab bar and new fonts.',
+  'The fonts now come with the game, so it looks the same offline.'
+ ]},
  {h:'New in 2.5',i:[
-  '<b>A 3D world.</b> Every time you rebirth you pick a new country on a spinnable globe: Netherlands, Japan, USA, Germany, UK, Brazil, Australia or South Korea.',
-  '<b>Every country plays differently.</b> Demand, rent, wages, shipping, resin and tax change, and each country loves certain figures. The first time you open a new country you earn bonus Resin Shards.',
-  '<b>Branches.</b> Your old company stays open, earns passive income every day and gives a permanent perk. See the whole map in Empire › Rebirth › World.'
+  '<b>3D world.</b> Each rebirth you pick a country on a globe: Netherlands, Japan, USA, Germany, UK, Brazil, Australia or South Korea.',
+  '<b>Country rules.</b> Demand, rent, wages, shipping, resin and tax change per country, and each one favours certain figures. A country you have not opened before gives bonus Resin Shards.',
+  '<b>Branches.</b> Your old company stays open, pays out every day and gives a permanent perk. Map: Empire › Rebirth › World.'
  ]},
  {h:'New in 2.4',i:[
-  '<b>Rebirth.</b> Once your company is worth €1.000.000 you can rebirth: start again in the hok and earn <b>Resin Shards</b>, glowing black-matter crystals that never go away.',
-  '<b>Perks.</b> Spend shards in Empire › Rebirth on permanent perks: head start cash, demand, XP, chest luck, cheaper resin, faster prints, energy, free starting chests and more shards.',
-  'You keep your Resin Shards, perks and the whole vault collection. Everything else resets.'
+  '<b>Rebirth.</b> At a company value of €1.000.000 you can restart in the hok and earn <b>Resin Shards</b>.',
+  '<b>Perks.</b> Spend shards on permanent bonuses in Empire › Rebirth.',
+  'Shards, perks and the vault are kept. Everything else resets.'
  ]},
  {h:'New in 2.3',i:[
   '<b>Laboratorium.</b> A new level of printers in Buy › Printers. Eight machines beyond PolyJet and injection moulding: <b>Aurora Photonic Forge, Helix Volumetric V1, Nebula Holo-Press, Chronos Time-Lattice, Valkyrie Quantum Caster, Leviathan Mega-Forge, Singularity Nano-Assembler</b> and the <b>Omega Genesis Engine</b>. They make every product with no moulds and no washing, in huge batches, with almost no failures and a quality bonus.',
@@ -44,7 +48,7 @@ const PATCH=[
   'Contracts only appear for figures you list and still make.'
  ]}
 ];
-function patchHTML(){return `<div class="kicker">Update ${VERSION}</div><h3>${PATCH_TITLE}</h3><p>New update! Here is what changed.</p>${PATCH.map(g=>`<div class="pn"><h4>${g.h}</h4><ul>${g.i.map(x=>`<li>${x}</li>`).join('')}</ul></div>`).join('')}<div class="acts"><button class="btn primary" data-choice="0">Let's go</button></div>`}
+function patchHTML(){return `<div class="kicker">Update ${VERSION}</div><h3>${PATCH_TITLE}</h3><p>What changed:</p>${PATCH.map(g=>`<div class="pn"><h4>${g.h}</h4><ul>${g.i.map(x=>`<li>${x}</li>`).join('')}</ul></div>`).join('')}<div class="acts"><button class="btn primary" data-choice="0">Let's go</button></div>`}
 const patchDue=()=>!!S&&S.started&&!S.over&&S.seenVer!==VERSION;
 function showPatch(after){pending=[{f:()=>{S.seenVer=VERSION;if(typeof after==='function')after()}}];modal(patchHTML())}
 function maybePatchNotes(){

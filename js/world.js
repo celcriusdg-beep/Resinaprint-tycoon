@@ -8,7 +8,7 @@ const COUNTRIES={
   gb:{n:'United Kingdom',f:'🇬🇧',lat:54,lon:-2.5,t:'Card-game culture and pricey rent.',m:{dem:1.05,rent:1.25,ship:1.1,resin:1.05},fav:{bust:.2,deckbox:.25},bp:'+1 hype a day'},
   br:{n:'Brazil',f:'🇧🇷',lat:-10.8,lon:-52.9,t:'Cheap rent and wages, expensive imports.',m:{dem:.95,rent:.7,wage:.7,ship:1.3,resin:1.15,tax:.95},fav:{chibi:.25,desk:.25},bp:'Resin 4% cheaper'},
   au:{n:'Australia',f:'🇦🇺',lat:-25.7,lon:134.5,t:'Huge distances, passionate con scene.',m:{dem:1,ship:1.4,resin:1.2},fav:{kit:.2,premium:.2},bp:'+10 max energy'},
-  kr:{n:'South Korea',f:'🇰🇷',lat:36.5,lon:127.8,t:'Fast, fashionable and full of colour.',m:{dem:1.15,rent:1.1,ship:.85},fav:{fullcolor:.25,licensed:.25},bp:'Prints 3% faster'}
+  kr:{n:'South Korea',f:'🇰🇷',lat:36.5,lon:127.8,t:'Colourful, fast-moving market.',m:{dem:1.15,rent:1.1,ship:.85},fav:{fullcolor:.25,licensed:.25},bp:'Prints 3% faster'}
 };
 const CKEYS=Object.keys(COUNTRIES);
 const ctryOf=()=>COUNTRIES[(S&&S.country)||'nl']||COUNTRIES.nl;
@@ -106,7 +106,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-ctry]');if
 function openWorld(mode,onGo){
   WORLD.mode=mode;WORLD.sel=mode==='pick'?CKEYS.find(k=>!branchOf()[k]&&k!==S.country)||S.country||'nl':S.country||'nl';
   pending=mode==='pick'?[{f:()=>onGo(WORLD.sel)},{f:()=>{}}]:[{f:()=>{}}];
-  modal(`<div class="kicker">${mode==='pick'?'Rebirth':'World'}</div><h3>${mode==='pick'?'Where does Resinaprint open next?':'Resinaprint worldwide'}</h3>
+  modal(`<div class="kicker">${mode==='pick'?'Rebirth':'World'}</div><h3>${mode==='pick'?'Pick the next country':'World map'}</h3>
   <div class="v3d" id="wglobe"><canvas id="wcv"></canvas><div class="v3fb" id="wfb" style="display:none"><div class="s" style="text-align:center;padding-top:40%">3D is not available here</div></div></div>
   <div class="ctrys" id="wChips">${worldChipsHTML()}</div>
   <div class="card" style="margin:10px 0 14px" id="wInfo">${worldInfoHTML()}</div>

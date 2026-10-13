@@ -1,7 +1,7 @@
 /* Offline support. Game files: network first (updates arrive when online), cache as fallback.
    Google Fonts: cache first. Bump VERSION when the file list changes. */
-const VERSION = 'resinaprint-2.5-1';
-const FILES = ['./', 'index.html', 'manifest.webmanifest', 'css/style.css',
+const VERSION = 'resinaprint-2.6-1';
+const FILES = ['./', 'index.html', 'manifest.webmanifest', 'css/style.css', 'css/fonts.css', 'fonts/BarlowCondensed-500-latin-ext.woff2', 'fonts/BarlowCondensed-500-latin.woff2', 'fonts/BarlowCondensed-600-latin-ext.woff2', 'fonts/BarlowCondensed-600-latin.woff2', 'fonts/BarlowCondensed-700-latin-ext.woff2', 'fonts/BarlowCondensed-700-latin.woff2', 'fonts/Bungee-400-latin-ext.woff2', 'fonts/Bungee-400-latin.woff2', 'fonts/Karla-400-800-latin-ext.woff2', 'fonts/Karla-400-800-latin.woff2',
   'js/data.js', 'js/state.js', 'js/simulation.js', 'js/actions.js', 'js/expansions.js', 'js/art.js', 'js/images.js',
   'js/patch-notes.js', 'js/progression.js', 'js/vault.js', 'js/rebirth.js', 'js/world.js', 'js/viewer3d.js', 'js/views.js', 'js/main.js', 'js/pwa.js',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png'];
