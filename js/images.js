@@ -5,7 +5,7 @@ const RIMG={};
 /* Official photos live in assets/official (generated map in js/official.js). If a photo is missing the drawn picture is used. */
 const OFF=(typeof OFFICIAL!=='undefined'&&OFFICIAL)||{p:{},f:{}};
 const _prodArt=prodArt,_printerArt=printerArt;
-const photoTag=(src,fb)=>`<img src="${src}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block" data-fb="${encodeURIComponent(fb)}" onerror="this.onerror=null;this.outerHTML=decodeURIComponent(this.dataset.fb)">`;
+const photoTag=(src,fb)=>`<img src="${src}" alt="" style="width:100%;height:100%;object-fit:cover;display:block" data-fb="${encodeURIComponent(fb)}" onerror="this.onerror=null;this.outerHTML=decodeURIComponent(this.dataset.fb)">`;
 prodArt=function(k){
   if(PIMG[k])return `<img src="${PIMG[k]}" alt="" style="width:100%;height:100%;object-fit:cover;object-position:50% 30%;display:block">`;
   return OFF.f[k]?photoTag(OFF.f[k],_prodArt(k)):_prodArt(k)};

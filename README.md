@@ -48,3 +48,10 @@ The test compares against the original 2.1 game, so it applies to the first comm
 with seeded randomness and a frozen clock, plays the same scripted days, and compares full game
 state, every rendered screen, 3D geometry, screenshots, the live clock, the away report and
 save/reload. Latest result: `tests/REPORT.md`; side-by-side screenshots: `tests/screenshots/`.
+
+## Official photos (local only)
+
+`assets/official/` holds manufacturer and licensor photos for the printers and figures. The folder is
+git-ignored, and `js/official.js` / `sw-assets.js` are marked skip-worktree locally, so the public repo
+only has empty maps and the game falls back to the drawn pictures. To rebuild the maps after changing
+photos: `python3 tools/make-official-map.py`.

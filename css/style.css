@@ -369,3 +369,9 @@ nav .dot{border-radius:4px}
 .ctry.on{background:var(--uv);color:#17122e;box-shadow:none;border-color:color-mix(in srgb,var(--uv) 55%,#000)}
 #mShard{border-radius:5px;box-shadow:none}
 .shardbtn{box-shadow:none;border-width:2px}
+
+/* Photos: larger thumbnails so the machines are recognisable */
+.item .art{width:56px;height:56px}
+.item .art.prod{width:62px;height:62px}
+.art img{background:#fff}
+.pr .art{width:60px;height:60px}
