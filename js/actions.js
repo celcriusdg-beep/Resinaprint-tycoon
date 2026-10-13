@@ -77,6 +77,7 @@ const A={
   carrier(d){const C=CARRIERS[d.k];if(S.car[d.k])return;if(C.kvk&&needKvk())return;if(C.req&&!C.req())return toast(C.reqText);if(S.cash<C.cost)return toast('Not enough cash');if(C.cost)spend('Equipment',C.cost);S.car[d.k]=true;log(`${C.name} is now available for your parcels.`,'good');toast(`${C.name} unlocked`)},
   channel(d){const C=CHANNELS[d.k];if(S.ch[d.k])return;if(C.kvk&&needKvk())return;if(S.cash<C.cost)return toast('Not enough cash');if(C.cost)spend('Marketing',C.cost);S.ch[d.k]=true;log(`You started selling on ${C.name}.`,'good');toast(`${C.name} is live`)},
   sub(d){sub[d.t]=d.k;if(d.t==='empire'&&d.k==='goals')S.unread=0},
+  cheatCash(d){S.cash+=+d.n||0;toast('Added '+fmt(+d.n||0))},
   restart(){confirmBox('Restart this run?',`You start again in the hok with ${fmt(800+500*perk('head'))}. Cash, printers, staff, stores and upgrades are reset. Your Resin Shards, perks, branches and vault are kept, but this run earns no shards.`,()=>{restartRun();toast('New run started')})},
   reset(){confirmBox('Delete everything?','This erases your whole save: this run, Resin Shards, perks, branches and the vault. It cannot be undone.',()=>{confirmBox('Really delete everything?','Last chance. All progress will be gone.',()=>{S=fresh();S.started=true;S.lastT=Date.now();refreshOffers();newTrend();lastHTML='';toast('Save deleted')})})}
 };
