@@ -377,3 +377,9 @@ nav .dot{border-radius:4px}
 
 /* Cut-out photos sit on a mid-tone tile so dark printers and white boxes both show */
 .art:has(img[data-ph]){background:radial-gradient(circle at 50% 38%,#9a8f7b,#625848);border-color:#7a6f5c}
+
+/* No double-tap zoom or text selection while tapping fast */
+*{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body,button,.item,.card,.group,.task,nav,header{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input,select,textarea{-webkit-user-select:auto;user-select:auto}

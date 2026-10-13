@@ -14,3 +14,6 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
   });
 }
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+
+/* iOS: block pinch gestures. Double-tap zoom is prevented by touch-action:manipulation in the CSS. */
+['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
