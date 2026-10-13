@@ -373,5 +373,4 @@ nav .dot{border-radius:4px}
 /* Photos: larger thumbnails so the machines are recognisable */
 .item .art{width:56px;height:56px}
 .item .art.prod{width:62px;height:62px}
-.art img{background:#fff}
 .pr .art{width:60px;height:60px}

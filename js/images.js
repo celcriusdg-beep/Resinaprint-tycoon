@@ -5,10 +5,18 @@ const RIMG={};
 /* Official photos live in assets/official (generated map in js/official.js). If a photo is missing the drawn picture is used. */
 const OFF=(typeof OFFICIAL!=='undefined'&&OFFICIAL)||{p:{},f:{}};
 const _prodArt=prodArt,_printerArt=printerArt;
-const photoTag=(src,fb)=>`<img src="${src}" alt="" style="width:100%;height:100%;object-fit:cover;display:block" data-fb="${encodeURIComponent(fb)}" onerror="this.onerror=null;this.outerHTML=decodeURIComponent(this.dataset.fb)">`;
+/* Photos are read into memory once and used as data URIs, so the screen can be rebuilt every few seconds without flicker. */
+const OFFDATA={};
+const photoTag=(src,fb)=>OFFDATA[src]?`<img src="${OFFDATA[src]}" alt="" decoding="sync" style="width:100%;height:100%;object-fit:cover;display:block">`:fb;
+function preloadOfficial(){
+  const paths=[...Object.values(OFF.p),...Object.values(OFF.f)];if(!paths.length)return;
+  Promise.all(paths.map(p=>fetch(p).then(r=>r.ok?r.blob():Promise.reject()).then(b=>new Promise(res=>{const fr=new FileReader();fr.onload=()=>{OFFDATA[p]=fr.result;res()};fr.onerror=res;fr.readAsDataURL(b)})).catch(()=>{})))
+    .then(()=>{if(typeof S!=='undefined'&&S&&typeof render==='function'){lastHTML='';render()}});
+}
 prodArt=function(k){
   if(PIMG[k])return `<img src="${PIMG[k]}" alt="" style="width:100%;height:100%;object-fit:cover;object-position:50% 30%;display:block">`;
   return OFF.f[k]?photoTag(OFF.f[k],_prodArt(k)):_prodArt(k)};
 printerArt=function(k){
   if(RIMG[k])return `<img src="${RIMG[k]}" alt="" style="width:100%;height:100%;object-fit:contain;display:block">`;
   return OFF.p[k]?photoTag(OFF.p[k],_printerArt(k)):_printerArt(k)};
+preloadOfficial();

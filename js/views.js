@@ -279,6 +279,24 @@ function vEmpire(){
   return h;
 }
 const VIEWS={studio:vStudio,orders:vOrders,buy:vBuy,team:vTeam,empire:vEmpire};
+/* Update the screen in place: only the parts that changed are touched, so pictures do not reload or flash. */
+function morphAttrs(a,b){
+  for(const at of [...a.attributes])if(!b.hasAttribute(at.name))a.removeAttribute(at.name);
+  for(const at of b.attributes)if(a.getAttribute(at.name)!==at.value)a.setAttribute(at.name,at.value);
+  if(a.tagName==='INPUT'){if(a.checked!==b.checked)a.checked=b.checked}
+}
+function morphKids(a,b){
+  const ac=[...a.childNodes],bc=[...b.childNodes];
+  for(let i=0;i<bc.length;i++){
+    const x=ac[i],y=bc[i];
+    if(!x)a.appendChild(y.cloneNode(true));
+    else if(x.nodeType!==y.nodeType||(x.nodeType===1&&x.tagName!==y.tagName))a.replaceChild(y.cloneNode(true),x);
+    else if(x.nodeType===1){morphAttrs(x,y);morphKids(x,y);if(x.tagName==='SELECT'&&x.value!==y.value)x.value=y.value}
+    else if(x.nodeValue!==y.nodeValue)x.nodeValue=y.nodeValue;
+  }
+  for(let i=ac.length-1;i>=bc.length;i--)a.removeChild(ac[i]);
+}
+function morphInto(el,html){const t=document.createElement(el.tagName);t.innerHTML=html;morphKids(el,t)}
 function render(){
   setT(document.getElementById('cash'),fmt(S.cash));document.getElementById('cash').classList.toggle('neg',S.cash<0);
   setT(document.getElementById('clock'),String(S.hour).padStart(2,'0')+':'+String(Math.floor(S.m)).padStart(2,'0')+(S.paused?' · paused':''));
@@ -297,7 +315,7 @@ function render(){
   document.querySelectorAll('#tabs button').forEach(b=>{b.classList.toggle('on',b.dataset.tab===tab);let d=b.querySelector('.dot');const n=badge[b.dataset.tab]||0;if(n){if(!d){b.insertAdjacentHTML('beforeend','<span class="dot"></span>');d=b.querySelector('.dot')}d.textContent=n>9?'9+':n}else if(d)d.remove()});
   liveVals={};
   const raw=VIEWS[tab](),main=document.getElementById('main');
-  if(raw!==lastHTML){main.innerHTML=raw.replace(/\u0001(\w+)\u0002/g,(m,id)=>liveVals[id]);lastHTML=raw}
+  if(raw!==lastHTML){morphInto(main,raw.replace(/\u0001(\w+)\u0002/g,(m,id)=>liveVals[id]));lastHTML=raw}
   else for(const id in liveVals){const v=liveVals[id];const e1=main.querySelector('[data-l="'+id+'"]');if(e1&&e1.textContent!==v)e1.textContent=v;const e2=main.querySelector('[data-w="'+id+'"]');if(e2)e2.style.width=v+'%'}
 }
 
