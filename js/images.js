@@ -10,6 +10,7 @@ const OFFDATA={};
 const photoTag=(src,fb)=>OFFDATA[src]?`<img src="${OFFDATA[src]}" alt="" decoding="sync" style="width:100%;height:100%;object-fit:cover;display:block">`:fb;
 function preloadOfficial(){
   const paths=[...Object.values(OFF.p),...Object.values(OFF.f)];if(!paths.length)return;
+  if(location.protocol==='file:'){paths.forEach(p=>{OFFDATA[p]=p});return}
   Promise.all(paths.map(p=>fetch(p).then(r=>r.ok?r.blob():Promise.reject()).then(b=>new Promise(res=>{const fr=new FileReader();fr.onload=()=>{OFFDATA[p]=fr.result;res()};fr.onerror=res;fr.readAsDataURL(b)})).catch(()=>{})))
     .then(()=>{if(typeof S!=='undefined'&&S&&typeof render==='function'){lastHTML='';render()}});
 }
