@@ -374,3 +374,6 @@ nav .dot{border-radius:4px}
 .item .art{width:56px;height:56px}
 .item .art.prod{width:62px;height:62px}
 .pr .art{width:60px;height:60px}
+
+/* Cut-out photos sit on a mid-tone tile so dark printers and white boxes both show */
+.art:has(img[data-ph]){background:radial-gradient(circle at 50% 38%,#9a8f7b,#625848);border-color:#7a6f5c}
