@@ -229,7 +229,7 @@ function goodEvents(){
   if(S.biz.kvk&&!S.grant&&S.sold>=20)g.push(()=>{S.grant=true;const a=ri(400,1000);earn('Subsidy',a);notice('Startup grant approved',`A regional startup grant of ${fmt(a)} landed in your account.`)});
   if(S.sold>=100)g.push(()=>{S.rating=clamp(S.rating+.1,1,5);S.hype+=40;notice('Best local webshop award','A regional magazine voted you best local webshop. Rating +0.10, hype +40.')});
   if(S.printers.length)g.push(()=>{const a=ri(40,150);earn('Refund',a);notice('Electricity refund',`Your energy supplier corrected your bill. You got ${fmt(a)} back.`)});
-  if(S.staff.filter(s=>s.role!=='clerk').length)g.push(()=>{const s=pick(S.staff.filter(x=>x.role!=='clerk'));s.xp=(s.xp||0)+40;while((s.lvl||1)<5&&s.xp>=XPN[(s.lvl||1)-1])levelUp(s);notice('A good idea from the team',`${s.name} found a smarter way to work and learned a lot doing it.`)});
+  if(S.staff.filter(s=>s.role!=='clerk'&&!s.mach).length)g.push(()=>{const s=pick(S.staff.filter(x=>x.role!=='clerk'&&!x.mach));s.xp=(s.xp||0)+40;while((s.lvl||1)<5&&s.xp>=XPN[(s.lvl||1)-1])levelUp(s);notice('A good idea from the team',`${s.name} found a smarter way to work and learned a lot doing it.`)});
   g.push(()=>choice('Fan artist offer','A fan artist offers to draw your mascot as a poster if you pay €100. Fans would share it everywhere.',[
     {l:'Pay €100',ok:()=>S.cash>=100,f:()=>{spend('Marketing',100);S.hype+=25;soc('instagram').f+=400;soc('tiktok').f+=200;log('The fan art poster is everywhere. Hype +25.','good')}},{l:'No thanks',f:()=>{}}]));
   if(S.stock&&PKEYS.some(k=>S.stock[k]>=2))g.push(()=>choice('School project',`A local school wants a handful of figures for a class project and offers to pay your list price.`,[
@@ -260,8 +260,8 @@ function badEvents(){
   if(S.printers.length)b.push(()=>{let n=0;S.printers.forEach(p=>{if(p.state==='printing'){p.job.left+=2;n++}});if(n)notice('Firmware bug',`A bad firmware update slowed ${n} printer${n>1?'s':''}. Prints lost 2 hours.`,'Ouch')});
   if(S.printers.length)b.push(()=>{const a=hit(S.printers.length*ri(12,30));spend('Electricity',a);notice('Power price spike',`Energy prices spiked this week. It cost you an extra ${fmt(a)}.`,'Ouch')});
   if(S.ws===0&&ownedResins().length)b.push(()=>{const k=pick(ownedResins()),l=Math.round(S.resin[k]*.25);S.resin[k]-=l;notice('Damp in the storage unit',`Water got into the hok. You lost ${amt(k,l)} of ${RESINS[k].name}.`,'Ouch')});
-  const st=S.staff.filter(s=>s.role!=='clerk'&&s.mood<75);
-  if(S.staff.filter(s=>s.role!=='clerk').length>=2)b.push(()=>{const s=pick(S.staff.filter(x=>x.role!=='clerk'));choice('A better offer',`${s.name} got a better job offer from a competitor.`,[
+  const st=S.staff.filter(s=>s.role!=='clerk'&&!s.mach&&s.mood<75);
+  if(S.staff.filter(s=>s.role!=='clerk'&&!s.mach).length>=2)b.push(()=>{const s=pick(S.staff.filter(x=>x.role!=='clerk'&&!x.mach));choice('A better offer',`${s.name} got a better job offer from a competitor.`,[
     {l:'Counter offer: +€12/day',f:()=>{s.wage+=12;s.mood=clamp(s.mood+20,0,100);log(`${s.name} stayed with a raise.`,'good')}},
     {l:'Let them go',f:()=>{S.staff=S.staff.filter(x=>x!==s);log(`${s.name} left for a competitor.`,'bad')}}])});
   if(S.biz.kvk&&S.sold>=30)b.push(()=>{const a=hit(ri(80,300));spend('Admin',a);notice('Late filing penalty',`A form was filed late and the authority charged ${fmt(a)}.`,'Ouch')});

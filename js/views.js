@@ -181,6 +181,7 @@ function vTeam(){
   let h=label('Team',`${st.length} of ${space().staff} · ${fmt(wages())}/day`)+`<div class="group">`;
   h+=item('You <span class="chip uv">Owner</span>',`${Math.round(S.energy)}/${maxE()} energy · +${regen().toFixed(1)}/h · more in Empire › Upgrades`)+crunchRow();
   for(const s of S.staff){
+    if(s.mach)continue;
     if(s.role==='clerk'){h+=`<div class="item"><div class="grow"><div class="t">${s.name} ${moodChip(s.mood)}</div><div class="s">${STORES[s.store].name} clerk · ${fmt(s.wage)}/day</div></div><button class="btn sm ghost" data-a="fire" data-id="${s.id}">Let go</button></div>`;continue}
     const lv=s.lvl||1,lo=lv>1?XPN[lv-2]:0,hi=XPN[lv-1]||lo+1,xpct=lv>=5?100:100*((s.xp||0)-lo)/(hi-lo);
     h+=`<div class="item" style="align-items:flex-start"><div class="grow"><div class="t">${s.name} <span class="chip amber">Lv ${lv}</span> ${moodChip(s.mood)}</div>
@@ -190,7 +191,7 @@ function vTeam(){
       <div class="row"><span class="lv">XP</span>${lbar('sx'+s.id,xpct,'var(--amber)')}</div>
       <div class="row"><span class="lv">Mood</span>${bar(s.mood,s.mood>=70?'var(--good)':s.mood>=40?'var(--warn)':'var(--bad)')}</div></div></div>
       <div style="display:grid;gap:6px"><button class="btn sm" data-a="train" data-id="${s.id}" ${lv>=5||S.cash<150*lv?'disabled':''}>${lv>=5?'Max level':'Train '+fmt(150*lv)}</button><button class="btn sm ghost" data-a="fire" data-id="${s.id}">Let go</button></div></div>`}
-  if(S.staff.length)h+=item('Team lunch','+20 morale for everyone, once a week',`<button class="btn sm" data-a="lunch" ${S.lunchCd?'disabled':''}>${S.lunchCd?`in ${S.lunchCd} d`:fmt(Math.max(15,S.staff.length*15))}</button>`);
+  if(S.staff.some(s=>!s.mach))h+=item('Team lunch','+20 morale for everyone, once a week',`<button class="btn sm" data-a="lunch" ${S.lunchCd?'disabled':''}>${S.lunchCd?`in ${S.lunchCd} d`:fmt(Math.max(15,S.staff.filter(s=>!s.mach).length*15))}</button>`);
   h+='</div>';
   if(bo.length)h+=label('Team bonuses')+`<div class="card"><div class="bonus">${bo.map(x=>`<span class="chip good">${x}</span>`).join('')}</div></div>`;
   if(!S.biz.kvk)h+=`<div class="card" style="margin-top:18px"><div class="t" style="font-weight:800">Register first</div><div class="s" style="margin-top:4px">To hire people you need a company. Register at the KvK for ${fmt(KVK_FEE)}.</div><div class="opts"><button class="btn sm primary" data-a="kvk" ${S.cash<KVK_FEE?'disabled':''}>Register ${fmt(KVK_FEE)}</button></div></div>`;

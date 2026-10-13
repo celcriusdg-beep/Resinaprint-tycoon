@@ -39,7 +39,7 @@ const A={
     const cs=candidates(d.k);
     choice(`Hire a ${ROLES[d.k].name.toLowerCase()}`,'Three people applied. Pick one.',[...cs.map(c=>({l:`${c.name} · ${TRAITS[c.trait].n}${c.lvl>1?' · Lv 2':''} · ${fmt(c.wage)}/day <small>${traitDesc(d.k,c.trait)}</small>`,f:()=>{if(studioStaff().length<space().staff)addStaff(d.k,null,c)}})),{l:'Nobody',f:()=>{}}])},
   fire(d){const s=S.staff.find(x=>x.id==d.id);confirmBox(`Let ${s.name} go?`,'The rest of the team will be a bit shaken.',()=>{S.staff=S.staff.filter(x=>x!==s);S.staff.forEach(x=>x.mood=clamp(x.mood-8,0,100));log(`${s.name} left the team.`)})},
-  lunch(){const c=Math.max(15,S.staff.length*15);if(S.cash<c)return toast('Not enough cash');spend('Team lunch',c);S.lunchCd=7;S.staff.forEach(s=>s.mood=clamp(s.mood+20,0,100));toast('Team lunch. Morale up')},
+  lunch(){const c=Math.max(15,S.staff.filter(s=>!s.mach).length*15);if(S.cash<c)return toast('Not enough cash');spend('Team lunch',c);S.lunchCd=7;S.staff.forEach(s=>s.mood=clamp(s.mood+20,0,100));toast('Team lunch. Morale up')},
   camp(d){const C=CAMPAIGNS.find(c=>c.id===d.k);if(S.cds[C.id])return;if(C.kvk&&needKvk())return;if(C.minHype&&S.hype<C.minHype)return toast(`Needs ${C.minHype} hype`);if(C.cost&&S.cash<C.cost)return toast('Not enough cash');
     if(C.id==='kick'){const k=contractable('statue')?'statue':contractable('premium')?'premium':null;if(!k)return toast('List a statue or premium figure you are making first');if(S.contracts.length>=4)return toast('You can run 4 contracts at once');
       spend('Marketing',C.cost);const qty=Math.round(15+S.hype/3+r(0,20)),net=Math.round(qty*S.prices[k]*.8*.9);earn('Crowdfunding',net);S.contracts.push({id:nid(),client:'Kickstarter backers',p:k,qty,pay:0,prepaid:true,refund:net,due:S.day+28});S.hype+=C.hype;S.cds.kick=C.cd;log(`Kickstarter funded: ${qty} backers prepaid ${fmt(net)}. Deliver ${qty}× ${PRODUCTS[k].name.toLowerCase()} within 4 weeks.`,'good');toast(`Funded: ${fmt(net)}`);return}
@@ -90,7 +90,7 @@ function candidates(role){
 }
 
 /* ---------- UI plumbing ---------- */
-let tab='studio',sub={orders:'queue',buy:'printers',empire:'stores',pg:'0',up:'energy'},pending=[],lastHTML='';
+let tab='studio',sub={orders:'queue',buy:'printers',empire:'stores',pg:'0',up:'energy',team:'people'},pending=[],lastHTML='';
 const openPr=new Set();
 A.togglePr=d=>{const id=+d.id;openPr.has(id)?openPr.delete(id):openPr.add(id)};
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(()=>el.style.opacity=0,1900)}

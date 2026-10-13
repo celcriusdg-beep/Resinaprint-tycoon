@@ -1,8 +1,14 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='3.0';
-const PATCH_TITLE='Resinaprint 3.0 · Inventory';
+const VERSION='3.1';
+const PATCH_TITLE='Resinaprint 3.1 · Machines';
 const PATCH=[
+ {h:'New in 3.1',i:[
+  '<b>Machines.</b> Team now has three tabs: People, Machines and the Omega Forge.',
+  '26 machines do the same jobs as people (technician, post-processor, painter, packer, support, social, engineer, buyer, logistics, inspector, designer, photographer, sales rep, accountant). They never get tired, work day and night and only cost upkeep.',
+  '<b>The Omega Forge</b> holds 20 laboratory machines with 2.6 to 5.5 times the speed of a person, like the Voidwright Arm, Singularity Sorter and Tax Titan. It needs the Laboratorium wing.',
+  'Bays: 2 + 3 per space level for machines, 8 for the Forge. Sell any machine for 40% back.'
+ ]},
  {h:'New in 3.0',i:[
   '<b>Inventory.</b> Usable items now drop from chests and daily goals. Open them in Empire › Items (or from the Studio tab) and tap Use.',
   '14 items: service kit (a free FEP, tank or screw), double espresso, hot meal, time skip ticket, express wash pass, shipping label book, demand ticket, viral post pack, free sale pass, training manual, staff course voucher, painter\'s masterclass, lucky charm and workshop day.',

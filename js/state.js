@@ -94,12 +94,12 @@ const regen=()=>{const night=S.hour>=23||S.hour<7;let r=regenDay();if(night)r*=1
 const ecm=()=>1-Math.min(.6,upv('ec'));
 const space=()=>{const b=SPACES[S.ws];return{...b,rent:Math.round(b.rent*cm('rent')),printers:b.printers+(S.up.racks?2:0)+(S.up.mezz?4:0)+upv('sp'),staff:b.staff+(S.up.mezz?4:0)+(S.up.office?3:0)+upv('st')}};
 const maxE=()=>Math.round(flatMaxE()*(1+pctMaxE()));
-const studioStaff=()=>S.staff.filter(s=>s.role!=='clerk');
+const studioStaff=()=>S.staff.filter(s=>s.role!=='clerk'&&!s.mach);
 const countRole=k=>S.staff.filter(s=>s.role===k).length;
 const wages=()=>Math.round(S.staff.reduce((a,s)=>a+s.wage,0)*(S.up.night?1.2:1)*(S.crunch?1.4:1)*(1-Math.min(.3,upv('wag')))*diffM().wage*cm('wage'));
 const shift=()=>S.up.night?[6,22]:[8,18];
 const shiftLen=()=>{const a=shift();return a[1]-a[0]};
-const skill=s=>(1+.2*((s.lvl||1)-1))*(s.trait==='quick'?1.25:1);
+const skill=s=>(1+.2*((s.lvl||1)-1))*(s.trait==='quick'?1.25:1)*(s.pw||1);
 const ofRole=r=>S.staff.filter(s=>s.role===r);
 const ofTrait=(r,t)=>ofRole(r).filter(s=>s.trait===t).length;
 const sumRole=(r,f)=>ofRole(r).reduce((a,s)=>a+f(s),0);

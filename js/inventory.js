@@ -48,7 +48,7 @@ const ITEM_USE={
   sale(){if(saleOn())return toast('A sale is already running');S.sale={until:S.abs+72,off:.2};S.hype+=5;takeItem('sale');log('Site-wide sale started: 20% off for 3 days.','amber');toast('Sale live for 3 days')},
   xp(){const n=Math.round(XP_NEED(S.lv)*.4);takeItem('xp');addXp(n);toast(`+${n} XP`)},
   train(){
-    const st=S.staff.filter(s=>s.role!=='clerk'&&(s.lvl||1)<5);
+    const st=S.staff.filter(s=>s.role!=='clerk'&&!s.mach&&(s.lvl||1)<5);
     if(!st.length)return toast('No one on your team can learn more');
     chooseTarget('Staff course voucher','Who goes on the course?',st.map(s=>({v:s,l:`${s.name} <small>${ROLES[s.role].name} · Lv ${s.lvl||1}</small>`})),s=>{if(takeItem('train')){s.xp=XPN[(s.lvl||1)-1];levelUp(s);toast(`${s.name} completed a course`)}});
   },

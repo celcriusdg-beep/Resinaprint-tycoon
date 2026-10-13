@@ -149,6 +149,7 @@ function hourStep(){
 }
 /* staff: every worker has a task cooldown and picks the most useful job on their own */
 function gainXp(s,h){
+  if(s.mach)return;
   s.xp=(s.xp||0)+(h+.12)*(S.up.training?1.5:1)*(1+upv('xp'));
   while((s.lvl||1)<5&&s.xp>=XPN[(s.lvl||1)-1])levelUp(s);
 }
@@ -195,7 +196,7 @@ function staffWork(dt){
   const [a,b]=shift(),on=S.hour>=a&&S.hour<b;
   for(const s of S.staff){
     if(s.role==='clerk')continue;
-    if(!on){s.act='Off shift';s.cd=0;continue}
+    if(!on&&!s.mach){s.act='Off shift';s.cd=0;continue}
     if(PASSIVE[s.role]){s.act=PASSIVE[s.role];s.busy+=dt*.5;gainXp(s,dt*.5);continue}
     s.cd-=dt;
     let n=0;
@@ -286,6 +287,7 @@ function endOfDay(){
   if(S.day%3===1)refreshOffers();
   S.hype=Math.max(2,(S.hype+socialHype()+hypePerDay()+upv('hyp')+(S.stores.cafe?.merged?5:0))*hypeKeep());
   for(const s of [...S.staff]){const load=s.busy/shiftLen();s.busy=0;
+    if(s.mach){s.mood=100;continue}
     if(s.role!=='clerk'){if(load>.85)s.mood-=2.5*(S.crunch?2:1)*(S.up.fume?.5:1)*(S.up.lounge?.6:1)*(1-Math.min(.7,upv('mo')));else s.mood+=S.up.lounge?2:1.2}
     s.mood=clamp(s.mood,0,100);
     if(s.mood<30&&Math.random()<.05){S.staff=S.staff.filter(x=>x!==s);log(`${s.name} (${s.role==='clerk'?'store clerk':ROLES[s.role].name.toLowerCase()}) quit. Morale was too low.`,'bad')}}
@@ -373,7 +375,7 @@ function randomEvent(){
   const tot=PKEYS.reduce((a,k)=>a+freeStock(k),0);
   if(tot>=5)ev.push(()=>choice('Wholesale offer','A webshop wants to buy your whole finished stock at 65% of your prices.',[
     {l:'Sell it all',ok:()=>PKEYS.some(k=>freeStock(k)>0),f:()=>{const now=PKEYS.reduce((a,k)=>a+freeStock(k),0),val=Math.round(PKEYS.reduce((a,k)=>a+freeStock(k)*S.prices[k],0)*.65);PKEYS.forEach(k=>{const n=freeStock(k);addXp(n*productXp(k));S.stock[k]-=n});earn('Wholesale',val);S.revenue+=val;S.sold+=now;log(`Sold ${now} items wholesale for ${fmt(val)}.`,'amber')}},{l:'Keep them',f:()=>{}}]));
-  if(S.staff.length){const s=pick(S.staff);ev.push(()=>choice('Raise request',`${s.name} asks for a raise of €15 a day.`,[
+  if(S.staff.some(x=>!x.mach)){const s=pick(S.staff.filter(x=>!x.mach));ev.push(()=>choice('Raise request',`${s.name} asks for a raise of €15 a day.`,[
     {l:'Give the raise',f:()=>{s.wage+=15;s.mood=clamp(s.mood+30,0,100);log(`${s.name} got a raise and is motivated.`,'good')}},
     {l:'Not now',f:()=>{s.mood=clamp(s.mood-25,0,100);log(`${s.name} is disappointed about the raise.`,'amber')}}]))}
   const fk=PKEYS.filter(k=>freeStock(k)>0).sort((a,b)=>PRODUCTS[b].ref-PRODUCTS[a].ref)[0];
