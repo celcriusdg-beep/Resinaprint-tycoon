@@ -3,6 +3,8 @@
 const XP_NEED=l=>Math.round(30*Math.pow(l,1.55)+20);
 const lvDem=()=>Math.min(.3,.01*(((S&&S.lv)||1)-1));
 const lvEnergy=()=>Math.floor((((S&&S.lv)||1)-1)/5)*10;
+/* XP a figure of this product earns when it is sold: the better the product, the more XP (chibi 1, statue 10) */
+const productXp=k=>PRODUCTS[k]?Math.max(1,Math.round(Math.pow(PRODUCTS[k].ref,.62)/4.5)):1;
 function addXp(n){
   if(!S||n<=0)return;
   n*=1+perk('xp')*.1;
@@ -17,7 +19,7 @@ function addXp(n){
 }
 function levelDay(){
   const d=(S.contractsDone||0)-(S.cdSeen||0);S.cdSeen=S.contractsDone||0;
-  if(d>0)addXp(d*10);
+
 }
 
 /* ---- trends ---- */
@@ -51,7 +53,7 @@ function renderLv(){
 /* ---- More tab: level, stats, settings ---- */
 function moreView(){
   const lv=S.lv||1,need=XP_NEED(lv),xp=S.xp||0;
-  let h=label('Studio level',`${Math.round(xp)} / ${need} XP`)+`<div class="card"><div style="display:flex;align-items:center;gap:14px"><div class="lvbig">${lv}</div><div class="grow"><div class="t">Level ${lv}</div><div class="s">+${Math.round(lvDem()*100)}% demand · +${lvEnergy()} max energy · next level pays ${fmt(40*(lv+1))}</div><div class="bar" style="margin-top:10px"><i style="width:${Math.min(100,xp/need*100)}%;background:var(--grad)"></i></div></div></div><div class="s" style="margin-top:10px">Shipping a figure gives 1 XP. Daily goals give 5, finished contracts 10.</div></div>`;
+  let h=label('Studio level',`${Math.round(xp)} / ${need} XP`)+`<div class="card"><div style="display:flex;align-items:center;gap:14px"><div class="lvbig">${lv}</div><div class="grow"><div class="t">Level ${lv}</div><div class="s">+${Math.round(lvDem()*100)}% demand · +${lvEnergy()} max energy · next level pays ${fmt(40*(lv+1))}</div><div class="bar" style="margin-top:10px"><i style="width:${Math.min(100,xp/need*100)}%;background:var(--grad)"></i></div></div></div><div class="s" style="margin-top:10px">Every figure you sell gives XP by its value: a chibi 1, a desk figure 2, a statue 10. Daily goals give 5 and a finished contract gives 10 on top of its figures.</div></div>`;
   const by=Object.entries(S.soldBy||{}).sort((a,b)=>b[1]-a[1]).filter(e=>PRODUCTS[e[0]]).slice(0,5);
   const peak=Math.max(S.cash,...(S.hist||[0]));
   h+=label('Stats')+`<div class="statgrid">

@@ -69,7 +69,7 @@ function ship(o,counter){
   const chn=CHANNELS[o.ch||'web']||CHANNELS.web;
   earn(counter?'Counter sales':chn.cat||(o.ch==='bol'?'bol.com sales':o.ch==='etsy'?'Etsy sales':'Webshop sales'),price);
   if(Pd.royalty)spend('Royalties',price*Pd.royalty);
-  S.revenue+=price;S.sold++;(S.soldBy=S.soldBy||{})[o.p]=(S.soldBy[o.p]||0)+1;S.rep.shipped++;qInc('shipped');
+  S.revenue+=price;S.sold++;(S.soldBy=S.soldBy||{})[o.p]=(S.soldBy[o.p]||0)+1;S.rep.shipped++;qInc('shipped');addXp(productXp(o.p));
   if(o.rush&&(o.age||0)<=1&&!counter){const rb=Math.round(price*.4*100)/100;earn('Rush bonus',rb);S.revenue+=rb;log(`Rush order shipped in time: +${fmt(rb)} bonus.`,'good')}
   const priceB=clamp((Pd.ref/price-1)*1.5,-.6,.4);
   if(counter){review(clamp(4.4+S.qual[o.p]+supportPower()+priceB+r(-.45,.3),1,5));return}
@@ -90,7 +90,7 @@ function deliverParcel(par){
 }
 function packOne(){const i=packableIdx();if(i<0)return false;const o=S.orders.splice(i,1)[0];ship(o);return true}
 function deliverContract(c,team){
-  S.stock[c.p]-=c.qty;earn('Contracts',c.pay);S.revenue+=c.pay;S.sold+=c.qty;S.contractsDone++;S.contracts=S.contracts.filter(x=>x!==c);review(4.9);
+  S.stock[c.p]-=c.qty;earn('Contracts',c.pay);S.revenue+=c.pay;S.sold+=c.qty;S.contractsDone++;S.cdSeen=S.contractsDone;addXp(c.qty*productXp(c.p)+10);S.contracts=S.contracts.filter(x=>x!==c);review(4.9);
   did('Contracts delivered',1,team);log(`Delivered ${c.qty}× ${PRODUCTS[c.p].name} to ${c.client}${c.pay?' for '+fmt(c.pay):''}.`,'good');
 }
 function acceptOffer(o){
@@ -372,7 +372,7 @@ function randomEvent(){
     {l:'Book the booth (€800)',ok:()=>S.cash>=800,f:()=>{spend('Marketing',800);S.hype+=55;const s=sellStock(15);log(`Con booth: sold ${s} figures and gained a lot of followers.`,'good')}},{l:'Skip it',f:()=>{}}]));
   const tot=PKEYS.reduce((a,k)=>a+S.stock[k],0);
   if(tot>=5)ev.push(()=>choice('Wholesale offer','A webshop wants to buy your whole finished stock at 65% of your prices.',[
-    {l:'Sell it all',ok:()=>PKEYS.some(k=>S.stock[k]>0),f:()=>{const now=PKEYS.reduce((a,k)=>a+S.stock[k],0),val=Math.round(PKEYS.reduce((a,k)=>a+S.stock[k]*S.prices[k],0)*.65);PKEYS.forEach(k=>S.stock[k]=0);earn('Wholesale',val);S.revenue+=val;S.sold+=now;log(`Sold ${now} items wholesale for ${fmt(val)}.`,'amber')}},{l:'Keep them',f:()=>{}}]));
+    {l:'Sell it all',ok:()=>PKEYS.some(k=>S.stock[k]>0),f:()=>{const now=PKEYS.reduce((a,k)=>a+S.stock[k],0),val=Math.round(PKEYS.reduce((a,k)=>a+S.stock[k]*S.prices[k],0)*.65);PKEYS.forEach(k=>{addXp(S.stock[k]*productXp(k));S.stock[k]=0});earn('Wholesale',val);S.revenue+=val;S.sold+=now;log(`Sold ${now} items wholesale for ${fmt(val)}.`,'amber')}},{l:'Keep them',f:()=>{}}]));
   if(S.staff.length){const s=pick(S.staff);ev.push(()=>choice('Raise request',`${s.name} asks for a raise of €15 a day.`,[
     {l:'Give the raise',f:()=>{s.wage+=15;s.mood=clamp(s.mood+30,0,100);log(`${s.name} got a raise and is motivated.`,'good')}},
     {l:'Not now',f:()=>{s.mood=clamp(s.mood-25,0,100);log(`${s.name} is disappointed about the raise.`,'amber')}}]))}
@@ -389,6 +389,6 @@ function randomEvent(){
   if(S.printers.length>=3)ev.push(()=>{const cost=S.biz.ins?200:900;const p=pick(S.printers);if(p.state==='printing'){p.job.left+=6}spend('Repairs',cost);log(`${short(p)} overheated. ${S.biz.ins?'Insurance paid most of the repair.':'The repair cost '+fmt(cost)+'.'}`,'bad')});
   pickEvent(ev);
 }
-function sellStock(max){let s=0,v=0;for(const k of [...PKEYS].sort((a,b)=>PRODUCTS[b].ref-PRODUCTS[a].ref)){while(freeStock(k)>0&&s<max){S.stock[k]--;s++;v+=S.prices[k];S.sold++}}if(v){earn('Con booth sales',v);S.revenue+=v}return s}
+function sellStock(max){let s=0,v=0;for(const k of [...PKEYS].sort((a,b)=>PRODUCTS[b].ref-PRODUCTS[a].ref)){while(freeStock(k)>0&&s<max){S.stock[k]--;s++;v+=S.prices[k];S.sold++;addXp(productXp(k))}}if(v){earn('Con booth sales',v);S.revenue+=v}return s}
 function addPrinter(t){const D=PRINTERS[t];S.printers.push({id:nid(),type:t,resin:D.form?DEFRES[D.fam]:'estd',vat:0,cond:100,prod:D.inj?'chibi':makeable('desk')?'desk':'chibi',state:'idle',job:null,auto:true,sc:false})}
 

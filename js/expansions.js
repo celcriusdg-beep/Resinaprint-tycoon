@@ -364,7 +364,7 @@ function catalogView(){
     let sub2;
     if(on){
       const days=d>.05?S.stock[k]/d:0;
-      sub2=`~${d.toFixed(1)} orders/day · <b>${S.stock[k]}</b> ready${res?` (${res} for contracts)`:''}${pipe?` · ${pipe} coming`:''}${days>0&&S.stock[k]>0?` · lasts ${days<1?'<1':Math.round(days)} d`:''}<br>Profit ≈ <span class="${pf>=0?'good':'bad'}">${fmt(pf)}</span> each${stop&&!clr?' · <span class="amber">production stopped</span>':''}`;
+      sub2=`~${d.toFixed(1)} orders/day · <b>${S.stock[k]}</b> ready${res?` (${res} for contracts)`:''}${pipe?` · ${pipe} coming`:''}${days>0&&S.stock[k]>0?` · lasts ${days<1?'<1':Math.round(days)} d`:''}<br>Profit ≈ <span class="${pf>=0?'good':'bad'}">${fmt(pf)}</span> each · <span class="uvc">+${productXp(k)} XP</span>${stop&&!clr?' · <span class="amber">production stopped</span>':''}`;
     }else sub2=can?'Not listed. Customers cannot buy it.':`Needs a ${TIERS[Pd.tier].toLowerCase()} printer`;
     h+=`<div class="item" style="flex-wrap:wrap">${dot}<div class="grow"><div class="t">${Pd.name} ${status}</div><div class="s">${sub2}</div></div>
     ${on&&!clr?`<div class="stepper"><button class="btn sm" data-a="price" data-k="${k}" data-d="-1" aria-label="Lower price">−</button><b>${fmt(S.prices[k])}</b><button class="btn sm" data-a="price" data-k="${k}" data-d="1" aria-label="Raise price">+</button></div>`:clr?`<b class="num">${fmt(S.prices[k])}</b>`:''}
@@ -399,7 +399,7 @@ function jobsView(){
     const mk=makeable(o.p),each=o.pay/o.qty,vs=Math.round(each/PRODUCTS[o.p].ref*100),have=S.stock[o.p];
     h+=`<div class="item" style="flex-wrap:wrap"><div class="grow"><div class="t">${o.qty}× ${PRODUCTS[o.p].name} ${o.commission?'<span class="chip uv">Custom commission</span>':''}</div>
     <div class="s">${o.client} · ${o.days} days · <span class="amber">${fmt(o.pay)}</span> (${fmt(each)} each, ${vs}% of list)</div>
-    <div class="s">Profit ≈ <span class="${profit>=0?'good':'bad'}">${fmt(profit)}</span> · ${mk?`${have} ready now`:'<span class="f">You cannot make this yet</span>'}</div></div>
+    <div class="s">Profit ≈ <span class="${profit>=0?'good':'bad'}">${fmt(profit)}</span> · <span class="uvc">+${o.qty*productXp(o.p)+10} XP</span> · ${mk?`${have} ready now`:'<span class="f">You cannot make this yet</span>'}</div></div>
     <button class="btn uv sm" data-a="accept" data-id="${o.id}" ${mk&&S.contracts.length<4?'':'disabled'}>Accept</button></div>`;
   }
   return h+'</div>';
@@ -427,7 +427,7 @@ function newQuests(){
 }
 function qInc(k,n=1){
   if(!S.quest||S.quest.day!==S.day)newQuests();
-  S.quest.qc[k]=(S.quest.qc[k]||0)+n;if(k==='shipped')addXp(n);
+  S.quest.qc[k]=(S.quest.qc[k]||0)+n;
   for(const q of S.quest.list)if(!q.done&&q.id===k&&S.quest.qc[k]>=q.need){
     q.done=true;addXp(5);earn('Quest rewards',q.reward);S.hype+=3;log(`Daily goal done: ${QDEFS.find(d=>d.id===k).t(q.need)}. +${fmt(q.reward)}.`,'good');
   }

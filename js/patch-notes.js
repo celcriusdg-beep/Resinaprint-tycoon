@@ -6,7 +6,8 @@ const PATCH=[
  {h:'New in 2.8',i:[
   '<b>Restart options.</b> Empire › More now has Restart this run (keeps shards, perks, branches and the vault) and Delete everything (asks twice).',
   'Going bankrupt no longer wipes your shards, perks or vault.',
-  'Printer and figure photos are cut out, with no white background.'
+  'Printer and figure photos are cut out, with no white background.',
+  '<b>XP by product.</b> Every figure you sell now gives XP by its value (chibi 1, bust 2, desk 2, kit 3, premium 5, statue 10). Contracts pay the XP for every figure straight away, plus 10.'
  ]},
  {h:'New in 2.7',i:[
   '<b>Real photos.</b> Printers and figures now show official product photos. The Laboratorium printers keep their drawings.'
