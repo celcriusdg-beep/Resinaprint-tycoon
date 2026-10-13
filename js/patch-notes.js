@@ -1,8 +1,13 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='2.9';
-const PATCH_TITLE='Resinaprint 2.9 · Energy Revamp';
+const VERSION='3.0';
+const PATCH_TITLE='Resinaprint 3.0 · Inventory';
 const PATCH=[
+ {h:'New in 3.0',i:[
+  '<b>Inventory.</b> Usable items now drop from chests and daily goals. Open them in Empire › Items (or from the Studio tab) and tap Use.',
+  '14 items: service kit (a free FEP, tank or screw), double espresso, hot meal, time skip ticket, express wash pass, shipping label book, demand ticket, viral post pack, free sale pass, training manual, staff course voucher, painter\'s masterclass, lucky charm and workshop day.',
+  'Everyone gets one service kit to start. Items stay when you rebirth or restart. Free upgrades from chests are still permanent and show as active.'
+ ]},
  {h:'New in 2.9',i:[
   '<b>Faster energy.</b> Base regen is up from 10 to 18 an hour, and every studio level adds +0.5% regen.',
   '<b>Percentage upgrades.</b> 19 new upgrades in Empire › Upgrades › Energy raise max energy and regen by a percentage, from +5% up to +50%. They stack.',

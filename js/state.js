@@ -17,7 +17,7 @@ let S;
 const newRep=s=>({day:s.day,cash0:s.cash,rating0:s.rating,hype0:s.hype,earn:{},spend:{},you:{},team:{},printed:0,failed:0,finished:0,shipped:0,newOrders:0,cancelled:0,ignored:0,delivered:0,lost:0,damaged:0,hours:0,events:[]});
 const newBiz=()=>({kvk:false,kor:false,form:'none',vatOut:0,vatIn:0,vatDue:null,yrRev:0,yrNext:YEAR+1,qNext:QUARTER+1,taxBase:0,wkInc:0,wkExp:0,waste:0,perm:{},ins:false,korCd:0,warned:false});
 function fresh(){
-  const s={country:'nl',reb:newReb(),vault:newVault(),lv:1,xp:0,cdSeen:0,soldBy:{},trend:null,diff:'normal',theme:'amber',seenVer:VERSION,always:{},target:{},autoP:{},quest:null,revs:[],sale:null,crunch:false,pre:{},stop:{},clear:{},soc:{},boost:null,wom:0,lastBig:0,grant:false,v:2,day:1,hour:8,cash:800,energy:200,rating:3.5,reviews:0,hype:5,ws:0,washer:'bucket',
+  const s={inv:{service:1},country:'nl',reb:newReb(),vault:newVault(),lv:1,xp:0,cdSeen:0,soldBy:{},trend:null,diff:'normal',theme:'amber',seenVer:VERSION,always:{},target:{},autoP:{},quest:null,revs:[],sale:null,crunch:false,pre:{},stop:{},clear:{},soc:{},boost:null,wom:0,lastBig:0,grant:false,v:2,day:1,hour:8,cash:800,energy:200,rating:3.5,reviews:0,hype:5,ws:0,washer:'bucket',
     resin:{estd:1000},prices:{},listed:{},qual:{},unwashed:{},cured:{},stock:{},
     printers:[{id:1,type:'mars',resin:'estd',vat:300,cond:90,prod:'chibi',state:'idle',job:null,auto:true,sc:false}],
     orders:[{id:2,p:'desk',age:0,dest:'nl',ch:'web'},{id:3,p:'chibi',age:0,dest:'nl',ch:'web'}],dms:[],offers:[],contracts:[],staff:[],stores:{},up:{},cds:{},shift:{},
@@ -33,6 +33,7 @@ function patch(s){
   const old=!s.biz;
   if(!s.lv){s.lv=1;let xp=s.sold||0;while(xp>=XP_NEED(s.lv)){xp-=XP_NEED(s.lv);s.lv++}s.xp=xp}
   if(!s.vault){s.vault=newVault();for(let l=2;l<=Math.min(s.lv,13);l++)vaultAdd(s,l)}
+  if(!s.inv)s.inv={service:1};
   if(!s.reb)s.reb=newReb();s.reb.branches=s.reb.branches||{};s.country=s.country||'nl';
   s.xp=s.xp||0;s.cdSeen=s.cdSeen===undefined?(s.contractsDone||0):s.cdSeen;s.soldBy=s.soldBy||{};s.diff=s.diff||'normal';s.theme=s.theme||'amber';if(s.seenVer===undefined)s.seenVer='';if(s.trend===undefined)s.trend=null;
   if(!s.rep)s.rep=newRep(s);

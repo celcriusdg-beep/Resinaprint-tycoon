@@ -72,7 +72,7 @@ function vStudio(){
   if(!S.biz.kvk&&S.sold>=3)h+=`<div class="card" style="margin-top:16px"><div class="t" style="font-weight:800">Make it official</div><div class="s" style="margin-top:4px">Register at the KvK to hire staff, rent a studio, take business contracts and sell on marketplaces. It costs ${fmt(KVK_FEE)}.</div><div class="opts"><button class="btn sm primary" data-a="kvk" ${S.cash<KVK_FEE?'disabled':''}>Register ${fmt(KVK_FEE)}</button></div></div>`;
   if(S.biz.vatDue)h+=`<div class="card" style="margin-top:16px"><div class="t" style="font-weight:800">BTW return due</div><div class="s" style="margin-top:4px">${S.biz.vatDue.amt>=0?'Pay '+fmt(S.biz.vatDue.amt):'You get '+fmt(-S.biz.vatDue.amt)+' back'}. File it within ${Math.max(0,S.biz.vatDue.by-S.day)} days or you get a fine.</div><div class="opts"><button class="btn sm primary" data-a="vat">File now</button></div></div>`;
   h+=marketChips();
-  h+=vaultCard()+rebirthCard();
+  h+=vaultCard()+itemsCard()+rebirthCard();
   h+=item('Do everything','Collect, wash, finish, pack and reply as far as your energy goes',`<button class="btn sm primary" data-a="doAll">Do all</button>`).replace('class="item"','class="item card" style="margin-top:16px"');
   h+=questCard();
   h+=label('Workbench',WASHERS[S.washer].name)+`<div class="card">
@@ -235,7 +235,7 @@ function companyView(){
   return h;
 }
 function vEmpire(){
-  let h=segs('empire',[['stores','Stores'],['upgrades','Upgrades'],['media','Media'],['company','Company'],['goals','Goals',sub.empire!=='goals'?Math.min(S.unread,99):0],['vault','Vault',vaultOf(S).chests.length],['rebirth','Rebirth',canRebirth()&&sub.empire!=='rebirth'?1:0],['more','More']]);
+  let h=segs('empire',[['stores','Stores'],['upgrades','Upgrades'],['media','Media'],['company','Company'],['goals','Goals',sub.empire!=='goals'?Math.min(S.unread,99):0],['vault','Vault',vaultOf(S).chests.length],['items','Items',invCount()],['rebirth','Rebirth',canRebirth()&&sub.empire!=='rebirth'?1:0],['more','More']]);
   if(sub.empire==='stores'){
     const closed=Object.keys(STORES).filter(k=>!S.stores[k]),opened=Object.keys(STORES).filter(k=>S.stores[k]);
     if(opened.length){h+=label('Your stores',`rent ${fmt(rent()-space().rent)}/week`)+`<div class="stack">`;
@@ -264,6 +264,8 @@ function vEmpire(){
     h+='</div>';
   }else if(sub.empire==='rebirth'){
     h+=rebirthView();
+  }else if(sub.empire==='items'){
+    h+=itemsView();
   }else if(sub.empire==='vault'){
     h+=vaultView();
   }else if(sub.empire==='more'){

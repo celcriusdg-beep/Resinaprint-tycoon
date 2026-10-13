@@ -34,7 +34,7 @@ function doRebirth(dest){
   keep.history.push({n:keep.count,c:from,day:old.day,value:Math.round(value(old)),sold:old.sold,lv:old.lv,shards:gain});
   if(keep.history.length>30)keep.history.shift();
   S=fresh();
-  S.started=true;S.lastT=Date.now();S.reb=keep;S.country=dest;S.vault=old.vault;S.theme=old.theme;S.diff=old.diff;S.seenVer=old.seenVer;
+  S.started=true;S.lastT=Date.now();S.reb=keep;S.country=dest;S.inv=old.inv||{};S.vault=old.vault;S.theme=old.theme;S.diff=old.diff;S.seenVer=old.seenVer;
   S.cash+=500*perk('head');
   for(let i=0;i<perk('keys');i++)vaultAdd(S,1);
   refreshOffers();newTrend();lastHTML='';
@@ -87,7 +87,7 @@ A.goRebirth=()=>{tab='empire';sub.empire='rebirth'};
 function restartRun(){
   const old=S;
   S=fresh();
-  S.started=true;S.lastT=Date.now();S.reb=rebOf(old);S.vault=old.vault;S.theme=old.theme;S.diff=old.diff;S.seenVer=old.seenVer;S.country=old.country||'nl';
+  S.started=true;S.lastT=Date.now();S.reb=rebOf(old);S.inv=old.inv||{};S.vault=old.vault;S.theme=old.theme;S.diff=old.diff;S.seenVer=old.seenVer;S.country=old.country||'nl';
   S.cash+=500*perk('head');
   for(let i=0;i<perk('keys');i++)vaultAdd(S,1);
   refreshOffers();newTrend();lastHTML='';

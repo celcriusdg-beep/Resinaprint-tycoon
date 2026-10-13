@@ -24,7 +24,7 @@ const vaultOf=s=>s.vault||(s.vault=newVault());
 const rarName=(i,cls)=>`<b class="rn r${i} ${cls||''}" aria-label="${RARITIES[i].n}">${[...RARITIES[i].n].map((c,j)=>`<i class="c" aria-hidden="true" style="--i:${j}">${c}</i>`).join('')}</b>`;
 function vaultAdd(s,lv){const v=vaultOf(s);v.chests.push({lv,big:lv%5===0})}
 function vaultRoll(ch){
-  const v=vaultOf(S),luck=Math.min(1.2,.03*ch.lv)+(ch.big?.8:0)+perk('luck')*.1;
+  const v=vaultOf(S),luck=Math.min(1.2,.03*ch.lv)+(ch.big?.8:0)+perk('luck')*.1+(v.charm?1.5:0);
   const w=RARITIES.map((r,i)=>r.w*(1+luck*i));let min=ch.big?1:0;
   if(v.pity>=9)min=Math.max(min,3);
   const tot=w.reduce((a,b)=>a+b,0);let x=Math.random()*tot,k=0;
@@ -51,8 +51,9 @@ function vaultGive(i,lv){
   }
   if(Math.random()<VAULT_UPGRADE[i]){
     const ok=UPGRADES.filter(u=>!S.up[u.id]&&u.cost<=VAULT_UPMAX[i]&&u.cost>=VAULT_UPMAX[i]/12&&(!u.req||u.req()));
-    if(ok.length){const U=ok[Math.floor(Math.random()*ok.length)];S.up[U.id]=true;if(U.e)S.energy+=U.e;got.push({k:'upgrade',t:'Free upgrade',v:U.name})}
+    if(ok.length){const U=ok[Math.floor(Math.random()*ok.length)];S.up[U.id]=true;if(U.e)S.energy+=U.e;got.push({k:'upgrade',t:'Free upgrade (active now)',v:U.name})}
   }
+  if(Math.random()<ITEM_CHANCE[i]){for(let n=0,m=i>=9?3:i>=7?2:1;n<m;n++){const id=pickItem(i);addItem(id);got.push({k:'item',t:'Item',v:ITEMS[id].n})}}
   if(R.rate){S.rating=clamp(S.rating+R.rate,1,5);got.push({k:'rating',t:'Rating',v:'+'+R.rate.toFixed(2)+'★'})}
   return got;
 }
@@ -74,7 +75,7 @@ Object.assign(A,{
   openChest(){
     const v=vaultOf(S);if(!v.chests.length)return toast('No chests to open');
     const ch=v.chests.shift(),i=vaultRoll(ch);
-    v.opened++;v.found[i]=(v.found[i]||0)+1;v.best=Math.max(v.best,i);v.pity=i>=3?0:v.pity+1;
+    const charmUsed=v.charm;v.charm=false;v.opened++;v.found[i]=(v.found[i]||0)+1;v.best=Math.max(v.best,i);v.pity=i>=3?0:v.pity+1;
     const got=vaultGive(i,ch.lv);
     log(`Vault: ${RARITIES[i].n} chest from level ${ch.lv}. ${got.map(g=>g.t+' '+g.v).join(', ')}.`,i>=3?'good':'');
     save();showVaultReveal(i,ch.lv,got,ch.big,v.chests.length);

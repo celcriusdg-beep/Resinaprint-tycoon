@@ -429,7 +429,7 @@ function qInc(k,n=1){
   if(!S.quest||S.quest.day!==S.day)newQuests();
   S.quest.qc[k]=(S.quest.qc[k]||0)+n;
   for(const q of S.quest.list)if(!q.done&&q.id===k&&S.quest.qc[k]>=q.need){
-    q.done=true;addXp(5);earn('Quest rewards',q.reward);S.hype+=3;log(`Daily goal done: ${QDEFS.find(d=>d.id===k).t(q.need)}. +${fmt(q.reward)}.`,'good');
+    q.done=true;addXp(5);if(Math.random()<.25){const id=pickItem(1);addItem(id);log(`Daily goal bonus: ${ITEMS[id].n} added to your bag.`,'good')}earn('Quest rewards',q.reward);S.hype+=3;log(`Daily goal done: ${QDEFS.find(d=>d.id===k).t(q.need)}. +${fmt(q.reward)}.`,'good');
   }
 }
 function questCard(){
