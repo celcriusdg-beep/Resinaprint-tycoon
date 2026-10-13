@@ -274,7 +274,7 @@ function vEmpire(){
     h+=label('Company',`worth ${fmt(value(S))}`)+`<div class="card"><div class="kv" style="margin:0"><span>Sold <b>${S.sold}</b></span><span>Revenue <b>${fmt(S.revenue)}</b></span><span>Reviews <b>${S.reviews}</b></span><span>Rent <b>${fmt(rent())}</b>/wk</span></div>${spark(S.hist)}<div class="s">Cash, last ${S.hist.length} days</div></div>`;
     h+=chartView()+reviewsView()+label('Goals',`${Object.keys(S.done).length} of ${MILESTONES.length}`)+`<div class="group">`+MILESTONES.map(m=>`<div class="item ms ${S.done[m.id]?'done':''}"><i>${S.done[m.id]?'✓':''}</i><div class="grow t">${m.t}</div></div>`).join('')+`</div>`;
     h+=label('Log')+`<div class="group">`+S.log.slice(0,40).map(l=>`<div class="item" style="min-height:0;padding:11px 16px"><span class="logd">D${l.d}</span><div class="grow s ${l.k}" style="margin:0;color:${l.k?'':'var(--ink)'}">${l.t}</div></div>`).join('')+`</div>
-    <div style="margin-top:22px;text-align:center"><button class="btn sm ghost" data-a="reset">Start a new company</button></div>`;
+    <div style="margin-top:22px;text-align:center"><button class="btn sm ghost" data-a="goMore">Restart options</button></div>`;
   }
   return h;
 }

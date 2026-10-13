@@ -82,3 +82,14 @@ function rebirthCard(){
   return `<div class="card vcta shardcard" style="margin-top:16px"><div>${shardSvg(40,'big')}</div><div class="grow"><div class="t">Rebirth available</div><div class="s">A restart is worth ${shardGain()} Resin Shards.</div></div><button class="btn sm primary" data-a="goRebirth">See</button></div>`;
 }
 A.goRebirth=()=>{tab='empire';sub.empire='rebirth'};
+
+/* Restart the run without a rebirth: permanent progress (shards, perks, branches, vault, settings) is kept, no shards are earned. */
+function restartRun(){
+  const old=S;
+  S=fresh();
+  S.started=true;S.lastT=Date.now();S.reb=rebOf(old);S.vault=old.vault;S.theme=old.theme;S.diff=old.diff;S.seenVer=old.seenVer;S.country=old.country||'nl';
+  S.cash+=500*perk('head');
+  for(let i=0;i<perk('keys');i++)vaultAdd(S,1);
+  refreshOffers();newTrend();lastHTML='';
+  log('You started over in the hok.','amber');
+}

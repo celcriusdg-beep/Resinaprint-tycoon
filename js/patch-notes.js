@@ -1,8 +1,13 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='2.7';
-const PATCH_TITLE='Resinaprint 2.7 · Real Photos';
+const VERSION='2.8';
+const PATCH_TITLE='Resinaprint 2.8 · Restart & Cutouts';
 const PATCH=[
+ {h:'New in 2.8',i:[
+  '<b>Restart options.</b> Empire › More now has Restart this run (keeps shards, perks, branches and the vault) and Delete everything (asks twice).',
+  'Going bankrupt no longer wipes your shards, perks or vault.',
+  'Printer and figure photos are cut out, with no white background.'
+ ]},
  {h:'New in 2.7',i:[
   '<b>Real photos.</b> Printers and figures now show official product photos. The Laboratorium printers keep their drawings.'
  ]},
