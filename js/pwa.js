@@ -1,4 +1,10 @@
 /* Installable app: offline cache and persistent storage for the save. Not part of the game logic. */
+/* Repair: open the game with ?repair=1 to drop the offline cache and service worker (your save is NOT touched). */
+async function repairCache(){
+  try{const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(r=>r.unregister()))}catch(e){}
+  try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}catch(e){}
+}
+if(/[?&]repair=1/.test(location.search)){repairCache().then(()=>location.replace(location.pathname))}
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
   const had = !!navigator.serviceWorker.controller;
   let reloaded = false;
