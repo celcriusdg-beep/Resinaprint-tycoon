@@ -83,7 +83,7 @@ function flowSnap(){
 function flowTick(){
   const now=flowSnap(),prev=_flow;_flow=now;
   if(!prev||tab!=='studio'||document.hidden||typeof prodArt!=='function')return;
-  const finBtn=q$('.bst[data-a="finish"]'),wash=q$('.st-in')||q$('.bst[data-a="wash"]'),tub=q$('.st-tub')||wash,que=q$('.st-q')||finBtn,booth=q$('.st-booth')||finBtn,pack=q$('.st-pack')||q$('.bst[data-a="pack"]'),send=q$('.st-dock')||q$('.bst[data-a="sendBay"]'),bayEl=q$('.st-bay')||send,win=q$('.win'),shelf=q$('.shelf'),fin=que;
+  const finBtn=q$('.bst[data-a="finish"]'),wash=q$('.st-in')||q$('.bst[data-a="wash"]'),tub=q$('.st-tub')||wash,que=q$('.st-q')||finBtn,booth=q$('.ln.paint .lm')||q$('.st-booth')||finBtn,pack=q$('.ln.pack .lm')||q$('.st-pack'),send=q$('.ln.send .lm')||q$('.st-dock'),bayEl=q$('.st-bay')||send,win=q$('.win'),shelf=q$('.shelf'),fin=que;
   const thumb=k=>`<span class="ft">${prodArt(k)}</span>`;
   /* 1. collected: the batch drops into the wash tub (injection, PolyJet and lab prints go straight to finishing) */
   let cw=0,cf=0,wEl=null,fEl=null,wP=null,fP=null;
