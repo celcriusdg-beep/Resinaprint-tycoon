@@ -391,3 +391,37 @@ body.noanim *{animation:none!important;transition:none!important}body.noanim .fl
 .ln .lq{width:100%}
 .ln.send .lq{padding:0 6px}
 .nocrew{display:none}
+
+/* ===== the conveyor: a real belt under the station cards, items ride between them ===== */
+.lanes .conv{display:none}
+.beltrow{position:relative;height:30px;margin:4px 2px 0;border-radius:8px;background:linear-gradient(#1a140f,#120d09);border:2px solid #0a0705;overflow:hidden}
+.beltrow .tread{position:absolute;left:0;right:0;bottom:5px;height:12px;border-radius:6px;background:repeating-linear-gradient(90deg,#5a4e40 0 10px,#3b332a 10px 20px);box-shadow:inset 0 2px 0 #ffffff14,0 2px 0 #000}
+.beltrow.run .tread{animation:tread .6s linear infinite}@keyframes tread{to{background-position:20px 0}}
+.beltrow .roll{position:absolute;bottom:2px;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#9a8a74,#3b332a);box-shadow:0 0 0 1px #000}
+.beltrow .r1{left:4%}.beltrow .r2{left:27%}.beltrow .r3{left:50%}.beltrow .r4{left:73%}.beltrow .r5{left:96%}
+.rider{position:absolute;bottom:13px;left:12.5%;width:20px;height:20px;margin-left:-10px;opacity:0;animation-duration:1.8s;animation-timing-function:linear;animation-iteration-count:infinite}
+.rider .ri{display:block;width:100%;height:100%;animation:jig .3s ease-in-out infinite alternate}
+.rider img,.rider svg{width:100%;height:100%;object-fit:contain;display:block;filter:drop-shadow(0 2px 2px #000c)}
+.rider.raw img{filter:grayscale(1) brightness(1.35) contrast(.65) drop-shadow(0 2px 2px #000c)}.rider.prime img{filter:grayscale(.9) brightness(1.75) contrast(.8) drop-shadow(0 2px 2px #000c)}
+.ride-a{animation-name:ridea}.ride-b{animation-name:rideb}.ride-c{animation-name:ridec}
+@keyframes ridea{0%{left:12.5%;opacity:0}12%{opacity:1}88%{opacity:1}100%{left:37.5%;opacity:0}}
+@keyframes rideb{0%{left:37.5%;opacity:0}12%{opacity:1}88%{opacity:1}100%{left:62.5%;opacity:0}}
+@keyframes ridec{0%{left:62.5%;opacity:0}12%{opacity:1}88%{opacity:1}100%{left:87.5%;opacity:0}}
+@keyframes jig{to{transform:translateY(-1.5px)}}
+/* station machines: bigger, always moving while there is work */
+.sticon{width:40px!important;height:32px!important}
+.st-tub.work svg{animation:slosh 1.4s ease-in-out infinite}@keyframes slosh{25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}
+.st-tub.work .wave{animation:wavem .8s linear infinite!important}
+.st-pack.work svg{animation:thump .6s ease-in-out infinite}@keyframes thump{50%{transform:translateY(-2px)}}
+.st-pack.work .lid{animation:lidm .8s ease-in-out infinite!important}
+.st-dock.work svg{animation:idleTruck .35s ease-in-out infinite alternate}@keyframes idleTruck{to{transform:translateY(-1.2px)}}
+.st-dock.work .whl{animation:spin .5s linear infinite!important}
+.st-booth.work .hose{animation:hosem .6s ease-in-out infinite alternate!important}.st-booth.work .sp{animation:spray .45s ease-out infinite!important}
+.ln.has .sticon{filter:drop-shadow(0 0 6px color-mix(in srgb,var(--amber) 60%,transparent))}
+/* machines: always hover gently, hum and spin a gear while working */
+.cw.mach svg.mart{animation:mhover 2.6s ease-in-out infinite}@keyframes mhover{50%{transform:translateY(-1.5px)}}
+.cw.mach.work svg.mart{animation:mhum .45s steps(3) infinite}
+.cw .gear{position:absolute;right:-3px;top:-4px;width:11px;height:11px;border-radius:50%;border:2.5px dotted #7ff3ff;opacity:.35}
+.cw.work .gear{opacity:1;animation:spin 1s linear infinite;filter:drop-shadow(0 0 3px #7ff3ff)}
+@media (prefers-reduced-motion:reduce){.rider,.beltrow .tread,.sticon svg{animation:none!important}}
+.beltrow{height:38px}.rider{bottom:12px;width:22px;height:22px;margin-left:-11px}

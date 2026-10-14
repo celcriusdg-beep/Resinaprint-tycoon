@@ -55,7 +55,7 @@ function stationCrew(role){
   const all=S.staff.filter(s=>s.role===role);if(!all.length)return '<span class="nocrew" title="Nobody works here yet">–</span>';
   const pick=all.find(s=>s.act&&!IDLE_RE.test(s.act))||all[0],work=pick.act&&!IDLE_RE.test(pick.act),off=!pick.mach&&pick.act==='Off shift';
   const nm=`${pick.name} · ${ROLES[role].name}${pick.act?' · '+pick.act:''}`.replace(/"/g,'');
-  const sprite=pick.mach?machArt(MACH.find(m=>m.id===pick.mach)):humanSprite(pick,ROLE_HUE[role]||200,0);
+  const sprite=pick.mach?machArt(MACH.find(m=>m.id===pick.mach))+'<i class="gear"></i>':humanSprite(pick,ROLE_HUE[role]||200,0);
   return `<span class="cw ${pick.mach?'mach':'human'} ${work?'work':'idle'}${off?' off':''} r-${role}" title="${nm}"><span class="flip">${sprite}</span></span>${all.length>1?`<b class="crn">×${all.length}</b>`:''}`;
 }
 crewScene=function(){
@@ -65,7 +65,7 @@ crewScene=function(){
   const busy=unw||cur||painting.length||bayN||packN;
   /* floor crew: printer technicians walk along the printers; office roles sit on the right */
   const techs=S.staff.filter(s=>s.role==='tech').slice(0,6),office=S.staff.filter(s=>!['tech','post','painter','packer','logistics','clerk'].includes(s.role));
-  const techHTML=techs.map((s,i)=>{const work=s.act&&!IDLE_RE.test(s.act);return `<span class="cw ${s.mach?'mach rail':'human patrol'} ${work?'work':'idle'}${!s.mach&&work?' walk':''} r-tech" style="animation-delay:${-(i*2.7).toFixed(1)}s" title="${(s.name+' · '+(s.act||'')).replace(/"/g,'')}"><span class="flip">${s.mach?machArt(MACH.find(m=>m.id===s.mach)):humanSprite(s,ROLE_HUE.tech,i)}</span></span>`}).join('');
+  const techHTML=techs.map((s,i)=>{const work=s.act&&!IDLE_RE.test(s.act);return `<span class="cw ${s.mach?'mach rail':'human patrol'} ${work?'work':'idle'}${!s.mach&&work?' walk':''} r-tech" style="animation-delay:${-(i*2.7).toFixed(1)}s" title="${(s.name+' · '+(s.act||'')).replace(/"/g,'')}"><span class="flip">${s.mach?machArt(MACH.find(m=>m.id===s.mach))+'<i class="gear"></i>':humanSprite(s,ROLE_HUE.tech,i)}</span></span>`}).join('');
   const offHTML=office.slice(0,4).map((s,i)=>{const work=s.act&&!IDLE_RE.test(s.act);return `<span class="cw ${s.mach?'mach':'human'} ${work?'work':'idle'} r-${s.role}" title="${(s.name+' · '+ROLES[s.role].name).replace(/"/g,'')}"><span class="flip">${s.mach?machArt(MACH.find(m=>m.id===s.mach)):humanSprite(s,ROLE_HUE[s.role]||200,i)}</span></span>`}).join('')+(office.length>4?`<b class="crn">+${office.length-4}</b>`:'');
   let h=`<div class="pline">`;
   if(techs.length||office.length)h+=`<div class="crewstrip"><div class="cs-floor">${techHTML||'<span class="cs-none">No technicians</span>'}</div>${office.length?`<div class="cs-office">${offHTML}</div>`:''}</div>`;
@@ -76,10 +76,22 @@ crewScene=function(){
   else paintMain=`<span class="sticon">${SVG_BOOTH}</span>`;
   const paintStatus=painting.length?`Painting ${Math.round(100*Math.max(0,Math.min(1,(S.abs-painting[0].paint.t0)/painting[0].paint.dur)))}%${painting.length>1?` · ${painting.length} at work`:''}`:cur?`${cur} to paint`:'Nothing to paint';
   h+=`<div class="lanes${busy?' run':''}"><i class="conv"></i>
-    <button class="ln wash ${unw?'has':''}" data-a="wash" ${unw?'':'disabled'}><span class="lh">Wash</span><span class="lm"><span class="sticon st-tub ${unw&&S.staff.some(s=>s.role==='post')?'work':''}">${SVG_TUB}</span>${stationCrew('post')}</span><span class="lq st-in">${miniTokens(S.unwashed,'raw',3)}</span><span class="ls">${unw?`${unw} waiting · ${en(washE())}`:'Empty'}</span></button>
-    <button class="ln paint ${cur||painting.length?'has':''}" data-a="finish" ${fk?'':'disabled'}><span class="lh">Paint</span><span class="lm st-booth ${painting.length?'work':''}">${paintMain}${stationCrew('painter')}</span><span class="lq st-q">${miniTokens(S.cured,'prime',3)}</span><span class="ls">${paintStatus}</span></button>
-    <button class="ln pack ${packN?'has':''}" data-a="pack" ${pk?'':'disabled'}><span class="lh">Pack</span><span class="lm"><span class="sticon st-pack ${packN&&S.staff.some(s=>s.role==='packer')?'work':''}">${SVG_TABLE}</span>${stationCrew('packer')}</span><span class="lq">${packN?`<b class="big">${packN}</b><small>orders</small>`:'<span class="lq-empty">·</span>'}</span><span class="ls">${full?'Bay is full':packN?`${en(E.pack())} each`:'No orders ready'}</span></button>
+    <button class="ln wash ${unw?'has':''}" data-a="wash" ${unw?'':'disabled'}><span class="lh">Wash</span><span class="lm"><span class="sticon st-tub ${unw?'work':''}">${SVG_TUB}</span>${stationCrew('post')}</span><span class="lq st-in">${miniTokens(S.unwashed,'raw',3)}</span><span class="ls">${unw?`${unw} waiting · ${en(washE())}`:'Empty'}</span></button>
+    <button class="ln paint ${cur||painting.length?'has':''}" data-a="finish" ${fk?'':'disabled'}><span class="lh">Paint</span><span class="lm st-booth ${painting.length||cur?'work':''}">${paintMain}${stationCrew('painter')}</span><span class="lq st-q">${miniTokens(S.cured,'prime',3)}</span><span class="ls">${paintStatus}</span></button>
+    <button class="ln pack ${packN?'has':''}" data-a="pack" ${pk?'':'disabled'}><span class="lh">Pack</span><span class="lm"><span class="sticon st-pack ${packN?'work':''}">${SVG_TABLE}</span>${stationCrew('packer')}</span><span class="lq">${packN?`<b class="big">${packN}</b><small>orders</small>`:'<span class="lq-empty">·</span>'}</span><span class="ls">${full?'Bay is full':packN?`${en(E.pack())} each`:'No orders ready'}</span></button>
     <button class="ln send ${bayN?'has':''}${full?' full':''}" data-a="sendBay" ${bayN?'':'disabled'}><span class="lh">Send</span><span class="lm"><span class="sticon st-dock ${bayN?'work':''}">${SVG_DOCK}</span>${stationCrew('logistics')}</span><span class="lq st-bay"><span class="baybar"><i style="width:${Math.min(100,100*bayN/cap)}%"></i></span></span><span class="ls">Bay ${bayN}/${cap}</span></button>
-  </div></div>`;
+  </div>${beltRow(unw,cur,painting,packN,bayN)}</div>`;
   return h;
 };
+function beltRow(unw,cur,painting,packN,bayN){
+  const top=(map)=>{let b=null;for(const k of PKEYS)if((map[k]||0)>0&&(!b||map[k]>map[b]))b=k;return b};
+  const ku=top(S.unwashed)||top(S.cured),kc=painting.length?painting[0].paint.k:top(S.stock);
+  const segA=unw>0||cur>0,segB=(painting.length>0||packN>0)&&kc,segC=packN>0||bayN>0;
+  const rider=(seg,html,cls,n)=>Array.from({length:n},(_,i)=>`<span class="rider ride-${seg} ${cls}" style="animation-delay:${(-i*0.9).toFixed(1)}s"><span class="ri">${html}</span></span>`).join('');
+  let r='';
+  if(segA&&ku)r+=rider('a',prodArt(ku),unw?'raw':'prime',2);
+  if(segB)r+=rider('b',prodArt(kc),'',2);
+  if(segC)r+=rider('c',typeof PARCEL!=='undefined'?PARCEL:'','box',2);
+  const run=segA||segB||segC;
+  return `<div class="beltrow${run?' run':''}"><i class="tread"></i><i class="roll r1"></i><i class="roll r2"></i><i class="roll r3"></i><i class="roll r4"></i><i class="roll r5"></i>${r}</div>`;
+}
