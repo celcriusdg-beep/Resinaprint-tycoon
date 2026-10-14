@@ -30,3 +30,15 @@ function start(data){
 }
 window.claude?.hot?.snapshot?.(()=>({S,tab}));
 window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+
+/* If something throws, show it instead of silently freezing, and keep the clock from getting stuck. */
+let lastErr='';
+function reportError(err){
+  const msg=(err&&err.message)||String(err);if(S)S.lastT=Date.now();
+  if(msg===lastErr)return;lastErr=msg;console.error(err);
+  let bar=document.getElementById('errbar');
+  if(!bar){bar=document.createElement('div');bar.id='errbar';bar.style.cssText='position:fixed;left:8px;right:8px;bottom:78px;z-index:99;background:#7a1f1a;color:#fff;border-radius:10px;padding:10px 12px;font:12px/1.35 system-ui;box-shadow:0 4px 18px #0008';document.body.appendChild(bar)}
+  bar.innerHTML='<b>Something broke:</b> '+msg.replace(/</g,'&lt;')+' <u onclick="this.parentNode.remove();lastErr=\'\'" style="margin-left:6px">Dismiss</u>';
+}
+addEventListener('error',e=>reportError(e.error||e.message));
+addEventListener('unhandledrejection',e=>reportError(e.reason));

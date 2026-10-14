@@ -319,7 +319,7 @@ function storesDay(){
     clerks.forEach(s=>s.mood=clamp(s.mood+.5,0,100));
   }
 }
-function advance(hours){simulating=true;let left=hours;while(left>1e-9&&!S.over){const dt=Math.min(.1,left);sim(dt);left-=dt}simulating=false}
+function advance(hours){simulating=true;let left=hours;try{while(left>1e-9&&!S.over){const dt=Math.min(.1,left);sim(dt);left-=dt}}catch(err){reportError(err)}finally{simulating=false}}
 const skipRate=()=>1.5+S.printers.length*.5+studioStaff().length*.8;
 const skipCost=h=>Math.round(h*skipRate());
 function afterSim(){
@@ -350,7 +350,7 @@ function liveTick(){
     return;
   }
   const dt=gap/HOUR_MS;
-  simulating=true;let left=dt;while(left>1e-9&&!S.over){const d=Math.min(.05,left);sim(d);left-=d}simulating=false;
+  simulating=true;let left=dt;try{while(left>1e-9&&!S.over){const d=Math.min(.05,left);sim(d);left-=d}}catch(err){reportError(err)}finally{simulating=false}
   S.lastT=Date.now();
   if(now-(liveTick.saved||0)>10000){liveTick.saved=now;save()}
   render();
