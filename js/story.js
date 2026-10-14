@@ -51,7 +51,7 @@ function currentGoal(){
   if(st.ch<CHAPTERS.length){const c=CHAPTERS[st.ch],o=c.objs.find(o=>{const [a,b]=o.f();return a<b})||c.objs[0],[a,b]=o.f();return{kick:`Ch ${st.ch+1}`,t:o.t,cur:a,max:b,go:o.go}}
   const g=smartGoal();g.kick='Goal';return g;
 }
-Object.assign(A,{goGoal(){const g=currentGoal(),[t,s]=g.go||['studio'];tab=t;if(s){const k={buy:'buy',empire:'empire',orders:'orders',team:'team'}[t];if(k)sub[k]=s}window.scrollTo({top:0})}});
+Object.assign(A,{goGoal(){const g=currentGoal(),[t,s]=g.go||['studio'];if(s==='upgrades'){openSkill();return}tab=t;if(s){const k={buy:'buy',empire:'empire',orders:'orders',team:'team'}[t];if(k)sub[k]=s}window.scrollTo({top:0})}});
 function goalHTML(){
   const g=currentGoal(),p=Math.min(100,100*g.cur/g.max);
   return `<span class="gk">${g.kick}</span><span class="gt">${g.t}</span><span class="gp"><i style="width:${p}%"></i></span><span class="gn">${g.money?fmt(g.cur)+' / '+fmt(g.max):nf(g.cur)+' / '+nf(g.max)}</span>`;
@@ -63,7 +63,7 @@ function chapterCard(){
     c.objs.map(o=>{const [a,b]=o.f(),d=a>=b;return `<button class="obj ${d?'done':''}" data-a="goObj" data-i="${c.objs.indexOf(o)}"><i>${d?'✓':''}</i><span>${o.t}</span><em>${d?'Done':nf(a)+' / '+nf(b)}</em></button>`}).join('')+
     `<div class="s" style="margin-top:8px">Reward: a chest and ${c.reward.items.map(k=>ITEMS[k].n.toLowerCase()).join(', ')}</div></div>`;
 }
-Object.assign(A,{goObj(d){const c=CHAPTERS[storyOf(S).ch],o=c&&c.objs[+d.i];if(!o)return;const [t,s]=o.go||['studio'];tab=t;if(s){const k={buy:'buy',empire:'empire',orders:'orders',team:'team'}[t];if(k)sub[k]=s}window.scrollTo({top:0})}});
+Object.assign(A,{goObj(d){const c=CHAPTERS[storyOf(S).ch],o=c&&c.objs[+d.i];if(!o)return;const [t,s]=o.go||['studio'];if(s==='upgrades'){openSkill();return}tab=t;if(s){const k={buy:'buy',empire:'empire',orders:'orders',team:'team'}[t];if(k)sub[k]=s}window.scrollTo({top:0})}});
 /* ---------- regulars ---------- */
 const REGS=[
   {id:'kenji',n:'Kenji',role:'Anime collector',fav:['chibi'],at:0,hue:350},

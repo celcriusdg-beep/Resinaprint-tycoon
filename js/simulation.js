@@ -201,7 +201,7 @@ function staffWork(dt){
     s.cd-=dt;
     let n=0;
     while(s.cd<=0&&n++<12){
-      const t=staffTask(s);
+      const t=staffTask(s);if(t)s.done=(s.done||0)+1;
       if(!t){s.cd=0;s.act='Waiting for work';break}
       const d=t.h/(skill(s)*mf(s));
       s.cd+=d;s.busy+=d;s.act=t.act;gainXp(s,d);
@@ -287,7 +287,7 @@ function endOfDay(){
   if(S.day%3===1)refreshOffers();
   S.hype=Math.max(2,(S.hype+socialHype()+hypePerDay()+upv('hyp')+(S.stores.cafe?.merged?5:0))*hypeKeep());
   for(const s of [...S.staff]){const load=s.busy/shiftLen();s.busy=0;
-    if(s.mach){s.mood=100;continue}
+    if(s.mach){s.mood=100;s.load=load;continue}
     if(s.role!=='clerk'){if(load>.85)s.mood-=2.5*(S.crunch?2:1)*(S.up.fume?.5:1)*(S.up.lounge?.6:1)*(1-Math.min(.7,upv('mo')));else s.mood+=S.up.lounge?2:1.2}
     s.mood=clamp(s.mood,0,100);
     if(s.mood<30&&Math.random()<.05){S.staff=S.staff.filter(x=>x!==s);log(`${s.name} (${s.role==='clerk'?'store clerk':ROLES[s.role].name.toLowerCase()}) quit. Morale was too low.`,'bad')}}

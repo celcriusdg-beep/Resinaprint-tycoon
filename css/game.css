@@ -147,3 +147,32 @@ body.skopen{overflow:hidden}
 .skp-x{background:none;border:0;color:var(--muted);font-size:16px;padding:0 4px}
 .skp-t{font-family:var(--f-display);font-size:18px;margin:4px 0 2px}.skp-d{color:var(--muted);font-size:14px}.skp-w{margin-top:6px;font-size:13px;color:var(--warn)}.skp-w b{color:var(--ink)}
 .skp-f{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}.skp-c{font:600 22px var(--f-num)}.skp-f .btn{min-width:150px}
+/* ===== machines ===== */
+.mhero{margin-top:12px}.mhero.lab{border-color:#6a4fd0;background:linear-gradient(135deg,#2a2150,var(--card))}
+.mfil{margin-top:2px}.mfil .seg{margin-top:6px!important;padding:3px}.mfil .seg button{padding:7px 9px;font-size:12.5px}
+.mlist{display:grid;gap:10px;margin-top:12px}
+.mcard{display:grid;grid-template-columns:104px 1fr;gap:10px;background:var(--card);border:2px solid var(--line);border-radius:10px;padding:10px;box-shadow:var(--lift)}
+.mcard.lab{border-color:#5a45b8}.mcard.ind{border-color:#a36a2a}.mcard.pro{border-color:#2f8a78}
+.mart-w{position:relative;background:radial-gradient(circle at 50% 70%,#ffffff12,transparent 70%),#0003;border-radius:8px;align-self:start}
+.mart{width:100%;display:block}.mart.big{max-width:240px;margin:0 auto}
+.chip.tier{position:absolute;left:4px;top:4px;font-size:9.5px;padding:1px 6px}.chip.tier.lab{background:#4a33b0;color:#e6dcff}.chip.tier.ind{background:#a35f1c;color:#ffe4bd}.chip.tier.pro{background:#23806d;color:#cdf7ea}
+.mbody .t{font-weight:800;font-size:14.5px}
+.mspec{display:grid;grid-template-columns:50px 1fr 62px;align-items:center;gap:6px;margin-top:4px;font-size:11.5px;color:var(--muted);font-weight:700}
+.mspec b{text-align:right;color:var(--ink);font:600 13px var(--f-num)}
+.mb{height:6px;border-radius:4px;background:#0005;overflow:hidden}.mb i{display:block;height:100%;border-radius:4px}
+.roi{margin-top:6px;font-size:12px;color:var(--muted)}.roi b{color:var(--good)}
+.macts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.fleet{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px}
+.ft{background:var(--card);border:2px solid var(--line);border-radius:8px;padding:7px 6px;text-align:center}.ft b{display:block;font:600 19px var(--f-num)}.ft b small{font-size:13px;color:var(--muted)}.ft span{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}.ft.good b{color:var(--good)}
+.rolechips{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}.rc{font-size:11px;font-weight:800;padding:2px 8px;border-radius:99px;background:#0003;color:var(--faint);border:1px solid var(--line)}.rc.on{color:var(--ink);background:var(--card2);border-color:var(--amber)}.rc b{color:var(--amber)}
+.mdet{background:radial-gradient(circle at 50% 60%,#ffffff14,transparent 70%),#0004;border-radius:10px;margin-bottom:10px}
+.dtable{display:grid;gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:13px}.dtable div{display:flex;justify-content:space-between;gap:12px;padding:6px 10px}.dtable div:nth-child(odd){background:#ffffff08}.dtable span{color:var(--muted)}.dtable b{text-align:right}
+@media (max-width:360px){.mcard{grid-template-columns:84px 1fr}.fleet{grid-template-columns:repeat(2,1fr)}}
+/* ===== shop hub ===== */
+.shopgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.stile{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:10px;text-align:left;background:linear-gradient(160deg,color-mix(in srgb,var(--c) 18%,var(--card)),var(--card) 70%);border:2px solid color-mix(in srgb,var(--c) 50%,#000);border-bottom-width:5px;border-radius:12px;padding:14px 12px 12px;min-height:128px;color:var(--ink);transition:transform .08s}
+.stile:active{transform:translateY(2px);border-bottom-width:3px}.stile.wide{grid-column:1/-1;flex-direction:row;align-items:center;min-height:0;padding:14px}
+.sico{width:44px;height:44px;border-radius:10px;background:color-mix(in srgb,var(--c) 22%,#0004);display:grid;place-items:center;flex:none}.sico svg{width:26px;height:26px;fill:none;stroke:var(--c);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.stt b{display:block;font-family:var(--f-display);font-size:15px;font-weight:400}.stt small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.sbadge{position:absolute;right:8px;top:8px;background:var(--good);color:#06240f;font:800 10.5px var(--f-body);font-style:normal;border-radius:99px;padding:1px 8px}
+.shopbar{display:flex;align-items:center;gap:10px;margin-top:14px}.shopbar b{flex:1;font-family:var(--f-display);font-size:17px;font-weight:400}

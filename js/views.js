@@ -227,7 +227,7 @@ function companyView(){
   return h;
 }
 function vEmpire(){
-  let h=segs('empire',[['stores','Stores'],['upgrades','Upgrades'],['media','Media'],['company','Company'],['goals','Goals',sub.empire!=='goals'?Math.min(S.unread,99):0],['vault','Vault',vaultOf(S).chests.length],['items','Items',invCount()],['regulars','Regulars'],['shelf','Shelf'],['rebirth','Rebirth',canRebirth()&&sub.empire!=='rebirth'?1:0],['more','More']]);
+  let h=segs('empire',[['stores','Stores'],['media','Media'],['company','Company'],['goals','Goals',sub.empire!=='goals'?Math.min(S.unread,99):0],['vault','Vault',vaultOf(S).chests.length],['items','Items',invCount()],['regulars','Regulars'],['shelf','Shelf'],['rebirth','Rebirth',canRebirth()&&sub.empire!=='rebirth'?1:0],['more','More']]);
   if(sub.empire==='stores'){
     const closed=Object.keys(STORES).filter(k=>!S.stores[k]),opened=Object.keys(STORES).filter(k=>S.stores[k]);
     if(opened.length){h+=label('Your stores',`rent ${fmt(rent()-space().rent)}/week`)+`<div class="stack">`;

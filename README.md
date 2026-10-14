@@ -60,3 +60,6 @@ A second game in `age-of-resin/` (open `age-of-resin/index.html`, or Empire > Mo
 
 ## 3.5 The Workshop Update
 Studio scene (js/workshop.js), story chapters, regulars, events and figure shelf (js/story.js), tech tree (js/tree.js), painting mini-game (js/minigame.js), sounds and confetti (js/fx.js), styles in css/game.css.
+
+## 3.7 Shop and machines
+Shop hub (js/shop.js), machine illustrations (js/machart.js) and the machine catalogue, fleet and tuning UI (js/machui.js).
