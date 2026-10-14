@@ -54,3 +54,6 @@ save/reload. Latest result: `tests/REPORT.md`; side-by-side screenshots: `tests/
 `assets/official/` holds manufacturer and licensor photos for the printers and figures. `js/official.js`
 and `sw-assets.js` list them (rebuild with `python3 tools/make-official-map.py`). If a photo is missing,
 the game falls back to the drawn picture.
+
+## Age of Resin
+A second game in `age-of-resin/` (open `age-of-resin/index.html`, or Empire > More in Resinaprint). Five ages, four units each, turrets, specials and an enemy AI. Saves only win counts in localStorage.

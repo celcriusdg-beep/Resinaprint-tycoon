@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#16130f"><title>Age of Resin</title>
+<link rel="stylesheet" href="style.css"></head>
+<body><div id="app">
+ <div id="hud">
+  <div class="cell"><b id="gold">0</b><small id="inc">+3/s</small></div>
+  <div class="cell grow"><div class="agerow"><b id="age">Stone Age</b><span id="xpt"></span></div><div class="bar"><i id="xpfill"></i></div></div>
+  <button id="evolve" disabled>Evolve</button>
+ </div>
+ <div id="stage">
+  <canvas id="cv"></canvas>
+  <div id="bases"><div class="bb me"><i id="b0"></i><span id="b0t"></span></div><div class="bb foe"><i id="b1"></i><span id="b1t"></span></div></div>
+  <div id="cam"><button id="camHome">⌂ Base</button><button id="camFront">⚔ Front</button><button id="camEnemy">Enemy ▶</button></div>
+ </div>
+ <div id="queue"></div>
+ <div id="units"></div>
+ <div id="tools">
+  <button id="tb">Build turret</button><button id="ts">Sell <span id="tcount">0/3</span></button>
+  <button id="sp" class="special">Special</button>
+ </div>
+ <div id="tools2"><button id="spd">1×</button><button id="pz">Pause</button><button id="mute">Sound on</button><button id="quit">Menu</button></div>
+ <div id="menu" class="overlay"><div class="panel">
+  <h1>Age of Resin</h1><p>Train an army, build turrets and push through five ages to destroy the enemy base.</p>
+  <div class="diffs"><button data-diff="easy">Easy</button><button data-diff="normal" class="pri">Normal</button><button data-diff="hard">Hard</button></div>
+  <small id="wins"></small>
+  <small class="tip">Tip: tap <b>Evolve</b> when XP is full. Specials hit the enemy half of the map. Drag the battlefield to look around. Keys: 1-4 train, E evolve, T turret, S special.</small>
+ </div></div>
+ <div id="end" class="overlay hide"><div class="panel"><h1 id="endT"></h1><p id="endS"></p><div class="diffs"><button id="again" class="pri">Play again</button><button id="tomenu">Menu</button></div></div></div>
+</div>
+<script src="data.js"></script><script src="art.js"></script><script src="game.js"></script>
+</body></html>
