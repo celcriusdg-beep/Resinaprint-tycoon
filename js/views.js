@@ -256,15 +256,17 @@ function carriersView(){
   h+='</div>';
   return h;
 }
-function vEmpire(){
-  let h=segs('empire',[['media','Media'],['company','Company'],['goals','Goals',sub.empire!=='goals'?Math.min(S.unread,99):0],['vault','Vault',vaultOf(S).chests.length],['items','Items',invCount()],['regulars','Regulars'],['shelf','Shelf'],['rebirth','Rebirth',canRebirth()&&sub.empire!=='rebirth'?1:0],['more','More']]);
-  if(sub.empire==='media'){
-    h+=`<div class="card" style="margin-bottom:6px"><div class="s">Sales channels are bought in the Shop. Here you run the ones you own.</div></div>`;
+function mediaView(){
+  let h='';
     h+=label('Hype','drops 6% a day')+`<div class="card"><div style="display:flex;align-items:baseline;gap:10px"><span class="num" style="font-size:28px;color:var(--uv)">${Math.round(S.hype)}</span><span class="s">+50 hype doubles webshop demand</span></div><div style="margin-top:10px">${bar(S.hype/2,'var(--uv)')}</div></div>`;
     h+=saleCard()+socialView()+label('Campaigns')+`<div class="group">`;
     for(const C of CAMPAIGNS){const cd=S.cds[C.id]||0,lock=(C.minRating&&S.rating<C.minRating)||(C.minSold&&S.sold<C.minSold)||(C.minHype&&S.hype<C.minHype)||(C.kvk&&!S.biz.kvk)||(C.needCh&&!S.ch[C.needCh]);h+=item(`${C.name} <span class="chip uv">+${C.hype}</span>`,C.desc,`<button class="btn sm ${C.cost?'primary':'uv'}" data-a="camp" data-k="${C.id}" ${cd||lock||S.cash<C.cost?'disabled':''}>${cd?`in ${cd} d`:C.cost?fmt(C.cost):`Post ${en(C.energy)}`}</button>`)}
     h+='</div>';
-  }else if(sub.empire==='rebirth'){
+  return h;
+}
+function vEmpire(){
+  let h=segs('empire',[['company','Company'],['goals','Goals',sub.empire!=='goals'?Math.min(S.unread,99):0],['vault','Vault',vaultOf(S).chests.length],['items','Items',invCount()],['regulars','Regulars'],['shelf','Shelf'],['rebirth','Rebirth',canRebirth()&&sub.empire!=='rebirth'?1:0],['more','More']]);
+  if(sub.empire==='rebirth'){
     h+=rebirthView();
   }else if(sub.empire==='regulars'){
     h+=regsView();

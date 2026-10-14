@@ -22,7 +22,7 @@ function shopTiles(){
     {k:'skill',n:'Upgrades',d:`Skill tree · ${upOwn} of ${upTot}`,badge:upBuy,col:'#ff7fa8',big:1},
     {k:'stores',n:'Stores',d:storesOpen?`${storesOpen} to open`:'All open',col:'#5aa6ff'},
     {k:'carriers',n:'Carriers',d:'Who ships your parcels',col:'#ff8a5c'},
-    {k:'channels',n:'Sales channels',d:'Where customers find you',col:'#7ff3ff'}
+    {k:'channels',n:'Media & channels',d:'Channels, hype, sales, campaigns',col:'#7ff3ff'}
   ];
 }
 function shopHub(){
@@ -42,10 +42,10 @@ Object.assign(A,{shopGo(d){
 const _vBuy0=vBuy;
 vBuy=function(){
   if(!['printers','resin','gear','space','stores','carriers','channels'].includes(sub.buy))return shopHub();
-  const names={printers:'Printers',resin:'Resin & supplies',gear:'Gear & moulds',space:'Space & permits',stores:'Stores',carriers:'Carriers',channels:'Sales channels'};
+  const names={printers:'Printers',resin:'Resin & supplies',gear:'Gear & moulds',space:'Space & permits',stores:'Stores',carriers:'Carriers',channels:'Media & channels'};
   if(sub.buy==='stores')return shopBack(names.stores)+storesView();
   if(sub.buy==='carriers')return shopBack(names.carriers)+`<div class="card" style="margin-top:12px"><div class="s">Pick the carriers you want to ship with. Choose which one handles which country in Orders › Delivery.</div></div>`+carriersView();
-  if(sub.buy==='channels')return shopBack(names.channels)+`<div class="card" style="margin-top:12px"><div class="s">Where customers find you. Hype, sales and campaigns for the channels you own are in Empire › Media.</div></div>`+channelsView();
+  if(sub.buy==='channels')return shopBack(names.channels)+`<div class="card" style="margin-top:12px"><div class="s">Where customers find you, plus your hype, site-wide sale, social accounts and campaigns.</div></div>`+channelsView()+mediaView();
   return shopBack(names[sub.buy])+_vBuy0();
 };
 VIEWS.buy=vBuy;
