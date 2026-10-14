@@ -1,8 +1,12 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='3.11';
-const PATCH_TITLE='Resinaprint 3.11 · Dispatch & Payouts';
+const VERSION='4.0';
+const PATCH_TITLE='Resinaprint 4.0 · Premium';
 const PATCH=[
+ {h:'New in 4.0',i:[
+  '<b>A new premium look.</b> Graphite and glass instead of brown and rainbow: one gold accent, quiet borders, frosted header, a floating dock, condensed headlines and cleaner numbers.',
+  'Every tab, card, button, chip, the Shop, machines, the skill tree and the workshop scene follow the same calm style. Colour is now saved for things that matter: gold for what you can do, green and red for good and bad.'
+ ]},
  {h:'New in 3.11',i:[
   '<b>Dispatch bay.</b> Packed orders now wait in a bay (50 to start) until the courier collects them or you press Send. The money chain is longer now: order → pack → bay → send → parcel → delivered, and online sales are paid out a few days after they are sent (webshop 1 day, bol.com 3, Etsy 4).',
   '<b>Dispatch & payouts catalogue in the Shop.</b> Upgrade bay size (up to 300), courier pickups (up to hourly), auto-dispatch, bulk carrier discounts, payout speed (down to instant) and parcel insurance.',
