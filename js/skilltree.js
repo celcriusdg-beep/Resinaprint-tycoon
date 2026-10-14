@@ -22,7 +22,7 @@ function buildSkill(){
     <svg id="skSvg"><g id="stg"><g id="skEdges"></g><g id="skNodes"></g><g id="skHub"></g></g></svg><div class="sk-panel" id="skPanel"></div>`;
   document.body.appendChild(el);
   let e='',n='',h='';
-  for(const u of UPGRADES){if(!u.br)continue;for(const id of u.par){const p=UBY[id];e+=`<line class="e" data-a="${id}" data-b="${u.id}" x1="${p.x.toFixed(1)}" y1="${p.y.toFixed(1)}" x2="${u.x.toFixed(1)}" y2="${u.y.toFixed(1)}" style="--c:${u.br.col}"/>`}}
+  for(const u of UPGRADES){if(!u.br)continue;for(const id of u.par){const p=UBY[id];e+=`<line class="e" data-p="${id}" data-c="${u.id}" x1="${p.x.toFixed(1)}" y1="${p.y.toFixed(1)}" x2="${u.x.toFixed(1)}" y2="${u.y.toFixed(1)}" style="--c:${u.br.col}"/>`}}
   for(const u of UPGRADES){if(!u.br)continue;const R=u.key?22:16;
     n+=`<g class="nd${u.key?' key':''}" data-id="${u.id}" transform="translate(${u.x.toFixed(1)} ${u.y.toFixed(1)})" style="--c:${u.br.col}"><circle class="ring" r="${R+6}"/><circle class="bg" r="${R}"/><g transform="translate(-8 -8) ${u.key?'scale(1)':'scale(1)'}"><path class="gl" d="${GL[glyphOf(u)]}"/></g><text class="lbl c" y="${R+13}">${cshort(u.cost)}</text><text class="lbl nm" y="${R+25}">${u.name.length>16?u.name.slice(0,15)+'…':u.name}</text></g>`}
   for(const B of BRANCHES){const x=TREE_C+Math.cos(B.ang)*(R0-62),y=TREE_C+Math.sin(B.ang)*(R0-62);h+=`<text class="bn" x="${x.toFixed(1)}" y="${y.toFixed(1)}" style="--c:${B.col}">${B.n}</text>`}
@@ -71,7 +71,7 @@ function refreshSkill(){
   const st={};let own=0;
   for(const u of UPGRADES){if(!u.br)continue;const s=nodeState(u);st[u.id]=s;if(s==='own')own++;
     if(skCache[u.id]!==s){skCache[u.id]=s;const g=nodeEl(u.id);if(g)g.setAttribute('data-s',s)}}
-  document.querySelectorAll('#skEdges .e').forEach(l=>{const a=st[l.dataset.a],b=st[l.dataset.b],c=a==='own'&&b==='own'?'e on':a==='own'?'e av':'e';if(l.getAttribute('class')!==c)l.setAttribute('class',c)});
+  document.querySelectorAll('#skEdges .e').forEach(l=>{const a=st[l.dataset.p],b=st[l.dataset.c],c=a==='own'&&b==='own'?'e on':a==='own'?'e av':'e';if(l.getAttribute('class')!==c)l.setAttribute('class',c)});
   setT(document.getElementById('skCash'),fmt(S.cash));
   document.getElementById('skHubS').textContent=`${own} / ${UPGRADES.filter(u=>u.br).length}`;
   for(const B of BRANCHES){const n=UPGRADES.filter(u=>u.cat===B.id&&S.up[u.id]).length;const sp=document.getElementById('skc-'+B.id);if(sp)setT(sp,` ${n}/${B.total}`)}

@@ -113,7 +113,7 @@ function vOrders(){
   return h;
 }
 function vBuy(){
-  let h=segs('buy',[['printers','Printers'],['resin','Resin'],['gear','Gear'],['space','Space']]);
+  let h='';
   const price=(a,k,cost,dis,extra='')=>`<button class="btn sm primary" data-a="${a}" data-k="${k}" ${extra} ${dis?'disabled':''}>${fmt(cost)}</button>`;
   if(sub.buy==='printers'){
     h+=`<div style="margin-top:12px">${segs('pg',PGROUPS.map((n,i)=>[String(i),n])).replace('margin-top:18px','')}</div>`;
