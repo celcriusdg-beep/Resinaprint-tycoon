@@ -296,3 +296,15 @@ nav button.on::before{background:rgb(var(--g1));box-shadow:0 0 12px rgb(var(--g1
 .fly .ft,.fly svg{display:block;width:100%;height:100%}.fly img{width:100%;height:100%;object-fit:contain;display:block;filter:drop-shadow(0 2px 3px #000a)}
 .ringfx{position:fixed;z-index:44;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;border:2px solid #fff;pointer-events:none;animation:ringx .55s ease-out forwards}@keyframes ringx{to{transform:scale(5);opacity:0}}
 @media (prefers-reduced-motion:reduce){.stn .uv,.stn .scan,.stn .spark,.stn .puff,.cw,.cw *,.bst.go,.bst.go *{animation:none!important}.fly,.ringfx{display:none}}
+
+/* dispatch: four bench stations, four zones */
+.bench{grid-template-columns:repeat(2,1fr)!important}
+.zl{font-size:8.5px}.z2{left:calc(25% - 12px)!important}.z3{left:calc(50% + 6px)!important;right:auto!important}.z4{left:auto!important;right:8px}
+.crewrow{background:linear-gradient(90deg,transparent calc(25% - 1px),rgba(255,255,255,.06) calc(25% - 1px) 25%,transparent 25% calc(50% - 1px),rgba(255,255,255,.06) calc(50% - 1px) 50%,transparent 50% calc(75% - 1px),rgba(255,255,255,.06) calc(75% - 1px) 75%,transparent 75%),rgba(0,0,0,.12)!important}
+.bst.snd.go .whl{animation:spin .5s linear infinite;transform-box:fill-box;transform-origin:center}@keyframes spin{to{transform:rotate(360deg)}}
+.pips{display:flex;gap:3px;margin-top:6px}.pips i{width:12px;height:6px;border-radius:2px;background:#ffffff1c}.pips i.on{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+.dspcard .evrow{margin-top:6px}
+
+.fly{overflow:visible}.fly .cnt{position:absolute;right:-12px;top:-8px;background:var(--amber);color:#2a1700;font:800 11px var(--f-body);border-radius:9px;padding:0 5px;box-shadow:0 1px 3px #0008}
+body.noanim *{animation:none!important;transition:none!important}body.noanim .fly,body.noanim .ringfx{display:none}
+.animbtns{display:flex;gap:6px;margin-top:8px}.animbtns .btn{flex:1}.animbtns .btn.on{background:var(--amber);color:var(--amber-ink)}

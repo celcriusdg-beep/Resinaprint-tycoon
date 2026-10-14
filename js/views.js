@@ -87,6 +87,7 @@ function vOrders(){
   const pk=PKEYS.reduce((a,k)=>a+Math.min(S.stock[k],S.orders.filter(o=>o.p===k).length),0);
   let h=segs('orders',[['queue','Orders'],['dms','Inbox',S.dms.length],['jobs','Contracts'],['catalog','Catalog'],['delivery','Delivery']]);
   if(sub.orders==='queue'){
+    h+=typeof dispatchCard==='function'?dispatchCard():'';
     h+=label('Ready to ship',`cancel after ${5+Math.min(countRole('support'),3)*2} days`)+`<div class="group">${item(`${pk} order${pk===1?'':'s'} can ship now`,`Packing costs ${en(E.pack())} per order`,`<button class="btn primary sm" data-a="packAll" ${pk?'':'disabled'}>Pack all</button>`)}</div>`;
     const ks=PKEYS.filter(k=>S.orders.some(o=>o.p===k));
     h+=label('Waiting',`${S.orders.length} orders`)+`<div class="group">`;

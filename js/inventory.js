@@ -42,7 +42,7 @@ const ITEM_USE={
   meal(){S.energy=Math.min(Math.round(maxE()*1.2),S.energy+Math.round(maxE()*.5));takeItem('meal');toast('That hit the spot')},
   tskip(){takeItem('tskip');advance(4);S.lastT=Date.now();afterSim();toast('+4 h')},
   washall(){const n=totUnwashed();if(!n)return toast('Nothing to wash');for(const k of PKEYS){S.cured[k]+=S.unwashed[k];S.unwashed[k]=0}takeItem('washall');toast(`Washed and cured ${n} prints`)},
-  packall(){if(packableIdx()<0)return toast('No order has stock yet');let n=0;while(n<10&&packableIdx()>=0){packOne();n++}did('Orders packed',n);takeItem('packall');toast(`Shipped ${n} order${n>1?'s':''}`)},
+  packall(){if(packableIdx()<0)return toast('No order has stock yet');let n=0;while(n<10&&packableIdx()>=0&&packOne())n++;did('Orders packed',n);takeItem('packall');toast(`Shipped ${n} order${n>1?'s':''}`)},
   boost(){if(boostMult()>=1.25)return toast('A bigger boost is already running');S.boost={m:1.25,until:S.abs+24};takeItem('boost');toast('+25% demand for a day')},
   hype(){S.hype+=40;takeItem('hype');toast('+40 hype')},
   sale(){if(saleOn())return toast('A sale is already running');S.sale={until:S.abs+72,off:.2};S.hype+=5;takeItem('sale');log('Site-wide sale started: 20% off for 3 days.','amber');toast('Sale live for 3 days')},

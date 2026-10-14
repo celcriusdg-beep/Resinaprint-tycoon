@@ -24,7 +24,7 @@ function humanSprite(s,hue,idx){
     <g class="arm"><rect x="20" y="15" width="5" height="12" rx="2.5" fill="${skin}"/>${tool}</g></g></svg>`;
 }
 function crewScene(){
-  const staff=S.staff.slice(0,18),ZONE={post:17,painter:50,packer:83},office=[7,23,39,55,71,87];
+  const staff=S.staff.slice(0,18),ZONE={post:12.5,painter:37.5,packer:62.5,logistics:87.5},office=[7,23,39,55,71,87];
   const count={},seen={};staff.forEach(s=>count[s.role]=(count[s.role]||0)+1);
   let oi=0;
   const out=staff.map((s,idx)=>{
@@ -40,7 +40,7 @@ function crewScene(){
     const sprite=s.mach?`${machArt(MACH.find(m=>m.id===s.mach))}<i class="led"></i>`:humanSprite(s,hue,idx);
     return `<span class="${cls}" style="${style}" title="${nm}"><span class="flip">${sprite}${off?'<em class="zz">z z</em>':''}</span></span>`;
   }).join('');
-  return `<div class="crewrow"><div class="zl z1">Wash</div><div class="zl z2">Finish</div><div class="zl z3">Pack</div>${out}${S.staff.length>18?`<span class="crewmore">+${S.staff.length-18}</span>`:''}</div>`;
+  return `<div class="crewrow"><div class="zl z1">Wash</div><div class="zl z2">Finish</div><div class="zl z3">Pack</div><div class="zl z4">Send</div>${out}${S.staff.length>18?`<span class="crewmore">+${S.staff.length-18}</span>`:''}</div>`;
 }
 /* ---- flying prints: station -> wash tub -> finishing -> shelf -> parcel -> orders board ---- */
 let _flow=null;
@@ -58,8 +58,24 @@ function fly(from,to,html,delay,dur){
   an.onfinish=()=>{el.remove();splash(to)};an.oncancel=()=>el.remove();
 }
 const el_ok=e=>e&&e.getBoundingClientRect&&e.getBoundingClientRect().width>0;
+/* animation intensity: Smart batches busy streams into a few flights, Calm only pulses, Off stops the flights */
+function animMode(){try{return localStorage.getItem('resinaprint-anim')||'smart'}catch(e){return 'smart'}}
+function applyAnimMode(){document.body.classList.toggle('noanim',animMode()==='off')}
+applyAnimMode();
+const _stage={},_pend={};
+function stageFly(stage,count,from,to,html,dur){
+  const mode=animMode();if(mode==='off'||count<=0)return;
+  _pend[stage]=(_pend[stage]||0)+count;
+  const n=_pend[stage],t=performance.now(),cool=n>8?1600:1000;
+  if(t-(_stage[stage]||0)<cool)return;
+  if(mode==='calm'){splash(to);_stage[stage]=t;_pend[stage]=0;return}
+  if(document.querySelectorAll('.fly').length>4)return;
+  _stage[stage]=t;_pend[stage]=0;
+  fly(from,to,html+(n>1?`<b class="cnt">×${n>99?'99+':n}</b>`:''),0,dur);
+}
+const TRUCK='<svg viewBox="0 0 32 28"><rect x="2" y="7" width="17" height="14" rx="2" fill="#c9a06a" stroke="#7a5a35" stroke-width="1.4"/><path d="M19 11h6l5 5v5H19z" fill="#7a5a35"/><circle cx="8" cy="23" r="3" fill="#222"/><circle cx="24" cy="23" r="3" fill="#222"/></svg>';
 function flowSnap(){
-  const o={unw:{},cur:{},stock:{},sold:S.sold,pst:{}};
+  const o={unw:{},cur:{},stock:{},bay:(typeof bayOf==='function'?bayOf().length:0),pst:{}};
   for(const k of PKEYS){o.unw[k]=S.unwashed[k]||0;o.cur[k]=S.cured[k]||0;o.stock[k]=S.stock[k]||0}
   for(const p of S.printers)o.pst[p.id]={st:p.state,prod:p.job&&p.job.prod,units:p.job&&p.job.units,type:p.type};
   return o;
@@ -67,27 +83,30 @@ function flowSnap(){
 function flowTick(){
   const now=flowSnap(),prev=_flow;_flow=now;
   if(!prev||tab!=='studio'||document.hidden||typeof prodArt!=='function')return;
-  const wash=q$('.bst[data-a="wash"]'),fin=q$('.bst[data-a="finish"]'),pack=q$('.bst[data-a="pack"]'),board=q$('.board'),shelf=q$('.shelf');
-  let budget=14,t=0;const thumb=k=>`<span class="ft">${prodArt(k)}</span>`;
-  /* 1. printer collected: the batch drops into the wash tub (or straight to finishing for injection, PolyJet and lab machines) */
+  const wash=q$('.bst[data-a="wash"]'),fin=q$('.bst[data-a="finish"]'),pack=q$('.bst[data-a="pack"]'),send=q$('.bst[data-a="sendBay"]'),win=q$('.win'),shelf=q$('.shelf');
+  const thumb=k=>`<span class="ft">${prodArt(k)}</span>`;
+  /* 1. collected: the batch drops into the wash tub (injection, PolyJet and lab prints go straight to finishing) */
+  let cw=0,cf=0,wEl=null,fEl=null,wP=null,fP=null;
   for(const id in prev.pst){
     const a=prev.pst[id],b=now.pst[id];
     if(a.st==='done'&&b&&b.st!=='done'&&a.prod){
-      const D=PRINTERS[a.type],stn=q$(`.stn[data-id="${id}"] .pic`),dest=(D.inj||D.pj||D.lab)?fin:wash;
-      const n=Math.min(3,a.units||1);for(let i=0;i<n&&budget>0;i++,budget--)fly(stn,dest,thumb(a.prod),t+i*110,850);
-      t+=60;
+      const D=PRINTERS[a.type],el=q$(`.stn[data-id="${id}"] .pic`);
+      if(D.inj||D.pj||D.lab){cf+=a.units||1;fEl=fEl||el;fP=fP||a.prod}else{cw+=a.units||1;wEl=wEl||el;wP=wP||a.prod}
     }
   }
+  if(cw)stageFly('cw',cw,wEl,wash,thumb(wP),850);
+  if(cf)stageFly('cf',cf,fEl,fin,thumb(fP),850);
+  /* 2. washed and cured, 3. finished and stocked */
+  let dw=0,dwP=null,ds=0,dsP=null;
   for(const k of PKEYS){
-    /* 2. washed and cured: tub -> finishing bench */
-    const dw=prev.unw[k]-now.unw[k];
-    if(dw>0&&now.cur[k]>prev.cur[k]){const n=Math.min(3,dw);for(let i=0;i<n&&budget>0;i++,budget--)fly(wash,fin,thumb(k),i*120,800)}
-    /* 3. finished and painted: finishing bench -> shelf (it is stock now) */
-    const ds=now.stock[k]-prev.stock[k];
-    if(ds>0&&now.cur[k]<prev.cur[k]){const tgt=document.querySelectorAll('.shelf .sitem');let el=shelf;for(const s of tgt){if(s.dataset.k===k)el=s}
-      const n=Math.min(3,ds);for(let i=0;i<n&&budget>0;i++,budget--)fly(fin,el,thumb(k),i*120,850)}
+    const w=prev.unw[k]-now.unw[k];if(w>0&&now.cur[k]>prev.cur[k]){dw+=w;dwP=dwP||k}
+    const f=now.stock[k]-prev.stock[k];if(f>0&&now.cur[k]<prev.cur[k]){ds+=f;dsP=dsP||k}
   }
-  /* 4. shipped: shelf -> pack bench -> orders board */
-  const sold=now.sold-prev.sold;
-  if(sold>0&&budget>0){const n=Math.min(4,sold);for(let i=0;i<n;i++){fly(shelf,pack,PARCEL,i*130,650);fly(pack,board,PARCEL,i*130+640,750)}}
+  if(dw)stageFly('wash',dw,wash,fin,thumb(dwP),800);
+  if(ds){let el=shelf;if(dsP)for(const x of document.querySelectorAll('.shelf .sitem'))if(x.dataset.k===dsP)el=x;stageFly('fin',ds,fin,el,thumb(dsP),850)}
+  /* 4. packed into the dispatch bay, 5. the courier takes the batch */
+  const db=now.bay-prev.bay;
+  if(db>0){stageFly('pack',db,shelf,pack,PARCEL,650);stageFly('bay',db,pack,send,PARCEL,750)}
+  if(db<0)stageFly('send',-db,send,win,TRUCK,1100);
 }
+Object.assign(A,{animMode(d){try{localStorage.setItem('resinaprint-anim',d.m)}catch(e){}applyAnimMode();toast('Animations: '+d.m)}});

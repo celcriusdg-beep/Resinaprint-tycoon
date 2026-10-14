@@ -1,8 +1,14 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='3.10';
-const PATCH_TITLE='Resinaprint 3.10 · The Animated Workshop';
+const VERSION='3.11';
+const PATCH_TITLE='Resinaprint 3.11 · Dispatch & Payouts';
 const PATCH=[
+ {h:'New in 3.11',i:[
+  '<b>Dispatch bay.</b> Packed orders now wait in a bay (50 to start) until the courier collects them or you press Send. The money chain is longer now: order → pack → bay → send → parcel → delivered, and online sales are paid out a few days after they are sent (webshop 1 day, bol.com 3, Etsy 4).',
+  '<b>Dispatch & payouts catalogue in the Shop.</b> Upgrade bay size (up to 300), courier pickups (up to hourly), auto-dispatch, bulk carrier discounts, payout speed (down to instant) and parcel insurance.',
+  'Logistics people and machines now run the dispatch bay and send it for you. Fulfilment partners skip the bay.',
+  '<b>Calmer animations.</b> Busy streams of prints and parcels are now bunched into a few flights with a ×count badge. Choose Smart, Calm or Off under Empire › More.'
+ ]},
  {h:'New in 3.10',i:[
   '<b>Printing is animated.</b> A printing printer glows with UV light, a scan line sweeps over it and a little copy of the figure builds up from the bottom as the print progresses. A finished print sparkles, and a failed one shakes and smokes.',
   '<b>Prints move through the shop.</b> When you collect a print it flies into the wash tub. Washed prints fly to the finishing bench, and finished figures fly onto the shelf, so you can see them become stock. Shipped orders fly out to the orders board as parcels.',
