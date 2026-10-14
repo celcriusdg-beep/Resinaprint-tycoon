@@ -202,7 +202,7 @@ function staffWork(dt){
     let n=0;
     while(s.cd<=0&&n++<12){
       const t=staffTask(s);if(t)s.done=(s.done||0)+1;
-      if(!t){s.cd=0;s.act='Waiting for work';break}
+      if(!t){s.cd=0;s.act=(typeof idleWhy==='function'&&idleWhy(s))||'Waiting for work';break}
       const d=t.h/(skill(s)*mf(s));
       s.cd+=d;s.busy+=d;s.act=t.act;gainXp(s,d);
     }

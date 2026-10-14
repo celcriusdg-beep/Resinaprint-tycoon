@@ -74,3 +74,19 @@ render=function(){
 const _reveal0=showVaultReveal;
 showVaultReveal=function(i){_reveal0.apply(null,arguments);try{snd('chest');if(i>=3)confetti(40+i*14);buzz(i>=3?[30,40,30]:15)}catch(e){}};
 Object.assign(A,{sound(){setSound(!sndOn);toast(sndOn?'Sound on':'Sound off')}});
+/* say WHY a worker or machine is waiting, so a stalled chain is easy to spot */
+function idleWhy(s){
+  try{
+    if(s.role==='tech'){
+      if(!S.printers.length)return 'No printers to run';
+      if(S.printers.some(p=>p.state==='idle'&&!whyNot(p,p.prod)&&(S.resin[p.resin]||0)<jobMl(p)))return 'Waiting for resin';
+      if(totUnwashed()>0)return 'Printers full: prints need washing';
+      if(totCured()>0)return 'Printers full: prints need finishing';
+      return 'Nothing in demand to print';
+    }
+    if(s.role==='post')return 'No prints to wash';
+    if(s.role==='painter')return 'No figures to finish';
+    if(s.role==='packer')return 'No orders to ship';
+  }catch(e){}
+  return '';
+}
