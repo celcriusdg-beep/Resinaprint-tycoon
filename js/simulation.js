@@ -69,7 +69,7 @@ function ship(o,counter){
   const chn=CHANNELS[o.ch||'web']||CHANNELS.web;
   earn(counter?'Counter sales':chn.cat||(o.ch==='bol'?'bol.com sales':o.ch==='etsy'?'Etsy sales':'Webshop sales'),price);
   if(Pd.royalty)spend('Royalties',price*Pd.royalty);
-  S.revenue+=price;S.sold++;(S.soldBy=S.soldBy||{})[o.p]=(S.soldBy[o.p]||0)+1;S.rep.shipped++;qInc('shipped');addXp(productXp(o.p));
+  S.revenue+=price;S.sold++;(S.soldBy=S.soldBy||{})[o.p]=(S.soldBy[o.p]||0)+1;regSale(o.p);S.rep.shipped++;qInc('shipped');addXp(productXp(o.p));
   if(o.rush&&(o.age||0)<=1&&!counter){const rb=Math.round(price*.4*100)/100;earn('Rush bonus',rb);S.revenue+=rb;log(`Rush order shipped in time: +${fmt(rb)} bonus.`,'good')}
   const priceB=clamp((Pd.ref/price-1)*1.5,-.6,.4);
   if(counter){review(clamp(4.4+S.qual[o.p]+supportPower()+priceB+r(-.45,.3),1,5));return}

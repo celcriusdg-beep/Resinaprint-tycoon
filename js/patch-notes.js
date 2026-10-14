@@ -1,12 +1,22 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='3.1';
-const PATCH_TITLE='Resinaprint 3.1 · Machines';
+const VERSION='3.5';
+const PATCH_TITLE='Resinaprint 3.5 · The Workshop Update';
 const PATCH=[
+ {h:'New in 3.5',i:[
+  '<b>Your workshop is a picture.</b> The Studio tab now shows your real printers on desks with progress rings and glowing lamps. Tap a printer to start, collect or clean it. Your team and machines stand in the room, finished figures sit on the shelf, and the wall changes with your space and the time of day.',
+  '<b>Chapters and a goal strip.</b> A story from the hok to Resin legend, with objectives, rewards and a goal that stays pinned at the top of every tab.',
+  '<b>Tech tree.</b> Upgrades are now rows in a tree. Own any upgrade in a row to open the next one.',
+  '<b>Regulars.</b> Eight named customers who love certain figures. Sell them what they like and they level up: more demand, gift chests.',
+  '<b>Figure shelf.</b> Fill sets of figures for a chest and +4% demand forever.',
+  '<b>Weekly events.</b> Convention Week, Collector Rush and Resin Fair, each with a goal and a reward.',
+  '<b>Painting bench.</b> An optional daily mini-game for hype, XP and items.',
+  '<b>Juice.</b> Flying money, confetti, sounds and sheets that slide up. Sound can be turned off in Empire › More.'
+ ]},
  {h:'New in 3.1',i:[
   '<b>Machines.</b> Team now has three tabs: People, Machines and the Omega Forge.',
-  '26 machines do the same jobs as people (technician, post-processor, painter, packer, support, social, engineer, buyer, logistics, inspector, designer, photographer, sales rep, accountant). They never get tired, work day and night and only cost upkeep.',
-  '<b>The Omega Forge</b> holds 20 laboratory machines with 2.6 to 5.5 times the speed of a person, like the Voidwright Arm, Singularity Sorter and Tax Titan. It needs the Laboratorium wing.',
+  '26 machines do the same jobs as people. They never get tired, work day and night and only cost upkeep.',
+  '<b>The Omega Forge</b> holds 20 laboratory machines with 2.6 to 5.5 times the speed of a person. It needs the Laboratorium wing.',
   'Bays: 2 + 3 per space level for machines, 8 for the Forge. Sell any machine for 40% back.'
  ]},
  {h:'New in 3.0',i:[

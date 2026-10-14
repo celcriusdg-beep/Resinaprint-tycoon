@@ -57,3 +57,6 @@ the game falls back to the drawn picture.
 
 ## Age of Resin
 A second game in `age-of-resin/` (open `age-of-resin/index.html`, or Empire > More in Resinaprint). Five ages, four units each, turrets, specials and an enemy AI. Saves only win counts in localStorage.
+
+## 3.5 The Workshop Update
+Studio scene (js/workshop.js), story chapters, regulars, events and figure shelf (js/story.js), tech tree (js/tree.js), painting mini-game (js/minigame.js), sounds and confetti (js/fx.js), styles in css/game.css.

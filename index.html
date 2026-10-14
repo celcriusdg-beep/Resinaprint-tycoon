@@ -15,6 +15,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/game.css">
 </head>
 <body>
 
@@ -30,13 +31,14 @@
         <button class="btn ghost stk" id="waitBtn" data-a="wait">+2 h</button>
       </div>
     </div>
-    <div class="statline"><span>Rating <b id="mRating">–</b></span><span>Hype <b id="mHype">–</b></span><span id="mPay"></span></div>
+    <div class="pills"><span class="pill star"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 1.5l1.9 4 4.4.6-3.2 3 .8 4.3L8 11.3 4.1 13.4l.8-4.3-3.2-3 4.4-.6z"/></svg><b id="mRating">–</b></span><span class="pill hype"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 1c.5 2.4 3.5 3.8 3.5 7a3.5 3.5 0 0 1-7 0c0-1.2.5-2 1.2-2.8C6 6.5 6.6 7 7 7c0-2-.3-3.5 1-6z"/></svg><b id="mHype">–</b></span><span class="pill pay"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 7h12M5 1.5v3M11 1.5v3"/></svg><span id="mPay"></span></span></div>
     <div class="energy">
       <span class="lab"><svg class="bolt" viewBox="0 0 10 14" aria-hidden="true"><path d="M6 0 0 8h4l-1 6 7-9H6z" fill="currentColor"/></svg>Energy</span>
       <div class="bar"><i id="mEnergyBar" style="width:100%"></i></div>
       <span class="val" id="mEnergy">100/100</span>
       <button class="linkbtn" id="drinkBtn" data-a="drink">+ Drink</button>
     </div>
+    <button class="goal" id="goal" data-a="goGoal" aria-label="Current goal"></button>
   </header>
   <main id="main"></main>
 </div>
@@ -69,6 +71,11 @@
 <script src="js/viewer3d.js"></script>
 <script src="js/views.js"></script>
 <script src="js/machines.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/story.js"></script>
+<script src="js/tree.js"></script>
+<script src="js/minigame.js"></script>
+<script src="js/workshop.js"></script>
 <script src="js/main.js"></script>
 <script src="js/pwa.js"></script>
 </body>

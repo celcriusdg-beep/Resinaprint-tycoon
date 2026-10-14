@@ -75,18 +75,9 @@ function vStudio(){
   h+=vaultCard()+itemsCard()+rebirthCard();
   h+=item('Do everything','Collect, wash, finish, pack and reply as far as your energy goes',`<button class="btn sm primary" data-a="doAll">Do all</button>`).replace('class="item"','class="item card" style="margin-top:16px"');
   h+=questCard();
-  h+=label('Workbench',WASHERS[S.washer].name)+`<div class="card">
-  <div class="flow"><div class="${uw?'hot':''}"><b>${uw}</b><span>Unwashed</span></div><div class="${cu?'hot':''}"><b>${cu}</b><span>To finish</span></div><div><b>${ready}</b><span>Ready</span></div><div><b>${S.orders.length}</b><span>Orders</span></div></div>
-  <div class="tasks">
-    <button class="task ${uw?'go':''}" data-a="wash" ${uw?'':'disabled'}><strong>Wash & cure</strong><span>${uw?Math.min(uw,WASHERS[S.washer].cap)+' prints · '+en(washE()):'Nothing yet'}</span></button>
-    <button class="task ${fk?'go':''}" data-a="finish" ${fk?'':'disabled'}><strong>Finish</strong><span>${fk?PRODUCTS[fk].name.split(' ')[0]+' · '+en(finishE(fk)):'Nothing yet'}</span></button>
-    <button class="task ${pk?'go':''}" data-a="pack" ${pk?'':'disabled'}><strong>Pack & ship</strong><span>${pk?'1 order · '+en(E.pack()):'Nothing yet'}</span></button>
-  </div></div>`;
-  h+=label('Printers',`${S.printers.length} of ${space().printers} spots`)+`<div class="stack">`;
+  h+=label('Printer settings',`${S.printers.length} of ${space().printers} spots · ${WASHERS[S.washer].name}`)+`<div class="stack">`;
   h+=S.printers.length?S.printers.map(printerCard).join(''):`<div class="card empty">No printers yet. Buy one in the Buy tab.</div>`;
   h+='</div>';
-  const crew=studioStaff();
-  if(crew.length){h+=label('Team at work',`${shift()[0]}:00–${shift()[1]}:00`)+`<div class="group">`+crew.map(x=>item(`${x.name} <span class="f">${ROLES[x.role].name}</span>`,LT('sa'+x.id,x.act||'Starting up'))).join('')+'</div>'}
   return h;
 }
 function carrierOpts(dest){
@@ -236,7 +227,7 @@ function companyView(){
   return h;
 }
 function vEmpire(){
-  let h=segs('empire',[['stores','Stores'],['upgrades','Upgrades'],['media','Media'],['company','Company'],['goals','Goals',sub.empire!=='goals'?Math.min(S.unread,99):0],['vault','Vault',vaultOf(S).chests.length],['items','Items',invCount()],['rebirth','Rebirth',canRebirth()&&sub.empire!=='rebirth'?1:0],['more','More']]);
+  let h=segs('empire',[['stores','Stores'],['upgrades','Upgrades'],['media','Media'],['company','Company'],['goals','Goals',sub.empire!=='goals'?Math.min(S.unread,99):0],['vault','Vault',vaultOf(S).chests.length],['items','Items',invCount()],['regulars','Regulars'],['shelf','Shelf'],['rebirth','Rebirth',canRebirth()&&sub.empire!=='rebirth'?1:0],['more','More']]);
   if(sub.empire==='stores'){
     const closed=Object.keys(STORES).filter(k=>!S.stores[k]),opened=Object.keys(STORES).filter(k=>S.stores[k]);
     if(opened.length){h+=label('Your stores',`rent ${fmt(rent()-space().rent)}/week`)+`<div class="stack">`;
@@ -255,7 +246,7 @@ function vEmpire(){
       h+='</div>'}
   }else if(sub.empire==='upgrades'){
     const UC=UCATS.find(c=>c[0]===sub.up)||UCATS[0],own=UPGRADES.filter(u=>u.cat===UC[0]&&S.up[u.id]).length,tot=UPGRADES.filter(u=>u.cat===UC[0]).length;
-    h+=segs('up',UCATS)+label(UC[1],UC[0]==='energy'?`max ${maxE()} · regen ${regen().toFixed(1)}/h`:`${own} of ${tot} owned`)+(UC[0]==='energy'?energyCard():'')+`<div class="group">${upgradeItems(UC[0])}</div>`;
+    h+=segs('up',UCATS)+label(UC[1],UC[0]==='energy'?`max ${maxE()} · regen ${regen().toFixed(1)}/h`:`${own} of ${tot} owned`)+(UC[0]==='energy'?energyCard():'')+`<div class="tree">${treeItems(UC[0])}</div>`;
   }else if(sub.empire==='media'){
     h+=label('Sales channels','where customers find you')+`<div class="group">`;
     for(const k in CHANNELS){const C=CHANNELS[k],on=S.ch[k];h+=item(C.name,k==='web'?'Your own Shopify store':`${C.note}`,on?chip('Live','good'):`<button class="btn sm primary" data-a="channel" data-k="${k}" ${S.cash<C.cost||(C.kvk&&!S.biz.kvk)?'disabled':''}>${C.cost?fmt(C.cost):'Start'}</button>`)}
@@ -265,6 +256,10 @@ function vEmpire(){
     h+='</div>';
   }else if(sub.empire==='rebirth'){
     h+=rebirthView();
+  }else if(sub.empire==='regulars'){
+    h+=regsView();
+  }else if(sub.empire==='shelf'){
+    h+=shelfView();
   }else if(sub.empire==='items'){
     h+=itemsView();
   }else if(sub.empire==='vault'){

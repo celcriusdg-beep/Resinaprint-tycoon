@@ -123,7 +123,7 @@ const maxTier=()=>S.printers.reduce((a,p)=>Math.max(a,PRINTERS[p.type].tier),-1)
 const unlocked=k=>!PRODUCTS[k].req||S.up[PRODUCTS[k].req];
 const makeable=k=>unlocked(k)&&PRODUCTS[k].tier<=maxTier();
 const sellable=k=>S.listed[k]&&makeable(k);
-const resinPrice=k=>RESINS[k].cost*(S.up.bulk?.8:1)*S.mk.resin*(1-perk('rsn')*.02-(hasBranch('br')?.04:0))*cm('resin');
+const resinPrice=k=>RESINS[k].cost*(S.up.bulk?.8:1)*S.mk.resin*(1-perk('rsn')*.02-(hasBranch('br')?.04:0))*cm('resin')*evtResin();
 const mf=s=>.5+s.mood/200;
 const short=p=>PRINTERS[p.type].name.replace(/^(Elegoo|Anycubic|Phrozen|Formlabs|Creality|Stratasys|3D Systems|Prusa|Carbon|Nexa3D|Asiga|Engel|Arburg|Babyplast) /,'').replace(/ \((PolyJet|injection)\)/,'')+' #'+p.id;
 const E0={start:()=>4,collect:()=>3,refill:()=>S.up.feeder?0:2,clean:()=>6,service:()=>8,pack:()=>S.up.label?2:3,dm:()=>S.up.inbox?1:2,deliver:()=>6,restock:()=>5,shift:()=>40};
@@ -141,7 +141,7 @@ function demand(k){
   const Pd=PRODUCTS[k];
   let d=Pd.base*(1+S.hype/50)*Math.pow(S.rating/4.5,3)*Math.pow(Pd.ref*designMult()/S.prices[k],2.2)*(1+Math.log10(1+S.sold)/2);
   if(S.up.lightbox)d*=1.1; if(S.up.theme)d*=1.15; if(S.up.franchise)d*=1.5; if(S.up.ip)d*=1.1;
-  d*=saleMult()*earlyBoost()*socDem()*boostMult()*(1+Math.min(.8,upv('dem')))*photoMult()*season().m*S.mk.comp*chanMult()*trendMult(k)*(1+lvDem())*diffM().dem*(1+rebDem())*cm('dem')*(1+ctryFav(k));
+  d*=saleMult()*earlyBoost()*socDem()*boostMult()*(1+Math.min(.8,upv('dem')))*photoMult()*season().m*S.mk.comp*chanMult()*trendMult(k)*(1+lvDem())*diffM().dem*(1+rebDem())*cm('dem')*(1+ctryFav(k))*(1+regBonus(k)+shelfBonus())*evtDemand(k);
   return d;
 }
 function need(k){return S.orders.filter(o=>o.p===k).length+S.contracts.filter(c=>c.p===k).reduce((a,c)=>a+c.qty,0)-S.stock[k]}
