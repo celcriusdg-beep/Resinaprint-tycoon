@@ -178,10 +178,10 @@ body.skopen{overflow:hidden}
 .shopbar{display:flex;align-items:center;gap:10px;margin-top:14px}.shopbar b{flex:1;font-family:var(--f-display);font-size:17px;font-weight:400}
 /* ===== 3.8 Atmosphere: a lit workshop at night instead of a flat dark page ===== */
 :root{--g1:255,170,60;--g2:150,110,255;--bgtop:#1a1224;--bgmid:#1d1510;--bgbot:#100b08}
-body[data-tab=orders]{--g1:70,170,230;--g2:120,110,255}
-body[data-tab=buy]{--g1:240,190,70;--g2:80,210,150}
-body[data-tab=team]{--g1:255,120,170;--g2:150,110,255}
-body[data-tab=empire]{--g1:157,137,255;--g2:255,170,60}
+body[data-view=orders]{--g1:70,170,230;--g2:120,110,255}
+body[data-view=buy]{--g1:240,190,70;--g2:80,210,150}
+body[data-view=team]{--g1:255,120,170;--g2:150,110,255}
+body[data-view=empire]{--g1:157,137,255;--g2:255,170,60}
 body{background-color:var(--bgbot);
   background-image:
     radial-gradient(70% 38% at 8% -4%,rgba(var(--g1),.20),transparent 70%),
