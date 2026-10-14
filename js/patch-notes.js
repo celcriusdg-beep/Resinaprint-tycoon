@@ -7,7 +7,8 @@ const PATCH=[
   '<b>One Shop for everything you buy.</b> The Buy tab is now the Shop: pick a catalogue (Printers, Resin & supplies, Gear & moulds, Space & permits, Upgrades, Stores, Carriers, Sales channels). Upgrades open the skill tree. Tap the Shop tab again to return to the hub.',
   '<b>Machines are a proper catalogue.</b> Each of the 46 machines has its own illustration, spec bars (speed, output, upkeep), a payback calculator against hiring a person, filters by tier and job, sorting, and a spec sheet.',
   '<b>Fleet dashboard.</b> See bays, workforce power, upkeep and how much you save against hiring. Each machine shows how busy it was and how many tasks it has done.',
-  '<b>Tuning.</b> Tune any machine from Mk I up to Mk IV for +25% speed per step.'
+  '<b>Tuning.</b> Tune any machine from Mk I up to Mk IV for +25% speed per step.',
+  '<b>The Shop is the only place to buy.</b> Stores, carriers and sales channels moved into the Shop, and the Stores and Upgrades tabs are gone from Empire. Running your stores stays in the Shop too; hype, campaigns and delivery rules stay where they were.'
  ]},
  {h:'New in 3.6',i:[
   '<b>A real skill tree.</b> Shop › Upgrades opens a full-screen map: seven branches (Energy, Production, Sales, Team, Business, Media, Site) grow out of your studio. Drag to explore, pinch to zoom, tap a node to read it and buy it.',

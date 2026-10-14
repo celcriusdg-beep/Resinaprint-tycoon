@@ -106,10 +106,7 @@ function vOrders(){
     h+=item('Track record',`${st.del} delivered · ${st.lost} lost · ${st.dmg} damaged${done?` · ${Math.round(100*st.del/done)}% perfect`:''}`)+'</div>';
     h+=label('Delivery rules','which carrier ships where')+`<div class="group">`;
     for(const d in DESTS){const D=DESTS[d],C=CARRIERS[carrierFor(d)];h+=`<div class="item"><div class="grow"><div class="t">${D.name}</div><div class="s">${Math.round(D.w*100)}% of orders · about ${fmt(PRODUCTS.desk.ship*C.mult*D.cost)} for a desk figure</div></div><select class="sel" data-ship="${d}">${carrierOpts(d)}</select></div>`}
-    h+='</div>'+label('Carriers')+`<div class="group">`;
-    for(const id in CARRIERS){const C=CARRIERS[id],own=S.car[id],blocked=(C.kvk&&!S.biz.kvk)?'Register at the KvK first':(C.req&&!C.req())?C.reqText:'';
-      h+=item(C.name,`${C.note} · ×${C.mult} price · ${C.days*12>=24?Math.round(C.days)+' d':'1 d'} · ${((1-(1-C.lost)*(1-C.dmg))*100).toFixed(1)}% problems${blocked&&!own?` · <span class="f">${blocked}</span>`:''}`,own?chip('Yours','amber'):`<button class="btn sm primary" data-a="carrier" data-k="${id}" ${blocked||S.cash<C.cost?'disabled':''}>${C.cost?fmt(C.cost):'Free'}</button>`)}
-    h+='</div>';
+    h+='</div>'+`<div class="card" style="margin-top:12px"><div class="s">Carriers are bought in the Shop.</div></div>`;
   }else{
     h+=catalogView();
   }
@@ -170,7 +167,7 @@ function vTeam(){
   if(logiSave()>0)bo.push(`${Math.round(logiSave()*100)}% cheaper shipping`);
   if(salesMult()>1)bo.push(`+${Math.round((salesMult()-1)*100)}% contract pay`);
   let h=label('Team',`${st.length} of ${space().staff} · ${fmt(wages())}/day`)+`<div class="group">`;
-  h+=item('You <span class="chip uv">Owner</span>',`${Math.round(S.energy)}/${maxE()} energy · +${regen().toFixed(1)}/h · more in Empire › Upgrades`)+crunchRow();
+  h+=item('You <span class="chip uv">Owner</span>',`${Math.round(S.energy)}/${maxE()} energy · +${regen().toFixed(1)}/h · more in Shop › Upgrades`)+crunchRow();
   for(const s of S.staff){
     if(s.mach)continue;
     if(s.role==='clerk'){h+=`<div class="item"><div class="grow"><div class="t">${s.name} ${moodChip(s.mood)}</div><div class="s">${STORES[s.store].name} clerk · ${fmt(s.wage)}/day</div></div><button class="btn sm ghost" data-a="fire" data-id="${s.id}">Let go</button></div>`;continue}
@@ -226,9 +223,8 @@ function companyView(){
   h+='</div>';
   return h;
 }
-function vEmpire(){
-  let h=segs('empire',[['stores','Stores'],['media','Media'],['company','Company'],['goals','Goals',sub.empire!=='goals'?Math.min(S.unread,99):0],['vault','Vault',vaultOf(S).chests.length],['items','Items',invCount()],['regulars','Regulars'],['shelf','Shelf'],['rebirth','Rebirth',canRebirth()&&sub.empire!=='rebirth'?1:0],['more','More']]);
-  if(sub.empire==='stores'){
+function storesView(){
+  let h='';
     const closed=Object.keys(STORES).filter(k=>!S.stores[k]),opened=Object.keys(STORES).filter(k=>S.stores[k]);
     if(opened.length){h+=label('Your stores',`rent ${fmt(rent()-space().rent)}/week`)+`<div class="stack">`;
       for(const k of opened){const D=STORES[k],st=S.stores[k],clerks=S.staff.filter(s=>s.role==='clerk'&&s.store===k).length,cap=D.capB*st.level,openToday=clerks>0||S.shift[k]===S.day;
@@ -244,13 +240,27 @@ function vEmpire(){
     if(closed.length){h+=label('Open a store','sells on days a clerk or you work')+`<div class="group">`;
       for(const k of closed){const D=STORES[k],ok=D.req();h+=item(D.name,ok?`Sells ${D.item} · ${fmt(D.rent)}/week`:`<span class="f">${D.reqText}</span>`,`<button class="btn sm primary" data-a="openStore" data-k="${k}" ${!ok||S.cash<D.cost?'disabled':''}>${fmt(D.cost)}</button>`)}
       h+='</div>'}
-  }else if(sub.empire==='upgrades'){
-    const UC=UCATS.find(c=>c[0]===sub.up)||UCATS[0],own=UPGRADES.filter(u=>u.cat===UC[0]&&S.up[u.id]).length,tot=UPGRADES.filter(u=>u.cat===UC[0]).length;
-    h+=skillCard()+label('List view','the same upgrades as plain rows')+segs('up',UCATS).replace('margin-top:18px','')+label(UC[1],UC[0]==='energy'?`max ${maxE()} · regen ${regen().toFixed(1)}/h`:`${own} of ${tot} owned`)+(UC[0]==='energy'?energyCard():'')+`<div class="tree">${treeItems(UC[0])}</div>`;
-  }else if(sub.empire==='media'){
+  return h;
+}
+function channelsView(){
+  let h='';
     h+=label('Sales channels','where customers find you')+`<div class="group">`;
     for(const k in CHANNELS){const C=CHANNELS[k],on=S.ch[k];h+=item(C.name,k==='web'?'Your own Shopify store':`${C.note}`,on?chip('Live','good'):`<button class="btn sm primary" data-a="channel" data-k="${k}" ${S.cash<C.cost||(C.kvk&&!S.biz.kvk)?'disabled':''}>${C.cost?fmt(C.cost):'Start'}</button>`)}
-    h+='</div>'+label('Hype','drops 6% a day')+`<div class="card"><div style="display:flex;align-items:baseline;gap:10px"><span class="num" style="font-size:28px;color:var(--uv)">${Math.round(S.hype)}</span><span class="s">+50 hype doubles webshop demand</span></div><div style="margin-top:10px">${bar(S.hype/2,'var(--uv)')}</div></div>`;
+  h+='</div>';
+  return h;
+}
+function carriersView(){
+  let h=label('Carriers')+`<div class="group">`;
+    for(const id in CARRIERS){const C=CARRIERS[id],own=S.car[id],blocked=(C.kvk&&!S.biz.kvk)?'Register at the KvK first':(C.req&&!C.req())?C.reqText:'';
+      h+=item(C.name,`${C.note} · ×${C.mult} price · ${C.days*12>=24?Math.round(C.days)+' d':'1 d'} · ${((1-(1-C.lost)*(1-C.dmg))*100).toFixed(1)}% problems${blocked&&!own?` · <span class="f">${blocked}</span>`:''}`,own?chip('Yours','amber'):`<button class="btn sm primary" data-a="carrier" data-k="${id}" ${blocked||S.cash<C.cost?'disabled':''}>${C.cost?fmt(C.cost):'Free'}</button>`)}
+  h+='</div>';
+  return h;
+}
+function vEmpire(){
+  let h=segs('empire',[['media','Media'],['company','Company'],['goals','Goals',sub.empire!=='goals'?Math.min(S.unread,99):0],['vault','Vault',vaultOf(S).chests.length],['items','Items',invCount()],['regulars','Regulars'],['shelf','Shelf'],['rebirth','Rebirth',canRebirth()&&sub.empire!=='rebirth'?1:0],['more','More']]);
+  if(sub.empire==='media'){
+    h+=`<div class="card" style="margin-bottom:6px"><div class="s">Sales channels are bought in the Shop. Here you run the ones you own.</div></div>`;
+    h+=label('Hype','drops 6% a day')+`<div class="card"><div style="display:flex;align-items:baseline;gap:10px"><span class="num" style="font-size:28px;color:var(--uv)">${Math.round(S.hype)}</span><span class="s">+50 hype doubles webshop demand</span></div><div style="margin-top:10px">${bar(S.hype/2,'var(--uv)')}</div></div>`;
     h+=saleCard()+socialView()+label('Campaigns')+`<div class="group">`;
     for(const C of CAMPAIGNS){const cd=S.cds[C.id]||0,lock=(C.minRating&&S.rating<C.minRating)||(C.minSold&&S.sold<C.minSold)||(C.minHype&&S.hype<C.minHype)||(C.kvk&&!S.biz.kvk)||(C.needCh&&!S.ch[C.needCh]);h+=item(`${C.name} <span class="chip uv">+${C.hype}</span>`,C.desc,`<button class="btn sm ${C.cost?'primary':'uv'}" data-a="camp" data-k="${C.id}" ${cd||lock||S.cash<C.cost?'disabled':''}>${cd?`in ${cd} d`:C.cost?fmt(C.cost):`Post ${en(C.energy)}`}</button>`)}
     h+='</div>';

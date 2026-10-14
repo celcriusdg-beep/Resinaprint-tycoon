@@ -36,16 +36,16 @@ function shopBack(label_){
 Object.assign(A,{shopGo(d){
   const k=d.k;
   if(k==='skill'){openSkill();return}
-  if(k==='stores'){tab='empire';sub.empire='stores';return}
-  if(k==='carriers'){tab='orders';sub.orders='delivery';return}
-  if(k==='channels'){tab='empire';sub.empire='media';return}
   sub.buy=k;window.scrollTo({top:0});
 }});
 /* the Buy tab becomes the Shop: hub first, then each catalogue with a way back */
 const _vBuy0=vBuy;
 vBuy=function(){
-  if(!['printers','resin','gear','space'].includes(sub.buy))return shopHub();
-  const names={printers:'Printers',resin:'Resin & supplies',gear:'Gear & moulds',space:'Space & permits'};
+  if(!['printers','resin','gear','space','stores','carriers','channels'].includes(sub.buy))return shopHub();
+  const names={printers:'Printers',resin:'Resin & supplies',gear:'Gear & moulds',space:'Space & permits',stores:'Stores',carriers:'Carriers',channels:'Sales channels'};
+  if(sub.buy==='stores')return shopBack(names.stores)+storesView();
+  if(sub.buy==='carriers')return shopBack(names.carriers)+`<div class="card" style="margin-top:12px"><div class="s">Pick the carriers you want to ship with. Choose which one handles which country in Orders › Delivery.</div></div>`+carriersView();
+  if(sub.buy==='channels')return shopBack(names.channels)+`<div class="card" style="margin-top:12px"><div class="s">Where customers find you. Hype, sales and campaigns for the channels you own are in Empire › Media.</div></div>`+channelsView();
   return shopBack(names[sub.buy])+_vBuy0();
 };
 VIEWS.buy=vBuy;

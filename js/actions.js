@@ -91,7 +91,7 @@ function candidates(role){
 }
 
 /* ---------- UI plumbing ---------- */
-let tab='studio',sub={orders:'queue',buy:'hub',empire:'stores',pg:'0',up:'energy',team:'people'},pending=[],lastHTML='';
+let tab='studio',sub={orders:'queue',buy:'hub',empire:'company',pg:'0',up:'energy',team:'people'},pending=[],lastHTML='';
 const openPr=new Set();
 A.togglePr=d=>{const id=+d.id;openPr.has(id)?openPr.delete(id):openPr.add(id)};
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(()=>el.style.opacity=0,1900)}

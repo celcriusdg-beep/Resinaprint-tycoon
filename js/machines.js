@@ -78,7 +78,7 @@ function machRow(m){
 function machView(lab){
   const own=machOwned(lab),bays=machBays(lab);
   let h='';
-  if(lab&&!S.up.labwing)return label('The Omega Forge','sealed')+`<div class="card empty">Buy the Laboratorium wing in Empire › Upgrades to open the Omega Forge.</div>`;
+  if(lab&&!S.up.labwing)return label('The Omega Forge','sealed')+`<div class="card empty">Buy the Laboratorium wing in Shop › Upgrades to open the Omega Forge.</div>`;
   h+=label(lab?'The Omega Forge':'Machines',`${own.length} of ${bays} bays · ${fmt(own.reduce((a,s)=>a+s.wage,0))}/day upkeep`);
   h+=`<div class="card" style="margin-bottom:12px"><div class="s">${lab?'Laboratory-grade automation. Far faster than any person, works through the night and never asks for a raise.':'Machines do the same jobs as people. They never get tired or unhappy, work day and night, and cost only upkeep. More bays come with a bigger space.'}</div></div>`;
   if(own.length){
