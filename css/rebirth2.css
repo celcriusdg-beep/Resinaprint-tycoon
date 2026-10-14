@@ -1,0 +1,29 @@
+/* ===== black matter, out of control ===== */
+.shard{filter:drop-shadow(0 0 5px rgba(157,107,255,.8))!important;animation:none!important;overflow:visible}
+.shard .sh-ca1{animation:ca1 2.1s steps(1) infinite}.shard .sh-ca2{animation:ca2 2.1s steps(1) infinite}
+@keyframes ca1{0%,100%{transform:translate(0,0)}6%{transform:translate(-2.4px,.6px)}9%{transform:translate(1.8px,-.8px)}12%{transform:translate(0,0)}58%{transform:translate(2.2px,-1px)}61%{transform:translate(-1.6px,.8px)}64%{transform:translate(0,0)}}
+@keyframes ca2{0%,100%{transform:translate(0,0)}6%{transform:translate(2.4px,-.6px)}9%{transform:translate(-1.8px,.8px)}12%{transform:translate(0,0)}58%{transform:translate(-2.2px,1px)}61%{transform:translate(1.6px,-.8px)}64%{transform:translate(0,0)}}
+.shard.big{filter:drop-shadow(0 0 14px rgba(140,70,255,.9)) drop-shadow(0 0 40px rgba(90,20,220,.7))!important;animation:shjit 3.2s steps(1) infinite!important}
+@keyframes shjit{0%,100%{transform:translate(0,0) scale(1)}20%{transform:translate(0,-3px) scale(1.02)}41%{transform:translate(-3px,0) skewX(4deg) scale(1.05)}43%{transform:translate(3px,1px) skewX(-6deg) scale(.97)}45%{transform:translate(0,0)}70%{transform:translate(0,-5px) scale(1.03)}}
+.sh-ring{transform-origin:24px 32px;animation:shring 7s linear infinite}@keyframes shring{to{transform:rotate(360deg)}}
+.sh-bit{transform-origin:24px 32px;animation:shbit 3.5s linear infinite;animation-delay:calc(var(--d)*-1)}
+@keyframes shbit{from{transform:rotate(var(--a)) translateX(30px) scaleY(.4)}to{transform:rotate(calc(var(--a) + 360deg)) translateX(30px) scaleY(.4)}}
+.sh-scan{animation:shscan 2.4s linear infinite}@keyframes shscan{from{transform:translateY(-6px)}to{transform:translateY(70px)}}
+/* glitch text */
+.gl{position:relative;display:inline-block;color:#efe0ff;text-shadow:0 0 12px rgba(157,107,255,.9)}
+.gl::before,.gl::after{content:attr(data-t);position:absolute;left:0;top:0;width:100%;overflow:hidden;pointer-events:none}
+.gl::before{color:#ff2fa8;text-shadow:none;animation:glA 2.6s steps(1) infinite;clip-path:inset(0 0 55% 0)}
+.gl::after{color:#27e3ff;text-shadow:none;animation:glB 2.6s steps(1) infinite;clip-path:inset(55% 0 0 0)}
+@keyframes glA{0%,100%{transform:translate(0)}7%{transform:translate(-3px,0);clip-path:inset(10% 0 60% 0)}10%{transform:translate(2px,0);clip-path:inset(40% 0 30% 0)}13%{transform:translate(0);clip-path:inset(0 0 55% 0)}72%{transform:translate(3px,0);clip-path:inset(20% 0 50% 0)}75%{transform:translate(0)}}
+@keyframes glB{0%,100%{transform:translate(0)}7%{transform:translate(3px,0);clip-path:inset(60% 0 10% 0)}10%{transform:translate(-2px,0);clip-path:inset(30% 0 40% 0)}13%{transform:translate(0);clip-path:inset(55% 0 0 0)}72%{transform:translate(-3px,0);clip-path:inset(50% 0 20% 0)}75%{transform:translate(0)}}
+.gl.lg{animation:glshake 3.4s steps(1) infinite}@keyframes glshake{0%,100%{transform:none}30%{transform:skewX(0)}31%{transform:skewX(-14deg) translateX(3px)}32%{transform:skewX(10deg) translateX(-3px)}33%{transform:none}}
+.shardn .gl::before,.shardn .gl::after{animation-duration:4s}
+/* rebirth page */
+.rbhero{padding:20px 16px 18px;overflow:hidden;position:relative;background:radial-gradient(70% 50% at 50% 22%,rgba(122,59,255,.42),transparent 70%),radial-gradient(40% 30% at 50% 22%,rgba(255,47,168,.14),transparent 70%),#050309!important}
+.rbhero::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px);pointer-events:none;animation:crt 8s linear infinite}@keyframes crt{to{background-position:0 60px}}
+.rb-orb{display:grid;place-items:center;height:130px}.rb-n{text-align:center;margin-top:2px}.rb-n .shardbig{font-size:52px}
+.rbcols{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;font-size:12.5px}.rbcols .k{font:700 11px var(--f-body);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}.rbcols ul{margin:0;padding-left:16px;color:var(--ink)}.rbcols li{margin:2px 0}.rbcols>div:last-child li{color:var(--muted)}
+.prk{display:flex;align-items:center;gap:12px;padding:12px 14px;border-top:1px solid var(--line)}.prk:first-child{border-top:0}
+.prk .pips{display:flex;gap:3px;margin-top:6px}.prk .pips i{width:14px;height:4px;border-radius:2px;background:rgba(255,255,255,.1)}.prk .pips i.on{background:#a46bff;box-shadow:0 0 6px #7a3bff}
+.prk.own .perkico{box-shadow:0 0 14px rgba(122,59,255,.5)}.prk .s .f{color:#c9a8ff}
+@media (prefers-reduced-motion:reduce){.shard *,.shard.big,.gl,.gl::before,.gl::after,.rbhero::after{animation:none!important}}
