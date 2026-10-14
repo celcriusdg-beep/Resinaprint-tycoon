@@ -25,7 +25,7 @@ function skyFor(h){
 function workshopScene(){
   const sp=space(),shown=S.printers.slice(0,12);
   let h=`<div class="shop ws${S.ws}"><div class="wall">
-    <div class="win" style="background:${skyFor(S.hour)}">${S.hour>=21||S.hour<5?'<i class="moon"></i>':'<i class="sun"></i>'}</div>
+    ${typeof wallDeco==='function'?wallDeco(S.ws):''}
     <div class="spname">${sp.name}</div>
     <div class="clockface">${String(S.hour).padStart(2,'0')}:${String(Math.floor(S.m)).padStart(2,'0')}</div>
     <div class="board"><b>${S.orders.length}</b><span>orders</span>${S.contracts.length?`<b>${S.contracts.length}</b><span>contracts</span>`:''}</div>

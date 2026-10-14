@@ -1,8 +1,11 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.0';
-const PATCH_TITLE='Resinaprint 4.0 · Premium';
+const VERSION='4.1';
+const PATCH_TITLE='Resinaprint 4.1 · Spaces';
 const PATCH=[
+ {h:'New in 4.1',i:[
+  '<b>Every space looks different again.</b> Hok: a corrugated roller-door wall, a swinging bare bulb and stacked boxes. Small studio: brick, a window, a pendant lamp, a poster and a plant. Workshop: a pegboard of tools, work lights and a safety-stripe floor. Factory hall: steel trusses, high windows, strip lights and hazard stripes. Industrial unit: pipes, valves, a duct and a crane that crosses the ceiling. Production campus: a glass wall with a city skyline that lights up at night.'
+ ]},
  {h:'New in 4.0',i:[
   '<b>A new premium look.</b> Graphite and glass instead of brown and rainbow: one gold accent, quiet borders, frosted header, a floating dock, condensed headlines and cleaner numbers.',
   'Every tab, card, button, chip, the Shop, machines, the skill tree and the workshop scene follow the same calm style. Colour is now saved for things that matter: gold for what you can do, green and red for good and bad.'
