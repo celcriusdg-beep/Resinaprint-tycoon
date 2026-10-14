@@ -1,8 +1,13 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='3.5';
-const PATCH_TITLE='Resinaprint 3.5 · The Workshop Update';
+const VERSION='3.6';
+const PATCH_TITLE='Resinaprint 3.6 · The Skill Tree';
 const PATCH=[
+ {h:'New in 3.6',i:[
+  '<b>A real skill tree.</b> Empire › Upgrades opens a full-screen map: seven branches (Energy, Production, Sales, Team, Business, Media, Site) grow out of your studio. Drag to explore, pinch to zoom, tap a node to read it and buy it.',
+  'Nodes link to the ones above them. Own any linked node to open the next, and bigger keystone nodes sit where branches merge. Everything you already own stays unlocked.',
+  'Best buy jumps to the most useful thing you can afford. The old list is still there under the tree card.'
+ ]},
  {h:'New in 3.5',i:[
   '<b>Your workshop is a picture.</b> The Studio tab now shows your real printers on desks with progress rings and glowing lamps. Tap a printer to start, collect or clean it. Your team and machines stand in the room, finished figures sit on the shelf, and the wall changes with your space and the time of day.',
   '<b>Chapters and a goal strip.</b> A story from the hok to Resin legend, with objectives, rewards and a goal that stays pinned at the top of every tab.',

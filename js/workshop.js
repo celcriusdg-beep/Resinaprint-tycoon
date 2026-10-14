@@ -67,7 +67,7 @@ render=function(){
     _lastCash=S.cash;
     if(_lastLv!=null&&S.lv>_lastLv){confetti(70);snd('level');buzz([20,40,20])}
     _lastLv=S.lv;
-    storyCheck();
+    storyCheck();if(typeof skillOpen!=='undefined'&&skillOpen)refreshSkill();
   }catch(e){console.error(e)}
 };
 const _reveal0=showVaultReveal;
