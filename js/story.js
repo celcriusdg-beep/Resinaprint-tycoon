@@ -148,6 +148,6 @@ function shelfView(){
   return h;
 }
 /* keep story, regulars and shelf through rebirth and restart, and show everything */
-const _storyKeep=o=>{S.story=o.story;S.regs=o.regs;S.shelf=o.shelf};
+const _storyKeep=o=>{S.story=o.story;S.regs=o.regs;S.shelf=o.shelf;S.pinv=o.pinv};
 const _doRebirth0=doRebirth;doRebirth=function(d){const o=S;_doRebirth0(d);_storyKeep(o)};
 const _restart0=restartRun;restartRun=function(){const o=S;_restart0();_storyKeep(o)};

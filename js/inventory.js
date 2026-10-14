@@ -17,7 +17,7 @@ const ITEMS={
 };
 const IKEYS=Object.keys(ITEMS);
 const invOf=s=>s.inv||(s.inv={});
-const invCount=()=>Object.values(invOf(S)).reduce((a,b)=>a+b,0);
+const invCount=()=>Object.values(invOf(S)).reduce((a,b)=>a+b,0)+((S.pinv&&S.pinv.length)||0);
 function addItem(k,n){const v=invOf(S);v[k]=(v[k]||0)+(n||1)}
 function takeItem(k){const v=invOf(S);if(!(v[k]>0))return false;v[k]--;if(v[k]<=0)delete v[k];return true}
 /* chests and goals drop items; better rarities drop better items */
@@ -61,7 +61,8 @@ function itemsView(){
   const v=invOf(S),have=IKEYS.filter(k=>v[k]>0);
   let h=label('Items',`${invCount()} in your bag`);
   if(vaultOf(S).charm)h+=`<div class="card" style="margin-bottom:12px"><div class="t">Lucky charm active</div><div class="s">Your next chest rolls much better rewards.</div></div>`;
-  if(!have.length)return h+`<div class="card empty">Nothing here yet. Chests and daily goals drop items.</div>`;
+  h+=storageView();
+  if(!have.length)return h+`<div class="card empty" style="margin-top:12px">No items yet. Chests and daily goals drop them.</div>`;
   h+=`<div class="group">`;
   for(const k of have){const I=ITEMS[k],c=RARITIES[Math.min(9,I.r)].col;
     h+=`<div class="item"><div class="perkico" style="color:${c};border-color:${c}"><svg viewBox="0 0 16 16" aria-hidden="true">${I.ico}</svg></div><div class="grow"><div class="t">${I.n} <span class="chip">×${v[k]}</span></div><div class="s">${I.d}</div></div><button class="btn sm primary" data-a="useItem" data-k="${k}">Use</button></div>`}
@@ -71,3 +72,21 @@ function itemsCard(){
   const n=invCount();if(!n)return '';
   return `<div class="card vcta" style="margin-top:16px"><div class="perkico" style="width:44px;height:44px"><svg viewBox="0 0 16 16" aria-hidden="true">${ITEMS.service.ico}</svg></div><div class="grow"><div class="t">${n} item${n>1?'s':''} in your bag</div><div class="s">Service kits, drinks, boosts and more.</div></div><button class="btn sm primary" data-a="goItems">Open</button></div>`;
 }
+
+/* printers from chests wait in storage until you decide where they go */
+function storageView(){
+  const L=S.pinv||[];if(!L.length)return '';
+  let h=label('Printers in storage',`${S.printers.length} of ${space().printers} spots used`)+'<div class="group">';
+  for(const x of L){const D=PRINTERS[x.type],lk=printerLock(D),room=S.printers.length<space().printers;
+    h+=`<div class="item">${artBox(printerArt(x.type),'','',['p',x.type])}<div class="grow"><div class="t">${D.name}</div><div class="s">${lk?`<span class="f">${lk}</span>`:room?`${TIERS[D.tier]} · ${D.slots} slots · ${D.speed}×`:'<span class="f">No free printer spot</span>'}</div></div><div style="display:grid;gap:6px"><button class="btn sm primary" data-a="placePrinter" data-id="${x.id}" ${lk||!room?'disabled':''}>Place</button><button class="btn sm ghost" data-a="sellStored" data-id="${x.id}">Sell ${fmt(Math.round(D.cost*.5))}</button></div></div>`}
+  return h+'</div>';
+}
+Object.assign(A,{
+  placePrinter(d){const L=S.pinv||[],x=L.find(y=>y.id==d.id);if(!x)return;const D=PRINTERS[x.type];
+    if(printerLock(D))return toast(printerLock(D));if(S.printers.length>=space().printers)return toast('No free printer spot');
+    addPrinter(x.type);const p=S.printers[S.printers.length-1];
+    if(!D.form)p.vat=D.vat;else S.resin[DEFRES[D.fam]]=(S.resin[DEFRES[D.fam]]||0)+(RESINS[DEFRES[D.fam]].vol||1000)*2;
+    S.pinv=L.filter(y=>y!==x);log(`Placed ${D.name} from storage.`,'good');toast(`${D.name} placed`)},
+  sellStored(d){const L=S.pinv||[],x=L.find(y=>y.id==d.id);if(!x)return;const D=PRINTERS[x.type],v=Math.round(D.cost*.5);
+    confirmBox(`Sell ${D.name}?`,`You get ${fmt(v)}.`,()=>{S.pinv=(S.pinv||[]).filter(y=>y!==x);earn('Vault rewards',v);toast(`Sold for ${fmt(v)}`)})}
+});

@@ -43,11 +43,8 @@ function vaultGive(i,lv){
   if(R.boost&&(!boostMult()||R.boost[0]>boostMult())){S.boost={m:R.boost[0],until:S.abs+R.boost[1]*24};got.push({k:'boost',t:'Demand boost',v:`+${Math.round((R.boost[0]-1)*100)}% for ${R.boost[1]} days`})}
   if(Math.random()<VAULT_PRINTER[i]){
     const pool=vaultPool(i),k=pool[Math.floor(Math.random()*pool.length)],D=PRINTERS[k];
-    if(S.printers.length<space().printers){
-      addPrinter(k);const p=S.printers[S.printers.length-1];
-      if(!D.form)p.vat=D.vat;else S.resin[DEFRES[D.fam]]=(S.resin[DEFRES[D.fam]]||0)+(RESINS[DEFRES[D.fam]].vol||1000)*2;
-      got.push({k:'printer',t:'Printer',v:D.name,art:printerArt(k),big:1});
-    }else{const v=Math.round(D.cost*.5);earn('Vault rewards',v);got.push({k:'printer',t:'Printer (no room, sold)',v:D.name+' '+'+'+fmt(v),art:printerArt(k),big:1})}
+    (S.pinv=S.pinv||[]).push({id:nid(),type:k});
+    got.push({k:'printer',t:'Printer · sent to storage',v:D.name,art:printerArt(k),big:1});
   }
   if(Math.random()<VAULT_UPGRADE[i]){
     const ok=UPGRADES.filter(u=>!S.up[u.id]&&u.cost<=VAULT_UPMAX[i]&&u.cost>=VAULT_UPMAX[i]/12&&(!u.req||u.req()));
@@ -57,7 +54,7 @@ function vaultGive(i,lv){
   if(R.rate){S.rating=clamp(S.rating+R.rate,1,5);got.push({k:'rating',t:'Rating',v:'+'+R.rate.toFixed(2)+'★'})}
   return got;
 }
-const CHEST_SVG=big=>{const a=big?'#ffd45e':'#b98a55',b=big?'#b8801f':'#7a5532',c=big?'#fff3b0':'#e0b783';
+var CHEST_SVG=big=>{const a=big?'#ffd45e':'#b98a55',b=big?'#b8801f':'#7a5532',c=big?'#fff3b0':'#e0b783';
   return `<svg viewBox="0 0 96 80" aria-hidden="true"><ellipse cx="48" cy="72" rx="36" ry="6" fill="#000" opacity=".35"/><rect x="10" y="34" width="76" height="36" rx="5" fill="${b}"/><path d="M10 38C10 18 24 8 48 8s38 10 38 30z" fill="${a}"/><rect x="10" y="34" width="76" height="6" fill="${c}" opacity=".55"/><rect x="40" y="30" width="16" height="20" rx="3" fill="${c}"/><circle cx="48" cy="40" r="3" fill="${b}"/><rect x="22" y="34" width="5" height="36" fill="${c}" opacity=".35"/><rect x="69" y="34" width="5" height="36" fill="${c}" opacity=".35"/></svg>`};
 function showVaultReveal(i,lv,got,big,left){
   const R=RARITIES[i];
