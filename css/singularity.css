@@ -1,0 +1,21 @@
+.sgcard{overflow:hidden;background:radial-gradient(70% 55% at 50% 45%,rgba(122,59,255,.3),transparent 70%),#05030a!important;border-color:rgba(157,107,255,.35)!important}
+.reactor{position:relative;width:100%;max-width:340px;aspect-ratio:1;margin:0 auto 8px}
+.reactor>svg{position:absolute;inset:0;width:100%;height:100%}
+.rspin{transform-origin:50px 50px;animation:rspin 40s linear infinite}@keyframes rspin{to{transform:rotate(360deg)}}
+.rcore{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;display:grid;place-items:center}
+.rc-hole{width:58px;margin-bottom:-4px}.rc-n{font-size:30px;font-weight:700;line-height:1}.rcore small{font:700 10px var(--f-body);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.snode{position:absolute;width:62px;height:62px;margin:-31px 0 0 -31px;border-radius:50%;padding:7px;background:radial-gradient(circle,#15111f,#07050c);border:2px solid color-mix(in srgb,var(--c) 40%,#2a2535);color:var(--ink);cursor:pointer;display:grid;place-items:center;transition:transform .15s,box-shadow .2s;filter:saturate(.55) brightness(.8)}
+.snode .sa{display:block;width:100%;height:100%}.snode b{position:absolute;left:-2px;top:-2px;width:18px;height:18px;border-radius:50%;background:#0d0b14;border:1px solid var(--c);font:700 10px/16px var(--f-num);text-align:center;color:var(--c)}
+.snode em{position:absolute;right:-3px;bottom:-3px;min-width:18px;height:18px;border-radius:9px;background:var(--c);color:#000;font:700 10px/18px var(--f-num);font-style:normal;text-align:center;padding:0 4px}
+.snode.ready{filter:none;animation:sgready 1.8s ease-in-out infinite;border-color:var(--c)}@keyframes sgready{50%{box-shadow:0 0 18px 2px var(--c)}}
+.snode.forged{filter:none;border-color:var(--c);box-shadow:0 0 14px var(--c)}
+.snode.sel{transform:scale(1.14);filter:none;box-shadow:0 0 0 2px #fff3,0 0 22px var(--c);z-index:2}
+.ings{display:grid;gap:6px;margin-top:10px}
+.ing{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;font-size:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+.ing i{width:8px;height:8px;border-radius:50%;background:#a46bff;flex:none}.ing.t-cash i{background:var(--amber)}.ing.t-item i{background:#5bd6a6}.ing.t-core i{background:#fff;box-shadow:0 0 8px #a46bff}.ing.t-pt i,.ing.t-lab i,.ing.t-any i{background:#5aa6ff;border-radius:2px}
+.ing span{flex:1}.ing b{font:600 14px var(--f-num)}.ing em{font:500 12px var(--f-num);font-style:normal;min-width:70px;text-align:right}
+.ing.ok em{color:var(--good)}.ing.no{border-color:rgba(255,90,90,.3)}.ing.no em{color:var(--bad)}
+.sgdetail{border-color:color-mix(in srgb,var(--c) 40%,transparent)!important;background:radial-gradient(90% 60% at 0% 0%,color-mix(in srgb,var(--c) 14%,transparent),transparent 70%),var(--glass)!important}
+.sgh{display:flex;gap:14px;align-items:center}.sgart{width:96px;height:96px;flex:none}.sgn{font:700 26px var(--f-display);text-transform:uppercase;letter-spacing:.04em;color:var(--c);text-shadow:0 0 16px color-mix(in srgb,var(--c) 55%,transparent)}
+.sgreveal{width:140px;height:140px;margin:6px auto}
+@media (prefers-reduced-motion:reduce){.rspin,.snode.ready{animation:none}}

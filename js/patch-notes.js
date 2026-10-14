@@ -1,8 +1,11 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.2';
-const PATCH_TITLE='Resinaprint 4.2 · Black Matter';
+const VERSION='4.3';
+const PATCH_TITLE='Resinaprint 4.3 · Singularity';
 const PATCH=[
+ {h:'New in 4.3',i:[
+  '<b>Singularity.</b> A new Empire tab, a rebirth system without the rebirth. Fuse black matter, cash and a spare printer into Singularity Cores, then forge six impossible printers in the Fusion Reactor: Event Horizon Press, Quasar Lattice, Tachyon Loom, Wormhole Foundry, Dark Matter Reactor and the Omega Singularity. Each needs the one before it, other printers, items and cores. Forged printers go to your inventory first, and Singularity survives rebirths.'
+ ]},
  {h:'New in 4.2',i:[
   '<b>Rebirth rebuilt.</b> Resin Shards are now glitching black matter that warps, splits into colour and throws sparks. Ten new, very different perks: Heirloom (keep cash), Shard bank (interest), Starter kit (free printers), Phoenix (survive bankruptcy), Echo sale (double payouts), Event horizon (higher prices), Compound interest, Ghost shift (orders pack themselves), Void forge (figures appear twice) and Fate (a head start on chest pity). Perks are grouped by Economy, Production, Vault and Legacy, with a clear keep/lose list.',
   '<b>Chest printers go to storage.</b> A printer from a chest is no longer placed or sold by itself. Place or sell it in Empire › Items › Printers in storage.',

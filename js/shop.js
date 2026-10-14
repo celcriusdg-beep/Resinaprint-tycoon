@@ -12,7 +12,7 @@ const SHOP_ICO={
   channels:'<path d="M2 9V6l8-3v9zM2 9l1.2 4M12 5.5a3 3 0 0 1 0 3.5"/>'
 };
 function shopTiles(){
-  const printersOk=Object.keys(PRINTERS).filter(t=>!printerLock(PRINTERS[t])&&PRINTERS[t].cost<=S.cash).length;
+  const printersOk=Object.keys(PRINTERS).filter(t=>!PRINTERS[t].sing&&!printerLock(PRINTERS[t])&&PRINTERS[t].cost<=S.cash).length;
   const upBuy=typeof nodeState==='function'?UPGRADES.filter(u=>u.br&&nodeState(u)==='buy').length:0;
   const upOwn=UPGRADES.filter(u=>u.br&&S.up[u.id]).length,upTot=UPGRADES.filter(u=>u.br).length;
   const storesOpen=Object.keys(STORES).filter(k=>!(S.stores&&S.stores[k])).length;
