@@ -1,8 +1,13 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='3.8';
-const PATCH_TITLE='Resinaprint 3.8 · Atmosphere';
+const VERSION='3.9';
+const PATCH_TITLE='Resinaprint 3.9 · Five More Machine Tiers';
 const PATCH=[
+ {h:'New in 3.9',i:[
+  '<b>Five new machine tiers</b> above Industrial: Advanced, Elite, Quantum, Mythic and Apex. 70 new machines, one per job in every tier, with their own colours and glow. Apex machines run up to 9.5 times the speed of a person.',
+  'Each tier unlocks when you own a machine of the tier below. Advanced also needs a factory hall. Find them in Team › Machines › Catalogue and filter by tier.',
+  'Workers and machines now say why they are waiting (no resin, prints need washing and so on).'
+ ]},
  {h:'New in 3.8',i:[
   '<b>A new look.</b> The flat dark page is now a lit workshop at night: lamp and resin glow in the corners, drifting sparks, a vignette, raised glossy panels, a glass header and dock, and glowing section titles.',
   'The glow colour changes with the tab: amber in Studio, blue in Orders, gold in the Shop, pink in Team and violet in Empire. Your colour theme from Empire › More still works.'

@@ -3,6 +3,7 @@ const MK_NAMES=['Mk I','Mk II','Mk III','Mk IV'];
 const mkPw=(m,mk)=>m.pw*(1+.25*(mk||0)),mkUp=(m,mk)=>Math.round(m.up*(1+.12*(mk||0))),mkCost=(m,mk)=>Math.round(m.cost*.5*((mk||0)+1));
 const MROLE_ORDER=['tech','post','painter','packer','support','social','engineer','buyer','logistics','inspector','designer','photographer','salesrep','accountant'];
 const TIER_LABEL={basic:'Basic',pro:'Pro',ind:'Industrial',lab:'Prototype'};
+const machLockText=m=>typeof machLock==='function'?machLock(m):'';
 function mstat(m,mk){
   const pw=mkPw(m,mk),up=mkUp(m,mk),hw=ROLES[m.role].wage,out=pw*24/shiftLen(),save=Math.round(hw*out-up),pay=save>0?Math.ceil(m.cost/save):0;
   return{pw,up,hw,out,save,pay};
@@ -10,8 +11,8 @@ function mstat(m,mk){
 const mbar=(v,col)=>`<div class="mb"><i style="width:${Math.max(4,Math.min(100,v))}%;background:${col}"></i></div>`;
 function mspecs(m,mk){
   const s=mstat(m,mk);
-  return `<div class="mspec"><span>Speed</span>${mbar(s.pw/6.9*100,'var(--uv)')}<b>${s.pw.toFixed(1)}×</b></div>
-    <div class="mspec"><span>Output</span>${mbar(s.out/16*100,'var(--good)')}<b>${s.out.toFixed(1)}×</b></div>
+  return `<div class="mspec"><span>Speed</span>${mbar(s.pw/10*100,'var(--uv)')}<b>${s.pw.toFixed(1)}×</b></div>
+    <div class="mspec"><span>Output</span>${mbar(s.out/24*100,'var(--good)')}<b>${s.out.toFixed(1)}×</b></div>
     <div class="mspec"><span>Upkeep</span>${mbar(s.up/2600*100,'var(--warn)')}<b>${fmt(s.up)}/d</b></div>`;
 }
 function roiLine(m,mk){
@@ -27,11 +28,11 @@ function mfilter(lab){
   return l.sort((a,b)=>key(a)-key(b));
 }
 function machCard(m){
-  const R=ROLES[m.role],n=S.staff.filter(s=>s.mach===m.id).length,full=machOwned(m.lab).length>=machBays(m.lab),t=machTier(m);
-  return `<div class="mcard ${t}"><div class="mart-w">${machArt(m)}<span class="chip tier ${t}">${TIER_LABEL[t]}</span></div>
+  const R=ROLES[m.role],n=S.staff.filter(s=>s.mach===m.id).length,full=machOwned(m.lab).length>=machBays(m.lab),t=machTier(m),lock=machLockText(m);
+  return `<div class="mcard ${t}${lock?' locked':''}"><div class="mart-w">${machArt(m)}<span class="chip tier ${t}">${TIER_LABEL[t]}</span></div>
     <div class="mbody"><div class="t">${m.name}${n?` <span class="f">×${n}</span>`:''}</div><div class="s"><b>${R.name}</b> · ${TRAITS[m.trait].n}</div>
-      ${mspecs(m,0)}<div class="roi">${roiLine(m,0)}</div>
-      <div class="macts"><button class="btn sm" data-a="machInfo" data-k="${m.id}">Details</button><button class="btn sm primary" data-a="buyMach" data-k="${m.id}" ${full||S.cash<m.cost?'disabled':''}>${full?'No bay':fmt(m.cost)}</button></div></div></div>`;
+      ${mspecs(m,0)}<div class="roi">${lock?`<span class="f">${lock}</span>`:roiLine(m,0)}</div>
+      <div class="macts"><button class="btn sm" data-a="machInfo" data-k="${m.id}">Details</button><button class="btn sm primary" data-a="buyMach" data-k="${m.id}" ${lock||full||S.cash<m.cost?'disabled':''}>${lock?'Locked':full?'No bay':fmt(m.cost)}</button></div></div></div>`;
 }
 function fleetCard(s){
   const m=MACH.find(x=>x.id===s.mach),mk=s.mk||0,st=mstat(m,mk),load=Math.round((s.load||0)*100),next=mk<3?mkCost(m,mk):0;
@@ -63,7 +64,7 @@ function machView(lab){
     h+=own.length?`<div class="mlist">${own.map(fleetCard).join('')}</div>`:`<div class="card empty" style="margin-top:12px">No machines yet. Open the catalogue to buy your first one.</div>`;
     return h;
   }
-  const tierSegs=lab?[['all','All'],['lab4','Prototype'],['lab5','Prime']]:[['all','All'],['basic','Basic'],['pro','Pro'],['ind','Industrial']];
+  const tierSegs=lab?[['all','All'],['lab4','Prototype'],['lab5','Prime']]:[['all','All'],['basic','Basic'],['pro','Pro'],['ind','Industrial'],...(typeof NEW_TIERS!=='undefined'?NEW_TIERS.map(t=>[t,TIER_LABEL[t]]):[])];
   h+=label('Catalogue',`${machBays(lab)-own.length} free bay${machBays(lab)-own.length===1?'':'s'}`);
   h+=`<div class="mfil">${segs(lab?'mtl':'mt',tierSegs).replace('margin-top:18px','margin-top:0')}${segs(lab?'mfl':'mf',[['all','All jobs'],...MROLE_ORDER.filter(r=>MACH.some(m=>!!m.lab===lab&&m.role===r)).map(r=>[r,ROLES[r].name.split(' ')[0]])]).replace('margin-top:18px','margin-top:6px')}${segs('ms',[['price','Price'],['speed','Speed'],['upkeep','Upkeep'],['payback','Payback'],['role','Job']]).replace('margin-top:18px','margin-top:6px')}</div>`;
   const l=mfilter(lab);
@@ -80,7 +81,7 @@ Object.assign(A,{
       <div class="dtable">${rows.map(r=>`<div><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')}</div>
       <div class="card" style="margin:12px 0"><div class="t">Compared with hiring</div><div class="s" style="margin-top:4px">${roiLine(m,mk)}</div></div>
       ${!own?`<p class="s" style="margin:0 0 10px">Tuning: Mk II, III and IV each add +25% speed for +12% upkeep, after you buy it.</p>`:''}
-      <div class="acts">${own?`<button class="btn ghost" data-choice="0">Close</button>`:`<button class="btn primary" data-choice="0" ${full||S.cash<m.cost?'disabled':''}>${full?'No free bay':'Buy '+fmt(m.cost)}</button><button class="btn ghost" data-choice="1">Close</button>`}</div>`);
+      <div class="acts">${own?`<button class="btn ghost" data-choice="0">Close</button>`:`<button class="btn primary" data-choice="0" ${machLockText(m)||full||S.cash<m.cost?'disabled':''}>${machLockText(m)||(full?'No free bay':'Buy '+fmt(m.cost))}</button><button class="btn ghost" data-choice="1">Close</button>`}</div>`);
     pending=own?[{f:()=>{}}]:[{f:()=>A.buyMach({k:m.id})},{f:()=>{}}];
   },
   tuneMach(d){

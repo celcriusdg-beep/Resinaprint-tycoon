@@ -223,3 +223,8 @@ nav button.on::before{background:rgb(var(--g1));box-shadow:0 0 12px rgb(var(--g1
 .goal .gk,.goal .gp i{color:rgb(var(--g1))}.goal .gp i{background:rgb(var(--g1));box-shadow:0 0 8px rgb(var(--g1))}
 .modal{background:radial-gradient(70% 60% at 50% 100%,rgba(var(--g1),.18),rgba(5,4,10,.82))}
 .sheet{border:2px solid rgba(255,255,255,.12);background-image:linear-gradient(180deg,rgba(255,255,255,.06),transparent 30%)}
+
+/* machine tiers above Industrial */
+.mcard.adv{border-color:#3b86c8}.mcard.elite{border-color:#b9962a}.mcard.quantum{border-color:#2bb5a8}.mcard.myth{border-color:#d44a74;box-shadow:0 0 18px -6px #ff5c8a,var(--lift)}.mcard.apex{border-color:#ffe27a;box-shadow:0 0 22px -4px #ffe27a,var(--lift)}
+.chip.tier.adv{background:#245f99;color:#d4ecff}.chip.tier.elite{background:#8a6b14;color:#fff2b8}.chip.tier.quantum{background:#0f7a72;color:#c6fff8}.chip.tier.myth{background:#9a1f48;color:#ffd4e0}.chip.tier.apex{background:linear-gradient(90deg,#b8923a,#fff1b8);color:#4a3508}
+.mcard.locked .mart-w{filter:grayscale(.7) brightness(.7)}

@@ -1,6 +1,6 @@
 /* Machine illustrations: one drawing per job, coloured by tier (basic, pro, industrial, laboratory). */
 const MTIER={basic:['#8f9db0','#56657a','#d3dde8','#7ff3ff'],pro:['#43c0a4','#23806d','#a6f0dd','#fff3a0'],ind:['#e8963c','#a35f1c','#ffd7a0','#ffffff'],lab:['#8e70ff','#4a33b0','#d6c8ff','#7ff3ff']};
-const machTier=m=>m.lab?'lab':m.lvl>=3?'ind':m.lvl===2?'pro':'basic';
+const machTier=m=>m.tier||(m.lab?'lab':m.lvl>=3?'ind':m.lvl===2?'pro':'basic');
 const MPROP={
   tech:(b,d,l,g)=>`<rect x="24" y="80" width="72" height="8" rx="3" fill="${d}"/><rect x="28" y="30" width="7" height="52" rx="2" fill="${b}"/><rect x="85" y="30" width="7" height="52" rx="2" fill="${b}"/><rect x="24" y="24" width="72" height="9" rx="3" fill="${d}"/><rect x="50" y="22" width="20" height="14" rx="3" fill="${l}"/><rect x="57" y="36" width="6" height="14" fill="${d}"/><path d="M60 50l-3 5h6z" fill="${g}"/><rect x="42" y="68" width="36" height="6" rx="2" fill="${l}"/><path d="M52 68c0-8 4-14 8-14s8 6 8 14z" fill="${b}"/>`,
   post:(b,d,l,g)=>`<rect x="26" y="52" width="68" height="34" rx="6" fill="${b}"/><rect x="32" y="58" width="56" height="22" rx="4" fill="#16222e"/><rect x="32" y="68" width="56" height="12" rx="3" fill="${g}" opacity=".5"/><circle cx="46" cy="72" r="2.4" fill="#fff" opacity=".7"/><circle cx="62" cy="75" r="1.8" fill="#fff" opacity=".7"/><circle cx="76" cy="71" r="2.2" fill="#fff" opacity=".7"/><rect x="30" y="38" width="60" height="14" rx="5" fill="${d}"/><rect x="38" y="42" width="44" height="5" rx="2" fill="#c18bff"/><path d="M40 52l-3 6M60 52v8M80 52l3 6" stroke="#c18bff" stroke-width="1.6" opacity=".7"/>`,
@@ -19,5 +19,5 @@ const MPROP={
 };
 function machArt(m,big){
   const t=machTier(m),[b,d,l,g]=MTIER[t],id='mg'+t;
-  return `<svg viewBox="0 0 120 96" class="mart ${t}${big?' big':''}" aria-hidden="true"><defs><radialGradient id="${id}"><stop offset="0" stop-color="${g}" stop-opacity=".35"/><stop offset="1" stop-color="${g}" stop-opacity="0"/></radialGradient></defs>${t==='lab'||t==='ind'?`<circle cx="60" cy="50" r="46" fill="url(#${id})"/>`:''}<ellipse cx="60" cy="88" rx="44" ry="5" fill="#0005"/>${(MPROP[m.role]||MPROP.tech)(b,d,l,g)}${t==='lab'?`<circle cx="18" cy="18" r="1.8" fill="${g}"/><circle cx="104" cy="14" r="1.4" fill="${g}"/><circle cx="12" cy="60" r="1.2" fill="${g}"/>`:''}</svg>`;
+  return `<svg viewBox="0 0 120 96" class="mart ${t}${big?' big':''}" aria-hidden="true"><defs><radialGradient id="${id}"><stop offset="0" stop-color="${g}" stop-opacity=".35"/><stop offset="1" stop-color="${g}" stop-opacity="0"/></radialGradient></defs>${t!=='basic'&&t!=='pro'?`<circle cx="60" cy="50" r="46" fill="url(#${id})"/>`:''}<ellipse cx="60" cy="88" rx="44" ry="5" fill="#0005"/>${(MPROP[m.role]||MPROP.tech)(b,d,l,g)}${t==='lab'||t==='myth'||t==='apex'||t==='quantum'?`<circle cx="18" cy="18" r="1.8" fill="${g}"/><circle cx="104" cy="14" r="1.4" fill="${g}"/><circle cx="12" cy="60" r="1.2" fill="${g}"/>`:''}</svg>`;
 }
