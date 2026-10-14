@@ -24,7 +24,7 @@ function humanSprite(s,hue,idx){
     <g class="arm"><rect x="20" y="15" width="5" height="12" rx="2.5" fill="${skin}"/>${tool}</g></g></svg>`;
 }
 function crewScene(){
-  const staff=S.staff.slice(0,18),ZONE={post:12.5,painter:37.5,packer:62.5,logistics:87.5},office=[7,23,39,55,71,87];
+  const staff=S.staff.slice(0,18),ZONE={post:15,painter:40,packer:64,logistics:90},office=[7,23,39,55,71,87];
   const count={},seen={};staff.forEach(s=>count[s.role]=(count[s.role]||0)+1);
   let oi=0;
   const out=staff.map((s,idx)=>{
@@ -40,7 +40,7 @@ function crewScene(){
     const sprite=s.mach?`${machArt(MACH.find(m=>m.id===s.mach))}<i class="led"></i>`:humanSprite(s,hue,idx);
     return `<span class="${cls}" style="${style}" title="${nm}"><span class="flip">${sprite}${off?'<em class="zz">z z</em>':''}</span></span>`;
   }).join('');
-  return `<div class="crewrow"><div class="zl z1">Wash</div><div class="zl z2">Finish</div><div class="zl z3">Pack</div><div class="zl z4">Send</div>${out}${S.staff.length>18?`<span class="crewmore">+${S.staff.length-18}</span>`:''}</div>`;
+  return `<div class="crewrow"><div class="zl z1">Wash</div><div class="zl z2">Paint</div><div class="zl z3">Pack</div><div class="zl z4">Send</div>${out}${S.staff.length>18?`<span class="crewmore">+${S.staff.length-18}</span>`:''}${typeof beltScene==='function'?beltScene():''}</div>`;
 }
 /* ---- flying prints: station -> wash tub -> finishing -> shelf -> parcel -> orders board ---- */
 let _flow=null;
@@ -83,7 +83,7 @@ function flowSnap(){
 function flowTick(){
   const now=flowSnap(),prev=_flow;_flow=now;
   if(!prev||tab!=='studio'||document.hidden||typeof prodArt!=='function')return;
-  const wash=q$('.bst[data-a="wash"]'),fin=q$('.bst[data-a="finish"]'),pack=q$('.bst[data-a="pack"]'),send=q$('.bst[data-a="sendBay"]'),win=q$('.win'),shelf=q$('.shelf');
+  const finBtn=q$('.bst[data-a="finish"]'),wash=q$('.st-in')||q$('.bst[data-a="wash"]'),tub=q$('.st-tub')||wash,que=q$('.st-q')||finBtn,booth=q$('.st-booth')||finBtn,pack=q$('.st-pack')||q$('.bst[data-a="pack"]'),send=q$('.st-dock')||q$('.bst[data-a="sendBay"]'),bayEl=q$('.st-bay')||send,win=q$('.win'),shelf=q$('.shelf'),fin=que;
   const thumb=k=>`<span class="ft">${prodArt(k)}</span>`;
   /* 1. collected: the batch drops into the wash tub (injection, PolyJet and lab prints go straight to finishing) */
   let cw=0,cf=0,wEl=null,fEl=null,wP=null,fP=null;
@@ -95,18 +95,20 @@ function flowTick(){
     }
   }
   if(cw)stageFly('cw',cw,wEl,wash,thumb(wP),850);
-  if(cf)stageFly('cf',cf,fEl,fin,thumb(fP),850);
+  if(cf)stageFly('cf',cf,fEl,que,thumb(fP),850);
   /* 2. washed and cured, 3. finished and stocked */
-  let dw=0,dwP=null,ds=0,dsP=null;
+  let dw=0,dwP=null,ds=0,dsP=null,dc=0,dcP=null;
   for(const k of PKEYS){
     const w=prev.unw[k]-now.unw[k];if(w>0&&now.cur[k]>prev.cur[k]){dw+=w;dwP=dwP||k}
-    const f=now.stock[k]-prev.stock[k];if(f>0&&now.cur[k]<prev.cur[k]){ds+=f;dsP=dsP||k}
+    const f=now.stock[k]-prev.stock[k];if(f>0){if(now.cur[k]<prev.cur[k]){ds+=f;dsP=dsP||k}else{dc+=f;dcP=dcP||k}}
   }
-  if(dw)stageFly('wash',dw,wash,fin,thumb(dwP),800);
-  if(ds){let el=shelf;if(dsP)for(const x of document.querySelectorAll('.shelf .sitem'))if(x.dataset.k===dsP)el=x;stageFly('fin',ds,fin,el,thumb(dsP),850)}
+  if(dw)stageFly('wash',dw,tub,que,thumb(dwP),800);
+  const shelfEl=k=>{let el=shelf;if(k)for(const x of document.querySelectorAll('.shelf .sitem'))if(x.dataset.k===k)el=x;return el};
+  if(ds)stageFly('fin',ds,finBtn||que,shelfEl(dsP),thumb(dsP),850);
+  if(dc)stageFly('paint',dc,booth,shelfEl(dcP),thumb(dcP),850);
   /* 4. packed into the dispatch bay, 5. the courier takes the batch */
   const db=now.bay-prev.bay;
-  if(db>0){stageFly('pack',db,shelf,pack,PARCEL,650);stageFly('bay',db,pack,send,PARCEL,750)}
+  if(db>0){stageFly('pack',db,shelf,pack,PARCEL,650);stageFly('bay',db,pack,bayEl,PARCEL,750)}
   if(db<0)stageFly('send',-db,send,win,TRUCK,1100);
 }
 Object.assign(A,{animMode(d){try{localStorage.setItem('resinaprint-anim',d.m)}catch(e){}applyAnimMode();toast('Animations: '+d.m)}});

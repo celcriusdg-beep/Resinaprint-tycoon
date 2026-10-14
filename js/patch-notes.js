@@ -7,6 +7,7 @@ const PATCH=[
   '<b>Dispatch bay.</b> Packed orders now wait in a bay (50 to start) until the courier collects them or you press Send. The money chain is longer now: order → pack → bay → send → parcel → delivered, and online sales are paid out a few days after they are sent (webshop 1 day, bol.com 3, Etsy 4).',
   '<b>Dispatch & payouts catalogue in the Shop.</b> Upgrade bay size (up to 300), courier pickups (up to hourly), auto-dispatch, bulk carrier discounts, payout speed (down to instant) and parcel insurance.',
   'Logistics people and machines now run the dispatch bay and send it for you. Fulfilment partners skip the bay.',
+  '<b>Production line.</b> A conveyor belt runs under your crew. Fresh prints pile up in an inbox, move through the wash tub, wait in a queue and then go into the paint booth. A painter, person or machine, really paints each figure there: it fills with colour as they work, and only when it is dry does it count as stock and fly to the shelf. Backlogs show up as piles with a count, so you can see where the line is stuck.',
   '<b>Calmer animations.</b> Busy streams of prints and parcels are now bunched into a few flights with a ×count badge. Choose Smart, Calm or Off under Empire › More.'
  ]},
  {h:'New in 3.10',i:[

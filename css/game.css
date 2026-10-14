@@ -308,3 +308,34 @@ nav button.on::before{background:rgb(var(--g1));box-shadow:0 0 12px rgb(var(--g1
 .fly{overflow:visible}.fly .cnt{position:absolute;right:-12px;top:-8px;background:var(--amber);color:#2a1700;font:800 11px var(--f-body);border-radius:9px;padding:0 5px;box-shadow:0 1px 3px #0008}
 body.noanim *{animation:none!important;transition:none!important}body.noanim .fly,body.noanim .ringfx{display:none}
 .animbtns{display:flex;gap:6px;margin-top:8px}.animbtns .btn{flex:1}.animbtns .btn.on{background:var(--amber);color:var(--amber-ink)}
+
+/* ===== production line: conveyor belt under the crew ===== */
+.crewrow{height:112px!important}.cw{bottom:44px!important}
+.zl{bottom:40px!important}
+.belt{position:absolute;left:0;right:0;bottom:0;height:40px;background:linear-gradient(#2a221a,#1a140f);border-top:2px solid #0007}
+.belt .rail{position:absolute;left:0;right:0;bottom:5px;height:9px;border-radius:5px;background:repeating-linear-gradient(90deg,#4a4036 0 14px,#362e26 14px 28px);box-shadow:0 2px 0 #0008}
+.belt.run .rail{animation:beltm .9s linear infinite}@keyframes beltm{to{background-position:28px 0}}
+.stp{position:absolute;bottom:13px;transform:translateX(-50%);display:flex;align-items:flex-end;color:#c9bfa8;min-width:14px}
+.stp svg{width:44px;height:32px;display:block;overflow:visible}
+.st-tub svg{margin-bottom:-2px}.st-booth svg{width:52px;height:38px;margin-bottom:-4px}.st-dock svg{width:46px}
+.tok{display:block;width:21px;height:21px;margin-left:-9px;position:relative;animation:drop .5s ease-out}.tok:first-child{margin-left:0}
+.tok img,.tok svg{width:100%;height:100%;object-fit:contain;display:block;filter:drop-shadow(0 2px 2px #000a)}
+.tok.raw img{filter:grayscale(1) brightness(1.35) contrast(.65) drop-shadow(0 2px 2px #000a);opacity:.85}
+.tok.prime img{filter:grayscale(.9) brightness(1.75) contrast(.8) drop-shadow(0 2px 2px #000a)}
+.cnt2{align-self:flex-start;margin:-8px 0 0 3px;background:var(--amber);color:#2a1700;font:800 10px var(--f-body);border-radius:8px;padding:0 5px;box-shadow:0 1px 2px #0008}
+@keyframes drop{from{transform:translateY(-14px) scale(.7);opacity:0}}
+.st-tub.work svg .wave{animation:wavem 1s linear infinite}.st-tub.work .bub{animation:bubl 1.6s ease-in infinite}.st-tub.work .b2{animation-delay:.5s}.st-tub.work .b3{animation-delay:1s}.st-tub.work .uvbar{animation:uvf .5s steps(2) infinite}
+.st-tub .bub{fill:#bfe8ff;opacity:0}.st-tub .uvbar{opacity:.1}.st-tub.work .uvbar{opacity:1}
+.st-booth .sp{opacity:0}.st-booth.work{color:var(--amber)}.st-booth.work .hose{transform-origin:24px 8px;animation:hosem .8s ease-in-out infinite alternate}.st-booth.work .nozzle{animation:nozm .8s ease-in-out infinite alternate}
+.st-booth.work .sp{animation:spray .5s ease-out infinite}.st-booth.work .s2{animation-delay:.15s}.st-booth.work .s3{animation-delay:.3s}
+@keyframes hosem{from{transform:rotate(-10deg)}to{transform:rotate(14deg)}}@keyframes nozm{from{transform:translate(-6px,-2px)}to{transform:translate(4px,0)}}@keyframes spray{0%{opacity:.9;transform:translateY(-4px) scale(.6)}100%{opacity:0;transform:translateY(8px) scale(1.4)}}
+.st-pack.work .lid{transform-origin:10px 18px;animation:lidm 1s ease-in-out infinite}.st-pack.work .tape{animation:tapem .6s steps(2) infinite}@keyframes tapem{50%{opacity:.4}}
+.st-dock.work .whl{animation:spin .6s linear infinite;transform-box:fill-box;transform-origin:center}
+.pit{position:absolute;bottom:22px;width:30px;height:30px;margin-left:-15px;z-index:2;animation:drop .4s ease-out}
+.pit .g,.pit .c{position:absolute;inset:0;display:block}.pit img,.pit svg{width:100%;height:100%;object-fit:contain;display:block}
+.pit .g img{filter:grayscale(1) brightness(1.6) contrast(.7)}
+.pit .c{clip-path:inset(0 calc(100% - var(--pp)) 0 0);transition:clip-path .3s linear}
+.pit .brushline{position:absolute;top:-4px;bottom:-2px;left:var(--pp);width:2px;background:#ff6a9a;box-shadow:0 0 8px #ff6a9a;transition:left .3s linear}
+.zl{left:auto!important;right:auto!important}
+.zl.z1{left:calc(15% - 14px)!important}.zl.z2{left:calc(40% - 14px)!important}.zl.z3{left:calc(64% - 12px)!important}.zl.z4{left:calc(90% - 12px)!important}
+.crewrow{background:rgba(0,0,0,.12)!important}
