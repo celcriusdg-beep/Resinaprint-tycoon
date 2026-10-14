@@ -30,7 +30,7 @@ function workshopScene(){
     <div class="clockface">${String(S.hour).padStart(2,'0')}:${String(Math.floor(S.m)).padStart(2,'0')}</div>
     <div class="board"><b>${S.orders.length}</b><span>orders</span>${S.contracts.length?`<b>${S.contracts.length}</b><span>contracts</span>`:''}</div>
     <div class="shelf">`;
-  const stock=PKEYS.filter(k=>S.stock[k]>0).slice(0,7);
+  const stock=PKEYS.filter(k=>S.stock[k]>0);
   h+=stock.length?stock.map(k=>`<span class="sitem">${prodArt(k)}${S.stock[k]>1?`<em>${S.stock[k]}</em>`:''}</span>`).join(''):'<span class="sempty">Finished figures show up here</span>';
   h+=`</div></div><div class="floor"><div class="stns">`;
   if(!shown.length)h+=`<button class="stn empty" data-a="goBuy"><span class="pic">+</span><span class="nm">Buy your first printer</span></button>`;

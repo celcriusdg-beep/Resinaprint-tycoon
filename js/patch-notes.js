@@ -6,7 +6,9 @@ const PATCH=[
  {h:'New in 3.9',i:[
   '<b>Five new machine tiers</b> above Industrial: Advanced, Elite, Quantum, Mythic and Apex. 70 new machines, one per job in every tier, with their own colours and glow. Apex machines run up to 9.5 times the speed of a person.',
   'Each tier unlocks when you own a machine of the tier below. Advanced also needs a factory hall. Find them in Team › Machines › Catalogue and filter by tier.',
-  'Workers and machines now say why they are waiting (no resin, prints need washing and so on).'
+  'Workers and machines now say why they are waiting (no resin, prints need washing and so on).',
+  '<b>The Omega Forge gets 3 more tiers</b>: Rift, Eternal and Omega, with 42 unique machines (own names and animated art). They run 20, 50 and 100 times faster than the Prime machines they replace. Each tier needs a machine of the tier below.',
+  '<b>Fixed:</b> the shelf in the Studio now scrolls sideways, so you can see every figure type you have in stock.'
  ]},
  {h:'New in 3.8',i:[
   '<b>A new look.</b> The flat dark page is now a lit workshop at night: lamp and resin glow in the corners, drifting sparks, a vignette, raised glossy panels, a glass header and dock, and glowing section titles.',

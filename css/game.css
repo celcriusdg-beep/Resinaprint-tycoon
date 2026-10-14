@@ -228,3 +228,12 @@ nav button.on::before{background:rgb(var(--g1));box-shadow:0 0 12px rgb(var(--g1
 .mcard.adv{border-color:#3b86c8}.mcard.elite{border-color:#b9962a}.mcard.quantum{border-color:#2bb5a8}.mcard.myth{border-color:#d44a74;box-shadow:0 0 18px -6px #ff5c8a,var(--lift)}.mcard.apex{border-color:#ffe27a;box-shadow:0 0 22px -4px #ffe27a,var(--lift)}
 .chip.tier.adv{background:#245f99;color:#d4ecff}.chip.tier.elite{background:#8a6b14;color:#fff2b8}.chip.tier.quantum{background:#0f7a72;color:#c6fff8}.chip.tier.myth{background:#9a1f48;color:#ffd4e0}.chip.tier.apex{background:linear-gradient(90deg,#b8923a,#fff1b8);color:#4a3508}
 .mcard.locked .mart-w{filter:grayscale(.7) brightness(.7)}
+
+/* shelf: full width and scrolls sideways when you have many figure types */
+.shelf{left:12px!important;right:12px!important;height:60px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;touch-action:pan-x;scrollbar-width:thin;scrollbar-color:#7a5a35 transparent;padding-bottom:4px}
+.shelf::-webkit-scrollbar{height:4px}.shelf::-webkit-scrollbar-thumb{background:#7a5a35;border-radius:3px}
+.sitem{flex:none}
+.spname{left:112px!important;bottom:auto!important;top:16px}
+
+.mcard.rift{border-color:#b04aff;box-shadow:0 0 20px -6px #b04aff,var(--lift)}.mcard.eternal{border-color:#2fe0ff;box-shadow:0 0 22px -6px #2fe0ff,var(--lift)}.mcard.omega{border-color:#ffd24a;box-shadow:0 0 26px -4px #ff6a3a,var(--lift)}
+.chip.tier.rift{background:#4a1a8a;color:#f0d9ff}.chip.tier.eternal{background:#0a4a78;color:#d6f8ff}.chip.tier.omega{background:linear-gradient(90deg,#8a4a00,#ffd24a);color:#2a1500}

@@ -11,9 +11,9 @@ function mstat(m,mk){
 const mbar=(v,col)=>`<div class="mb"><i style="width:${Math.max(4,Math.min(100,v))}%;background:${col}"></i></div>`;
 function mspecs(m,mk){
   const s=mstat(m,mk);
-  return `<div class="mspec"><span>Speed</span>${mbar(s.pw/10*100,'var(--uv)')}<b>${s.pw.toFixed(1)}×</b></div>
-    <div class="mspec"><span>Output</span>${mbar(s.out/24*100,'var(--good)')}<b>${s.out.toFixed(1)}×</b></div>
-    <div class="mspec"><span>Upkeep</span>${mbar(s.up/2600*100,'var(--warn)')}<b>${fmt(s.up)}/d</b></div>`;
+  return `<div class="mspec"><span>Speed</span>${mbar(Math.log10(Math.max(1,s.pw))/Math.log10(700)*100,'var(--uv)')}<b>${s.pw>=100?Math.round(s.pw):s.pw.toFixed(1)}×</b></div>
+    <div class="mspec"><span>Output</span>${mbar(Math.log10(Math.max(1,s.out))/Math.log10(1700)*100,'var(--good)')}<b>${s.out.toFixed(1)}×</b></div>
+    <div class="mspec"><span>Upkeep</span>${mbar(Math.log10(Math.max(1,s.up))/Math.log10(120000)*100,'var(--warn)')}<b>${fmt(s.up)}/d</b></div>`;
 }
 function roiLine(m,mk){
   const s=mstat(m,mk);
@@ -23,7 +23,7 @@ function mfilter(lab){
   let l=MACH.filter(m=>!!m.lab===lab);
   const kf=lab?'mfl':'mf',kt=lab?'mtl':'mt';
   if(sub[kf]&&sub[kf]!=='all')l=l.filter(m=>m.role===sub[kf]);
-  if(sub[kt]&&sub[kt]!=='all'){l=l.filter(m=>lab?('lab'+m.lvl===sub[kt]):machTier(m)===sub[kt])}
+  if(sub[kt]&&sub[kt]!=='all'){l=l.filter(m=>lab&&!m.tier?('lab'+m.lvl===sub[kt]):machTier(m)===sub[kt])}
   const key={price:m=>m.cost,speed:m=>-m.pw,upkeep:m=>m.up,payback:m=>{const s=mstat(m);return s.save>0?s.pay:1e9},role:m=>MROLE_ORDER.indexOf(m.role)*1e7+m.cost}[sub.ms||'price'];
   return l.sort((a,b)=>key(a)-key(b));
 }
@@ -64,7 +64,7 @@ function machView(lab){
     h+=own.length?`<div class="mlist">${own.map(fleetCard).join('')}</div>`:`<div class="card empty" style="margin-top:12px">No machines yet. Open the catalogue to buy your first one.</div>`;
     return h;
   }
-  const tierSegs=lab?[['all','All'],['lab4','Prototype'],['lab5','Prime']]:[['all','All'],['basic','Basic'],['pro','Pro'],['ind','Industrial'],...(typeof NEW_TIERS!=='undefined'?NEW_TIERS.map(t=>[t,TIER_LABEL[t]]):[])];
+  const tierSegs=lab?[['all','All'],['lab4','Prototype'],['lab5','Prime'],...(typeof FORGE_TIERS!=='undefined'?FORGE_TIERS.map(t=>[t,TIER_LABEL[t]]):[])]:[['all','All'],['basic','Basic'],['pro','Pro'],['ind','Industrial'],...(typeof NEW_TIERS!=='undefined'?NEW_TIERS.map(t=>[t,TIER_LABEL[t]]):[])];
   h+=label('Catalogue',`${machBays(lab)-own.length} free bay${machBays(lab)-own.length===1?'':'s'}`);
   h+=`<div class="mfil">${segs(lab?'mtl':'mt',tierSegs).replace('margin-top:18px','margin-top:0')}${segs(lab?'mfl':'mf',[['all','All jobs'],...MROLE_ORDER.filter(r=>MACH.some(m=>!!m.lab===lab&&m.role===r)).map(r=>[r,ROLES[r].name.split(' ')[0]])]).replace('margin-top:18px','margin-top:6px')}${segs('ms',[['price','Price'],['speed','Speed'],['upkeep','Upkeep'],['payback','Payback'],['role','Job']]).replace('margin-top:18px','margin-top:6px')}</div>`;
   const l=mfilter(lab);

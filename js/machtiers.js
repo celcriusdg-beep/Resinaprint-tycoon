@@ -46,3 +46,47 @@ function machLock(m){
 }
 const _buyMach0=A.buyMach;
 A.buyMach=function(d){const m=MACH.find(x=>x.id===d.k);const why=m&&machLock(m);if(why)return toast(why);_buyMach0(d)};
+
+/* ===== Omega Forge: three more tiers, 20 to 100 times better than the Prime machines ===== */
+const FORGE_TIERS=['rift','eternal','omega'];
+Object.assign(TIER_LABEL,{rift:'Rift',eternal:'Eternal',omega:'Omega'});
+Object.assign(MTIER,{
+  rift:['#b04aff','#4a1a8a','#e9c8ff','#ff9cf5'],
+  eternal:['#2fe0ff','#0a4a78','#c8f6ff','#ffffff'],
+  omega:['#ffd24a','#8a4a00','#fff3c0','#ff6a3a']
+});
+const FORGE_NAMES={
+  tech:['Riftwright Gantry','Chronos Printwright','Omega Genesis Press'],
+  post:['Rift Cure Vortex','Everspring Cure','Omega Cure Sun'],
+  painter:['Riftbrush Atelier','Palette of Ages','Omega Masterbrush'],
+  packer:['Rift Cargo Gate','Orbit Packer','Omega Logistics Core'],
+  support:['Rift Concierge','Companion Eternal','Omega Heartlink'],
+  social:['Rift Hype Engine','Echo Chamber','Omega Broadcast'],
+  engineer:['Riftsmith Swarm','Perpetual Mender','Omega Restorer'],
+  buyer:['Rift Market Seer','Fortune Weaver','Omega Market Mind'],
+  logistics:['Rift Dispatch Portal','Meridian Engine','Omega Worldweb'],
+  inspector:['Rift Truth Lens','Verity Eye','Omega Allsight'],
+  designer:['Rift Dreamsmith','Muse of Ages','Omega Creator'],
+  photographer:['Rift Lightwell','Lumen Eternal','Omega Prism'],
+  salesrep:['Rift Dealmaker','Emissary of Gold','Omega Closer'],
+  accountant:['Rift Ledger Mind','Infinite Ledger','Omega Treasury']
+};
+(function addForgeTiers(){
+  const PW=[20,50,100],COST=[12,35,80],UP=[8,20,45],traits=['careful','efficient','quick'];
+  for(const role of MROLE_ORDER){
+    const base=MACH.filter(m=>m.lab&&!m.tier&&m.role===role).sort((a,b)=>b.cost-a.cost)[0];
+    if(!base)continue;
+    FORGE_TIERS.forEach((t,i)=>{
+      const m=mm(`${role}_${t}`,FORGE_NAMES[role][i],role,Math.round(base.cost*COST[i]/1000)*1000,Math.round(base.up*UP[i]/10)*10,+(base.pw*PW[i]).toFixed(0),5,traits[(MROLE_ORDER.indexOf(role)+i)%3],true);
+      m.tier=t;MACH.push(m);
+    });
+  }
+})();
+const _machLock0=machLock;
+machLock=function(m){
+  const i=FORGE_TIERS.indexOf(m.tier);
+  if(i<0)return _machLock0(m);
+  if(!S.up.labwing)return 'Needs the Laboratorium wing';
+  const has=S.staff.some(s=>{if(!s.mach)return false;const x=MACH.find(y=>y.id===s.mach);return i===0?(x.lab&&!x.tier&&x.lvl>=5):x.tier===FORGE_TIERS[i-1]});
+  return has?'':i===0?'Own any Prime machine in the Forge first':`Own any ${TIER_LABEL[FORGE_TIERS[i-1]]} machine first`;
+};
