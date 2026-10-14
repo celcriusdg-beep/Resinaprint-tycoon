@@ -237,3 +237,62 @@ nav button.on::before{background:rgb(var(--g1));box-shadow:0 0 12px rgb(var(--g1
 
 .mcard.rift{border-color:#b04aff;box-shadow:0 0 20px -6px #b04aff,var(--lift)}.mcard.eternal{border-color:#2fe0ff;box-shadow:0 0 22px -6px #2fe0ff,var(--lift)}.mcard.omega{border-color:#ffd24a;box-shadow:0 0 26px -4px #ff6a3a,var(--lift)}
 .chip.tier.rift{background:#4a1a8a;color:#f0d9ff}.chip.tier.eternal{background:#0a4a78;color:#d6f8ff}.chip.tier.omega{background:linear-gradient(90deg,#8a4a00,#ffd24a);color:#2a1500}
+/* ===== 3.10 animated workshop ===== */
+.stn .uv{position:absolute;inset:-2px;border-radius:50%;background:radial-gradient(circle,rgba(181,140,255,.5),transparent 66%);animation:uvp 1.1s ease-in-out infinite;pointer-events:none}
+@keyframes uvp{50%{opacity:.3;transform:scale(.9)}}
+.stn .scan{position:absolute;left:8%;right:8%;top:12%;height:3px;border-radius:2px;background:linear-gradient(90deg,transparent,#e2d2ff,transparent);box-shadow:0 0 10px #b58cff;animation:scanl 1.5s ease-in-out infinite alternate;pointer-events:none}
+@keyframes scanl{to{top:84%}}
+.stn .mini{position:absolute;right:-9px;bottom:-7px;width:30px;height:30px;border-radius:50%;background:#150f22e8;border:2px solid var(--uv);overflow:hidden;box-shadow:0 0 10px #b58cff}
+.stn .mini .fig{display:block;width:100%;height:100%;clip-path:inset(calc(100% - var(--pct,0%)) 0 0 0);transition:clip-path .45s linear}
+.stn .mini .fig img,.stn .mini .fig svg{width:100%;height:100%;object-fit:contain;display:block;filter:none}
+.stn .mini.full{border-color:var(--good);box-shadow:0 0 12px var(--good);animation:popm .9s ease-in-out infinite}.stn .mini.full .fig{clip-path:none}
+@keyframes popm{50%{transform:scale(1.18)}}
+.stn .spark{position:absolute;width:6px;height:6px;border-radius:50%;background:#fff6a0;box-shadow:0 0 6px #fff6a0;opacity:0;animation:spk 1.3s ease-out infinite;pointer-events:none}
+.stn .s1{left:8%;top:30%}.stn .s2{right:6%;top:20%;animation-delay:.4s}.stn .s3{left:46%;top:2%;animation-delay:.8s}
+@keyframes spk{0%{opacity:0;transform:scale(.3)}30%{opacity:1}100%{opacity:0;transform:translateY(-14px) scale(1.5)}}
+.stn.st-failed .pic{animation:shk .45s ease-in-out infinite}
+@keyframes shk{25%{transform:translateX(-2px) rotate(-1.5deg)}75%{transform:translateX(2px) rotate(1.5deg)}}
+.stn .puff{position:absolute;bottom:55%;width:12px;height:12px;border-radius:50%;background:rgba(190,190,200,.6);opacity:0;animation:puffu 1.7s ease-out infinite;pointer-events:none}
+.stn .p1{left:30%}.stn .p2{left:52%;animation-delay:.55s}.stn .p3{left:40%;animation-delay:1.1s}
+@keyframes puffu{0%{opacity:.8;transform:translateY(0) scale(.5)}100%{opacity:0;transform:translateY(-34px) scale(2)}}
+/* bench: a wash tub, a finishing bench and a packing table that move while there is work */
+.bst{position:relative}
+.bico{position:absolute;right:6px;top:5px;width:32px;height:28px;color:var(--faint);overflow:visible}
+.bst.go .bico{color:var(--amber)}
+.bico .bub{fill:#bfe8ff;opacity:0}.bico .uvbar{opacity:.0}
+.bst.go .wave{animation:wavem 1s linear infinite}@keyframes wavem{to{transform:translateX(-5px)}}
+.bst.go .bub{animation:bubl 1.7s ease-in infinite}.bst.go .b2{animation-delay:.5s}.bst.go .b3{animation-delay:1s}
+@keyframes bubl{0%{opacity:0;transform:translateY(0)}30%{opacity:.9}100%{opacity:0;transform:translateY(-12px)}}
+.bst.go .uvbar{opacity:1;animation:uvf .5s steps(2) infinite}@keyframes uvf{50%{opacity:.25}}
+.bst.go .brush{transform-origin:9px 18px;animation:brushm .7s ease-in-out infinite alternate}.bst.go .tip{animation:tipm .7s ease-in-out infinite alternate}
+@keyframes brushm{to{transform:rotate(-22deg)}}@keyframes tipm{to{transform:translate(-5px,2px)}}
+.bst.go .lid{transform-origin:5px 12px;animation:lidm 1.1s ease-in-out infinite}@keyframes lidm{50%{transform:rotate(-24deg)}}
+.bst.go{animation:benchp 1.6s ease-in-out infinite}@keyframes benchp{50%{box-shadow:0 0 14px -2px var(--amber)}}
+/* crew floor */
+.crewrow{position:relative;display:block;height:68px;margin:8px -8px 0;padding:0;border-top:2px dashed rgba(255,255,255,.14);background:linear-gradient(90deg,transparent calc(33.3% - 1px),rgba(255,255,255,.06) calc(33.3% - 1px) 33.3%,transparent 33.3% calc(66.6% - 1px),rgba(255,255,255,.06) calc(66.6% - 1px) 66.6%,transparent 66.6%),rgba(0,0,0,.12);overflow:hidden}
+.zl{position:absolute;bottom:1px;font:800 8.5px var(--f-body);letter-spacing:.12em;text-transform:uppercase;color:#fff6}.z1{left:8px}.z2{left:calc(50% - 12px)}.z3{right:8px}
+.cw{position:absolute;bottom:8px;width:34px;height:42px;margin-left:-17px}
+.cw .flip{display:block;width:100%;height:100%;position:relative}.cw svg{width:100%;height:100%;display:block;overflow:visible}
+.cw.mach{width:52px;height:42px;margin-left:-26px}.cw.mach svg.mart{filter:drop-shadow(0 3px 3px #0007)}
+.cw.human.idle .trunk{animation:breathe 3.2s ease-in-out infinite}@keyframes breathe{50%{transform:translateY(-1px)}}
+.cw.human.work .trunk{animation:bobh .7s ease-in-out infinite alternate}@keyframes bobh{to{transform:translateY(-1.6px)}}
+.cw.human.work .arm{transform-origin:22px 16px;animation:armw .55s ease-in-out infinite alternate}
+.cw.r-painter.work .arm{animation-name:paintw;animation-duration:.8s}.cw.r-packer.work .arm{animation-name:tapew;animation-duration:.6s}.cw.r-post.work .arm{animation-name:scrubw;animation-duration:.35s}
+@keyframes armw{from{transform:rotate(-24deg)}to{transform:rotate(18deg)}}@keyframes paintw{from{transform:rotate(-40deg)}to{transform:rotate(30deg) translateX(2px)}}@keyframes tapew{from{transform:rotate(-8deg) translateY(-2px)}to{transform:rotate(26deg) translateY(2px)}}@keyframes scrubw{from{transform:translateX(-3px) rotate(-6deg)}to{transform:translateX(3px) rotate(8deg)}}
+.cw.walk .leg.l{transform-origin:12px 28px;animation:legl .42s ease-in-out infinite alternate}.cw.walk .leg.r{transform-origin:19px 28px;animation:legl .42s ease-in-out infinite alternate-reverse}
+@keyframes legl{from{transform:rotate(-26deg)}to{transform:rotate(26deg)}}
+.cw.patrol{left:6%;animation:patrol 18s ease-in-out infinite}.cw.patrol.idle{animation-play-state:paused}
+@keyframes patrol{0%{left:6%}36%{left:92%}50%{left:92%}86%{left:6%}100%{left:6%}}
+.cw.patrol .flip{animation:flipx 18s steps(1) infinite}.cw.patrol.idle .flip{animation-play-state:paused}
+@keyframes flipx{0%,49.9%{transform:scaleX(1)}50%,99.9%{transform:scaleX(-1)}100%{transform:scaleX(1)}}
+.cw.rail{left:6%;animation:railm 7s linear infinite alternate}.cw.rail.idle{animation-play-state:paused}@keyframes railm{from{left:6%}to{left:92%}}
+.cw.mach.work svg.mart{animation:mhum .6s steps(3) infinite}@keyframes mhum{0%{transform:translateY(0)}33%{transform:translateY(-1.6px)}66%{transform:translateY(0) rotate(.7deg)}100%{transform:translateY(-1px) rotate(-.6deg)}}
+.cw.mach::after{content:"";position:absolute;left:8%;right:8%;bottom:-3px;height:3px;border-radius:2px;background:transparent}
+.cw.mach.rail::after{content:"";background:linear-gradient(90deg,transparent,#7ff3ff88,transparent)}
+.cw .led{position:absolute;right:3px;top:0;width:6px;height:6px;border-radius:50%;background:#556}.cw.work .led{background:#7fffb2;box-shadow:0 0 6px #7fffb2;animation:blink .5s steps(2) infinite}
+.cw.off{opacity:.5;filter:grayscale(.7)}.zz{position:absolute;right:-6px;top:-10px;font:800 10px var(--f-body);font-style:normal;color:#dfe;animation:zzf 2s ease-in-out infinite}@keyframes zzf{50%{transform:translateY(-4px);opacity:.4}}
+/* flying prints and splashes */
+.fly{position:fixed;left:0;top:0;width:28px;height:28px;z-index:45;pointer-events:none;will-change:transform}
+.fly .ft,.fly svg{display:block;width:100%;height:100%}.fly img{width:100%;height:100%;object-fit:contain;display:block;filter:drop-shadow(0 2px 3px #000a)}
+.ringfx{position:fixed;z-index:44;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;border:2px solid #fff;pointer-events:none;animation:ringx .55s ease-out forwards}@keyframes ringx{to{transform:scale(5);opacity:0}}
+@media (prefers-reduced-motion:reduce){.stn .uv,.stn .scan,.stn .spark,.stn .puff,.cw,.cw *,.bst.go,.bst.go *{animation:none!important}.fly,.ringfx{display:none}}

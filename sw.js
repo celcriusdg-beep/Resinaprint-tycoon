@@ -1,10 +1,10 @@
 /* Offline support. Game files: network first (updates arrive when online), cache as fallback.
    Google Fonts: cache first. Bump VERSION when the file list changes. */
-const VERSION = 'resinaprint-3.9-2';
+const VERSION = 'resinaprint-3.10-1';
 try { importScripts('sw-assets.js'); } catch (e) { self.OFFICIAL_FILES = []; }
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'css/style.css', 'css/fonts.css', 'fonts/BarlowCondensed-500-latin-ext.woff2', 'fonts/BarlowCondensed-500-latin.woff2', 'fonts/BarlowCondensed-600-latin-ext.woff2', 'fonts/BarlowCondensed-600-latin.woff2', 'fonts/BarlowCondensed-700-latin-ext.woff2', 'fonts/BarlowCondensed-700-latin.woff2', 'fonts/Bungee-400-latin-ext.woff2', 'fonts/Bungee-400-latin.woff2', 'fonts/Karla-400-800-latin-ext.woff2', 'fonts/Karla-400-800-latin.woff2',
   'js/data.js', 'js/state.js', 'js/simulation.js', 'js/actions.js', 'js/expansions.js', 'js/art.js', 'js/images.js',
-  'js/patch-notes.js', 'js/progression.js', 'js/vault.js', 'js/energy.js', 'js/inventory.js', 'js/machines.js', 'js/machart.js', 'js/machui.js', 'js/machtiers.js', 'js/fx.js', 'js/story.js', 'js/tree.js', 'js/skilltree.js', 'js/minigame.js', 'js/shop.js', 'js/workshop.js', 'css/game.css', 'age-of-resin/index.html', 'age-of-resin/style.css', 'age-of-resin/data.js', 'age-of-resin/art.js', 'age-of-resin/game.js', 'js/rebirth.js', 'js/world.js', 'js/viewer3d.js', 'js/views.js', 'js/main.js', 'js/pwa.js',
+  'js/patch-notes.js', 'js/progression.js', 'js/vault.js', 'js/energy.js', 'js/inventory.js', 'js/machines.js', 'js/machart.js', 'js/machui.js', 'js/machtiers.js', 'js/fx.js', 'js/story.js', 'js/tree.js', 'js/skilltree.js', 'js/minigame.js', 'js/shop.js', 'js/workshop.js', 'js/animate.js', 'css/game.css', 'age-of-resin/index.html', 'age-of-resin/style.css', 'age-of-resin/data.js', 'age-of-resin/art.js', 'age-of-resin/game.js', 'js/rebirth.js', 'js/world.js', 'js/viewer3d.js', 'js/views.js', 'js/main.js', 'js/pwa.js',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

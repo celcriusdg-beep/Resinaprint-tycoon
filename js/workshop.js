@@ -31,19 +31,19 @@ function workshopScene(){
     <div class="board"><b>${S.orders.length}</b><span>orders</span>${S.contracts.length?`<b>${S.contracts.length}</b><span>contracts</span>`:''}</div>
     <div class="shelf">`;
   const stock=PKEYS.filter(k=>S.stock[k]>0);
-  h+=stock.length?stock.map(k=>`<span class="sitem">${prodArt(k)}${S.stock[k]>1?`<em>${S.stock[k]}</em>`:''}</span>`).join(''):'<span class="sempty">Finished figures show up here</span>';
+  h+=stock.length?stock.map(k=>`<span class="sitem" data-k="${k}">${prodArt(k)}${S.stock[k]>1?`<em>${S.stock[k]}</em>`:''}</span>`).join(''):'<span class="sempty">Finished figures show up here</span>';
   h+=`</div></div><div class="floor"><div class="stns">`;
   if(!shown.length)h+=`<button class="stn empty" data-a="goBuy"><span class="pic">+</span><span class="nm">Buy your first printer</span></button>`;
   for(const p of shown){const D=PRINTERS[p.type],a=printerAct(p),pct=p.state==='printing'?100*(1-p.job.left/p.job.total):p.state==='done'?100:0;
     h+=`<button class="stn st-${p.state} ${D.lab?'lab':''} ${a.cls}" data-a="printerMain" data-id="${p.id}" ${a.dis?'disabled':''} aria-label="${short(p)}: ${p.state}">
-      <span class="lamp"></span><span class="pic" style="--pct:${pct}%">${printerArt(p.type)}</span><span class="nm">${short(p).replace(/ #\d+$/,'')} <small>#${p.id}</small></span><span class="act ${a.cls}">${a.t}</span>${p.cond<35?'<i class="wrench" title="Needs service"></i>':''}</button>`}
+      <span class="lamp"></span><span class="pic" style="--pct:${pct}%">${printerArt(p.type)}${typeof stationFx==='function'?stationFx(p):''}</span><span class="nm">${short(p).replace(/ #\d+$/,'')} <small>#${p.id}</small></span><span class="act ${a.cls}">${a.t}</span>${p.cond<35?'<i class="wrench" title="Needs service"></i>':''}</button>`}
   if(S.printers.length>12)h+=`<div class="stn more"><span class="pic">+${S.printers.length-12}</span><span class="nm">more printers below</span></div>`;
-  h+=`</div><div class="crewrow">${S.staff.slice(0,18).map(avatar).join('')}${S.staff.length>18?`<span class="crewmore">+${S.staff.length-18}</span>`:''}</div></div>`;
+  h+=`</div>${typeof crewScene==='function'?crewScene():''}</div>`;
   const uw=totUnwashed(),cu=totCured(),fk=nextFinish(),pk=packableIdx()>=0;
   h+=`<div class="bench">
-    <button class="bst ${uw?'go':''}" data-a="wash" ${uw?'':'disabled'}><b>${uw}</b><strong>Wash & cure</strong><span>${uw?en(washE()):'nothing yet'}</span></button>
-    <button class="bst ${fk?'go':''}" data-a="finish" ${fk?'':'disabled'}><b>${cu}</b><strong>Finish</strong><span>${fk?en(finishE(fk)):'nothing yet'}</span></button>
-    <button class="bst ${pk?'go':''}" data-a="pack" ${pk?'':'disabled'}><b>${PKEYS.reduce((a,k)=>a+Math.min(S.stock[k],S.orders.filter(o=>o.p===k).length),0)}</b><strong>Pack & ship</strong><span>${pk?en(E.pack()):'nothing yet'}</span></button>
+    <button class="bst wsh ${uw?'go':''}" data-a="wash" ${uw?'':'disabled'}><svg class="bico" viewBox="0 0 32 28" aria-hidden="true"><path d="M4 12h24l-2 13a3 3 0 0 1-3 2H9a3 3 0 0 1-3-2z" fill="#8fd3ff" opacity=".35" stroke="currentColor" stroke-width="1.6"/><path class="wave" d="M6 17q3-3 5 0t5 0 5 0 5 0" fill="none" stroke="currentColor" stroke-width="1.6"/><circle class="bub b1" cx="11" cy="22" r="1.6"/><circle class="bub b2" cx="18" cy="23" r="1.3"/><circle class="bub b3" cx="23" cy="21" r="1.5"/><path d="M10 12V6M16 12V3M22 12V6" stroke="#c18bff" stroke-width="2" stroke-linecap="round" class="uvbar"/></svg><b>${uw}</b><strong>Wash & cure</strong><span>${uw?en(washE()):'nothing yet'}</span></button>
+    <button class="bst fnh ${fk?'go':''}" data-a="finish" ${fk?'':'disabled'}><svg class="bico" viewBox="0 0 32 28" aria-hidden="true"><rect x="3" y="20" width="26" height="5" rx="2" fill="currentColor" opacity=".4"/><path class="brush" d="M9 18L21 6" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle class="tip" cx="22" cy="5" r="3.4" fill="#ff6a9a"/><path d="M8 25c3-4 6 3 9-1s6 2 8-1" fill="none" stroke="#ff6a9a" stroke-width="1.6"/></svg><b>${cu}</b><strong>Finish</strong><span>${fk?en(finishE(fk)):'nothing yet'}</span></button>
+    <button class="bst pck ${pk?'go':''}" data-a="pack" ${pk?'':'disabled'}><svg class="bico" viewBox="0 0 32 28" aria-hidden="true"><path class="boxb" d="M5 12l11-5 11 5v11l-11 5-11-5z" fill="#c9a06a" stroke="currentColor" stroke-width="1.4"/><path d="M5 12l11 5 11-5M16 17v11" stroke="currentColor" stroke-width="1.4" fill="none"/><path class="lid" d="M5 12l11-5 11 5" fill="#a98150" stroke="currentColor" stroke-width="1.4"/></svg><b>${PKEYS.reduce((a,k)=>a+Math.min(S.stock[k],S.orders.filter(o=>o.p===k).length),0)}</b><strong>Pack & ship</strong><span>${pk?en(E.pack()):'nothing yet'}</span></button>
   </div></div>`;
   return h;
 }
@@ -68,7 +68,7 @@ render=function(){
     _lastCash=S.cash;
     if(_lastLv!=null&&S.lv>_lastLv){confetti(70);snd('level');buzz([20,40,20])}
     _lastLv=S.lv;
-    storyCheck();if(typeof skillOpen!=='undefined'&&skillOpen)refreshSkill();
+    storyCheck();if(typeof flowTick==='function')flowTick();if(typeof skillOpen!=='undefined'&&skillOpen)refreshSkill();
   }catch(e){console.error(e)}
 };
 const _reveal0=showVaultReveal;

@@ -1,8 +1,14 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='3.9';
-const PATCH_TITLE='Resinaprint 3.9 · Five More Machine Tiers';
+const VERSION='3.10';
+const PATCH_TITLE='Resinaprint 3.10 · The Animated Workshop';
 const PATCH=[
+ {h:'New in 3.10',i:[
+  '<b>Printing is animated.</b> A printing printer glows with UV light, a scan line sweeps over it and a little copy of the figure builds up from the bottom as the print progresses. A finished print sparkles, and a failed one shakes and smokes.',
+  '<b>Prints move through the shop.</b> When you collect a print it flies into the wash tub. Washed prints fly to the finishing bench, and finished figures fly onto the shelf, so you can see them become stock. Shipped orders fly out to the orders board as parcels.',
+  '<b>People and machines move differently.</b> People walk, swing a brush, tape boxes and scrub, get tired and go off shift. Machines slide along a rail or hum in place with a blinking light and never stop.',
+  'The wash tub, finishing bench and packing table animate while there is work waiting.'
+ ]},
  {h:'New in 3.9',i:[
   '<b>Five new machine tiers</b> above Industrial: Advanced, Elite, Quantum, Mythic and Apex. 70 new machines, one per job in every tier, with their own colours and glow. Apex machines run up to 9.5 times the speed of a person.',
   'Each tier unlocks when you own a machine of the tier below. Advanced also needs a factory hall. Find them in Team › Machines › Catalogue and filter by tier.',
