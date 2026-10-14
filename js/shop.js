@@ -8,6 +8,7 @@ const SHOP_ICO={
   stores:'<path d="M2 6l1-4h10l1 4M2 6v8h12V6M2 6h12M6 14V9h4v5"/>',
   dispatch:'<path d="M2 6l6-3 6 3v7l-6 2-6-2zM2 6l6 3 6-3M8 9v6"/>',
   carriers:'<path d="M1.5 4h8v7h-8zM9.5 7h3l2 2.2V11h-5"/><circle cx="4.5" cy="12" r="1.5"/><circle cx="11.5" cy="12" r="1.5"/>',
+  fleet:'<path d="M1 4h9v7H1zM10 6.5h3l2 2.5v2h-5"/><circle cx="4" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/>',
   channels:'<path d="M2 9V6l8-3v9zM2 9l1.2 4M12 5.5a3 3 0 0 1 0 3.5"/>'
 };
 function shopTiles(){
@@ -23,6 +24,7 @@ function shopTiles(){
     {k:'skill',n:'Upgrades',d:`Skill tree · ${upOwn} of ${upTot}`,badge:upBuy,col:'#ff7fa8',big:1},
     {k:'stores',n:'Stores',d:storesOpen?`${storesOpen} to open`:'All open',col:'#5aa6ff'},
     {k:'dispatch',n:'Dispatch & payouts',d:`Bay ${bayOf().length}/${dispCap()} · ${fmt(pendingPay())} pending`,col:'#ffb547'},
+    {k:'fleet',n:'Fleet & garage',d:typeof garageSummary==='function'?garageSummary():'Vans, buses, trucks',col:'#e8b34b'},
     {k:'carriers',n:'Carriers',d:'Who ships your parcels',col:'#ff8a5c'},
     {k:'channels',n:'Media & channels',d:'Channels, hype, sales, campaigns',col:'#7ff3ff'}
   ];
@@ -43,8 +45,9 @@ Object.assign(A,{shopGo(d){
 /* the Buy tab becomes the Shop: hub first, then each catalogue with a way back */
 const _vBuy0=vBuy;
 vBuy=function(){
-  if(!['printers','resin','gear','space','stores','carriers','channels','dispatch'].includes(sub.buy))return shopHub();
+  if(!['printers','resin','gear','space','stores','carriers','channels','dispatch','fleet'].includes(sub.buy))return shopHub();
   const names={printers:'Printers',resin:'Resin & supplies',gear:'Gear & moulds',space:'Space & permits',stores:'Stores',carriers:'Carriers',channels:'Media & channels',dispatch:'Dispatch & payouts'};
+  if(sub.buy==='fleet')return shopBack('Fleet & garage')+fleetView();
   if(sub.buy==='dispatch')return shopBack(names.dispatch)+dispatchView();
   if(sub.buy==='stores')return shopBack(names.stores)+storesView();
   if(sub.buy==='carriers')return shopBack(names.carriers)+`<div class="card" style="margin-top:12px"><div class="s">Pick the carriers you want to ship with. Choose which one handles which country in Orders › Delivery.</div></div>`+carriersView();

@@ -4,10 +4,10 @@ const dsp=()=>S.dsp||(S.dsp={});
 const bayOf=()=>S.bay||(S.bay=[]);
 const payoutsOf=()=>S.payouts||(S.payouts=[]);
 const dspLv=k=>dsp()[k]||0;
-const dispCap=()=>50+25*dspLv('racks');
+function dispCap(){return 50+25*dspLv('racks')+(typeof fleetCap==='function'?fleetCap():0)}
 const bayFull=()=>bayOf().length>=dispCap();
 const PICKUPS=[[18],[12,18],[9,12,15,18],[8,10,12,14,16,18,20],[8,9,10,11,12,13,14,15,16,17,18,19,20]];
-const pickHours=()=>PICKUPS[Math.min(4,dspLv('pick'))];
+function pickHours(){const b=PICKUPS[Math.min(4,dspLv('pick'))];const x=typeof fleetPick==='function'?fleetPick():[];return x.length?[...new Set([...b,...x])].sort((a,c)=>a-c):b}
 const PAY_BASE={web:1,bol:3,etsy:4};
 const payoutDays=ch=>Math.max(0,(PAY_BASE[ch]!=null?PAY_BASE[ch]:3)-dspLv('pay'));
 const SEND_E=4;

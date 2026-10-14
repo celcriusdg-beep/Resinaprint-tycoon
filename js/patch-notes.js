@@ -1,8 +1,14 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.1';
-const PATCH_TITLE='Resinaprint 4.1 · Spaces';
+const VERSION='4.2';
+const PATCH_TITLE='Resinaprint 4.2 · Black Matter';
 const PATCH=[
+ {h:'New in 4.2',i:[
+  '<b>Rebirth rebuilt.</b> Resin Shards are now glitching black matter that warps, splits into colour and throws sparks. Ten new, very different perks: Heirloom (keep cash), Shard bank (interest), Starter kit (free printers), Phoenix (survive bankruptcy), Echo sale (double payouts), Event horizon (higher prices), Compound interest, Ghost shift (orders pack themselves), Void forge (figures appear twice) and Fate (a head start on chest pity). Perks are grouped by Economy, Production, Vault and Legacy, with a clear keep/lose list.',
+  '<b>Chest printers go to storage.</b> A printer from a chest is no longer placed or sold by itself. Place or sell it in Empire › Items › Printers in storage.',
+  '<b>Fleet &amp; garage.</b> A new Shop catalogue with a cargo bike, delivery van, box truck, promo bus, vrachtwagen and trailer rig. They enlarge the dispatch bay, cut shipping, add courier pickups and cost upkeep. Six fleet upgrades from garage bays to night drivers.',
+  '<b>A new vault.</b> Wood and iron chests, a shaking and bursting opening sequence with particles, a vault hall with a pity meter, and rarity names whose effects match their meaning: emerald sweep, cut sapphire glints, arcane lightning, molten gold, dragonfire, holy rays, a night sky, a black hole and drifting ether.'
+ ]},
  {h:'New in 4.1',i:[
   '<b>Every space looks different again.</b> Hok: a corrugated roller-door wall, a swinging bare bulb and stacked boxes. Small studio: brick, a window, a pendant lamp, a poster and a plant. Workshop: a pegboard of tools, work lights and a safety-stripe floor. Factory hall: steel trusses, high windows, strip lights and hazard stripes. Industrial unit: pipes, valves, a duct and a crane that crosses the ceiling. Production campus: a glass wall with a city skyline that lights up at night.'
  ]},
