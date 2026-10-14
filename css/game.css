@@ -176,3 +176,50 @@ body.skopen{overflow:hidden}
 .stt b{display:block;font-family:var(--f-display);font-size:15px;font-weight:400}.stt small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
 .sbadge{position:absolute;right:8px;top:8px;background:var(--good);color:#06240f;font:800 10.5px var(--f-body);font-style:normal;border-radius:99px;padding:1px 8px}
 .shopbar{display:flex;align-items:center;gap:10px;margin-top:14px}.shopbar b{flex:1;font-family:var(--f-display);font-size:17px;font-weight:400}
+/* ===== 3.8 Atmosphere: a lit workshop at night instead of a flat dark page ===== */
+:root{--g1:255,170,60;--g2:150,110,255;--bgtop:#1a1224;--bgmid:#1d1510;--bgbot:#100b08}
+body[data-tab=orders]{--g1:70,170,230;--g2:120,110,255}
+body[data-tab=buy]{--g1:240,190,70;--g2:80,210,150}
+body[data-tab=team]{--g1:255,120,170;--g2:150,110,255}
+body[data-tab=empire]{--g1:157,137,255;--g2:255,170,60}
+body{background-color:var(--bgbot);
+  background-image:
+    radial-gradient(70% 38% at 8% -4%,rgba(var(--g1),.20),transparent 70%),
+    radial-gradient(60% 40% at 100% 108%,rgba(var(--g2),.18),transparent 70%),
+    radial-gradient(rgba(255,255,255,.05) 1px,transparent 1.6px),
+    linear-gradient(180deg,var(--bgtop) 0%,var(--bgmid) 55%,var(--bgbot) 100%);
+  background-size:auto,auto,24px 24px,auto;background-attachment:fixed}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(130% 95% at 50% 38%,transparent 52%,rgba(0,0,0,.5))}
+.wrap{position:relative;z-index:1}
+#amb{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+#amb i{position:absolute;bottom:-12px;width:var(--s);height:var(--s);border-radius:50%;background:rgba(var(--g1),.55);box-shadow:0 0 calc(var(--s)*3) rgba(var(--g1),.6);opacity:0;animation:rise var(--d) linear var(--dl) infinite}
+#amb i:nth-child(3n){background:rgba(var(--g2),.55);box-shadow:0 0 calc(var(--s)*3) rgba(var(--g2),.6)}
+@keyframes rise{0%{transform:translate(0,0);opacity:0}12%{opacity:.8}85%{opacity:.5}100%{transform:translate(var(--x),-108vh);opacity:0}}
+@media (prefers-reduced-motion:reduce){#amb{display:none}}
+/* header and dock */
+header{background:linear-gradient(180deg,rgba(40,28,48,.96),rgba(28,20,30,.96));border-bottom:2px solid rgba(var(--g1),.45);box-shadow:0 8px 24px rgba(0,0,0,.45),0 1px 0 rgba(var(--g1),.25) inset}
+nav{background:linear-gradient(180deg,rgba(38,28,42,.96),rgba(22,16,24,.98));border-top:2px solid rgba(var(--g1),.4);box-shadow:0 -10px 30px rgba(0,0,0,.5)}
+nav button.on{background:radial-gradient(60% 80% at 50% 0%,rgba(var(--g1),.22),transparent)}
+nav button.on::before{background:rgb(var(--g1));box-shadow:0 0 12px rgb(var(--g1))}
+/* panels: raised, lit from above */
+.card,.group,.shop,.mcard,.ft,.stile,.shelfset .plank{background-image:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,0) 42%),linear-gradient(0deg,rgba(0,0,0,.18),transparent 30%);box-shadow:0 1px 0 rgba(255,255,255,.07) inset,0 6px 16px rgba(0,0,0,.35),var(--lift)}
+.card,.group{border-color:rgba(255,255,255,.1);border-width:2px}
+.item+.item{border-top-color:rgba(255,255,255,.07)}
+/* buttons: glossy */
+.btn.primary{background-image:linear-gradient(180deg,rgba(255,255,255,.32),rgba(255,255,255,0) 55%);box-shadow:0 3px 0 color-mix(in srgb,var(--amber) 38%,#000),0 6px 14px rgba(var(--g1),.25),0 1px 0 rgba(255,255,255,.45) inset}
+.btn:not(.primary):not(.ghost):not(.uv){background-image:linear-gradient(180deg,rgba(255,255,255,.07),transparent)}
+.btn.uv{background-image:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,0) 55%)}
+.seg{background:rgba(0,0,0,.28);border:2px solid rgba(255,255,255,.08)}
+.seg button.on{background:linear-gradient(180deg,rgba(var(--g1),.95),rgba(var(--g1),.7));color:#1c1206;box-shadow:0 2px 0 rgba(0,0,0,.4),0 0 14px rgba(var(--g1),.35)}
+/* section labels get an ornament */
+.label{position:relative;padding-left:18px;color:rgb(var(--g1));border-bottom-color:rgba(var(--g1),.35)}
+.label::before{content:"";position:absolute;left:3px;top:50%;width:8px;height:8px;margin-top:-5px;transform:rotate(45deg);background:rgb(var(--g1));box-shadow:0 0 8px rgb(var(--g1))}
+/* the workshop scene feels lit */
+.shop{border-color:rgba(var(--g1),.55);box-shadow:0 0 0 1px #000 inset,0 10px 30px rgba(0,0,0,.5),0 0 40px -10px rgba(var(--g1),.4)}
+.wall::after{content:"";position:absolute;inset:0;background:radial-gradient(60% 90% at 78% 0%,rgba(255,200,120,.22),transparent 70%),linear-gradient(180deg,transparent 55%,rgba(0,0,0,.35));pointer-events:none}
+.floor::before{content:"";display:block;height:2px;margin:-8px -8px 8px;background:linear-gradient(90deg,transparent,rgba(255,200,120,.5),transparent)}
+.cash{text-shadow:0 2px 0 rgba(0,0,0,.5),0 0 18px rgba(var(--g1),.35)}
+.goal{background:linear-gradient(90deg,rgba(var(--g1),.2),rgba(var(--g1),.02));border-left-color:rgb(var(--g1))}
+.goal .gk,.goal .gp i{color:rgb(var(--g1))}.goal .gp i{background:rgb(var(--g1));box-shadow:0 0 8px rgb(var(--g1))}
+.modal{background:radial-gradient(70% 60% at 50% 100%,rgba(var(--g1),.18),rgba(5,4,10,.82))}
+.sheet{border:2px solid rgba(255,255,255,.12);background-image:linear-gradient(180deg,rgba(255,255,255,.06),transparent 30%)}

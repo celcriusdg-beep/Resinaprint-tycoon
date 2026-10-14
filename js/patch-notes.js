@@ -1,8 +1,12 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='3.7';
-const PATCH_TITLE='Resinaprint 3.7 · Shop & Machines';
+const VERSION='3.8';
+const PATCH_TITLE='Resinaprint 3.8 · Atmosphere';
 const PATCH=[
+ {h:'New in 3.8',i:[
+  '<b>A new look.</b> The flat dark page is now a lit workshop at night: lamp and resin glow in the corners, drifting sparks, a vignette, raised glossy panels, a glass header and dock, and glowing section titles.',
+  'The glow colour changes with the tab: amber in Studio, blue in Orders, gold in the Shop, pink in Team and violet in Empire. Your colour theme from Empire › More still works.'
+ ]},
  {h:'New in 3.7',i:[
   '<b>One Shop for everything you buy.</b> The Buy tab is now the Shop: pick a catalogue (Printers, Resin & supplies, Gear & moulds, Space & permits, Upgrades, Stores, Carriers, Sales channels). Upgrades open the skill tree. Tap the Shop tab again to return to the hub.',
   '<b>Machines are a proper catalogue.</b> Each of the 46 machines has its own illustration, spec bars (speed, output, upkeep), a payback calculator against hiring a person, filters by tier and job, sorting, and a spec sheet.',

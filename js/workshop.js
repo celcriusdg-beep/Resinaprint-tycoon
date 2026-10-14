@@ -58,6 +58,7 @@ const _render0=render;
 render=function(){
   _render0();
   try{
+    document.body.dataset.tab=tab;
     setH(document.getElementById('goal'),goalHTML());
     document.getElementById('mRating').textContent=S.rating.toFixed(2);
     const ce=document.getElementById('cash');
