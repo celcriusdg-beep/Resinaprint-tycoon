@@ -309,7 +309,7 @@ function morphKids(a,b){
     const x=ac[i],y=bc[i];
     if(!x)a.appendChild(y.cloneNode(true));
     else if(x.nodeType!==y.nodeType||(x.nodeType===1&&x.tagName!==y.tagName))a.replaceChild(y.cloneNode(true),x);
-    else if(x.nodeType===1){morphAttrs(x,y);morphKids(x,y);if(x.tagName==='SELECT'&&x.value!==y.value)x.value=y.value}
+    else if(x.nodeType===1){if(x.hasAttribute('data-keep')&&y.hasAttribute('data-keep')&&x.id===y.id)continue;morphAttrs(x,y);morphKids(x,y);if(x.tagName==='SELECT'&&x.value!==y.value)x.value=y.value}
     else if(x.nodeValue!==y.nodeValue)x.nodeValue=y.nodeValue;
   }
   for(let i=ac.length-1;i>=bc.length;i--)a.removeChild(ac[i]);

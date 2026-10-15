@@ -6,7 +6,7 @@ const FLOOR={cv:null,ctx:null,host:null,w:0,h:0,dpr:1,t0:performance.now(),last:
 try{FLOOR.open=localStorage.getItem('resinaprint-floor')!=='closed'}catch(e){}
 function floorCard(){
   if(!S||!S.started)return '';
-  return `<div class="card floorcard"><div class="fl-h"><span class="kicker">Live floor · ${SPACES[S.ws].name}</span><button class="btn sm" data-a="floorTog">${FLOOR.open?'Hide':'Show'}</button></div>${FLOOR.open?'<div id="floorHost" class="floorhost"></div>':''}</div>`;
+  return `<div class="card floorcard"><div class="fl-h"><span class="kicker">Live floor · ${SPACES[S.ws].name}</span><button class="btn sm" data-a="floorTog">${FLOOR.open?'Hide':'Show'}</button></div>${FLOOR.open?'<div id="floorHost" class="floorhost" data-keep></div>':''}</div>`;
 }
 A.floorTog=()=>{FLOOR.open=!FLOOR.open;try{localStorage.setItem('resinaprint-floor',FLOOR.open?'open':'closed')}catch(e){}};
 const _vs7=VIEWS.studio;VIEWS.studio=function(){return floorCard()+_vs7.apply(this,arguments)};
@@ -31,18 +31,17 @@ const ROLE_COL={tech:'#5aa6ff',post:'#7ff3ff',painter:'#ff7fa8',packer:'#e8b34b'
 /* ---------- host + canvas ---------- */
 function flEnsure(){
   if(!FLOOR.cv){
-    const c=document.createElement('canvas');c.id='floorCanvas';c.setAttribute('aria-label','Live workshop floor');document.body.appendChild(c);
-    FLOOR.cv=c;FLOOR.ctx=c.getContext('2d');
-    c.addEventListener('click',flTap);
+    const c=document.createElement('canvas');c.id='floorCanvas';c.setAttribute('aria-label','Live workshop floor');
+    FLOOR.cv=c;FLOOR.ctx=c.getContext('2d');c.addEventListener('click',flTap);
   }
   return FLOOR.cv;
 }
+/* the canvas sits inside its card (the morph leaves data-keep nodes alone), so it scrolls and layers like any other element */
 function flPlace(){
-  const host=document.getElementById('floorHost'),c=flEnsure();
-  if(!host||tab!=='studio'||modalOpen()&&false){c.style.display='none';return false}
-  const r=host.getBoundingClientRect();if(r.width<10){c.style.display='none';return false}
+  const host=document.getElementById('floorHost');if(!host||tab!=='studio')return false;
+  const c=flEnsure();if(c.parentNode!==host){host.appendChild(c);FLOOR.w=0}
+  const r=host.getBoundingClientRect();if(r.width<10)return false;
   const dpr=Math.min(2,window.devicePixelRatio||1),w=Math.round(r.width),h=Math.round(r.height);
-  c.style.display='block';c.style.left=(r.left+window.scrollX)+'px';c.style.top=(r.top+window.scrollY)+'px';c.style.width=w+'px';c.style.height=h+'px';
   if(FLOOR.w!==w||FLOOR.h!==h||FLOOR.dpr!==dpr){FLOOR.w=w;FLOOR.h=h;FLOOR.dpr=dpr;c.width=w*dpr;c.height=h*dpr}
   return r.bottom>0&&r.top<innerHeight;
 }

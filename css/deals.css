@@ -15,4 +15,5 @@
 .floorcard{padding:12px!important}
 .fl-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .floorhost{height:250px;border-radius:14px;background:#141418}
-#floorCanvas{position:absolute;z-index:3;display:none;border-radius:14px;cursor:pointer;touch-action:manipulation}
+#floorCanvas{display:block;width:100%;height:100%;border-radius:14px;cursor:pointer;touch-action:manipulation}
+.floorhost{position:relative;overflow:hidden}
