@@ -59,7 +59,7 @@ const ITEM_USE={
 Object.assign(A,{useItem(d){if(!(invOf(S)[d.k]>0))return;if(vaultOf(S).charm&&d.k==='charm')return toast('A lucky charm is already active');ITEM_USE[d.k]()},goItems(){tab='empire';sub.empire='items'}});
 function itemsView(){
   const v=invOf(S),have=IKEYS.filter(k=>v[k]>0);
-  let h=label('Items',`${invCount()} in your bag`);
+  let h=(typeof puInvView==='function'?puInvView():'')+label('Items',`${invCount()} in your bag`);
   if(vaultOf(S).charm)h+=`<div class="card" style="margin-bottom:12px"><div class="t">Lucky charm active</div><div class="s">Your next chest rolls much better rewards.</div></div>`;
   h+=storageView();
   if(!have.length)return h+`<div class="card empty" style="margin-top:12px">No items yet. Chests and daily goals drop them.</div>`;

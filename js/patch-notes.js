@@ -1,8 +1,13 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.13';
-const PATCH_TITLE='Resinaprint 4.13 · Big deals';
+const VERSION='4.14';
+const PATCH_TITLE='Resinaprint 4.14 · Power-ups';
 const PATCH=[
+ {h:'New in 4.14',i:[
+  '<b>Power crates.</b> A new Shop catalogue with five crates, from Scrap to Void, full of power-ups for your staff, machines and printers in 12 rarities: Common up to Primordial and Singular. Open one or ten at a time, see the exact odds, and fuse three of the same into the next rarity.',
+  '<b>Equip without limits.</b> Equip power-ups from Empire › Items or Team › Power-ups, as many per unit as you like. People get Focus and Spirit, machines get Overclock and Cryo coolant, printers get Turbo lasers and Precision optics.',
+  '<b>Every rarity has its own look.</b> A unit takes the look of its rarest power-up, from brushed steel, emerald sweeps, sapphire glints, lightning and molten gold, through dragonfire, holy rays, a night sky and a nebula, to ghost light, a blood-red heartbeat and a black-hole void. It shows on printer stations, team cards, machine cards and the live floor. Tap any unit in Team › Power-ups to see its full loadout.'
+ ]},
  {h:'New in 4.13',i:[
   '<b>Big deals.</b> From level 5, named clients (a board-game publisher, an anime con, a film studio, a theme park...) offer big orders of several figures with a deadline, in Orders › Big deals. Deliver in parts as stock comes in, or let Auto or a sales rep do it. Each finished deal pays a lump sum, a chest and +1% demand forever, and raises your supplier rank for bigger deals. Missing one only costs rating and hype.',
   '<b>Live floor.</b> The Studio now opens with a top-down view of your workshop: printers glow and fill up while printing, people and machines walk to their stations, prints fly to the wash, parcels roll to the bay and the van drives off at pickup. Tap a printer to open it. The floor changes with every space you move to.'

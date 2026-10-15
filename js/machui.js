@@ -36,13 +36,13 @@ function machCard(m){
 }
 function fleetCard(s){
   const m=MACH.find(x=>x.id===s.mach),mk=s.mk||0,st=mstat(m,mk),load=Math.round((s.load||0)*100),next=mk<3?mkCost(m,mk):0;
-  return `<div class="mcard own ${machTier(m)}"><div class="mart-w">${machArt(m)}<span class="chip tier ${machTier(m)}">${MK_NAMES[mk]}</span></div>
+  return `<div class="mcard own ${machTier(m)}${typeof puCls==='function'?puCls('s:'+s.id):''}">${typeof puFx==='function'?puFx('s:'+s.id):''}<div class="mart-w">${machArt(m)}<span class="chip tier ${machTier(m)}">${MK_NAMES[mk]}</span></div>
     <div class="mbody"><div class="t">${s.name} <span class="chip good">Online</span></div><div class="s">${ROLES[s.role].name} · ${TRAITS[s.trait].n}</div>
       <div class="tm"><div class="act">${LT('sa'+s.id,s.act||'Starting up')}</div></div>
       ${mspecs(m,mk)}
       <div class="mspec"><span>Busy</span>${mbar(load,'var(--amber)')}<b>${load}%</b></div>
       <div class="s" style="margin-top:4px">${nf(s.done||0)} tasks done · yesterday ${load}% busy</div>
-      <div class="macts"><button class="btn sm" data-a="machInfo" data-k="${m.id}" data-id="${s.id}">Details</button>
+      <div class="macts"><button class="btn sm" data-a="machInfo" data-k="${m.id}" data-id="${s.id}">Details</button><button class="btn sm" data-a="puUnit" data-k="s:${s.id}">Power-ups${typeof puAt==='function'&&puAt('s:'+s.id).length?' ('+puAt('s:'+s.id).length+')':''}</button>
         <button class="btn sm ${next?'primary':'ghost'}" data-a="tuneMach" data-id="${s.id}" ${!next||S.cash<next?'disabled':''}>${next?`Tune to ${MK_NAMES[mk+1]} ${fmt(next)}`:'Max tuned'}</button>
         <button class="btn sm ghost" data-a="sellMach" data-id="${s.id}">Sell</button></div></div></div>`;
 }

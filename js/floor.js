@@ -103,6 +103,7 @@ function flDraw(time){
     c.fillStyle='rgba(0,0,0,.35)';c.fillRect(sl.x+5,sl.y+sl.h-9,sl.w-10,4);
     if(st==='printing'){c.fillStyle='#ffb547';c.fillRect(sl.x+5,sl.y+sl.h-9,(sl.w-10)*pr,4)}
     c.beginPath();c.arc(sl.x+sl.w-7,sl.y+sl.h-7,2.2,0,7);c.fillStyle=st==='printing'?'#ffb547':st==='done'?(Math.sin(t*6)>0?'#5bd6a6':'#1f5a44'):st==='failed'?'#ff5a5a':'#5c5f6a';c.fill();
+    if(typeof unitRar==='function'){const ur=unitRar('p:'+p.id);if(ur>=0)flAura(c,sl.x+sl.w/2,sl.y+sl.h/2,sl.w*.72,ur,t,i)}
     FLOOR.hit.push({x:sl.x,y:sl.y,w:sl.w,h:sl.h,id:p.id});
   });
   /* stations */
@@ -133,6 +134,7 @@ function flDraw(time){
     if(f.k==='print'){c.beginPath();c.arc(x,y,3.2,0,7);c.fillStyle='#d8dbe2';c.fill()}else{c.fillStyle='#c79a5b';c.fillRect(x-4,y-4,8,7)}return f.t<1});
   /* people and machines */
   for(const id in FLOOR.ppl){const p=FLOOR.ppl[id],s2=p.s,col=ROLE_COL[s2.role]||'#ccc',bob=p.walk?Math.sin(t*12+p.ph)*1.2:0;
+    if(typeof unitRar==='function'){const ur=unitRar('s:'+s2.id);if(ur>=0)flAura(c,p.x,p.y+1,11,ur,t,p.ph)}
     c.beginPath();c.ellipse(p.x,p.y+7,6,2.2,0,0,7);c.fillStyle='rgba(0,0,0,.35)';c.fill();
     if(s2.mach){rr(c,p.x-6,p.y-6+bob,12,11,3);c.fillStyle='#3a3e4b';c.fill();c.strokeStyle=col;c.lineWidth=1.4;c.stroke();c.fillStyle=col;c.fillRect(p.x-3,p.y-3+bob,6,2);c.beginPath();c.moveTo(p.x,p.y-6+bob);c.lineTo(p.x,p.y-10+bob);c.strokeStyle='rgba(255,255,255,.5)';c.stroke()}
     else{c.beginPath();c.ellipse(p.x,p.y+1+bob,5.2,6,0,0,7);c.fillStyle=col;c.fill();c.beginPath();c.arc(p.x,p.y-6+bob,3.6,0,7);c.fillStyle='#f0c9a6';c.fill();
@@ -141,6 +143,15 @@ function flDraw(time){
   if(!S.staff.length){const ox=L.st.pack.x,oy=L.st.pack.y-24+Math.sin(t*2)*1;c.beginPath();c.ellipse(ox,oy+1,5.2,6,0,0,7);c.fillStyle='#e8b34b';c.fill();c.beginPath();c.arc(ox,oy-6,3.6,0,7);c.fillStyle='#f0c9a6';c.fill();lbl(ox,oy-13,'YOU','rgba(232,179,75,.8)')}
   c.restore();
   rr(c,.5,.5,W-1,H-1,14);c.strokeStyle='rgba(255,255,255,.08)';c.lineWidth=1;c.stroke();
+}
+/* rarity aura for power-up holders: a ring in the rarity colour, pulsing faster and brighter the rarer it is, with sparks from Divine up */
+function flAura(c,x,y,R,r,t,ph){
+  const col=PU_RAR[r].c,pulse=.5+.5*Math.sin(t*(1.5+r*.35)+ph);
+  c.save();c.globalAlpha=.35+.45*pulse;c.strokeStyle=col;c.lineWidth=1+r*.18;c.shadowColor=col;c.shadowBlur=6+r*1.5;
+  c.beginPath();c.ellipse(x,y,R,R*.62,0,0,7);c.stroke();
+  if(r>=10){c.setLineDash([3,4]);c.lineDashOffset=-t*20;c.beginPath();c.ellipse(x,y,R*1.25,R*.8,0,0,7);c.stroke();c.setLineDash([])}
+  if(r>=6)for(let k=0;k<Math.min(6,r-4);k++){const a=t*(1+k*.2)+k*1.7+ph;c.globalAlpha=.6+.4*Math.sin(t*5+k);c.fillStyle=r===11?(k%2?'#fff':'#000'):col;c.beginPath();c.arc(x+Math.cos(a)*R*1.1,y+Math.sin(a)*R*.7,1.4+(r>=9?.6:0),0,7);c.fill()}
+  c.restore();
 }
 function flTap(e){
   if(modalOpen())return;const r=FLOOR.cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;

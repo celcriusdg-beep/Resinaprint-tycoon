@@ -35,8 +35,8 @@ function workshopScene(){
   h+=`</div></div><div class="floor"><div class="stns">`;
   if(!shown.length)h+=`<button class="stn empty" data-a="goBuy"><span class="pic">+</span><span class="nm">Buy your first printer</span></button>`;
   for(const p of shown){const D=PRINTERS[p.type],a=printerAct(p),pct=p.state==='printing'?100*(1-p.job.left/p.job.total):p.state==='done'?100:0;
-    h+=`<button class="stn st-${p.state} ${D.lab?'lab':''} ${a.cls}" data-a="printerMain" data-id="${p.id}" ${a.dis?'disabled':''} aria-label="${short(p)}: ${p.state}">
-      <span class="lamp"></span><span class="pic" style="--pct:${pct}%">${printerArt(p.type)}${typeof stationFx==='function'?stationFx(p):''}</span><span class="nm">${short(p).replace(/ #\d+$/,'')} <small>#${p.id}</small></span><span class="act ${a.cls}">${a.t}</span>${p.cond<35?'<i class="wrench" title="Needs service"></i>':''}</button>`}
+    h+=`<button class="stn st-${p.state} ${D.lab?'lab':''} ${a.cls}${typeof puCls==='function'?puCls('p:'+p.id):''}" data-a="printerMain" data-id="${p.id}" ${a.dis?'disabled':''} aria-label="${short(p)}: ${p.state}">
+      ${typeof puFx==='function'?puFx('p:'+p.id):''}<span class="lamp"></span><span class="pic" style="--pct:${pct}%">${printerArt(p.type)}${typeof stationFx==='function'?stationFx(p):''}</span><span class="nm">${short(p).replace(/ #\d+$/,'')} <small>#${p.id}</small></span><span class="act ${a.cls}">${a.t}</span>${p.cond<35?'<i class="wrench" title="Needs service"></i>':''}</button>`}
   if(S.printers.length>12)h+=`<div class="stn more"><span class="pic">+${S.printers.length-12}</span><span class="nm">more printers below</span></div>`;
   h+=`</div>${typeof crewScene==='function'?crewScene():''}</div>`;
   const uw=totUnwashed(),cu=totCured(),fk=nextFinish(),pk=packableIdx()>=0&&!bayFull(),nb=bayOf().length,cap=dispCap();

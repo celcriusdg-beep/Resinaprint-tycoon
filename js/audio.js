@@ -108,6 +108,7 @@ function audMusicTick(){
 }
 setInterval(audMusicTick,1500);
 document.addEventListener('visibilitychange',()=>{if(!MUS.els.length)return;if(document.hidden)MUS.els.forEach(e=>e.pause());else if(MUS.cur>=0&&MUS.mode&&audCfg.music&&sndOn)MUS.els[MUS.cur].play().catch(()=>{})});
+function audFade(g,to,t){const c=AUDIO.ctx;if(!c)return;g.gain.cancelScheduledValues(c.currentTime);g.gain.setValueAtTime(g.gain.value,c.currentTime);g.gain.linearRampToValueAtTime(to,c.currentTime+t)}
 function audDuck(ms){
   const c=AUDIO.ctx;if(!c||!AUDIO.musG)return;const g=AUDIO.musG.gain,base=audCfg.mv*.6;
   g.cancelScheduledValues(c.currentTime);g.setValueAtTime(g.value,c.currentTime);g.linearRampToValueAtTime(base*.25,c.currentTime+.2);
