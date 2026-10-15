@@ -24,13 +24,16 @@ function buildSkill(){
   let e='',n='',h='';
   for(const u of UPGRADES){if(!u.br)continue;for(const id of u.par){const p=UBY[id];e+=`<line class="e" data-p="${id}" data-c="${u.id}" x1="${p.x.toFixed(1)}" y1="${p.y.toFixed(1)}" x2="${u.x.toFixed(1)}" y2="${u.y.toFixed(1)}" style="--c:${u.br.col}"/>`}}
   for(const u of UPGRADES){if(!u.br)continue;const R=u.key?22:16;
-    n+=`<g class="nd${u.key?' key':''}" data-id="${u.id}" transform="translate(${u.x.toFixed(1)} ${u.y.toFixed(1)})" style="--c:${u.br.col}"><circle class="ring" r="${R+6}"/><circle class="bg" r="${R}"/>${u.ipKey&&OFF.f[u.ipKey]?`<image href="${OFF.f[u.ipKey]}" x="${-R}" y="${-R}" width="${2*R}" height="${2*R}" style="clip-path:circle(50%)"/>`:u.cat==='ip'&&u.step===0?`<text class="iplic" y="6">${u.name[0]}</text>`:`<g transform="translate(-8 -8) ${u.key?'scale(1)':'scale(1)'}"><path class="gl" d="${GL[glyphOf(u)]}"/></g>`}<text class="lbl c" y="${R+13}">${cshort(u.cost)}</text><text class="lbl nm" y="${R+25}">${u.name.length>16?u.name.slice(0,15)+'…':u.name}</text></g>`}
-  for(const B of BRANCHES){const x=TREE_C+Math.cos(B.ang)*(R0-62),y=TREE_C+Math.sin(B.ang)*(R0-62);h+=`<text class="bn" x="${x.toFixed(1)}" y="${y.toFixed(1)}" style="--c:${B.col}">${B.n}</text>`}
+    n+=`<g class="nd${u.key?' key':''}" data-id="${u.id}" transform="translate(${u.x.toFixed(1)} ${u.y.toFixed(1)})" style="--c:${u.br.col}"><circle class="ring" r="${R+6}"/><circle class="bg" r="${R}"/>${u.ipKey&&OFF.f[u.ipKey]?`<image href="${OFF.f[u.ipKey].replace('/products/','/thumbs/')}" x="${-R+2}" y="${-R+2}" width="${2*R-4}" height="${2*R-4}" decoding="async"/>`:u.cat==='ip'&&u.step===0?`<text class="iplic" y="6">${u.name[0]}</text>`:`<g transform="translate(-8 -8) ${u.key?'scale(1)':'scale(1)'}"><path class="gl" d="${GL[glyphOf(u)]}"/></g>`}<text class="lbl c" y="${R+13}">${cshort(u.cost)}</text><text class="lbl nm" y="${R+25}">${u.name.length>16?u.name.slice(0,15)+'…':u.name}</text></g>`}
+  for(const B of BRANCHES){const rr=B.id==='ip'?R0+235:R0-62,x=TREE_C+Math.cos(B.ang)*rr,y=TREE_C+Math.sin(B.ang)*rr;h+=`<text class="bn" x="${x.toFixed(1)}" y="${y.toFixed(1)}" style="--c:${B.col}">${B.n}</text>`}
   h+=`<circle class="hub" cx="${TREE_C}" cy="${TREE_C}" r="62"/><circle class="hubr" cx="${TREE_C}" cy="${TREE_C}" r="72"/><text class="hubt" x="${TREE_C}" y="${TREE_C-4}">STUDIO</text><text class="hubs" id="skHubS" x="${TREE_C}" y="${TREE_C+18}"></text>`;
   document.getElementById('skEdges').innerHTML=e;document.getElementById('skNodes').innerHTML=n;document.getElementById('skHub').innerHTML=h;
   skBuilt=true;wireSkill();
 }
-function applyCam(){document.getElementById('stg').setAttribute('transform',`translate(${cam.x.toFixed(1)} ${cam.y.toFixed(1)}) scale(${cam.k.toFixed(3)})`);
+let _camRaf=0;
+function applyCam(){if(_camRaf)return;_camRaf=requestAnimationFrame(()=>{_camRaf=0;applyCam0()})}
+function skMoving(){const s=document.getElementById('skSvg');if(!s)return;s.classList.add('moving');clearTimeout(skMoving.t);skMoving.t=setTimeout(()=>s.classList.remove('moving'),180)}
+function applyCam0(){skMoving();document.getElementById('stg').setAttribute('transform',`translate(${cam.x.toFixed(1)} ${cam.y.toFixed(1)}) scale(${cam.k.toFixed(3)})`);
   const s=document.getElementById('skSvg');s.classList.toggle('z1',cam.k>=.62);s.classList.toggle('z2',cam.k>=1.05)}
 function skSize(){const s=document.getElementById('skSvg');return{w:s.clientWidth,h:s.clientHeight}}
 function flyTo(wx,wy,k,instant){

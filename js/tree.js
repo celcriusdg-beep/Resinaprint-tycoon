@@ -11,7 +11,7 @@ const UBY={};UPGRADES.forEach(u=>UBY[u.id]=u);
     if(B.id==='ip'){ /* IP branch: one lane per licence, the licence first, then its 10 figures from mini to statue */
       const ang=(-90+bi*360/BRANCHES.length)*Math.PI/180,dx=Math.cos(ang),dy=Math.sin(ang),px=-dy,py=dx,list=UPGRADES.filter(u=>u.cat==='ip'),lanes=Math.max(...list.map(u=>u.lane))+1;
       B.ang=ang;B.rows=11;B.total=list.length;
-      list.forEach(u=>{u.br=B;u.row=u.step;u.col=u.lane;u.w=lanes;const lat=(u.lane-(lanes-1)/2)*LANE*1.3,rad=R0+u.step*ROW_H;
+      list.forEach(u=>{u.br=B;u.row=u.step;u.col=u.lane;u.w=lanes;const lat=(u.lane-(lanes-1)/2)*LANE*1.12,rad=R0+300+u.step*ROW_H;
         u.x=TREE_C+dx*rad+px*lat;u.y=TREE_C+dy*rad+py*lat;u.key=u.step===0;u.par=u.step?[u.step===1?'ip_'+u.ipGame:`ip_${u.ipGame}_${u.step-1}`]:[]});
       return;
     }

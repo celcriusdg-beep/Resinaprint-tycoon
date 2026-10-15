@@ -103,3 +103,7 @@
 .lowfx .ru,.lowfx .ru *,.calm .ru,.calm .ru *{animation:none!important}
 @media (prefers-reduced-motion:reduce){.ru,.ru *{animation:none!important}}
 .iplic{font:700 18px var(--f-display,'Barlow Condensed');text-anchor:middle;fill:#fff}
+/* skill tree: smooth panning */
+#skSvg.moving .e.av{animation:none!important}
+#skSvg.moving .e.on,#skSvg.moving .nd *{filter:none!important}
+#skSvg .nd image{pointer-events:none}

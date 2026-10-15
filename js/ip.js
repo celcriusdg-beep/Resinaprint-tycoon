@@ -28,7 +28,7 @@ const IP_GAMES=[
 ];
 const IP_BY={},IP_GAME_OF={};
 IP_GAMES.forEach((G,lane)=>{
-  UPGRADES.push({id:'ip_'+G.id,cat:'ip',name:`${G.co} licence`,cost:G.cost,lane,step:0,ipGame:G.id,
+  UPGRADES.push({id:'ip_'+G.id,cat:'ip',name:`${G.co} licence · ${G.short}`,cost:G.cost,lane,step:0,ipGame:G.id,
     desc:`Buy the ${G.game} IP from ${G.co}. Opens its 10 figures in this branch. ${Math.round(G.roy*100)}% royalty on every sale.`});
   G.figs.forEach(([k,n],i)=>{
     const sc=IP_SCALE[i],id=`ip_${G.id}_${i+1}`,ref=Math.round(sc.ref*G.pop);
