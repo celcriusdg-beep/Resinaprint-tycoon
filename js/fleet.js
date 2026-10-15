@@ -75,7 +75,7 @@ function fleetRoad(){
 }
 function fleetView(){
   const cap=fleetCap(),sl=fSlots(),gc=garageCap();
-  let h=`<div class="card dspcard"><img class="uiimg bayhero" src="img/ui/fleet.webp" alt="" width="96" height="96"><div class="chk"><span>Garage</span><b>${sl} of ${gc} slots</b></div><div class="bar" style="margin:8px 0"><i style="width:${Math.min(100,100*sl/gc)}%;background:var(--amber)"></i></div>${fleetRoad()}
+  let h=`<div class="card dspcard"><span class="bayhero">${uiIcon('fleet',96)}</span><div class="chk"><span>Garage</span><b>${sl} of ${gc} slots</b></div><div class="bar" style="margin:8px 0"><i style="width:${Math.min(100,100*sl/gc)}%;background:var(--amber)"></i></div>${fleetRoad()}
     <div class="fleet" style="margin-top:10px"><div class="ft"><b>+${cap}</b><span>Bay space</span></div><div class="ft"><b>−${Math.round(fleetShip()*100)}%</b><span>Shipping</span></div><div class="ft"><b>${fmt(fleetUpkeep())}</b><span>Upkeep / day</span></div><div class="ft good"><b>+${fleetHype().toFixed(1)}</b><span>Hype / day</span></div></div></div>`;
   h+=label('Vehicles','every vehicle takes garage slots and costs upkeep')+'<div class="group">';
   for(const k of VEH_ORDER){

@@ -104,7 +104,7 @@ const DSP_UP=[
 const payoutDaysFor=(ch,l)=>Math.max(0,PAY_BASE[ch]-l);
 function dispatchView(){
   const bay=bayOf().length,cap=dispCap(),pend=pendingPay(),nxt=nextPickup();
-  let h=`<div class="card dspcard"><img class="uiimg bayhero" src="img/ui/dispatch.webp" alt="" width="96" height="96"><div class="chk"><span>Dispatch bay</span><b>${bay} of ${cap}</b></div><div class="bar" style="margin:8px 0"><i style="width:${100*bay/cap}%;background:var(--amber)"></i></div>
+  let h=`<div class="card dspcard"><span class="bayhero">${uiIcon('dispatch',96)}</span><div class="chk"><span>Dispatch bay</span><b>${bay} of ${cap}</b></div><div class="bar" style="margin:8px 0"><i style="width:${100*bay/cap}%;background:var(--amber)"></i></div>
     <div class="fleet" style="margin-top:6px"><div class="ft"><b>${cap}</b><span>Bay size</span></div><div class="ft"><b>${pickHours().length}</b><span>Pickups a day</span></div><div class="ft"><b>${payoutDaysFor('web',dspLv('pay'))}d</b><span>Webshop payout</span></div><div class="ft good"><b>${fmt(pend)}</b><span>Waiting to clear</span></div></div>
     <div class="s" style="margin-top:8px">Packed orders wait in the bay until the courier comes (next at ${String(nxt%24).padStart(2,'0')}:00) or you send them. Sales are paid out a few days after they are sent. Logistics people and machines send the bay for you.</div></div>`;
   h+=label('Upgrades','each one makes a step faster or bigger')+'<div class="group">';

@@ -1,8 +1,11 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.5';
-const PATCH_TITLE='Resinaprint 4.5 · Icons';
+const VERSION='4.6';
+const PATCH_TITLE='Resinaprint 4.6 · Motion';
 const PATCH=[
+ {h:'New in 4.6',i:[
+  '<b>The icons move.</b> The printer scans with UV light, resin bubbles rise, the gear rocks and throws sparks, the workshop chimney smokes, the shop window flickers and twinkles, the van rolls with speed lines, the megaphone sends out sound rings, and the skill network turns. All of it is light on battery and turns off with reduce-motion.'
+ ]},
  {h:'New in 4.5',i:[
   '<b>Real icons.</b> The Shop tiles, the dispatch bay and the fleet now use rendered 3D icons made in Figma (parcel pallet, resin printer, resin bottle, gear and paint, workshop, storefront, delivery van, megaphone, skill network) instead of flat blocks and spheres.'
  ]},
