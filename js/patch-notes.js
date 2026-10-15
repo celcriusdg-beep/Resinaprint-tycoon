@@ -1,8 +1,17 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.20';
-const PATCH_TITLE='Resinaprint 4.20 · Fulfilment bay';
+const VERSION='4.21';
+const PATCH_TITLE='Resinaprint 4.21 · Showroom';
 const PATCH=[
+ {h:'New in 4.21',i:[
+  '<b>Showroom.</b> Lease a shop front (Studio tab) and build it tile by tile in an isometric room. 22 pieces of furniture: figure shelves, glass vitrines, a turning plinth, a prop wall, a hero statue, tills, a gacha machine, an arcade cabinet, an aquarium, a sakura tree, neon signs, a video wall, shop windows and more. Your real products stand on the shelves.',
+  'Furniture adds traffic (people walking in), appeal (how many buy) and display slots. Every piece has a style tag: three, six or nine of a tag give a set bonus. Five floor and wall styles, and the shop grows from a corner shop to a flagship store.',
+  'Customers walk in, browse, show a heart when they want something, walk to the till and pay. Every coin you see is a real counter sale.',
+  '<b>Commissions</b> (Orders › Commissions). Customers ask for one-off pieces. Print the base model, let a painter (or you) paint it to the brief and deliver before the deadline. Standard, Premium or Masterpiece, with a tip for 4.5 stars.',
+  '<b>Collector club</b> (Orders › Club). Monthly mystery boxes in three tiers. Choose what goes in each box and set the price. Members pay on box day, but every box needs real stock.',
+  '<b>Paint studio</b> (Team › Paint studio). Give each product a Basic, Studio or Competition paint tier: slower to paint, worth far more, higher quality. Install the competition bench to enter painting contests, from Local to the World Open, and fill your trophy cabinet. Medals boost demand for that product for good.',
+  '<b>Resin lab</b> (Empire › Resin lab). Mix glow-in-the-dark, metallic, crystal, flex and colour-shift resins from your own bottles. Print with a blend and those prints become variant editions that sell for 20% to 60% more.'
+ ]},
  {h:'New in 4.20',i:[
   'While the fulfilment partner handles a destination, the dispatch bay only leaves when it is full: no courier pickups and no early sends by logistics staff. You can still press Send yourself.'
  ]},

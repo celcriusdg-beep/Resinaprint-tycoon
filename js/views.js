@@ -85,8 +85,10 @@ function carrierOpts(dest){
 }
 function vOrders(){
   const pk=PKEYS.reduce((a,k)=>a+Math.min(S.stock[k],S.orders.filter(o=>o.p===k).length),0);
-  let h=segs('orders',[['queue','Orders'],['dms','Inbox',S.dms.length],['deals','Big deals',typeof dealsOf==='function'&&dealsOpen()?dealsOf().active.length:0],['jobs','Contracts'],['catalog','Catalog'],['delivery','Delivery']]);
+  let h=segs('orders',[['queue','Orders'],['dms','Inbox',S.dms.length],['deals','Big deals',typeof dealsOf==='function'&&dealsOpen()?dealsOf().active.length:0],['jobs','Contracts'],['comm','Commissions',typeof comOf==='function'&&S.com?S.com.board.length:0],['club','Club'],['catalog','Catalog'],['delivery','Delivery']]);
   if(sub.orders==='deals')return h+dealsView();
+  if(sub.orders==='comm')return h+comView();
+  if(sub.orders==='club')return h+clubView();
   if(sub.orders==='queue'){
     h+=typeof dispatchCard==='function'?dispatchCard():'';
     h+=label('Ready to ship',`cancel after ${5+Math.min(countRole('support'),3)*2} days`)+`<div class="group">${item(`${pk} order${pk===1?'':'s'} can ship now`,`Packing costs ${en(E.pack())} per order`,`<button class="btn primary sm" data-a="packAll" ${pk?'':'disabled'}>Pack all</button>`)}</div>`;
@@ -130,7 +132,7 @@ function vBuy(){
     const own=new Set(S.printers.map(p=>PRINTERS[p.type].fam));own.add('vat');
     for(const f in FAMS){if(!own.has(f))continue;
       h+=label(FAMS[f])+`<div class="group">`;
-      for(const k in RESINS){const R2=RESINS[k];if(R2.fam!==f)continue;
+      for(const k in RESINS){const R2=RESINS[k];if(R2.fam!==f||R2.mix)continue;
         h+=`<div class="item rsitem" style="flex-wrap:wrap">${artBox(resinArt(k),'rsart')}<div class="grow" style="min-width:50%"><div class="t">${R2.name} ${R2.q>0?`<span class="chip good">+${R2.q.toFixed(2)}★</span>`:''}</div><div class="s">${R2.note} · ${R2.pack} · <b class="num" style="color:var(--ink)">${amt(k,S.resin[k]||0)}</b> in stock</div></div>
         <div style="display:flex;gap:6px"><button class="btn sm" data-a="resin" data-k="${k}" data-n="1" ${S.cash<resinPrice(k)?'disabled':''}>1× ${fmt(resinPrice(k))}</button>${S.ws>=1?`<button class="btn sm primary" data-a="resin" data-k="${k}" data-n="5" ${S.cash<resinPrice(k)*4.5?'disabled':''}>5× ${fmt(resinPrice(k)*4.5)}</button>`:''}</div></div>`}
       h+='</div>'}
@@ -267,8 +269,10 @@ function mediaView(){
   return h;
 }
 function vEmpire(){
-  let h=segs('empire',[['company','Company'],['goals','Goals',sub.empire!=='goals'?Math.min(S.unread,99):0],['vault','Vault',vaultOf(S).chests.length],['items','Items',invCount()],['regulars','Regulars'],['shelf','Shelf'],['rebirth','Rebirth',canRebirth()&&sub.empire!=='rebirth'?1:0],['sing','Singularity'],['lab','R&D',typeof rdOf==='function'&&S.rd?S.rd.run.length:0],['rivals','Rivals'],['auto','Auto'],['more','More']]);
-  if(sub.empire==='lab'){
+  let h=segs('empire',[['company','Company'],['goals','Goals',sub.empire!=='goals'?Math.min(S.unread,99):0],['vault','Vault',vaultOf(S).chests.length],['items','Items',invCount()],['regulars','Regulars'],['shelf','Shelf'],['rebirth','Rebirth',canRebirth()&&sub.empire!=='rebirth'?1:0],['sing','Singularity'],['lab','R&D',typeof rdOf==='function'&&S.rd?S.rd.run.length:0],['mix','Resin lab'],['rivals','Rivals'],['auto','Auto'],['more','More']]);
+  if(sub.empire==='mix'){
+    h+=mixView();
+  }else if(sub.empire==='lab'){
     h+=rdView();
   }else if(sub.empire==='rivals'){
     h+=rivalsView();

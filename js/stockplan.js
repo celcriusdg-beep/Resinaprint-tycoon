@@ -6,7 +6,7 @@ const spInUse=()=>[...new Set(S.printers.map(p=>p.resin))].filter(k=>RESINS[k]);
 /* resins worth showing: what your machines can use, what you own, and what a plan already covers */
 function spList(s){
   const fams=new Set(S.printers.map(p=>PRINTERS[p.type].fam));fams.add('vat');
-  return Object.keys(RESINS).filter(k=>fams.has(RESINS[k].fam)||(S.resin[k]||0)>0||(s&&s.plan&&s.plan[k]));
+  return Object.keys(RESINS).filter(k=>!RESINS[k].mix).filter(k=>fams.has(RESINS[k].fam)||(S.resin[k]||0)>0||(s&&s.plan&&s.plan[k]));
 }
 /* with no plan yet, a manager keeps every resin in use between 1 and 3 bottles */
 function spPlan(s){

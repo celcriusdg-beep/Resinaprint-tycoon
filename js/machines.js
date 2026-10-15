@@ -93,7 +93,8 @@ function machView(lab){
 const _vTeamPeople=vTeam;
 vTeam=function(){
   const nm=machOwned(false).length,nl=machOwned(true).length;
-  const t=segs('team',[['people','People'],['mach','Machines',nm],['lab','Omega Forge',nl],['powers','Power-ups',typeof puFree==='function'?puFree().length:0]]);
+  const t=segs('team',[['people','People'],['mach','Machines',nm],['lab','Omega Forge',nl],['powers','Power-ups',typeof puFree==='function'?puFree().length:0],['paint','Paint studio']]);
+  if(sub.team==='paint')return t+paintView();
   if(sub.team==='powers')return t+powersView();
   if(sub.team==='mach')return t+machView(false);
   if(sub.team==='lab')return t+machView(true);
