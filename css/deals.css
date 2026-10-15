@@ -1,0 +1,18 @@
+.deal{margin-top:10px;border-color:color-mix(in srgb,var(--c) 30%,rgba(255,255,255,.07))!important;background:radial-gradient(90% 80% at 0% 0%,color-mix(in srgb,var(--c) 9%,transparent),transparent 70%),var(--glass)!important}
+.deal.on{border-color:color-mix(in srgb,var(--c) 55%,transparent)!important}
+.dl-h{display:flex;gap:12px;align-items:center}
+.dl-logo{width:42px;height:42px;border-radius:12px;background:var(--c);color:#0b0c10;display:grid;place-items:center;font:700 22px var(--f-display);flex:none}
+.dl-items{display:grid;gap:8px;margin:12px 0 10px}
+.dl-it{display:flex;align-items:center;gap:10px}
+.dl-art{width:40px;height:40px;flex:none;border-radius:10px;overflow:hidden;background:rgba(255,255,255,.04)}
+.dl-art img,.dl-art svg{width:100%;height:100%;object-fit:contain}
+.dl-n{font-size:13.5px;font-weight:600}.dl-it .bar{height:5px;margin-top:5px}.dl-it .bar i{background:var(--c)!important}
+.dl-it b{font-size:15px;min-width:58px;text-align:right}.dl-it small{font-size:11px;color:var(--faint);min-width:50px;text-align:right}.dl-it small.ok{color:var(--good)}
+.dl-r{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted);margin-bottom:10px}.dl-r b{color:var(--ink)}
+.deal .acts{display:flex;flex-wrap:wrap;gap:6px}
+.dealrank .t{font:700 22px var(--f-display);text-transform:uppercase;letter-spacing:.04em;color:var(--amber)}
+/* live floor */
+.floorcard{padding:12px!important}
+.fl-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.floorhost{height:250px;border-radius:14px;background:#141418}
+#floorCanvas{position:absolute;z-index:3;display:none;border-radius:14px;cursor:pointer;touch-action:manipulation}

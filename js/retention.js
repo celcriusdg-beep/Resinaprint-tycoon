@@ -2,6 +2,7 @@
 /* ---------- tips ---------- */
 const TIPS={
   studio:['Your studio','Prints finish on their own. Tap a station to wash, paint, pack or send by hand, or hire people and machines to do it. Your goal is the gold bar at the top.'],
+  'orders:deals':['Big deals','Big clients order several figures with a deadline. Your printers plan for them. Deliver in parts; finishing pays cash, a chest and +1% demand forever.'],
   orders:['Orders','Customers order figures you have in stock. Pack them, then send the dispatch bay when it fills or when a courier comes. Money arrives the next morning after you send.'],
   buy:['The Shop','Everything you can buy lives here. Printers and resin first, then space, stores, dispatch upgrades and the fleet. Prices go up, so buy what you need now.'],
   team:['Your team','People do jobs for you: painting, packing, repairs. Machines never get tired. Watch morale: a tired team quits.'],
@@ -19,6 +20,7 @@ const tipsSeen=()=>{try{return JSON.parse(localStorage.getItem('resinaprint-tips
 const tipsSave=o=>{try{localStorage.setItem('resinaprint-tips',JSON.stringify(o))}catch(e){}};
 function tipKey(){
   if(tab==='empire')return 'empire:'+(sub.empire||'company');
+  if(tab==='orders'&&sub.orders==='deals')return 'orders:deals';
   if(tab==='buy'&&sub.buy&&['dispatch','fleet'].includes(sub.buy))return 'shop:'+sub.buy;
   return tab;
 }

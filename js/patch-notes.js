@@ -1,8 +1,12 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.12';
-const PATCH_TITLE='Resinaprint 4.12 · Real stations';
+const VERSION='4.13';
+const PATCH_TITLE='Resinaprint 4.13 · Big deals';
 const PATCH=[
+ {h:'New in 4.13',i:[
+  '<b>Big deals.</b> From level 5, named clients (a board-game publisher, an anime con, a film studio, a theme park...) offer big orders of several figures with a deadline, in Orders › Big deals. Deliver in parts as stock comes in, or let Auto or a sales rep do it. Each finished deal pays a lump sum, a chest and +1% demand forever, and raises your supplier rank for bigger deals. Missing one only costs rating and hype.',
+  '<b>Live floor.</b> The Studio now opens with a top-down view of your workshop: printers glow and fill up while printing, people and machines walk to their stations, prints fly to the wash, parcels roll to the bay and the van drives off at pickup. Tap a printer to open it. The floor changes with every space you move to.'
+ ]},
  {h:'New in 4.12',i:[
   '<b>Real wash and paint stations.</b> The Wash station shows the wash & cure machine you own (Elegoo Mercury, Anycubic Wash & Cure, Formlabs Form Wash) with bubbles while it runs, and the Paint station shows a real miniature painting kit. The wash machines also show their photo in Shop › Gear.',
   '<b>Real resin photos</b> in Shop › Resin & supplies.'
