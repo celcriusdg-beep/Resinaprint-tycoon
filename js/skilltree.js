@@ -24,8 +24,8 @@ function buildSkill(){
   let e='',n='',h='';
   for(const u of UPGRADES){if(!u.br)continue;for(const id of u.par){const p=UBY[id];e+=`<line class="e" data-p="${id}" data-c="${u.id}" x1="${p.x.toFixed(1)}" y1="${p.y.toFixed(1)}" x2="${u.x.toFixed(1)}" y2="${u.y.toFixed(1)}" style="--c:${u.br.col}"/>`}}
   for(const u of UPGRADES){if(!u.br)continue;const R=u.key?22:16;
-    n+=`<g class="nd${u.key?' key':''}" data-id="${u.id}" transform="translate(${u.x.toFixed(1)} ${u.y.toFixed(1)})" style="--c:${u.br.col}"><circle class="ring" r="${R+6}"/><circle class="bg" r="${R}"/>${u.ipKey&&OFF.f[u.ipKey]?`<image href="${OFF.f[u.ipKey].replace('/products/','/thumbs/')}" x="${-R+2}" y="${-R+2}" width="${2*R-4}" height="${2*R-4}" decoding="async"/>`:u.cat==='ip'&&u.step===0?`<text class="iplic" y="6">${u.name[0]}</text>`:`<g transform="translate(-8 -8) ${u.key?'scale(1)':'scale(1)'}"><path class="gl" d="${GL[glyphOf(u)]}"/></g>`}<text class="lbl c" y="${R+13}">${cshort(u.cost)}</text><text class="lbl nm" y="${R+25}">${u.name.length>16?u.name.slice(0,15)+'…':u.name}</text></g>`}
-  for(const B of BRANCHES){const rr=B.id==='ip'?R0+235:R0-62,x=TREE_C+Math.cos(B.ang)*rr,y=TREE_C+Math.sin(B.ang)*rr;h+=`<text class="bn" x="${x.toFixed(1)}" y="${y.toFixed(1)}" style="--c:${B.col}">${B.n}</text>`}
+    n+=`<g class="nd${u.key?' key':''}" data-id="${u.id}" transform="translate(${u.x.toFixed(1)} ${u.y.toFixed(1)})" style="--c:${u.br.col}"><circle class="ring" r="${R+6}"/><circle class="bg" r="${R}"/>${u.ipKey&&OFF.f[u.ipKey]?`<image href="${OFF.f[u.ipKey].replace('/products/','/thumbs/')}" x="${-R+2}" y="${-R+2}" width="${2*R-4}" height="${2*R-4}" decoding="async"/>`:u.id==='pr_root'?`<text class="iplic" y="6">⚔</text>`:u.cat==='ip'&&u.step===0?`<text class="iplic" y="6">${u.name[0]}</text>`:`<g transform="translate(-8 -8) ${u.key?'scale(1)':'scale(1)'}"><path class="gl" d="${GL[glyphOf(u)]}"/></g>`}<text class="lbl c" y="${R+13}">${cshort(u.cost)}</text><text class="lbl nm" y="${R+25}">${u.name.length>16?u.name.slice(0,15)+'…':u.name}</text></g>`}
+  for(const B of BRANCHES){const rr=B.custom?R0+235:R0-62,x=TREE_C+Math.cos(B.ang)*rr,y=TREE_C+Math.sin(B.ang)*rr;h+=`<text class="bn" x="${x.toFixed(1)}" y="${y.toFixed(1)}" style="--c:${B.col}">${B.n}</text>`}
   h+=`<circle class="hub" cx="${TREE_C}" cy="${TREE_C}" r="62"/><circle class="hubr" cx="${TREE_C}" cy="${TREE_C}" r="72"/><text class="hubt" x="${TREE_C}" y="${TREE_C-4}">STUDIO</text><text class="hubs" id="skHubS" x="${TREE_C}" y="${TREE_C+18}"></text>`;
   document.getElementById('skEdges').innerHTML=e;document.getElementById('skNodes').innerHTML=n;document.getElementById('skHub').innerHTML=h;
   skBuilt=true;wireSkill();
@@ -107,7 +107,7 @@ function openSkill(branch){
   skillOpen=true;document.getElementById('skill').classList.add('on');document.body.classList.add('skopen');
   skCache={};refreshSkill();
   const {w,h}=skSize();
-  if(branch){const B=BRANCHES.find(b=>b.id===branch);flyTo(TREE_C+Math.cos(B.ang)*(R0+ROW_H*2),TREE_C+Math.sin(B.ang)*(R0+ROW_H*2),.8,true)}
+  if(branch){const B=BRANCHES.find(b=>b.id===branch);const rr=B.custom?R0+420:R0+ROW_H*2;flyTo(TREE_C+Math.cos(B.ang)*rr,TREE_C+Math.sin(B.ang)*rr,.8,true)}
   else{const u=bestBuy();if(u){flyTo(u.x,u.y,.85,true);selectNode(u.id)}else flyTo(TREE_C,TREE_C,Math.min(w,h)/3600*1.9,true)}
 }
 function closeSkill(){skillOpen=false;skSel=null;const el=document.getElementById('skill');if(el)el.classList.remove('on');document.body.classList.remove('skopen')}

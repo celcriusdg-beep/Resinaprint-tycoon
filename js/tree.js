@@ -2,17 +2,18 @@
 const BRANCHES=[
   {id:'energy',n:'Energy',col:'#5bd6a6',gated:1},{id:'prod',n:'Production',col:'#9d89ff',gated:1},{id:'sales',n:'Sales',col:'#f0a53a',gated:1},
   {id:'team',n:'Team',col:'#ff7fa8',gated:1},{id:'biz',n:'Business',col:'#5aa6ff',gated:1},{id:'social',n:'Media',col:'#ff8a5c'},{id:'site',n:'Site',col:'#cfc7b6'},
-  {id:'ip',n:'IP & figures',col:'#ff5fa2',gated:1}
+  {id:'ip',n:'IP & figures',col:'#ff5fa2',gated:1,custom:1},
+  {id:'props',n:'Props',col:'#c75bff',gated:1,custom:1}
 ];
 const ROW_W=[1,3,4,4,3],LANE=54,ROW_H=64,R0=210,TREE_C=2000;
 const UBY={};UPGRADES.forEach(u=>UBY[u.id]=u);
 (function buildTree(){
   BRANCHES.forEach((B,bi)=>{
-    if(B.id==='ip'){ /* IP branch: one lane per licence, the licence first, then its 10 figures from mini to statue */
-      const ang=(-90+bi*360/BRANCHES.length)*Math.PI/180,dx=Math.cos(ang),dy=Math.sin(ang),px=-dy,py=dx,list=UPGRADES.filter(u=>u.cat==='ip'),lanes=Math.max(...list.map(u=>u.lane))+1;
-      B.ang=ang;B.rows=11;B.total=list.length;
+    if(B.custom){ /* IP branch: one lane per licence, the licence first, then its 10 figures from mini to statue */
+      const ang=(-90+bi*360/BRANCHES.length)*Math.PI/180,dx=Math.cos(ang),dy=Math.sin(ang),px=-dy,py=dx,list=UPGRADES.filter(u=>u.cat===B.id),lanes=Math.max(...list.map(u=>Math.ceil(u.lane)))+1;
+      B.ang=ang;B.rows=Math.max(...list.map(u=>u.step))+1;B.total=list.length;
       list.forEach(u=>{u.br=B;u.row=u.step;u.col=u.lane;u.w=lanes;const lat=(u.lane-(lanes-1)/2)*LANE*1.12,rad=R0+300+u.step*ROW_H;
-        u.x=TREE_C+dx*rad+px*lat;u.y=TREE_C+dy*rad+py*lat;u.key=u.step===0;u.par=u.step?[u.step===1?'ip_'+u.ipGame:`ip_${u.ipGame}_${u.step-1}`]:[]});
+        u.x=TREE_C+dx*rad+px*lat;u.y=TREE_C+dy*rad+py*lat;u.key=u.step===0||!!u.allPar;u.par=u.parIds||(u.step?[u.step===1?'ip_'+u.ipGame:`ip_${u.ipGame}_${u.step-1}`]:[])});
       return;
     }
     const list=UPGRADES.filter(u=>u.cat===B.id).sort((a,b)=>a.cost-b.cost),rows=[];
@@ -31,14 +32,14 @@ const UBY={};UPGRADES.forEach(u=>UBY[u.id]=u);
   });
 })();
 const treeOpen=u=>{
-  if(u.cat==='ip')return !u.row||u.par.some(id=>S.up[id]);
+  if(u.cat==='ip'||u.cat==='props')return !u.row||(u.allPar?u.par.every(id=>S.up[id]):u.par.some(id=>S.up[id]));
   if(!u.br||!u.br.gated||!u.row)return true;
   return u.par.some(id=>S.up[id])||UPGRADES.some(x=>x.cat===u.cat&&x.row>=u.row&&S.up[x.id]);
 };
 UPGRADES.forEach(u=>{
   const r0=u.req,t0=u.reqText;
   Object.defineProperty(u,'req',{value:()=>treeOpen(u)&&(!r0||r0()),writable:true,configurable:true});
-  Object.defineProperty(u,'reqText',{get:()=>treeOpen(u)?(t0||''):`Own ${u.par.map(id=>UBY[id].name).slice(0,2).join(' or ')} first`,configurable:true});
+  Object.defineProperty(u,'reqText',{get:()=>treeOpen(u)?(t0||''):(u.allPar?`Own ${u.par.map(id=>UBY[id].name).join(', ')} first`:`Own ${u.par.map(id=>UBY[id].name).slice(0,2).join(' or ')} first`),configurable:true});
 });
 /* list view (below the tree card): the same rows, as plain lists */
 const TIER_NAMES=['Basics','Improvements','Pro gear','Expert tools','Master class','Legendary','Mythic','Beyond','Endgame','Final'];

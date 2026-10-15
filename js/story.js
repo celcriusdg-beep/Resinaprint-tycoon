@@ -134,6 +134,7 @@ const SETS=[
   {id:'gi',n:'Genshin Impact',keys:['venti','zhongli','qiqi','klee','keqing','nahida','hutao','ganyu','ayaka','raiden']},
   {id:'ww',n:'Wuthering Waves',keys:['carlotta','cantarella','changli','shorekeeper','phoebe','verina','augusta','yinlin','mornye','jinhsi']},
   {id:'zzz',n:'Zenless Zone Zero',keys:['belle','wise','grace','yanagi','nicole','anby','jane','evelyn','ellen','miyabi']},
+  {id:'props',n:'Prop armoury',keys:['pr_vial','pr_compact','pr_book','pr_rod','pr_tiare','pr_sai','pr_katana','pr_giyu','pr_keyblade','pr_excal','pr_arc','pr_phaser','pr_vash','pr_xgun','pr_dominator','pr_glove','pr_tracker','pr_celtic','pr_panther','pr_berserker']},
   {id:'e7',n:'Epic Seven',keys:['vivian','diene','ken','ras','tamarinne','yufine','iseria','bellona','eda','luna']}
 ];
 const SET_BONUS=.04;

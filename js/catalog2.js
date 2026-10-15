@@ -2,10 +2,11 @@
    Every feature of the old catalogue is still here: listing, price, sell-off, stop making, auto-price and pre-orders. */
 const catOpen=new Set();
 function catGroups(){
-  const own=PKEYS.filter(k=>unlocked(k)&&!PRODUCTS[k].ip),g=[];
+  const own=PKEYS.filter(k=>unlocked(k)&&!PRODUCTS[k].ip&&!PRODUCTS[k].prop),props=PKEYS.filter(k=>unlocked(k)&&PRODUCTS[k].prop),g=[];
   g.push({id:'selling',n:'Selling',keys:PKEYS.filter(k=>unlocked(k)&&S.listed[k]&&makeable(k))});
   g.push({id:'own',n:'Own designs',keys:own});
   if(typeof IP_GAMES!=='undefined')for(const G of IP_GAMES){const ks=G.figs.map(f=>f[0]).filter(k=>unlocked(k));if(ks.length)g.push({id:G.id,n:G.short,col:G.col,keys:ks})}
+  if(props.length)g.push({id:'props',n:'Props',col:'#c75bff',keys:props});
   g.push({id:'idle',n:'Not listed',keys:PKEYS.filter(k=>unlocked(k)&&!S.listed[k])});
   return g;
 }

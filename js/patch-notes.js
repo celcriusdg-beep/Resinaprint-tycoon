@@ -1,8 +1,13 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.16';
-const PATCH_TITLE='Resinaprint 4.16 · R&D';
+const VERSION='4.17';
+const PATCH_TITLE='Resinaprint 4.17 · Props';
 const PATCH=[
+ {h:'New in 4.17',i:[
+  '<b>Props.</b> A new Props branch in the skill tree. Open the prop workshop, then unlock life-size replica props in four lanes from small to big: magic items, swords, guns & tech and masks & helmets, 20 in all, each with a cut-out photo. Props need medium or large printers, take a lot of painting and sell for €149 to €999.',
+  '<b>The Virtuous Contract.</b> The legendary blade of the Ascendent Abyss crowns the branch: unlock the top prop of all four lanes to forge it. It sells for about €4,999.',
+  'Props get their own catalogue tab and a Prop armoury shelf.'
+ ]},
  {h:'New in 4.16',i:[
   '<b>R&D lab</b> (Empire › R&D). Fund 15 research projects, from Rapid photopolymer to Quantum curing: faster prints, fewer failures, more demand, faster staff, cheaper shipping, lower IP royalties and daily hype. Research takes game time and can fail; failures refund 30% and make the next try 15% more likely. Technicians and engineers raise the odds, and up to 3 benches run at once. Breakthroughs survive rebirth.',
   '<b>A new catalogue.</b> Tabs for Selling, Own designs, each IP and Not listed, compact cards with a clear stats row, and the less-used controls (sell-off, stop making, auto-price, pre-orders) folded under More options.',
