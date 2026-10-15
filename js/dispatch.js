@@ -66,6 +66,7 @@ const _hs1=hourStep;
 hourStep=function(){
   _hs1();if(S.over)return;
   const bay=bayOf();if(!bay.length)return;
+  if(fpActive())return;   /* 4.20: with the fulfilment partner, the bay only leaves when it is full */
   if(pickHours().includes(S.hour)){const n=sendBay();if(n&&!awayMode)log(`The courier collected ${n} parcel${n>1?'s':''}.`,'good')}
   else if(dspLv('auto')>=2&&bay.length>=Math.ceil(dispCap()*.5))sendBay();
 };
@@ -74,7 +75,7 @@ delete PASSIVE.logistics;
 const _staffTask1=staffTask;
 staffTask=function(s){
   if(s.role==='logistics'){
-    if(bayOf().length>=Math.max(5,Math.ceil(dispCap()*.4))||bayFull()){const n=sendBay();return{h:.25,act:`Dispatching ${n} parcels`}}
+    if(fpActive()?bayFull():bayOf().length>=Math.max(5,Math.ceil(dispCap()*.4))||bayFull()){const n=sendBay();return{h:.25,act:`Dispatching ${n} parcels`}}
     gainXp(s,.03);return null;
   }
   if(s.role==='packer'&&(bayFull()||packableIdx()<0))return null;
@@ -122,6 +123,7 @@ function dispatchCard(){
 
 /* 4.19: the fulfilment partner packs orders into the dispatch bay one by one, and its van takes the whole bay when it is full.
    Couriers still collect at their pickup hours. */
+const fpActive=()=>!!S.car.fulfil&&Object.keys(DESTS).some(d=>CARRIERS[carrierFor(d)].auto);
 const fpOrders=()=>S.orders.filter(o=>freeStock(o.p)>0&&CARRIERS[carrierFor(o.dest||'nl')].auto);
 function fpPack(){
   if(bayFull()){const n=sendBay();if(n&&!awayMode&&!simulating){log(`Bay full: the fulfilment partner's van took ${n} parcels.`,'good');if(typeof snd==='function')snd('send')}}

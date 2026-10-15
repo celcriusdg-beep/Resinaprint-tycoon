@@ -1,8 +1,11 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.19';
-const PATCH_TITLE='Resinaprint 4.19 · Fulfilment bay';
+const VERSION='4.20';
+const PATCH_TITLE='Resinaprint 4.20 · Fulfilment bay';
 const PATCH=[
+ {h:'New in 4.20',i:[
+  'While the fulfilment partner handles a destination, the dispatch bay only leaves when it is full: no courier pickups and no early sends by logistics staff. You can still press Send yourself.'
+ ]},
  {h:'New in 4.19',i:[
   '<b>The fulfilment partner uses your dispatch bay.</b> Instead of making orders vanish, it now packs them into the bay one by one, about 8 an hour and faster when orders pile up. When the bay is full, its van takes every parcel at once. Couriers still collect at their pickup hours too.'
  ]},
