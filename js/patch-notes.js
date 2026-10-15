@@ -1,8 +1,13 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.14';
-const PATCH_TITLE='Resinaprint 4.14 · Power-ups';
+const VERSION='4.15';
+const PATCH_TITLE='Resinaprint 4.15 · IP licences';
 const PATCH=[
+ {h:'New in 4.15',i:[
+  '<b>IP licences.</b> A new IP & figures branch in the skill tree. Buy the rights from the company behind a game (Riot Games, HoYoverse, Kuro Games, Smilegate), then unlock its figures one by one, from a 10 cm mini to a 1/4 statue. Each one you unlock goes straight into your catalogue.',
+  '<b>50 licensed figures</b>, 10 each from League of Legends, Genshin Impact, Wuthering Waves, Zenless Zone Zero and Epic Seven, all with real cut-out pictures. They sell for far more than your own designs (up to €1,800 for a Genshin statue) but pay a 12 to 18% royalty. The old busts are retired.',
+  'If you already owned the Licensing deal, you get the Riot Games licence for free. Figure shelves now have one set per game.'
+ ]},
  {h:'New in 4.14',i:[
   '<b>Power crates.</b> A new Shop catalogue with five crates, from Scrap to Void, full of power-ups for your staff, machines and printers in 12 rarities: Common up to Primordial and Singular. Open one or ten at a time, see the exact odds, and fuse three of the same into the next rarity.',
   '<b>Equip without limits.</b> Equip power-ups from Empire › Items or Team › Power-ups, as many per unit as you like. People get Focus and Spirit, machines get Overclock and Cryo coolant, printers get Turbo lasers and Precision optics.',

@@ -67,11 +67,11 @@ Object.assign(A,{goObj(d){const c=CHAPTERS[storyOf(S).ch],o=c&&c.objs[+d.i];if(!
 /* ---------- regulars ---------- */
 const REGS=[
   {id:'kenji',n:'Kenji',role:'Anime collector',fav:['chibi'],at:0,hue:350},
-  {id:'sofie',n:'Sofie',role:'Bust enthusiast',fav:['bust','lux','yasuo','jinhsib'],at:30,hue:200},
+  {id:'sofie',n:'Sofie',role:'Bust enthusiast',fav:['bust','missf','venti','belle','vivian','carlotta'],at:30,hue:200},
   {id:'marco',n:'Marco',role:'Desk gamer',fav:['desk'],at:80,hue:140},
   {id:'tomo',n:'Tomo',role:'Card shop owner',fav:['deckbox','licensed'],at:150,hue:30},
   {id:'lotte',n:'Lotte',role:'Garage kit painter',fav:['kit'],at:250,hue:280},
-  {id:'ayaka',n:'Ayaka',role:'Champion fan',fav:['ahri','akali','yone','jhin','jinx','kaisa','jinhsi'],at:500,hue:320},
+  {id:'ayaka',n:'Ayaka',role:'Champion fan',fav:['ahri','akali','jinx','kaisa','raiden','hutao','miyabi','ellen','jinhsi','luna'],at:500,hue:320},
   {id:'voss',n:'Dr. Voss',role:'Premium collector',fav:['premium','fullcolor'],at:900,hue:50},
   {id:'bram',n:'Bram',role:'Statue baron',fav:['statue'],at:1600,hue:20}
 ];
@@ -130,8 +130,11 @@ const SETS=[
   {id:'basics',n:'Starter shelf',keys:['chibi','bust','desk']},
   {id:'collector',n:'Collector shelf',keys:['kit','premium','statue','fullcolor']},
   {id:'cards',n:'Game night',keys:['licensed','deckbox']},
-  {id:'lol',n:'Champions',keys:['ahri','akali','yone','jhin','jinx','lux','yasuo','kaisa']},
-  {id:'ww',n:'Wuthering',keys:['jinhsi','jinhsib']}
+  {id:'lol',n:'League of Legends',keys:['missf','ashe','lux','akali','yone','jhin','jinx','ahri','seraphine','kaisa']},
+  {id:'gi',n:'Genshin Impact',keys:['venti','zhongli','qiqi','klee','keqing','nahida','hutao','ganyu','ayaka','raiden']},
+  {id:'ww',n:'Wuthering Waves',keys:['carlotta','cantarella','changli','shorekeeper','phoebe','verina','augusta','yinlin','mornye','jinhsi']},
+  {id:'zzz',n:'Zenless Zone Zero',keys:['belle','wise','grace','yanagi','nicole','anby','jane','evelyn','ellen','miyabi']},
+  {id:'e7',n:'Epic Seven',keys:['vivian','diene','ken','ras','tamarinne','yufine','iseria','bellona','eda','luna']}
 ];
 const SET_BONUS=.04;
 const shelfBonus=()=>Object.keys(shelfOf().claimed).length*SET_BONUS;

@@ -203,7 +203,7 @@ const UPGRADES=[
   {id:'theme',cat:'biz',name:'Webshop redesign',cost:1200,desc:'+15% webshop demand.',req:()=>S.sold>=50,reqText:'Sell 50 figures first'},
   {id:'ip',cat:'biz',name:'Own character brand',cost:2500,desc:'Original characters: +10% demand and no more takedown notices.',req:()=>S.staff.some(s=>s.role==='designer'),reqText:'Hire a 3D designer first'},
   {id:'bulk',cat:'biz',name:'Bulk resin contract',cost:2000,desc:'All resin 20% cheaper.',req:()=>S.ws>=2,reqText:'Needs a workshop'},
-  {id:'licensing',cat:'biz',name:'Licensing deal',cost:5000,desc:'New products: licensed figures and official League of Legends and Wuthering Waves characters (15% royalty).',req:()=>!!S.stores.manga?.merged,reqText:'Merge the manga store first'},
+  {id:'licensing',cat:'biz',name:'Licensing deal',cost:5000,desc:'New product: generic licensed figures (15% royalty). Official game figures need an IP licence in the IP & figures branch.',req:()=>!!S.stores.manga?.merged,reqText:'Merge the manga store first'},
   {id:'deckbox',cat:'biz',name:'Deck box line',cost:1500,desc:'New product: printed deck boxes.',req:()=>!!S.stores.tcg?.merged,reqText:'Merge the card shop first'},
   {id:'franchise',cat:'biz',name:'Resinaprint franchise',cost:50000,desc:'Demand ×1.5 for everything.',req:()=>Object.values(S.stores).filter(s=>s.merged).length>=3,reqText:'Merge all three stores'},
   {id:'racks',cat:'site',name:'Racking & shelving',cost:600,desc:'+2 printer spots.'},

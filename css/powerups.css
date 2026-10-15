@@ -102,3 +102,4 @@
 .pu-list{display:grid;gap:6px;margin-top:12px;max-height:280px;overflow:auto}
 .lowfx .ru,.lowfx .ru *,.calm .ru,.calm .ru *{animation:none!important}
 @media (prefers-reduced-motion:reduce){.ru,.ru *{animation:none!important}}
+.iplic{font:700 18px var(--f-display,'Barlow Condensed');text-anchor:middle;fill:#fff}
