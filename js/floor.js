@@ -82,10 +82,15 @@ function flDraw(time){
   const c=FLOOR.ctx,W=FLOOR.w,H=FLOOR.h,th=FL_THEME[Math.min(5,S.ws)]||FL_THEME[0],L=flLayout(),t=time/1000;
   c.setTransform(FLOOR.dpr,0,0,FLOOR.dpr,0,0);c.clearRect(0,0,W,H);
   /* floor + walls */
-  rr(c,0,0,W,H,14);c.fillStyle=th.floor;c.fill();c.save();rr(c,0,0,W,H,14);c.clip();
-  c.strokeStyle=th.tile;c.lineWidth=1;for(let x=0;x<W;x+=22){c.beginPath();c.moveTo(x,0);c.lineTo(x,H);c.stroke()}for(let y=0;y<H;y+=22){c.beginPath();c.moveTo(0,y);c.lineTo(W,y);c.stroke()}
-  if(S.ws>=2){c.fillStyle='rgba(232,179,75,.18)';for(let x=0;x<W;x+=16){c.save();c.translate(x,H-74);c.rotate(-.6);c.fillRect(0,0,6,14);c.restore()}}
-  const lg=c.createLinearGradient(0,0,0,H);lg.addColorStop(0,'rgba(255,255,255,.04)');lg.addColorStop(1,'rgba(0,0,0,.25)');c.fillStyle=lg;c.fillRect(0,0,W,H);
+  /* the static floor is drawn once into a cache and copied every frame */
+  const bk=W+'x'+H+':'+S.ws+':'+FLOOR.dpr;
+  if(FLOOR.bgKey!==bk){const b=FLOOR.bg||(FLOOR.bg=document.createElement('canvas'));b.width=W*FLOOR.dpr;b.height=H*FLOOR.dpr;const g=b.getContext('2d');g.setTransform(FLOOR.dpr,0,0,FLOOR.dpr,0,0);
+    rr(g,0,0,W,H,14);g.fillStyle=th.floor;g.fill();g.save();rr(g,0,0,W,H,14);g.clip();
+    g.strokeStyle=th.tile;g.lineWidth=1;g.beginPath();for(let x=0;x<W;x+=22){g.moveTo(x,0);g.lineTo(x,H)}for(let y=0;y<H;y+=22){g.moveTo(0,y);g.lineTo(W,y)}g.stroke();
+    if(S.ws>=2){g.fillStyle='rgba(232,179,75,.18)';for(let x=0;x<W;x+=16){g.save();g.translate(x,H-74);g.rotate(-.6);g.fillRect(0,0,6,14);g.restore()}}
+    const lg=g.createLinearGradient(0,0,0,H);lg.addColorStop(0,'rgba(255,255,255,.04)');lg.addColorStop(1,'rgba(0,0,0,.25)');g.fillStyle=lg;g.fillRect(0,0,W,H);g.restore();FLOOR.bgKey=bk}
+  c.setTransform(1,0,0,1,0,0);c.drawImage(FLOOR.bg,0,0);c.setTransform(FLOOR.dpr,0,0,FLOOR.dpr,0,0);
+  c.save();rr(c,0,0,W,H,14);c.clip();
   /* belt between stations */
   const by=L.st.wash.y+10;c.fillStyle='#121216';rr(c,L.st.wash.x-16,by-5,L.st.bay.x-L.st.wash.x+32,10,5);c.fill();
   c.strokeStyle='rgba(255,255,255,.08)';c.setLineDash([6,6]);c.lineDashOffset=-t*18;c.beginPath();c.moveTo(L.st.wash.x-12,by);c.lineTo(L.st.bay.x+12,by);c.stroke();c.setLineDash([]);
@@ -147,8 +152,8 @@ function flDraw(time){
 /* rarity aura for power-up holders: a ring in the rarity colour, pulsing faster and brighter the rarer it is, with sparks from Divine up */
 function flAura(c,x,y,R,r,t,ph){
   const col=PU_RAR[r].c,pulse=.5+.5*Math.sin(t*(1.5+r*.35)+ph);
-  c.save();c.globalAlpha=.35+.45*pulse;c.strokeStyle=col;c.lineWidth=1+r*.18;c.shadowColor=col;c.shadowBlur=6+r*1.5;
-  c.beginPath();c.ellipse(x,y,R,R*.62,0,0,7);c.stroke();
+  c.save();c.strokeStyle=col;c.globalAlpha=(.12+.18*pulse)*(1+r/12);c.lineWidth=4+r*.5;c.beginPath();c.ellipse(x,y,R,R*.62,0,0,7);c.stroke();
+  c.globalAlpha=.35+.45*pulse;c.lineWidth=1+r*.18;c.beginPath();c.ellipse(x,y,R,R*.62,0,0,7);c.stroke();
   if(r>=10){c.setLineDash([3,4]);c.lineDashOffset=-t*20;c.beginPath();c.ellipse(x,y,R*1.25,R*.8,0,0,7);c.stroke();c.setLineDash([])}
   if(r>=6)for(let k=0;k<Math.min(6,r-4);k++){const a=t*(1+k*.2)+k*1.7+ph;c.globalAlpha=.6+.4*Math.sin(t*5+k);c.fillStyle=r===11?(k%2?'#fff':'#000'):col;c.beginPath();c.arc(x+Math.cos(a)*R*1.1,y+Math.sin(a)*R*.7,1.4+(r>=9?.6:0),0,7);c.fill()}
   c.restore();
@@ -160,11 +165,12 @@ function flTap(e){
 }
 function flLoop(time){
   requestAnimationFrame(flLoop);
+  if(time-FLOOR.scrollT<140)return; /* never compete with the page while you scroll */
   const vis=S&&S.started&&FLOOR.open&&!document.hidden&&flPlace();
   if(!vis)return;
-  const low=document.documentElement.classList.contains('lowfx')||document.documentElement.classList.contains('calm'),gap=low?1000/12:1000/40;
+  const low=document.documentElement.classList.contains('lowfx')||document.documentElement.classList.contains('calm'),gap=low?1000/12:1000/30;
   if(time-FLOOR.last<gap)return;const dt=Math.min(.1,(time-FLOOR.last)/1000);FLOOR.last=time;
   try{const L=flLayout();flSense(L);flWorkers(L,dt);flDraw(time)}catch(err){console.error(err)}
 }
 requestAnimationFrame(flLoop);
-addEventListener('resize',()=>{FLOOR.w=0});
+FLOOR.scrollT=0;addEventListener('scroll',()=>{FLOOR.scrollT=performance.now()},{passive:true});addEventListener('touchmove',()=>{FLOOR.scrollT=performance.now()},{passive:true});

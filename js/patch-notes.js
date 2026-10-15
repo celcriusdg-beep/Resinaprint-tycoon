@@ -1,8 +1,13 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.15';
-const PATCH_TITLE='Resinaprint 4.15 · IP licences';
+const VERSION='4.16';
+const PATCH_TITLE='Resinaprint 4.16 · R&D';
 const PATCH=[
+ {h:'New in 4.16',i:[
+  '<b>R&D lab</b> (Empire › R&D). Fund 15 research projects, from Rapid photopolymer to Quantum curing: faster prints, fewer failures, more demand, faster staff, cheaper shipping, lower IP royalties and daily hype. Research takes game time and can fail; failures refund 30% and make the next try 15% more likely. Technicians and engineers raise the odds, and up to 3 benches run at once. Breakthroughs survive rebirth.',
+  '<b>A new catalogue.</b> Tabs for Selling, Own designs, each IP and Not listed, compact cards with a clear stats row, and the less-used controls (sell-off, stop making, auto-price, pre-orders) folded under More options.',
+  '<b>Smoother live floor.</b> Scrolling over the Studio no longer stutters: the floor pauses while you scroll and draws far less each frame.'
+ ]},
  {h:'New in 4.15',i:[
   '<b>IP licences.</b> A new IP & figures branch in the skill tree. Buy the rights from the company behind a game (Riot Games, HoYoverse, Kuro Games, Smilegate), then unlock its figures one by one, from a 10 cm mini to a 1/4 statue. Each one you unlock goes straight into your catalogue.',
   '<b>50 licensed figures</b>, 10 each from League of Legends, Genshin Impact, Wuthering Waves, Zenless Zone Zero and Epic Seven, all with real cut-out pictures. They sell for far more than your own designs (up to €1,800 for a Genshin statue) but pay a 12 to 18% royalty. The old busts are retired.',

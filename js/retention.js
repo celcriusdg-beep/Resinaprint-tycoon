@@ -11,6 +11,7 @@ const TIPS={
   'empire:items':['Items','Usable items from chests and goals. Printers waiting in storage are listed here: place them in a free spot or sell them.'],
   'empire:rebirth':['Rebirth','Restart in a new country and keep Resin Shards, perks and your vault. Perks are permanent. Do not hoard too many shards: black matter gets unstable.'],
   'empire:sing':['Singularity','Fuse shards into Cores and forge printers far beyond the shop. Each machine needs the one before it. Nothing here resets your company.'],
+  'empire:lab':['R&D lab','Fund research that takes game time and can fail. Every breakthrough is permanent, even through rebirth. Technicians and engineers raise the odds.'],
   'empire:rivals':['Rivals','Rival companies take a share of your demand. Undercut them, sabotage them, or buy them out for a permanent bonus.'],
   'empire:auto':['Auto board','Switch on rules that run your empire: send the bay, rebuy resin, place printers, service machines. They cost real money but no energy.'],
   'shop:dispatch':['Dispatch','Packed orders wait in the bay. A bigger bay, more pickups and faster payouts all speed up your income.'],
