@@ -72,3 +72,13 @@
 .rsitem{align-items:center}
 .rsart{width:56px!important;height:56px!important;flex:none;background:none!important;border:0!important;box-shadow:none!important;padding:0!important}
 .rsart img{filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}
+/* wash & paint stations */
+.sticon .fx-wash,.sticon .fx-paint{width:var(--px);height:var(--px)}
+.fx-wash .fp{bottom:30%;width:4px;height:4px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#9fd3ff);opacity:0}
+.sticon.work .fx-wash .fp{animation:fxbub 2.2s ease-in infinite}
+.fx-wash .fp1{left:40%}.fx-wash .fp2{left:55%;animation-delay:.7s!important}.fx-wash .fp3{left:47%;animation-delay:1.4s!important}
+.sticon.work .fx-wash .uiimg{animation:fxwash 1.6s ease-in-out infinite}
+@keyframes fxwash{0%,100%{transform:translateX(0)}25%{transform:translateX(-1px) rotate(-.6deg)}75%{transform:translateX(1px) rotate(.6deg)}}
+.fx-paint .fp{width:7px;height:7px;background:#fff;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);opacity:0;animation:fxtwink 3s ease-in-out infinite}
+.fx-paint .fp1{left:18%;top:20%}.fx-paint .fp2{left:74%;top:48%;animation-delay:1.4s}
+.gimg{width:48px;height:48px;flex:none;object-fit:contain;filter:drop-shadow(0 5px 9px rgba(0,0,0,.45))}

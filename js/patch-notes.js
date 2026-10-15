@@ -1,8 +1,12 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.11';
-const PATCH_TITLE='Resinaprint 4.11 · Real resin';
+const VERSION='4.12';
+const PATCH_TITLE='Resinaprint 4.12 · Real stations';
 const PATCH=[
+ {h:'New in 4.12',i:[
+  '<b>Real wash and paint stations.</b> The Wash station shows the wash & cure machine you own (Elegoo Mercury, Anycubic Wash & Cure, Formlabs Form Wash) with bubbles while it runs, and the Paint station shows a real miniature painting kit. The wash machines also show their photo in Shop › Gear.',
+  '<b>Real resin photos</b> in Shop › Resin & supplies.'
+ ]},
  {h:'New in 4.11',i:[
   '<b>Real resin photos.</b> Elegoo, Anycubic, Siraya Tech, Monocure and Formlabs resins now show their official bottle and cartridge, cut out on a transparent background, in Shop › Resin & supplies.'
  ]},

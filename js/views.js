@@ -138,7 +138,7 @@ function vBuy(){
   }else if(sub.buy==='gear'){
     h+=label('Wash & cure','prints per batch')+`<div class="group">`;
     const ks=Object.keys(WASHERS),cur=ks.indexOf(S.washer);
-    ks.forEach((k,i)=>{const W=WASHERS[k],lock=S.ws<W.ws;h+=item(W.name,`${W.cap} per batch${lock?` · needs a ${SPACES[W.ws].name.toLowerCase()}`:''}`,k===S.washer?'<span class="chip amber">Yours</span>':i>cur?price('washer',k,W.cost,lock||S.cash<W.cost):'<span class="chip">Owned</span>')});
+    ks.forEach((k,i)=>{const W=WASHERS[k],lock=S.ws<W.ws;h+=item(`<span style="display:flex;align-items:center;gap:10px"><img class="gimg" src="${washImg(k)}" alt="">${W.name}</span>`,`${W.cap} per batch${lock?` · needs a ${SPACES[W.ws].name.toLowerCase()}`:''}`,k===S.washer?'<span class="chip amber">Yours</span>':i>cur?price('washer',k,W.cost,lock||S.cash<W.cost):'<span class="chip">Owned</span>')});
     h+='</div>';
     if(S.printers.some(p=>PRINTERS[p.type].inj)){
       h+=label('Injection moulds','steel moulds make parts almost for free')+`<div class="group">`;
