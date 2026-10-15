@@ -119,3 +119,21 @@ function dispatchCard(){
   return `<div class="card dspcard" style="margin-top:12px"><div class="chk"><span>Dispatch bay · next pickup ${String(nextPickup()%24).padStart(2,'0')}:00</span><b>${bay} / ${cap}</b></div><div class="bar" style="margin:8px 0"><i style="width:${100*bay/cap}%;background:${bay>=cap?'var(--bad)':'var(--amber)'}"></i></div>
     <div class="evrow"><span class="s">${pend>0?`${fmt(pend)} waiting to clear`:'No payments waiting'}</span><span style="display:flex;gap:6px"><button class="btn sm" data-a="shopGo" data-k="dispatch">Upgrades</button><button class="btn sm primary" data-a="sendBay" ${bay?'':'disabled'}>Send now ${en(SEND_E)}</button></span></div></div>`;
 }
+
+/* 4.19: the fulfilment partner packs orders into the dispatch bay one by one, and its van takes the whole bay when it is full.
+   Couriers still collect at their pickup hours. */
+const fpOrders=()=>S.orders.filter(o=>freeStock(o.p)>0&&CARRIERS[carrierFor(o.dest||'nl')].auto);
+function fpPack(){
+  if(bayFull()){const n=sendBay();if(n&&!awayMode&&!simulating){log(`Bay full: the fulfilment partner's van took ${n} parcels.`,'good');if(typeof snd==='function')snd('send')}}
+  const i=S.orders.findIndex(o=>freeStock(o.p)>0&&CARRIERS[carrierFor(o.dest||'nl')].auto);if(i<0)return false;
+  const o=S.orders.splice(i,1)[0],rec=shipSale(o,false);if(rec)bayOf().push(rec);
+  did('Orders packed by the fulfilment partner',1,true);
+  if(bayFull()){const n=sendBay();if(n&&!awayMode&&!simulating){log(`Bay full: the fulfilment partner's van took ${n} parcels.`,'good');if(typeof snd==='function')snd('send')}}
+  return true;
+}
+const _simFP=sim;sim=function(dt){
+  _simFP(dt);if(S.over)return;
+  const q=fpOrders().length;if(!q){S.fpAcc=0;return}
+  S.fpAcc=(S.fpAcc||0)+dt*(8+q*.4);   /* packs about 8 an hour, faster when orders pile up */
+  while(S.fpAcc>=1){S.fpAcc-=1;if(!fpPack())break}
+};

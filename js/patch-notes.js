@@ -1,8 +1,11 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.18';
-const PATCH_TITLE='Resinaprint 4.18 · Stock plans';
+const VERSION='4.19';
+const PATCH_TITLE='Resinaprint 4.19 · Fulfilment bay';
 const PATCH=[
+ {h:'New in 4.19',i:[
+  '<b>The fulfilment partner uses your dispatch bay.</b> Instead of making orders vanish, it now packs them into the bay one by one, about 8 an hour and faster when orders pile up. When the bay is full, its van takes every parcel at once. Couriers still collect at their pickup hours too.'
+ ]},
  {h:'New in 4.18',i:[
   '<b>Stock plans.</b> Every Production manager and Procurement Bot now has its own shopping list. Open <b>Stock plan</b> on the worker or machine (also in its Details), tick the resins it buys, and set two numbers: when stock falls to the first, it orders bottles until it reaches the second. For example: at 10 L, fill up to 100 L.',
   'Big orders get the 5-pack price. Managers keep a small cash cushion and tell you when they cannot afford a restock.',

@@ -142,7 +142,7 @@ function hourStep(){
   clearanceDone();
   autoContracts();
   for(const k of PKEYS)if(sellable(k)){const P=S.pre[k],lt=!!(P&&P.on&&P.ltd);takeOrders(k,poisson(demand(k)*(lt?1.3:1)/24))}
-  for(let i=S.orders.length-1;i>=0;i--){const o=S.orders[i];if(freeStock(o.p)>0&&CARRIERS[carrierFor(o.dest||'nl')].auto){S.orders.splice(i,1);ship(o);did('Orders packed by the fulfilment partner',1,true)}}
+  /* 4.19: the fulfilment partner now packs into the dispatch bay over time (see dispatch.js) */
   if(S.parcels.length){const keep=[];for(const par of S.parcels){if(S.abs>=par.due)deliverParcel(par);else keep.push(par)}S.parcels=keep}
   if(S.hour>=8&&S.hour<23&&Math.random()<.025+S.orders.length*.004)newDM();
   if(S.hour===12&&S.day>3&&Math.random()<.28)randomEvent();
