@@ -1,0 +1,20 @@
+.tipbar{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;margin:10px 0 4px;border-radius:14px;background:linear-gradient(135deg,rgba(232,179,75,.14),rgba(232,179,75,.04));border:1px solid rgba(232,179,75,.35);font-size:13px;line-height:1.4;animation:tipin .4s ease-out}
+.tipbar b{display:block;font:700 15px var(--f-display);letter-spacing:.04em;text-transform:uppercase;color:var(--amber);margin-bottom:2px}.tipbar .grow div{color:var(--muted)}
+.tipi{flex:none;width:26px;height:26px;border-radius:50%;background:var(--amber);color:#0b0c10;font:700 15px/26px var(--f-display);text-align:center}
+@keyframes tipin{from{opacity:0;transform:translateY(-6px)}}
+.dstreak{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:14px 0 4px}
+.dday{display:grid;place-items:center;gap:2px;padding:8px 0;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:var(--muted)}
+.dday b{font:700 15px var(--f-num)}.dday small{font-size:12px}
+.dday.done{background:rgba(91,214,166,.12);border-color:rgba(91,214,166,.4);color:var(--good)}
+.dday.now{background:rgba(232,179,75,.18);border-color:var(--amber);color:var(--amber);animation:dpulse 1.6s ease-in-out infinite}@keyframes dpulse{50%{box-shadow:0 0 14px rgba(232,179,75,.5)}}
+/* low effects */
+.lowfx #amb,.lowfx .fx .fp,.lowfx .shard .sh-ring,.lowfx .shard .sh-bits,.lowfx .shard .sh-scan,.lowfx .rbhero::after{display:none!important}
+.lowfx .fx .uiimg,.lowfx .gl::before,.lowfx .gl::after,.lowfx .rn .c,.lowfx .rn::before,.lowfx .rn::after,.lowfx .shard,.lowfx .shard.big,.lowfx .bayhero{animation:none!important}
+.lowfx *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.calm *,.calm *::before,.calm *::after{animation:none!important;transition-duration:.01s!important}
+.calm .fx .fp,.calm #amb{display:none!important}
+/* text size and contrast */
+html[data-text=large]{zoom:1.1}html[data-text=xl]{zoom:1.22}
+.hicon{--muted:#c9cdd8;--faint:#aab0bf;--line:rgba(255,255,255,.28)}
+.hicon .btn,.hicon .card,.hicon .item{border-color:rgba(255,255,255,.3)!important}
+.hicon .s,.hicon small{color:#d5d9e3!important}
