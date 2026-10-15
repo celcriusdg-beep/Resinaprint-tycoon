@@ -130,7 +130,7 @@ function vBuy(){
     for(const f in FAMS){if(!own.has(f))continue;
       h+=label(FAMS[f])+`<div class="group">`;
       for(const k in RESINS){const R2=RESINS[k];if(R2.fam!==f)continue;
-        h+=`<div class="item" style="flex-wrap:wrap"><div class="grow" style="min-width:60%"><div class="t">${R2.name} ${R2.q>0?`<span class="chip good">+${R2.q.toFixed(2)}★</span>`:''}</div><div class="s">${R2.note} · ${R2.pack} · <b class="num" style="color:var(--ink)">${amt(k,S.resin[k]||0)}</b> in stock</div></div>
+        h+=`<div class="item rsitem" style="flex-wrap:wrap">${artBox(resinArt(k),'rsart')}<div class="grow" style="min-width:50%"><div class="t">${R2.name} ${R2.q>0?`<span class="chip good">+${R2.q.toFixed(2)}★</span>`:''}</div><div class="s">${R2.note} · ${R2.pack} · <b class="num" style="color:var(--ink)">${amt(k,S.resin[k]||0)}</b> in stock</div></div>
         <div style="display:flex;gap:6px"><button class="btn sm" data-a="resin" data-k="${k}" data-n="1" ${S.cash<resinPrice(k)?'disabled':''}>1× ${fmt(resinPrice(k))}</button>${S.ws>=1?`<button class="btn sm primary" data-a="resin" data-k="${k}" data-n="5" ${S.cash<resinPrice(k)*4.5?'disabled':''}>5× ${fmt(resinPrice(k)*4.5)}</button>`:''}</div></div>`}
       h+='</div>'}
     if(own.size<2)h+=`<div class="label"><small>Cartridge, PolyJet and pellet supplies show up once you own that kind of machine.</small></div>`;

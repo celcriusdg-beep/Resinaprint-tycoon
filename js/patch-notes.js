@@ -1,8 +1,11 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.10';
-const PATCH_TITLE='Resinaprint 4.10 · Next-day pay';
+const VERSION='4.11';
+const PATCH_TITLE='Resinaprint 4.11 · Real resin';
 const PATCH=[
+ {h:'New in 4.11',i:[
+  '<b>Real resin photos.</b> Elegoo, Anycubic, Siraya Tech, Monocure and Formlabs resins now show their official bottle and cartridge, cut out on a transparent background, in Shop › Resin & supplies.'
+ ]},
  {h:'New in 4.10',i:[
   '<b>Next-day payouts.</b> Everything you pack and send is paid out the next morning, on every channel. The Payout fast-track upgrade (one level, €4,000) makes it instant.',
   '<b>Fair offline time.</b> Away time runs slower and stops after 12 to 48 game hours, the shop closes before it runs into debt, and the bank gives a rescue loan instead of ending your run.'

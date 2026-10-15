@@ -68,3 +68,7 @@
 .sticon{display:grid;place-items:center}
 .sticon:not(.work) .uiimg{filter:grayscale(.55) brightness(.8)}
 .sticon.work .uiimg{filter:drop-shadow(0 0 8px rgba(255,180,60,.45))}
+/* resin bottles in the shop */
+.rsitem{align-items:center}
+.rsart{width:56px!important;height:56px!important;flex:none;background:none!important;border:0!important;box-shadow:none!important;padding:0!important}
+.rsart img{filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}

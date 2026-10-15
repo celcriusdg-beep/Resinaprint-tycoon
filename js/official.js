@@ -49,5 +49,28 @@ const OFFICIAL={
   "statue": "assets/official/products/statue.webp",
   "yasuo": "assets/official/products/yasuo.webp",
   "yone": "assets/official/products/yone.webp"
+ },
+ "r": {
+  "aplant": "assets/official/resins/aplant.webp",
+  "atough": "assets/official/resins/atough.webp",
+  "aww": "assets/official/resins/aww.webp",
+  "eabs": "assets/official/resins/eabs.webp",
+  "erapid": "assets/official/resins/erapid.webp",
+  "estd": "assets/official/resins/estd.webp",
+  "ewater": "assets/official/resins/ewater.webp",
+  "fcast": "assets/official/resins/fcast.webp",
+  "fclear": "assets/official/resins/fclear.webp",
+  "fdraft": "assets/official/resins/fdraft.webp",
+  "fflex": "assets/official/resins/fflex.webp",
+  "fgrey": "assets/official/resins/fgrey.webp",
+  "fhigh": "assets/official/resins/fhigh.webp",
+  "frigid": "assets/official/resins/frigid.webp",
+  "ftough": "assets/official/resins/ftough.webp",
+  "fwhite": "assets/official/resins/fwhite.webp",
+  "mono": "assets/official/resins/mono.webp",
+  "sblu": "assets/official/resins/sblu.webp",
+  "siraya": "assets/official/resins/siraya.webp",
+  "ssculpt": "assets/official/resins/ssculpt.webp",
+  "sten": "assets/official/resins/sten.webp"
  }
 };
