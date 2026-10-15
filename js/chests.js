@@ -44,7 +44,7 @@ showVaultReveal=function(i,lv,got,big,left){
       <div class="vname">${rarName(i)}</div>
       <div class="vgot">${got.map((g,j)=>`<div class="vrow ${g.big?'big':''}" style="--d:${j}">${g.art?`<span class="vart">${g.art}</span>`:''}<span class="vl">${g.t}</span><b class="num">${g.v}</b></div>`).join('')}</div></div>
     </div><div class="acts" style="margin-top:14px">${left?`<button class="btn primary" data-choice="1">Open next chest (${left} left)</button>`:''}<button class="btn ${left?'ghost':'primary'}" data-choice="0">${left?'Later':'Collect'}</button></div>`);
-  if(typeof snd==='function'){setTimeout(()=>snd('chest'),950)}
+  if(typeof snd==='function'){setTimeout(()=>snd('chest_open',i),950)}
 };
 function chestSlot(c,i){return `<div class="cslot ${c.big?'big':''}" style="--d:${i}"><div class="cs-art">${CHEST_SVG(c.big,false)}</div><b>${c.big?'Crate':'Lv '+c.lv}</b></div>`}
 vaultCard=function(){

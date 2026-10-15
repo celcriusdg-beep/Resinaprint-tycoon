@@ -25,7 +25,7 @@ function flyer(text,cls,el){
   d.style.left=(r.left+r.width/2)+'px';d.style.top=(r.top+r.height)+'px';document.body.appendChild(d);setTimeout(()=>d.remove(),1100);
 }
 /* every tap on a main button gets a soft tick and a tiny buzz */
-document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.btn.primary,.stn,.task,.ub');if(b&&!b.disabled){snd('tap');buzz(6)}},true);
+document.addEventListener('click',e=>{if(typeof clickSound==='function')clickSound(e);else{const b=e.target.closest&&e.target.closest('.btn.primary,.stn,.task,.ub');if(b&&!b.disabled){snd('tap');buzz(6)}}},true);
 /* ambient particles drifting up behind everything, like resin sparks over a lit workshop */
 (function(){const a=document.createElement('div');a.id='amb';a.setAttribute('aria-hidden','true');
   for(let i=0;i<18;i++){const e=document.createElement('i');const s=2+Math.random()*4;

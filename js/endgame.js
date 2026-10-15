@@ -25,7 +25,7 @@ function rivalDay(){
   for(const r of R.list){
     r.pow=Math.min(12,r.pow+.05+Math.random()*.07);r.cash+=Math.round(r.pow*500);if(r.cd>0)r.cd--;if(r.hit>0)r.hit--;
     if(S.day%6===0&&Math.random()<.5){const keys=PKEYS.filter(k=>!PRODUCTS[k].royalty);r.focus=keys[Math.floor(Math.random()*keys.length)]}
-    if(Math.random()<.08){r.hit=3;r.hitK=r.focus;log(`${r.name} slashed prices on ${PRODUCTS[r.focus].name}. Your demand for it drops for a few days.`,'bad')}
+    if(Math.random()<.08){r.hit=3;r.hitK=r.focus;log(`${r.name} slashed prices on ${PRODUCTS[r.focus].name}. Your demand for it drops for a few days.`,'bad');snd('rival')}
   }
 }
 Object.assign(A,{
@@ -66,7 +66,7 @@ function stabDay(){
     const lose=Math.max(1,Math.min(Math.floor(R.shards*.25),Math.floor(R.shards*(.03+.07*Math.random()*r))));
     R.shards-=lose;let extra='';
     if(r>2&&typeof sng==='function'&&sng().cores>0&&Math.random()<.15){sng().cores--;extra=' A Core collapsed.'}
-    log(`The black matter leaked. You lost ${lose} Resin Shards.${extra}`,'bad');
+    log(`The black matter leaked. You lost ${lose} Resin Shards.${extra}`,'bad');snd('unstable');
   }else{
     const c=Math.round(value(S)*.005);earn('Matter surge',c);S.hype+=15;
     log(`A matter surge discharged: +${fmt(c)} and +15 hype.`,'amber');

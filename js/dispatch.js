@@ -90,7 +90,7 @@ Object.assign(A,{
   pack(){if(packableIdx()<0)return;if(bayFull())return toast('The dispatch bay is full. Send it first');if(useE(E.pack())&&packOne()){did('Orders packed');toast('Order packed')}},
   packAll(){let n=0;while(packableIdx()>=0&&!bayFull()&&S.energy>=E.pack()){S.energy-=E.pack();packOne();n++}if(n)did('Orders packed',n);toast(n?`Packed ${n} order${n>1?'s':''}`:bayFull()?'The dispatch bay is full':'You are too tired')},
   sendBay(){if(!bayOf().length)return toast('Nothing to send yet');if(!useE(SEND_E))return;const n=sendBay();did('Batches sent');toast(`Sent ${n} parcel${n>1?'s':''}`)},
-  dspBuy(d){const u=DSP_UP.find(x=>x.id===d.k);if(!u)return;const l=dspLv(u.id);if(l>=u.max)return;const c=u.cost(l);if(S.cash<c)return toast('Not enough cash');spend('Dispatch upgrades',c);dsp()[u.id]=l+1;log(`${u.n} upgraded to level ${l+1}.`,'good');toast(`${u.n} level ${l+1}`);confetti(25);snd('good')}
+  dspBuy(d){const u=DSP_UP.find(x=>x.id===d.k);if(!u)return;const l=dspLv(u.id);if(l>=u.max)return;const c=u.cost(l);if(S.cash<c)return toast('Not enough cash');spend('Dispatch upgrades',c);dsp()[u.id]=l+1;log(`${u.n} upgraded to level ${l+1}.`,'good');toast(`${u.n} level ${l+1}`);confetti(25);snd('buy')}
 });
 /* ---- the Shop catalogue ---- */
 const DSP_UP=[

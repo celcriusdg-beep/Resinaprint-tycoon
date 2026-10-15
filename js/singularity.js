@@ -78,7 +78,7 @@ Object.assign(A,{
     const rec=coreRec();if(!rec.every(ingOk))return toast('You are missing ingredients');
     const noun=rec.find(g=>g.t==='any'),cand=pcand(ingPred(noun))[0];
     confirmBox('Fuse a Singularity Core?',`Uses ${fmt(rec[1].n)}, ${rec[0].n} Resin Shards and one printer (${PRINTERS[(cand.x.type)].name}${cand.src==='pl'?', placed in your studio':', from storage'}).`,()=>{
-      if(!rec.every(ingOk))return;rec.forEach(ingTake);sng().cores++;sng().made++;confetti(40);snd('good');toast('Singularity Core fused');log('A Singularity Core collapsed into being.','amber')});
+      if(!rec.every(ingOk))return;rec.forEach(ingTake);sng().cores++;sng().made++;confetti(40);snd('perk');toast('Singularity Core fused');log('A Singularity Core collapsed into being.','amber')});
   },
   singForge(d){
     const x=SING_BY[d.k];if(!x)return;if(!x.rec.every(ingOk))return toast('You are missing ingredients');
@@ -87,7 +87,7 @@ Object.assign(A,{
       if(!x.rec.every(ingOk))return;
       x.rec.filter(g=>g.t!=='cash').concat(x.rec.filter(g=>g.t==='cash')).forEach(ingTake);
       (S.pinv=S.pinv||[]).push({id:nid(),type:x.k});sng().forged[x.k]=(sng().forged[x.k]||0)+1;
-      confetti(80);snd('good');log(`${x.n} forged. It waits in your inventory.`,'amber');
+      confetti(80);snd('forge');log(`${x.n} forged. It waits in your inventory.`,'amber');
       pending=[{f:()=>{}}];
       modal(`<div class="vreveal" style="--rc:${x.col}"><div class="vshow"><div class="kicker">Forged · sent to inventory</div><div class="sgreveal">${singArt(x.k)}</div><div class="vname" style="margin:4px 0">${x.n}</div><p style="text-align:center;margin:0 0 6px;color:var(--muted)">${x.speed}× speed · ${x.slots} slots</p></div></div><div class="acts" style="margin-top:12px"><button class="btn primary" data-a="goItems" data-choice="0">Open inventory</button></div>`);
     });

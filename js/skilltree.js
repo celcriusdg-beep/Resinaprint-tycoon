@@ -95,7 +95,7 @@ function selectNode(id){
 function buyNode(id){
   const u=UBY[id];if(!u||nodeState(u)!=='buy')return;
   A.upgrade({k:id});save();render();
-  if(S.up[id]){confetti(35);snd('good');buzz(15);u.par&&0;
+  if(S.up[id]){confetti(35);snd('buy');buzz(15);u.par&&0;
     UPGRADES.forEach(c=>{if(c.par&&c.par.includes(id)){const g=nodeEl(c.id);if(g){g.classList.remove('pop');void g.getBBox();g.classList.add('pop')}}});}
   skCache={};refreshSkill();
 }

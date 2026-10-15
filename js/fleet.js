@@ -48,7 +48,7 @@ Object.assign(A,{
     const V=VEH[d.k];if(!V)return;
     if(fSlots()+V.slots>garageCap())return toast('The garage is full. Add garage bays first');
     if(S.cash<V.cost)return toast('Not enough cash');
-    spend('Vehicles',V.cost);flt().own[d.k]=fOwn(d.k)+1;log(`${V.n} (${V.nl}) joined the fleet.`,'good');toast(`${V.n} bought`);confetti(30);snd('good');
+    spend('Vehicles',V.cost);flt().own[d.k]=fOwn(d.k)+1;log(`${V.n} (${V.nl}) joined the fleet.`,'good');toast(`${V.n} bought`);confetti(30);snd('buy');
   },
   fleetSell(d){
     const V=VEH[d.k];if(!V||!fOwn(d.k))return;
@@ -56,7 +56,7 @@ Object.assign(A,{
   },
   fleetUp(d){
     const u=FLT_UP.find(x=>x.id===d.k);if(!u)return;const l=fUp(u.id);if(l>=u.max)return;const c=u.cost(l);
-    if(S.cash<c)return toast('Not enough cash');spend('Fleet upgrades',c);flt().up[u.id]=l+1;toast(`${u.n} level ${l+1}`);snd('good')
+    if(S.cash<c)return toast('Not enough cash');spend('Fleet upgrades',c);flt().up[u.id]=l+1;toast(`${u.n} level ${l+1}`);snd('buy')
   }
 });
 const _parcelCost3=parcelCost;

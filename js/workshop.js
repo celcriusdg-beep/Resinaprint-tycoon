@@ -68,7 +68,7 @@ render=function(){
   }catch(e){console.error(e)}
 };
 const _reveal0=showVaultReveal;
-showVaultReveal=function(i){_reveal0.apply(null,arguments);try{snd('chest');if(i>=3)confetti(40+i*14);buzz(i>=3?[30,40,30]:15)}catch(e){}};
+showVaultReveal=function(i){_reveal0.apply(null,arguments);try{snd('chest_shake');if(i>=3)confetti(40+i*14);buzz(i>=3?[30,40,30]:15)}catch(e){}};
 Object.assign(A,{sound(){setSound(!sndOn);toast(sndOn?'Sound on':'Sound off')}});
 /* say WHY a worker or machine is waiting, so a stalled chain is easy to spot */
 function idleWhy(s){
