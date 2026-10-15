@@ -18,3 +18,4 @@ html[data-text=large]{zoom:1.1}html[data-text=xl]{zoom:1.22}
 .hicon{--muted:#c9cdd8;--faint:#aab0bf;--line:rgba(255,255,255,.28)}
 .hicon .btn,.hicon .card,.hicon .item{border-color:rgba(255,255,255,.3)!important}
 .hicon .s,.hicon small{color:#d5d9e3!important}
+.awaynote{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:rgba(232,179,75,.1);border:1px solid rgba(232,179,75,.35);font-size:13px;line-height:1.45;color:var(--ink)}

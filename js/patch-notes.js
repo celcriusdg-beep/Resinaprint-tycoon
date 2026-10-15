@@ -1,8 +1,13 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.8';
-const PATCH_TITLE='Resinaprint 4.8 · Lo-fi';
+const VERSION='4.9';
+const PATCH_TITLE='Resinaprint 4.9 · Fair offline';
 const PATCH=[
+ {h:'New in 4.9',i:[
+  '<b>Fair offline time.</b> While you are away the shop runs at a fifth of normal speed and stops after 12 game hours (up to 48 as you level up), instead of racing through weeks. If cash runs low it closes early to keep you out of debt, and nobody quits while you are gone.',
+  '<b>No more forced restarts.</b> The bank no longer closes your company. When money runs out it gives a rescue loan, repaid in small weekly parts and skipped in weeks you cannot afford it.',
+  '<b>Phoenix perk</b> now pays off your first rescue instead of cancelling bankruptcy.'
+ ]},
  {h:'New in 4.8',i:[
   '<b>A real lo-fi soundtrack.</b> Ten tracks by Holizna (free, CC0): seven warm workshop tracks on shuffle, and three slow, dark ones for Rebirth and Singularity. Tracks crossfade and stream, so they do not slow the game down.',
   '<b>Fixed:</b> the daily reward Claim button did nothing.'

@@ -238,7 +238,7 @@ function payday(){
   const prof=b.wkInc-b.wkExp;
   for(const l of [...S.loans]){
     if(l.pct){const a=Math.max(0,prof)*l.pct;if(a>0){spend('Investor share',a);tot+=a}l.n--;if(l.n<=0){S.loans=S.loans.filter(x=>x!==l);log('Your investor deal has ended.','good')}}
-    else{const pr=Math.min(l.bal,l.p0/l.n0),it=l.bal*l.rate;spend('Loan repayment',pr);spend('Loan interest',it);tot+=pr+it;l.bal-=pr;if(l.bal<=.5){S.loans=S.loans.filter(x=>x!==l);log(`${l.name} is paid off.`,'good')}}
+    else{if(l.key==='rescue'&&S.cash<Math.min(l.bal,l.p0/l.n0)+100){log('You could not afford this week\'s rescue loan payment. The bank waits.','amber');continue}const pr=Math.min(l.bal,l.p0/l.n0),it=l.bal*l.rate;spend('Loan repayment',pr);spend('Loan interest',it);tot+=pr+it;l.bal-=pr;if(l.bal<=.5){S.loans=S.loans.filter(x=>x!==l);log(`${l.name} is paid off.`,'good')}}
   }
   if(b.kvk){b.taxBase+=prof;b.wkInc=0;b.wkExp=0;if(b.taxBase>0){const t=incomeTax(b.taxBase);b.taxBase=0;if(t>0){spend(b.form==='bv'?'Corporate tax':'Income tax',t);tot+=t}}}
   S.mk.resin=clamp(S.mk.resin*r(.92,1.1),.8,1.5);
@@ -290,7 +290,7 @@ function endOfDay(){
     if(s.mach){s.mood=100;s.load=load;continue}
     if(s.role!=='clerk'){if(load>.85)s.mood-=2.5*(S.crunch?2:1)*(S.up.fume?.5:1)*(S.up.lounge?.6:1)*(1-Math.min(.7,upv('mo')));else s.mood+=S.up.lounge?2:1.2}
     s.mood=clamp(s.mood,0,100);
-    if(s.mood<30&&Math.random()<.05){S.staff=S.staff.filter(x=>x!==s);log(`${s.name} (${s.role==='clerk'?'store clerk':ROLES[s.role].name.toLowerCase()}) quit. Morale was too low.`,'bad')}}
+    if(s.mood<30&&!awayMode&&Math.random()<.05){S.staff=S.staff.filter(x=>x!==s);log(`${s.name} (${s.role==='clerk'?'store clerk':ROLES[s.role].name.toLowerCase()}) quit. Morale was too low.`,'bad')}}
   if(S.up.sub){const used=new Set(S.printers.map(p=>p.resin));for(const k of used){const vol=RESINS[k].vol||1000;if((S.resin[k]||0)<vol&&S.cash>resinPrice(k)){spend('Resin',resinPrice(k));S.resin[k]=(S.resin[k]||0)+vol}}}
   const si=Math.floor(((S.day-1)%YEAR)/28);
   if(si!==S.season){S.season=si;log(`${SEASONS[si].n} starts. Demand ×${SEASONS[si].m}.`,'amber')}
@@ -300,7 +300,7 @@ function endOfDay(){
   if(S.lunchCd>0)S.lunchCd--;
   S.hist.push(Math.round(S.cash));if(S.hist.length>30)S.hist.shift();
   for(const m of MILESTONES)if(!S.done[m.id]&&m.f(S)){S.done[m.id]=S.day;log(`Goal reached: ${m.t}`,'good')}
-  if(S.cash<-1500)S.over=true;
+  if(S.cash<-1500){if(typeof bankRescue==='function')bankRescue();else S.over=true}
 }
 function storesDay(){
   for(const k in S.stores){const st=S.stores[k],D=STORES[k];if(!st.open)continue;
