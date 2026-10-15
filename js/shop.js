@@ -11,6 +11,8 @@ const SHOP_ICO={
   fleet:'<path d="M1 4h9v7H1zM10 6.5h3l2 2.5v2h-5"/><circle cx="4" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/>',
   channels:'<path d="M2 9V6l8-3v9zM2 9l1.2 4M12 5.5a3 3 0 0 1 0 3.5"/>'
 };
+const SHOP_IMG=['printers','resin','gear','space','stores','dispatch','fleet','channels','skill'];
+const shopIco=k=>SHOP_IMG.includes(k)?`<img class="uiimg" src="img/ui/${k}.webp" alt="" width="56" height="56" loading="lazy">`:`<svg viewBox="0 0 16 16" aria-hidden="true">${SHOP_ICO[k]}</svg>`;
 function shopTiles(){
   const printersOk=Object.keys(PRINTERS).filter(t=>!PRINTERS[t].sing&&!printerLock(PRINTERS[t])&&PRINTERS[t].cost<=S.cash).length;
   const upBuy=typeof nodeState==='function'?UPGRADES.filter(u=>u.br&&nodeState(u)==='buy').length:0;
@@ -31,7 +33,7 @@ function shopTiles(){
 }
 function shopHub(){
   let h=label('Shop',`${fmt(S.cash)} to spend`)+`<div class="card" style="margin-bottom:12px"><div class="s">Everything you can buy for your studio, in one place. Pick a catalogue. Workers and machines are in the Team tab.</div></div><div class="shopgrid">`;
-  for(const t of shopTiles())h+=`<button class="stile${t.big?' wide':''}" data-a="shopGo" data-k="${t.k}" style="--c:${t.col}"><span class="sico"><svg viewBox="0 0 16 16" aria-hidden="true">${SHOP_ICO[t.k]}</svg></span><span class="stt"><b>${t.n}</b><small>${t.d}</small></span>${t.badge?`<em class="sbadge">${t.badge} ready</em>`:''}</button>`;
+  for(const t of shopTiles())h+=`<button class="stile${t.big?' wide':''}" data-a="shopGo" data-k="${t.k}" style="--c:${t.col}"><span class="sico ${SHOP_IMG.includes(t.k)?'has-img':''}">${shopIco(t.k)}</span><span class="stt"><b>${t.n}</b><small>${t.d}</small></span>${t.badge?`<em class="sbadge">${t.badge} ready</em>`:''}</button>`;
   return h+'</div>';
 }
 function shopBack(label_){

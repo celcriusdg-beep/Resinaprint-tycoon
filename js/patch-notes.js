@@ -1,8 +1,11 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.4';
-const PATCH_TITLE='Resinaprint 4.4 · Endgame';
+const VERSION='4.5';
+const PATCH_TITLE='Resinaprint 4.5 · Icons';
 const PATCH=[
+ {h:'New in 4.5',i:[
+  '<b>Real icons.</b> The Shop tiles, the dispatch bay and the fleet now use rendered 3D icons made in Figma (parcel pallet, resin printer, resin bottle, gear and paint, workshop, storefront, delivery van, megaphone, skill network) instead of flat blocks and spheres.'
+ ]},
  {h:'New in 4.4',i:[
   '<b>Rivals.</b> From a company worth 250k, three rival printing companies appear. They grow, take a share of demand and target your best figures. Undercut them, sabotage them (it can backfire), or buy them out for a permanent demand bonus and a printer.',
   '<b>Unstable black matter.</b> Hold too many Resin Shards and Singularity Cores and the matter gets restless: a daily chance to leak shards, or to surge into cash and hype. Buy Containment to raise the safe limit, or vent shards into cash.',

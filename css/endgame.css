@@ -7,3 +7,14 @@
 @keyframes unst{0%,100%{transform:none}30%{transform:translateX(0)}31%{transform:translateX(-2px)}32%{transform:translateX(2px)}33%{transform:none}}
 .arow{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
 @media (prefers-reduced-motion:reduce){.stabcard.unstable{animation:none}}
+/* ===== generated 3D icons (4.5): black backgrounds melt into the UI ===== */
+.uiimg{display:block;object-fit:contain;pointer-events:none}
+.sico.has-img{background:none!important;border:0!important;box-shadow:none!important;width:64px!important;height:64px!important;padding:0!important}
+.sico.has-img .uiimg{width:100%;height:100%;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
+.stile:active .sico.has-img .uiimg{transform:scale(.94)}
+.stile:hover .sico.has-img .uiimg{transform:translateY(-2px)}
+.sico.has-img .uiimg{transition:transform .2s}
+.bayhero{float:right;width:84px;height:84px;margin:-6px -4px 0 8px;animation:bayfloat 4.5s ease-in-out infinite}
+@keyframes bayfloat{50%{transform:translateY(-4px)}}
+.dspcard::after{content:"";display:block;clear:both}
+@media (prefers-reduced-motion:reduce){.bayhero{animation:none}}
