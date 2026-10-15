@@ -8,8 +8,8 @@ function dispCap(){return 50+25*dspLv('racks')+(typeof fleetCap==='function'?fle
 const bayFull=()=>bayOf().length>=dispCap();
 const PICKUPS=[[18],[12,18],[9,12,15,18],[8,10,12,14,16,18,20],[8,9,10,11,12,13,14,15,16,17,18,19,20]];
 function pickHours(){const b=PICKUPS[Math.min(4,dspLv('pick'))];const x=typeof fleetPick==='function'?fleetPick():[];return x.length?[...new Set([...b,...x])].sort((a,c)=>a-c):b}
-const PAY_BASE={web:1,bol:3,etsy:4};
-const payoutDays=ch=>Math.max(0,(PAY_BASE[ch]!=null?PAY_BASE[ch]:3)-dspLv('pay'));
+const PAY_BASE={web:1,bol:1,etsy:1};
+const payoutDays=ch=>dspLv('pay')>=1?0:1;  /* 4.10: everything you send is paid the next morning; fast-track makes it instant */
 const SEND_E=4;
 function nextPickup(){const h=pickHours(),now=S.hour+S.m/60;const n=h.find(x=>x>now);return n!=null?n:h[0]+24}
 const pendingPay=()=>payoutsOf().reduce((a,p)=>a+p.a,0);
@@ -57,7 +57,7 @@ function sendBay(){
 }
 function payoutTick(){
   const P=payoutsOf(),keep=[];let tot=0;
-  for(const e of P){if(e.d<=S.day){earn(e.c,e.a);tot+=e.a}else keep.push(e)}
+  for(const e of P){if(e.d<=S.day){earn(e.c,e.a);tot+=e.a}else{e.d=Math.min(e.d,S.day+1);keep.push(e)}}
   S.payouts=keep;
   if(tot>0&&!awayMode)log(`Payments cleared: +${fmt(tot)}.`,'good');
 }
@@ -98,15 +98,15 @@ const DSP_UP=[
   {id:'pick',n:'Courier pickups',max:4,cost:l=>[2500,8000,25000,90000][l],now:l=>`${PICKUPS[l].length} a day, first at ${PICKUPS[l][0]}:00`,next:l=>`${PICKUPS[l+1].length} pickups a day`},
   {id:'auto',n:'Auto-dispatch',max:2,cost:l=>[6000,40000][l],now:l=>['Only at pickups','Sends the moment the bay is full','Also sends at half full'][l],next:l=>['Send when the bay is full','Send at half full too'][l]},
   {id:'bulk',n:'Bulk carrier contract',max:8,cost:l=>Math.round(3000*Math.pow(1.8,l)/50)*50,now:l=>l?`−${4*l}% shipping on batches of 20 or more`:'No discount',next:l=>`−${4*(l+1)}% shipping on batches of 20+`},
-  {id:'pay',n:'Payout fast-track',max:4,cost:l=>Math.round(4000*Math.pow(2.4,l)/50)*50,now:l=>`Webshop ${payoutDaysFor('web',l)} d, bol.com ${payoutDaysFor('bol',l)} d, Etsy ${payoutDaysFor('etsy',l)} d`,next:l=>`One day faster for every channel`},
+  {id:'pay',n:'Payout fast-track',max:1,cost:()=>4000,now:l=>l?'Paid the moment parcels leave':'Paid the next morning',next:()=>'Get paid the moment parcels leave'},
   {id:'ins',n:'Parcel insurance',max:5,cost:l=>Math.round(5000*Math.pow(2,l)/50)*50,now:l=>l?`${8*l}% fewer lost and damaged parcels`:'No cover',next:l=>`${8*(l+1)}% fewer lost and damaged`}
 ];
-const payoutDaysFor=(ch,l)=>Math.max(0,PAY_BASE[ch]-l);
+const payoutDaysFor=(ch,l)=>l>=1?0:1;
 function dispatchView(){
   const bay=bayOf().length,cap=dispCap(),pend=pendingPay(),nxt=nextPickup();
   let h=`<div class="card dspcard"><span class="bayhero">${uiIcon('dispatch',96)}</span><div class="chk"><span>Dispatch bay</span><b>${bay} of ${cap}</b></div><div class="bar" style="margin:8px 0"><i style="width:${100*bay/cap}%;background:var(--amber)"></i></div>
     <div class="fleet" style="margin-top:6px"><div class="ft"><b>${cap}</b><span>Bay size</span></div><div class="ft"><b>${pickHours().length}</b><span>Pickups a day</span></div><div class="ft"><b>${payoutDaysFor('web',dspLv('pay'))}d</b><span>Webshop payout</span></div><div class="ft good"><b>${fmt(pend)}</b><span>Waiting to clear</span></div></div>
-    <div class="s" style="margin-top:8px">Packed orders wait in the bay until the courier comes (next at ${String(nxt%24).padStart(2,'0')}:00) or you send them. Sales are paid out a few days after they are sent. Logistics people and machines send the bay for you.</div></div>`;
+    <div class="s" style="margin-top:8px">Packed orders wait in the bay until the courier comes (next at ${String(nxt%24).padStart(2,'0')}:00) or you send them. Everything you send is paid out the next morning. Logistics people and machines send the bay for you.</div></div>`;
   h+=label('Upgrades','each one makes a step faster or bigger')+'<div class="group">';
   for(const u of DSP_UP){
     const l=dspLv(u.id),max=l>=u.max,c=max?0:u.cost(l);

@@ -1,8 +1,12 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.9';
-const PATCH_TITLE='Resinaprint 4.9 · Fair offline';
+const VERSION='4.10';
+const PATCH_TITLE='Resinaprint 4.10 · Next-day pay';
 const PATCH=[
+ {h:'New in 4.10',i:[
+  '<b>Next-day payouts.</b> Everything you pack and send is paid out the next morning, on every channel. The Payout fast-track upgrade (one level, €4,000) makes it instant.',
+  '<b>Fair offline time.</b> Away time runs slower and stops after 12 to 48 game hours, the shop closes before it runs into debt, and the bank gives a rescue loan instead of ending your run.'
+ ]},
  {h:'New in 4.9',i:[
   '<b>Fair offline time.</b> While you are away the shop runs at a fifth of normal speed and stops after 12 game hours (up to 48 as you level up), instead of racing through weeks. If cash runs low it closes early to keep you out of debt, and nobody quits while you are gone.',
   '<b>No more forced restarts.</b> The bank no longer closes your company. When money runs out it gives a rescue loan, repaid in small weekly parts and skipped in weeks you cannot afford it.',

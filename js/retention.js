@@ -2,7 +2,7 @@
 /* ---------- tips ---------- */
 const TIPS={
   studio:['Your studio','Prints finish on their own. Tap a station to wash, paint, pack or send by hand, or hire people and machines to do it. Your goal is the gold bar at the top.'],
-  orders:['Orders','Customers order figures you have in stock. Pack them, then send the dispatch bay when it fills or when a courier comes. Money arrives a few days after you send.'],
+  orders:['Orders','Customers order figures you have in stock. Pack them, then send the dispatch bay when it fills or when a courier comes. Money arrives the next morning after you send.'],
   buy:['The Shop','Everything you can buy lives here. Printers and resin first, then space, stores, dispatch upgrades and the fleet. Prices go up, so buy what you need now.'],
   team:['Your team','People do jobs for you: painting, packing, repairs. Machines never get tired. Watch morale: a tired team quits.'],
   'empire:company':['Company','Your company worth, taxes and reports. Register at the KvK when hobby sales get serious.'],
