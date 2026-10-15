@@ -46,3 +46,17 @@
 .rd-h{display:flex;gap:12px;align-items:center}.rd-ico{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:rgba(127,243,255,.12);font-size:20px;animation:rdb 2s ease-in-out infinite}
 @keyframes rdb{50%{box-shadow:0 0 14px rgba(127,243,255,.5)}}
 .rd-run .bar i{background:#7ff3ff!important}.rd-lock{opacity:.6}
+/* stock plans (4.18) */
+.sp-list{display:grid;gap:8px;max-height:52vh;overflow:auto;margin:10px 0 14px;padding-right:2px}
+.sp-row{border:1px solid var(--line,#ffffff1a);border-radius:14px;padding:10px;background:#ffffff06;opacity:.62;transition:opacity .2s,border-color .2s}
+.sp-row.on{opacity:1;border-color:color-mix(in srgb,var(--amber,#f0a53a) 55%,transparent);background:color-mix(in srgb,var(--amber,#f0a53a) 7%,transparent)}
+.sp-top{display:flex;align-items:center;gap:10px;cursor:pointer}
+.sp-top b{display:block;font-size:14px}.sp-top small{display:block;opacity:.7;font-size:12px;margin-top:2px}
+.sp-art{width:40px;height:40px;flex:0 0 40px;border-radius:10px}
+.sp-on{width:22px;height:22px;accent-color:var(--amber,#f0a53a);flex:0 0 auto;order:3}
+.sp-nums{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.sp-row:not(.on) .sp-nums{display:none}
+.sp-nums label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;opacity:.8;display:grid;gap:4px}
+.sp-nums span{display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0}
+.sp-nums input{width:100%;min-width:0;font:inherit;font-size:16px;padding:8px 10px;border-radius:10px;border:1px solid var(--line,#ffffff22);background:#0006;color:inherit}
+.sp-card{margin-bottom:12px}.sp-card .item{padding-left:0;padding-right:0}

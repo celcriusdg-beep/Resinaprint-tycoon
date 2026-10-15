@@ -42,7 +42,7 @@ function fleetCard(s){
       ${mspecs(m,mk)}
       <div class="mspec"><span>Busy</span>${mbar(load,'var(--amber)')}<b>${load}%</b></div>
       <div class="s" style="margin-top:4px">${nf(s.done||0)} tasks done · yesterday ${load}% busy</div>
-      <div class="macts"><button class="btn sm" data-a="machInfo" data-k="${m.id}" data-id="${s.id}">Details</button><button class="btn sm" data-a="puUnit" data-k="s:${s.id}">Power-ups${typeof puAt==='function'&&puAt('s:'+s.id).length?' ('+puAt('s:'+s.id).length+')':''}</button>
+      <div class="macts"><button class="btn sm" data-a="machInfo" data-k="${m.id}" data-id="${s.id}">Details</button>${s.role==='buyer'?`<button class="btn sm primary" data-a="stockPlan" data-id="${s.id}">Stock plan</button>`:''}<button class="btn sm" data-a="puUnit" data-k="s:${s.id}">Power-ups${typeof puAt==='function'&&puAt('s:'+s.id).length?' ('+puAt('s:'+s.id).length+')':''}</button>
         <button class="btn sm ${next?'primary':'ghost'}" data-a="tuneMach" data-id="${s.id}" ${!next||S.cash<next?'disabled':''}>${next?`Tune to ${MK_NAMES[mk+1]} ${fmt(next)}`:'Max tuned'}</button>
         <button class="btn sm ghost" data-a="sellMach" data-id="${s.id}">Sell</button></div></div></div>`;
 }
@@ -81,8 +81,8 @@ Object.assign(A,{
       <div class="dtable">${rows.map(r=>`<div><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')}</div>
       <div class="card" style="margin:12px 0"><div class="t">Compared with hiring</div><div class="s" style="margin-top:4px">${roiLine(m,mk)}</div></div>
       ${!own?`<p class="s" style="margin:0 0 10px">Tuning: Mk II, III and IV each add +25% speed for +12% upkeep, after you buy it.</p>`:''}
-      <div class="acts">${own?`<button class="btn ghost" data-choice="0">Close</button>`:`<button class="btn primary" data-choice="0" ${machLockText(m)||full||S.cash<m.cost?'disabled':''}>${machLockText(m)||(full?'No free bay':'Buy '+fmt(m.cost))}</button><button class="btn ghost" data-choice="1">Close</button>`}</div>`);
-    pending=own?[{f:()=>{}}]:[{f:()=>A.buyMach({k:m.id})},{f:()=>{}}];
+      ${own&&m.role==='buyer'&&typeof spSummary==='function'?`<div class="card" style="margin:0 0 12px"><div class="t">Stock plan</div><div class="s" style="margin-top:4px">${spSummary(own)}</div></div>`:''}<div class="acts">${own?`${m.role==='buyer'?'<button class="btn primary" data-choice="1">Edit stock plan</button>':''}<button class="btn ghost" data-choice="0">Close</button>`:`<button class="btn primary" data-choice="0" ${machLockText(m)||full||S.cash<m.cost?'disabled':''}>${machLockText(m)||(full?'No free bay':'Buy '+fmt(m.cost))}</button><button class="btn ghost" data-choice="1">Close</button>`}</div>`);
+    pending=own?[{f:()=>{}},{f:()=>setTimeout(()=>spSheet(own.id),0)}]:[{f:()=>A.buyMach({k:m.id})},{f:()=>{}}];
   },
   tuneMach(d){
     const s=S.staff.find(x=>x.id==d.id),m=s&&MACH.find(x=>x.id===s.mach);if(!s||!m)return;

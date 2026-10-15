@@ -1,8 +1,13 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.17';
-const PATCH_TITLE='Resinaprint 4.17 · Props';
+const VERSION='4.18';
+const PATCH_TITLE='Resinaprint 4.18 · Stock plans';
 const PATCH=[
+ {h:'New in 4.18',i:[
+  '<b>Stock plans.</b> Every Production manager and Procurement Bot now has its own shopping list. Open <b>Stock plan</b> on the worker or machine (also in its Details), tick the resins it buys, and set two numbers: when stock falls to the first, it orders bottles until it reaches the second. For example: at 10 L, fill up to 100 L.',
+  'Big orders get the 5-pack price. Managers keep a small cash cushion and tell you when they cannot afford a restock.',
+  'Without a plan, a manager keeps every resin in use between 1 and 3 bottles. The resin shop shows every plan at the top.'
+ ]},
  {h:'New in 4.17',i:[
   '<b>Props.</b> A new Props branch in the skill tree. Open the prop workshop, then unlock life-size replica props in four lanes from small to big: magic items, swords, guns & tech and masks & helmets, 20 in all, each with a cut-out photo. Props need medium or large printers, take a lot of painting and sell for €149 to €999.',
   '<b>The Virtuous Contract.</b> The legendary blade of the Ascendent Abyss crowns the branch: unlock the top prop of all four lanes to forge it. It sells for about €4,999.',

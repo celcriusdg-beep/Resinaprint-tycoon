@@ -175,12 +175,12 @@ function vTeam(){
     if(s.role==='clerk'){h+=`<div class="item"><div class="grow"><div class="t">${s.name} ${moodChip(s.mood)}</div><div class="s">${STORES[s.store].name} clerk · ${fmt(s.wage)}/day</div></div><button class="btn sm ghost" data-a="fire" data-id="${s.id}">Let go</button></div>`;continue}
     const lv=s.lvl||1,lo=lv>1?XPN[lv-2]:0,hi=XPN[lv-1]||lo+1,xpct=lv>=5?100:100*((s.xp||0)-lo)/(hi-lo);
     h+=`<div class="item${typeof puCls==='function'?puCls('s:'+s.id):''}" style="align-items:flex-start">${typeof puFx==='function'?puFx('s:'+s.id):''}<div class="grow"><div class="t">${s.name} <span class="chip amber">Lv ${lv}</span> ${moodChip(s.mood)}</div>
-      <div class="s">${ROLES[s.role].name} · ${fmt(s.wage)}/day</div>
+      <div class="s">${ROLES[s.role].name} · ${fmt(s.wage)}/day</div>${s.role==='buyer'&&typeof spSummary==='function'?`<div class="s">📦 ${spSummary(s)}</div>`:''}
       <div class="s"><b style="color:var(--ink)">${TRAITS[s.trait].n}</b>: ${traitDesc(s.role,s.trait)}</div>
       <div class="tm"><div class="act">${LT('sa'+s.id,s.act||'Starting up')}</div>
       <div class="row"><span class="lv">XP</span>${lbar('sx'+s.id,xpct,'var(--amber)')}</div>
       <div class="row"><span class="lv">Mood</span>${bar(s.mood,s.mood>=70?'var(--good)':s.mood>=40?'var(--warn)':'var(--bad)')}</div></div></div>
-      <div style="display:grid;gap:6px"><button class="btn sm" data-a="train" data-id="${s.id}" ${lv>=5||S.cash<150*lv?'disabled':''}>${lv>=5?'Max level':'Train '+fmt(150*lv)}</button><button class="btn sm" data-a="puUnit" data-k="s:${s.id}">Power-ups ${typeof puAt==='function'&&puAt('s:'+s.id).length?'('+puAt('s:'+s.id).length+')':''}</button><button class="btn sm ghost" data-a="fire" data-id="${s.id}">Let go</button></div></div>`}
+      <div style="display:grid;gap:6px"><button class="btn sm" data-a="train" data-id="${s.id}" ${lv>=5||S.cash<150*lv?'disabled':''}>${lv>=5?'Max level':'Train '+fmt(150*lv)}</button>${s.role==='buyer'?`<button class="btn sm primary" data-a="stockPlan" data-id="${s.id}">Stock plan</button>`:''}<button class="btn sm" data-a="puUnit" data-k="s:${s.id}">Power-ups ${typeof puAt==='function'&&puAt('s:'+s.id).length?'('+puAt('s:'+s.id).length+')':''}</button><button class="btn sm ghost" data-a="fire" data-id="${s.id}">Let go</button></div></div>`}
   if(S.staff.some(s=>!s.mach))h+=item('Team lunch','+20 morale for everyone, once a week',`<button class="btn sm" data-a="lunch" ${S.lunchCd?'disabled':''}>${S.lunchCd?`in ${S.lunchCd} d`:fmt(Math.max(15,S.staff.filter(s=>!s.mach).length*15))}</button>`);
   h+='</div>';
   if(bo.length)h+=label('Team bonuses')+`<div class="card"><div class="bonus">${bo.map(x=>`<span class="chip good">${x}</span>`).join('')}</div></div>`;
