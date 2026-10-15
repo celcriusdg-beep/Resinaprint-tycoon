@@ -1,8 +1,13 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.3';
-const PATCH_TITLE='Resinaprint 4.3 · Singularity';
+const VERSION='4.4';
+const PATCH_TITLE='Resinaprint 4.4 · Endgame';
 const PATCH=[
+ {h:'New in 4.4',i:[
+  '<b>Rivals.</b> From a company worth 250k, three rival printing companies appear. They grow, take a share of demand and target your best figures. Undercut them, sabotage them (it can backfire), or buy them out for a permanent demand bonus and a printer.',
+  '<b>Unstable black matter.</b> Hold too many Resin Shards and Singularity Cores and the matter gets restless: a daily chance to leak shards, or to surge into cash and hype. Buy Containment to raise the safe limit, or vent shards into cash.',
+  '<b>Auto board.</b> Rules that run your empire for you: send the dispatch bay at a fill level, rebuy resin, place stored printers, service worn printers and buy containment. Off until you switch them on.'
+ ]},
  {h:'New in 4.3',i:[
   '<b>Singularity.</b> A new Empire tab, a rebirth system without the rebirth. Fuse black matter, cash and a spare printer into Singularity Cores, then forge six impossible printers in the Fusion Reactor: Event Horizon Press, Quasar Lattice, Tachyon Loom, Wormhole Foundry, Dark Matter Reactor and the Omega Singularity. Each needs the one before it, other printers, items and cores. Forged printers go to your inventory first, and Singularity survives rebirths.'
  ]},

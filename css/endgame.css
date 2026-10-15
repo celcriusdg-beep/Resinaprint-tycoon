@@ -1,0 +1,9 @@
+.rival{border-color:color-mix(in srgb,var(--c) 35%,transparent)!important;background:radial-gradient(80% 90% at 0% 0%,color-mix(in srgb,var(--c) 10%,transparent),transparent 70%),var(--glass)!important}
+.rvh{display:flex;align-items:center;gap:12px}.rvlogo{width:44px;height:44px;border-radius:12px;background:var(--c);color:#0b0c10;display:grid;place-items:center;font:700 24px var(--f-display)}
+.rvp{text-align:center}.rvp b{font-size:24px;color:var(--c)}.rvp small{display:block;font:700 9px var(--f-body);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.rival .acts{display:flex;flex-wrap:wrap;gap:6px}
+.stabcard{margin-bottom:12px;border-color:rgba(157,107,255,.35)!important}
+.stabcard.unstable{border-color:rgba(255,47,168,.6)!important;animation:unst 1.6s steps(1) infinite;background:radial-gradient(90% 100% at 50% 0%,rgba(255,47,168,.14),transparent 70%),var(--glass)!important}
+@keyframes unst{0%,100%{transform:none}30%{transform:translateX(0)}31%{transform:translateX(-2px)}32%{transform:translateX(2px)}33%{transform:none}}
+.arow{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+@media (prefers-reduced-motion:reduce){.stabcard.unstable{animation:none}}

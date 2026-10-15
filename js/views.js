@@ -266,8 +266,12 @@ function mediaView(){
   return h;
 }
 function vEmpire(){
-  let h=segs('empire',[['company','Company'],['goals','Goals',sub.empire!=='goals'?Math.min(S.unread,99):0],['vault','Vault',vaultOf(S).chests.length],['items','Items',invCount()],['regulars','Regulars'],['shelf','Shelf'],['rebirth','Rebirth',canRebirth()&&sub.empire!=='rebirth'?1:0],['sing','Singularity'],['more','More']]);
-  if(sub.empire==='sing'){
+  let h=segs('empire',[['company','Company'],['goals','Goals',sub.empire!=='goals'?Math.min(S.unread,99):0],['vault','Vault',vaultOf(S).chests.length],['items','Items',invCount()],['regulars','Regulars'],['shelf','Shelf'],['rebirth','Rebirth',canRebirth()&&sub.empire!=='rebirth'?1:0],['sing','Singularity'],['rivals','Rivals'],['auto','Auto'],['more','More']]);
+  if(sub.empire==='rivals'){
+    h+=rivalsView();
+  }else if(sub.empire==='auto'){
+    h+=autoView();
+  }else if(sub.empire==='sing'){
     h+=singView();
   }else if(sub.empire==='rebirth'){
     h+=rebirthView();
