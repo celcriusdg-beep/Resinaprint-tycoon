@@ -39,7 +39,7 @@ showVaultReveal=function(i,lv,got,big,left){
   pending=[{f:()=>{}},{f:()=>A.openChest({})}];
   modal(`<div class="vrv r${i}-bg" style="--rc:${R.col};--pow:${(.4+i*.11).toFixed(2)}">
     <div class="vrv-fx"><i class="vflash"></i><i class="vrays"></i><i class="vhalo"></i></div>
-    <div class="vrv-stage"><div class="vrv-c shut ${big?'big':''}">${CHEST_SVG(big,false)}</div><div class="vrv-c open ${big?'big':''}">${CHEST_SVG(big,true,R.col)}</div><div class="vrv-pts">${vaultParticles(i)}</div></div>
+    <div class="vrv-stage"><div class="vrv-c shut ${big?'big':''}">${CHEST_SVG(big,false)}</div><div class="vrv-c open ${big?'big':''}">${CHEST_SVG(big,true,R.col)}</div><i class="vrv-orb"></i><div class="vrv-pts">${vaultParticles(i)}</div></div>
     <div class="vshow"><div class="kicker">${big?'Vault crate':'Level '+lv+' chest'} · ${RAR_FX[i].n}</div>
       <div class="vname">${rarName(i)}</div>
       <div class="vgot">${got.map((g,j)=>`<div class="vrow ${g.big?'big':''}" style="--d:${j}">${g.art?`<span class="vart">${g.art}</span>`:''}<span class="vl">${g.t}</span><b class="num">${g.v}</b></div>`).join('')}</div></div>
@@ -68,3 +68,5 @@ vaultView=function(){
       <div class="rc-f">${found?`Found ${found}×`:'Not found yet'}</div></div>`});
   return h+'</div>';
 };
+/* 4.7: the rendered chest replaces the hand-drawn one */
+CHEST_SVG=(big,open)=>`<img class="chestimg ${big?'crate':''} ${open?'burst':''}" src="img/ui/chest.webp" alt="" width="256" height="256">`;

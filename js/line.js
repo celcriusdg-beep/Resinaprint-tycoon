@@ -36,12 +36,12 @@ function beltScene(){
   });
   return `<div class="belt${busy?' run':''}"><i class="rail"></i>
     <div class="stp st-in" style="left:5%">${unw}</div>
-    <div class="stp st-tub ${work('post')||(unw&&S.staff.some(s=>s.role==='post'&&s.mach))?'work':''}" style="left:15%">${SVG_TUB}</div>
+    <div class="stp st-tub ${work('post')||(unw&&S.staff.some(s=>s.role==='post'&&s.mach))?'work':''}" style="left:15%">${uiIcon("resin",46)}</div>
     <div class="stp st-q" style="left:28%">${cur}</div>
     <div class="stp st-booth ${paintSet.length?'work':''}" style="left:40%">${SVG_BOOTH}</div>${pits}
-    <div class="stp st-pack ${work('packer')?'work':''}" style="left:64%">${SVG_TABLE}</div>
+    <div class="stp st-pack ${work('packer')?'work':''}" style="left:64%">${uiIcon("dispatch",46)}</div>
     <div class="stp st-bay" style="left:77%">${bay}</div>
-    <div class="stp st-dock ${bayN?'work':''}" style="left:90%">${SVG_DOCK}</div></div>`;
+    <div class="stp st-dock ${bayN?'work':''}" style="left:90%">${uiIcon("fleet",46)}</div></div>`;
 }
 /* ===== 3.12b clean production line: four station cards in a row, joined by a belt. Each card is also the button for that step. ===== */
 function miniTokens(map,cls,max){
@@ -76,10 +76,10 @@ crewScene=function(){
   else paintMain=`<span class="sticon">${SVG_BOOTH}</span>`;
   const paintStatus=painting.length?`Painting ${Math.round(100*Math.max(0,Math.min(1,(S.abs-painting[0].paint.t0)/painting[0].paint.dur)))}%${painting.length>1?` · ${painting.length} at work`:''}`:cur?`${cur} to paint`:'Nothing to paint';
   h+=`<div class="lanes${busy?' run':''}"><i class="conv"></i>
-    <button class="ln wash ${unw?'has':''}" data-a="wash" ${unw?'':'disabled'}><span class="lh">Wash</span><span class="lm"><span class="sticon st-tub ${unw?'work':''}">${SVG_TUB}</span>${stationCrew('post')}</span><span class="lq st-in">${miniTokens(S.unwashed,'raw',3)}</span><span class="ls">${unw?`${unw} waiting · ${en(washE())}`:'Empty'}</span></button>
+    <button class="ln wash ${unw?'has':''}" data-a="wash" ${unw?'':'disabled'}><span class="lh">Wash</span><span class="lm"><span class="sticon st-tub ${unw?'work':''}">${uiIcon("resin",46)}</span>${stationCrew('post')}</span><span class="lq st-in">${miniTokens(S.unwashed,'raw',3)}</span><span class="ls">${unw?`${unw} waiting · ${en(washE())}`:'Empty'}</span></button>
     <button class="ln paint ${cur||painting.length?'has':''}" data-a="finish" ${fk?'':'disabled'}><span class="lh">Paint</span><span class="lm st-booth ${painting.length||cur?'work':''}">${paintMain}${stationCrew('painter')}</span><span class="lq st-q">${miniTokens(S.cured,'prime',3)}</span><span class="ls">${paintStatus}</span></button>
-    <button class="ln pack ${packN?'has':''}" data-a="pack" ${pk?'':'disabled'}><span class="lh">Pack</span><span class="lm"><span class="sticon st-pack ${packN?'work':''}">${SVG_TABLE}</span>${stationCrew('packer')}</span><span class="lq">${packN?`<b class="big">${packN}</b><small>orders</small>`:'<span class="lq-empty">·</span>'}</span><span class="ls">${full?'Bay is full':packN?`${en(E.pack())} each`:'No orders ready'}</span></button>
-    <button class="ln send ${bayN?'has':''}${full?' full':''}" data-a="sendBay" ${bayN?'':'disabled'}><span class="lh">Send</span><span class="lm"><span class="sticon st-dock ${bayN?'work':''}">${SVG_DOCK}</span>${stationCrew('logistics')}</span><span class="lq st-bay"><span class="baybar"><i style="width:${Math.min(100,100*bayN/cap)}%"></i></span></span><span class="ls">Bay ${bayN}/${cap}</span></button>
+    <button class="ln pack ${packN?'has':''}" data-a="pack" ${pk?'':'disabled'}><span class="lh">Pack</span><span class="lm"><span class="sticon st-pack ${packN?'work':''}">${uiIcon("dispatch",46)}</span>${stationCrew('packer')}</span><span class="lq">${packN?`<b class="big">${packN}</b><small>orders</small>`:'<span class="lq-empty">·</span>'}</span><span class="ls">${full?'Bay is full':packN?`${en(E.pack())} each`:'No orders ready'}</span></button>
+    <button class="ln send ${bayN?'has':''}${full?' full':''}" data-a="sendBay" ${bayN?'':'disabled'}><span class="lh">Send</span><span class="lm"><span class="sticon st-dock ${bayN?'work':''}">${uiIcon("fleet",46)}</span>${stationCrew('logistics')}</span><span class="lq st-bay"><span class="baybar"><i style="width:${Math.min(100,100*bayN/cap)}%"></i></span></span><span class="ls">Bay ${bayN}/${cap}</span></button>
   </div>${beltRow(unw,cur,painting,packN,bayN)}</div>`;
   return h;
 };

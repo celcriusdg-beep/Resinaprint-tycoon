@@ -64,3 +64,7 @@
 .sico.has-img{display:block!important}.sico.has-img .fx{width:100%;height:100%;--px:64px}
 .bayhero{float:right;margin:-6px -4px 0 8px;width:96px;height:96px}
 @media (prefers-reduced-motion:reduce){.fx *,.fx .uiimg{animation:none!important}.fx .fp{display:none}}
+.sticon .fx{--px:46px}
+.sticon{display:grid;place-items:center}
+.sticon:not(.work) .uiimg{filter:grayscale(.55) brightness(.8)}
+.sticon.work .uiimg{filter:drop-shadow(0 0 8px rgba(255,180,60,.45))}
