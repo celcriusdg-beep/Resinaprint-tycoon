@@ -272,5 +272,4 @@ if __name__ == '__main__':
                      ('glitch', fx_glitch), ('perk', fx_perk), ('rival', fx_rival), ('unstable', fx_unstable), ('notify', fx_notify), ('buy', fx_buy), ('whoosh', fx_whoosh)]:
         save(name, fn(), '80k', stereo=True)
     for i in range(3): save(f'chest_open{i}', chest_open(i), '96k', stereo=True)
-    save('music_lofi', music_lofi(), '112k', stereo=True, peak=.7)
-    save('music_void', music_void(), '112k', stereo=True, peak=.7)
+    # music is the Holizna CC0 playlist in music/, not generated

@@ -26,7 +26,7 @@ function audUnlock(){
   if(AUDIO.unlocked)return;const c=audCtx();if(!c)return;
   AUDIO.unlocked=true;if(c.state==='suspended')c.resume();
   AUD_PRELOAD.forEach(n=>audLoad(n).catch(()=>{}));
-  audMusicTick();
+  musPrime();audMusicTick();
 }
 ['pointerdown','touchend','keydown'].forEach(ev=>document.addEventListener(ev,audUnlock,{passive:true}));
 document.addEventListener('visibilitychange',()=>{const c=AUDIO.ctx;if(!c)return;if(document.hidden)c.suspend();else if(AUDIO.unlocked)c.resume()});
@@ -50,36 +50,64 @@ snd=function(kind,arg){
   if(!name)return;
   const v=SND_VAR[kind];audPlay(name,{rate:v?1+(Math.random()*2-1)*v:1});
 };
-/* music: crossfaded loops that follow where you are in the game */
+/* music: a shuffled playlist of real lo-fi tracks (Holizna, CC0 via OpenGameArt), streamed through two audio
+   elements that crossfade. Workshop tracks normally, darker tracks in Rebirth and Singularity. */
+const PLAYLIST={
+  work:['work-creature-comforts','work-glad-to-be-stuck-inside','work-something-in-the-air','work-a-little-shade','work-waves','work-morning-coffee','work-vintage'],
+  void:['void-snow-drift','void-first-snow','void-foggy-headed']
+};
+const MUS={els:[],g:[],cur:-1,mode:null,order:{},pos:{},busy:false,primed:false};
 function audMusicFor(){
-  try{if(tab==='empire'&&(sub.empire==='sing'||sub.empire==='rebirth'))return 'music_void'}catch(e){}
-  return 'music_lofi';
+  try{if(tab==='empire'&&(sub.empire==='sing'||sub.empire==='rebirth'))return 'void'}catch(e){}
+  return 'work';
 }
-function audFade(g,to,t){const c=AUDIO.ctx;g.gain.cancelScheduledValues(c.currentTime);g.gain.setValueAtTime(g.gain.value,c.currentTime);g.gain.linearRampToValueAtTime(to,c.currentTime+t)}
-function audStartTrack(name){
-  const c=audCtx();if(!c)return;
-  audLoad(name).then(b=>{
-    if(AUDIO.curName===name||!audCfg.music||!sndOn)return;
-    const old=AUDIO.cur;if(old){old.stop=true;audFade(old.g,0,1.6);setTimeout(()=>{try{old.src&&old.src.stop()}catch(e){}},1800)}
-    const run={name,g:c.createGain(),stop:false,src:null};run.g.gain.value=0;run.g.connect(AUDIO.musG);
-    AUDIO.cur=run;AUDIO.curName=name;
-    const dur=b.duration,x=2.0;
-    const play=(at,first)=>{
-      if(run.stop)return;
-      const s=c.createBufferSource(),g=c.createGain();s.buffer=b;s.connect(g);g.connect(run.g);
-      g.gain.setValueAtTime(first?0:0,at);g.gain.linearRampToValueAtTime(1,at+(first?1.5:x));g.gain.setValueAtTime(1,at+dur-x);g.gain.linearRampToValueAtTime(0,at+dur);
-      s.start(at);run.src=s;
-      const next=at+dur-x;setTimeout(()=>play(next,false),Math.max(200,(next-c.currentTime-.3)*1000));
-    };
-    run.g.gain.value=1;play(c.currentTime+.05,true);
-  }).catch(()=>{});
+function musInit(){
+  if(MUS.els.length)return true;const c=audCtx();if(!c)return false;
+  for(let i=0;i<2;i++){
+    const el=new Audio();el.preload='none';el.crossOrigin='anonymous';el.setAttribute('playsinline','');
+    const g=c.createGain();g.gain.value=0;
+    try{c.createMediaElementSource(el).connect(g)}catch(e){}
+    g.connect(AUDIO.musG);
+    el.addEventListener('timeupdate',()=>{if(MUS.cur===i&&el.duration&&el.duration-el.currentTime<4&&!MUS.busy)musNext()});
+    el.addEventListener('ended',()=>{if(MUS.cur===i&&!MUS.busy)musNext()});
+    el.addEventListener('error',()=>{if(MUS.cur===i){MUS.busy=false;setTimeout(musNext,1500)}});
+    MUS.els.push(el);MUS.g.push(g);
+  }
+  return true;
+}
+function musPrime(){ /* iOS lets each audio element play only after a tap: touch both once during the unlock tap */
+  if(MUS.primed||!musInit())return;MUS.primed=true;
+  for(const el of MUS.els){try{const pr=el.play();if(pr&&pr.catch)pr.catch(()=>{});el.pause()}catch(e){}}
+}
+function musPick(mode){
+  if(!MUS.order[mode]||MUS.pos[mode]>=MUS.order[mode].length){MUS.order[mode]=PLAYLIST[mode].slice().sort(()=>Math.random()-.5);MUS.pos[mode]=0}
+  return MUS.order[mode][MUS.pos[mode]++];
+}
+function musPlay(mode){
+  if(!musInit())return;const c=AUDIO.ctx;MUS.busy=true;MUS.mode=mode;
+  const nxt=MUS.cur<0?0:1-MUS.cur,el=MUS.els[nxt],g=MUS.g[nxt],old=MUS.cur;
+  el.src='music/'+musPick(mode)+'.mp3';el.currentTime=0;
+  const pr=el.play();
+  const go=()=>{
+    g.gain.cancelScheduledValues(c.currentTime);g.gain.setValueAtTime(0,c.currentTime);g.gain.linearRampToValueAtTime(1,c.currentTime+3);
+    if(old>=0){const og=MUS.g[old],oe=MUS.els[old];og.gain.cancelScheduledValues(c.currentTime);og.gain.setValueAtTime(og.gain.value,c.currentTime);og.gain.linearRampToValueAtTime(0,c.currentTime+3);setTimeout(()=>{if(MUS.cur!==old)oe.pause()},3300)}
+    MUS.cur=nxt;setTimeout(()=>{MUS.busy=false},3500);
+  };
+  if(pr&&pr.then)pr.then(go).catch(()=>{MUS.busy=false});else go();
+}
+function musNext(){if(audCfg.music&&sndOn)musPlay(audMusicFor())}
+function musStop(){
+  const c=AUDIO.ctx;if(!c)return;MUS.mode=null;
+  MUS.g.forEach((g,i)=>{g.gain.cancelScheduledValues(c.currentTime);g.gain.setValueAtTime(g.gain.value,c.currentTime);g.gain.linearRampToValueAtTime(0,c.currentTime+.8);setTimeout(()=>{if(!MUS.mode)MUS.els[i].pause()},900)});
 }
 function audMusicTick(){
   if(!AUDIO.unlocked||!AUDIO.ctx)return;
-  if(!audCfg.music||!sndOn){if(AUDIO.cur&&!AUDIO.cur.stop){const o=AUDIO.cur;o.stop=true;audFade(o.g,0,.6);AUDIO.curName=null;setTimeout(()=>{try{o.src&&o.src.stop()}catch(e){}},900)}return}
-  const want=audMusicFor();if(AUDIO.curName!==want)audStartTrack(want);
+  if(!audCfg.music||!sndOn){if(MUS.mode)musStop();return}
+  if(document.hidden)return;
+  const want=audMusicFor();if(MUS.mode!==want&&!MUS.busy)musPlay(want);
 }
 setInterval(audMusicTick,1500);
+document.addEventListener('visibilitychange',()=>{if(!MUS.els.length)return;if(document.hidden)MUS.els.forEach(e=>e.pause());else if(MUS.cur>=0&&MUS.mode&&audCfg.music&&sndOn)MUS.els[MUS.cur].play().catch(()=>{})});
 function audDuck(ms){
   const c=AUDIO.ctx;if(!c||!AUDIO.musG)return;const g=AUDIO.musG.gain,base=audCfg.mv*.6;
   g.cancelScheduledValues(c.currentTime);g.setValueAtTime(g.value,c.currentTime);g.linearRampToValueAtTime(base*.25,c.currentTime+.2);

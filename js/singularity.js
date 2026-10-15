@@ -88,7 +88,7 @@ Object.assign(A,{
       x.rec.filter(g=>g.t!=='cash').concat(x.rec.filter(g=>g.t==='cash')).forEach(ingTake);
       (S.pinv=S.pinv||[]).push({id:nid(),type:x.k});sng().forged[x.k]=(sng().forged[x.k]||0)+1;
       confetti(80);snd('forge');log(`${x.n} forged. It waits in your inventory.`,'amber');
-      pending=[{f:()=>{}}];
+      pending=[{f:()=>{tab='empire';sub.empire='items'}}];
       modal(`<div class="vreveal" style="--rc:${x.col}"><div class="vshow"><div class="kicker">Forged · sent to inventory</div><div class="sgreveal">${singArt(x.k)}</div><div class="vname" style="margin:4px 0">${x.n}</div><p style="text-align:center;margin:0 0 6px;color:var(--muted)">${x.speed}× speed · ${x.slots} slots</p></div></div><div class="acts" style="margin-top:12px"><button class="btn primary" data-a="goItems" data-choice="0">Open inventory</button></div>`);
     });
   }

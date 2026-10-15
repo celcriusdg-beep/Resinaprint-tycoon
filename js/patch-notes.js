@@ -1,8 +1,12 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.7';
-const PATCH_TITLE='Resinaprint 4.7 · Sound';
+const VERSION='4.8';
+const PATCH_TITLE='Resinaprint 4.8 · Lo-fi';
 const PATCH=[
+ {h:'New in 4.8',i:[
+  '<b>A real lo-fi soundtrack.</b> Ten tracks by Holizna (free, CC0): seven warm workshop tracks on shuffle, and three slow, dark ones for Rebirth and Singularity. Tracks crossfade and stream, so they do not slow the game down.',
+  '<b>Fixed:</b> the daily reward Claim button did nothing.'
+ ]},
  {h:'New in 4.7',i:[
   '<b>A real soundtrack and sound effects.</b> Every tap, coin, sale, level up, chest shake, chest opening (three grades, rarer sounds bigger), parcel, van, forge, perk and rival now has its own sound, mixed with reverb and a limiter. A lo-fi workshop loop plays while you work and a deep drifting pad plays in Rebirth and Singularity. Failed actions make a low thud. Music and effect volume are in Empire › More.',
   '<b>Tips, daily rewards and comfort.</b> A short tip appears the first time you open each screen. A daily login streak (7 days, ending in a jackpot) gives cash, items, chests and shards. New settings: low effects (auto on older phones), text size, high contrast and reduce motion.',

@@ -50,14 +50,14 @@ function dailyDue(){return !!S&&S.started&&!S.over&&dstr().last!==dayKey()}
 function dailyShow(after){
   const D=dstr(),today=dayKey(),y=new Date(Date.now()-864e5),yk=y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate();
   const streak=D.last===yk?D.streak+1:1,idx=(streak-1)%7;
-  pending=[{f:()=>{if(typeof after==='function')after()}}];
-  modal(`<div class="kicker">Daily reward</div><h3>Welcome back</h3><div class="dstreak">${DAILY.map((r,i)=>`<div class="dday ${i<idx?'done':i===idx?'now':''}"><b>${i+1}</b><small>${i===6?'★':i%3===2?'▣':i%3===1?'◆':'€'}</small></div>`).join('')}</div><p style="text-align:center;margin:10px 0 2px">Day ${streak}: <b>${DAILY[idx].t}</b></p><div class="acts" style="margin-top:12px"><button class="btn primary" data-a="dailyClaim">Claim</button></div>`);
+  pending=[{f:()=>{dailyClaim();if(typeof after==='function')after()}}];
+  modal(`<div class="kicker">Daily reward</div><h3>Welcome back</h3><div class="dstreak">${DAILY.map((r,i)=>`<div class="dday ${i<idx?'done':i===idx?'now':''}"><b>${i+1}</b><small>${i===6?'★':i%3===2?'▣':i%3===1?'◆':'€'}</small></div>`).join('')}</div><p style="text-align:center;margin:10px 0 2px">Day ${streak}: <b>${DAILY[idx].t}</b></p><div class="acts" style="margin-top:12px"><button class="btn primary" data-choice="0">Claim</button></div>`);
 }
-A.dailyClaim=function(){
+function dailyClaim(){
   const D=dstr(),y=new Date(Date.now()-864e5),yk=y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate();
   const streak=D.last===yk?D.streak+1:1,idx=(streak-1)%7,got=DAILY[idx].f();
-  dstrSave({last:dayKey(),streak});closeModal();confetti(50);snd('level');toast('Claimed: '+got);log(`Daily reward (day ${streak}): ${got}.`,'good');
-};
+  dstrSave({last:dayKey(),streak});confetti(50);snd('level');toast('Claimed: '+got);log(`Daily reward (day ${streak}): ${got}.`,'good');
+}
 let _dailyTried=false;
 setInterval(()=>{
   if(_dailyTried||!dailyDue()||modalOpen()||(S.lv||1)<2)return;
