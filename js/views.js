@@ -269,8 +269,10 @@ function mediaView(){
   return h;
 }
 function vEmpire(){
-  let h=segs('empire',[['company','Company'],['goals','Goals',sub.empire!=='goals'?Math.min(S.unread,99):0],['vault','Vault',vaultOf(S).chests.length],['items','Items',invCount()],['regulars','Regulars'],['shelf','Shelf'],['rebirth','Rebirth',canRebirth()&&sub.empire!=='rebirth'?1:0],['sing','Singularity'],['lab','R&D',typeof rdOf==='function'&&S.rd?S.rd.run.length:0],['mix','Resin lab'],['rivals','Rivals'],['auto','Auto'],['more','More']]);
-  if(sub.empire==='mix'){
+  let h=segs('empire',[['company','Company'],['goals','Goals',sub.empire!=='goals'?Math.min(S.unread,99):0],['vault','Vault',vaultOf(S).chests.length],['items','Items',invCount()],['regulars','Regulars'],['shelf','Shelf'],['rebirth','Rebirth',canRebirth()&&sub.empire!=='rebirth'?1:0],['sing','Singularity'],['lab','R&D',typeof rdOf==='function'&&S.rd?S.rd.run.length:0],['mix','Resin lab'],['mega','Megaprojects'],['rivals','Rivals'],['auto','Auto'],['more','More']]);
+  if(sub.empire==='mega'){
+    h+=megaView();
+  }else if(sub.empire==='mix'){
     h+=mixView();
   }else if(sub.empire==='lab'){
     h+=rdView();

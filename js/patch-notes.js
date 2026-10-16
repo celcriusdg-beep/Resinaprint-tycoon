@@ -1,8 +1,13 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.31';
-const PATCH_TITLE='Resinaprint 4.26 · Rebirth matters';
+const VERSION='4.32';
+const PATCH_TITLE='Resinaprint 4.32 · Megaprojects';
 const PATCH=[
+ {h:'New in 4.32',i:[
+  '<b>Megaprojects</b> (Empire › Megaprojects). Six giant builds for the late game: the Resin Refinery, Global Logistics Hub, Resin Saga Anime Studio, Resinaland Theme Park, Orbital Print Lab and the Grand Resin Museum. Each has four stages: Groundwork, Structure, Fit-out and Grand opening. Every stage costs millions (scaled to your rebirth goal), a delivery of figures from your stock and days of building, and you watch the building grow.',
+  'Finished projects give big bonuses for the rest of the run: cheaper resin and shipping, more demand, daily park income, faster printers, a chest every day. Every project you ever finish adds +2% income for good (Legacy) and 25 Resin Shards.',
+  'Megaprojects open after your first rebirth or once your company is worth €5M.'
+ ]},
  {h:'New in 4.31',i:[
   'Injection machines now match their class: the Arburg Allrounder counts as a large machine and the Engel e-mac 180 as an industrial one, so they can mould statues, full-colour figures and other big products (buy the mould first). The Babyplast stays medium.'
  ]},

@@ -129,3 +129,24 @@ body.lowfx .sr-glow,body.lowfx .sr-spin,body.lowfx .sr-flick,body.lowfx .sr-scre
 .mixbottle .liq{animation:mxLiq 3s ease-in-out infinite;filter:drop-shadow(0 0 4px var(--c))}
 .mixbottle .bub{animation:mxBub 2.2s ease-in infinite}.mixbottle .bub.b2{animation-delay:-1s}
 @keyframes mxLiq{50%{transform:translateY(1.5px)}}
+
+/* megaprojects (4.32) */
+.mg-hero{display:flex;gap:14px;align-items:center;margin-top:16px}
+.mg-leg{display:grid;justify-items:center;min-width:70px;padding:10px;border-radius:14px;background:#9d89ff22;border:1px solid #9d89ff55}.mg-leg b{font-family:var(--f-num);font-size:20px;color:#e6dcff}.mg-leg span{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.mg-card{margin-top:12px;border-left:3px solid var(--c);overflow:hidden}
+.mg-card.open{box-shadow:0 0 0 1px color-mix(in srgb,var(--c) 50%,transparent),0 0 26px color-mix(in srgb,var(--c) 18%,transparent)}
+.mg-art{width:100%;height:auto;max-height:150px;display:block;border-radius:12px;background:linear-gradient(#1a2033,#121521);margin-bottom:10px}
+.mg-h{display:flex;gap:10px;align-items:flex-start}
+.mg-steps{display:flex;gap:4px;margin:10px 0 8px}.mg-steps span{flex:1;font-size:10.5px;text-align:center;padding:5px 2px;border-radius:8px;background:#ffffff08;color:var(--faint)}
+.mg-steps span.ok{background:color-mix(in srgb,var(--c) 22%,transparent);color:var(--c);font-weight:800}.mg-steps span.cur{background:var(--amber-soft);color:var(--amber);font-weight:800;animation:srOk 1.4s ease-in-out infinite}
+.mg-need{display:flex;flex-wrap:wrap;gap:6px}.mg-need span{font-size:12px;padding:4px 9px;border-radius:99px;background:#ffffff08;border:1px solid var(--hair)}.mg-need small{color:var(--faint)}
+.mg-win{animation:mgWin 3s ease-in-out infinite}@keyframes mgWin{50%{fill:#ffd36b}}
+.mg-smoke{animation:mgSmoke 3s ease-out infinite}@keyframes mgSmoke{0%{transform:translateY(0) scale(.6);opacity:.8}100%{transform:translateY(-14px) scale(1.6);opacity:0}}
+.mg-fly{animation:mgFly 6s ease-in-out infinite}@keyframes mgFly{50%{transform:translate(-14px,-4px)}}
+.mg-spin{animation:mgSpin 14s linear infinite}@keyframes mgSpin{to{transform:rotate(360deg)}}
+.mg-hover{animation:mgHover 2.4s ease-in-out infinite}@keyframes mgHover{50%{transform:translateY(-2px)}}
+.mg-flame{animation:mgFlame .25s steps(2) infinite}@keyframes mgFlame{50%{opacity:.4}}
+.mg-glow{animation:srGlow 3s ease-in-out infinite}
+.mg-hook{animation:mgHook 2.6s ease-in-out infinite}@keyframes mgHook{50%{transform:translateY(10px)}}
+body.lowfx .mg-art *{animation:none!important}
+.mg-art.blue{background:repeating-linear-gradient(0deg,#ffffff07 0 1px,transparent 1px 12px),repeating-linear-gradient(90deg,#ffffff07 0 1px,transparent 1px 12px),linear-gradient(#14233a,#0f1828)}.mg-art.blue>*:not(text){opacity:.28;filter:grayscale(.4) brightness(1.3)}.mg-art.blue *{animation:none!important}
