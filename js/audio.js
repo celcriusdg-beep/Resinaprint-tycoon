@@ -70,7 +70,7 @@ function musInit(){
     g.connect(AUDIO.musG);
     el.addEventListener('timeupdate',()=>{if(MUS.cur===i&&el.duration&&el.duration-el.currentTime<4&&!MUS.busy)musNext()});
     el.addEventListener('ended',()=>{if(MUS.cur===i&&!MUS.busy)musNext()});
-    el.addEventListener('error',()=>{if(MUS.cur===i){MUS.busy=false;setTimeout(musNext,1500)}});
+    el.addEventListener('error',()=>{MUS.busy=false;if(MUS.cur===i||MUS.cur<0){MUS.mode=null;setTimeout(audMusicTick,1500)}});
     MUS.els.push(el);MUS.g.push(g);
   }
   return true;
@@ -93,7 +93,7 @@ function musPlay(mode){
     if(old>=0){const og=MUS.g[old],oe=MUS.els[old];og.gain.cancelScheduledValues(c.currentTime);og.gain.setValueAtTime(og.gain.value,c.currentTime);og.gain.linearRampToValueAtTime(0,c.currentTime+3);setTimeout(()=>{if(MUS.cur!==old)oe.pause()},3300)}
     MUS.cur=nxt;setTimeout(()=>{MUS.busy=false},3500);
   };
-  if(pr&&pr.then)pr.then(go).catch(()=>{MUS.busy=false});else go();
+  if(pr&&pr.then)pr.then(go).catch(()=>{MUS.busy=false;MUS.mode=null;MUS.blocked=true});else go();
 }
 function musNext(){if(audCfg.music&&sndOn)musPlay(audMusicFor())}
 function musStop(){
@@ -115,7 +115,7 @@ function audDuck(ms){
   clearTimeout(AUDIO.duckT);AUDIO.duckT=setTimeout(()=>{if(AUDIO.ctx)audFade(AUDIO.musG,audCfg.mv*.6,1.2)},ms);
 }
 const _setSound=setSound;
-setSound=function(on){_setSound(on);if(on)audUnlock();audMusicTick()};
+setSound=function(on){_setSound(on);if(on)audUnlock();audMusicTick();if(typeof audSession==='function')audSession()};
 /* click sounds: specific for important actions, a soft tick for primary buttons */
 const CLICK_SND={pack:'pack',packAll:'pack',sendBay:'send',sub:'select',shopGo:'select',openSkill:'select',singSel:'select',perk:'perk',stabUp:'perk',stabVent:'glitch',rvUndercut:'rival',rvSabotage:'rival',rvBuyout:'cash',fleetBuy:'buy',fleetUp:'buy',dspBuy:'buy',buyPrinter:'buy',autoTog:'select',autoSet:'select',placePrinter:'buy',animMode:'select',diff:'select',theme:'select'};
 function clickSound(e){
@@ -130,7 +130,20 @@ function clickSound(e){
 const _toast0=toast;
 toast=function(t){_toast0(t);if(/not enough|too tired|is full|missing|wait |no room|no free|caught|can.t|locked|needs a/i.test(String(t)))snd('bad')};
 Object.assign(A,{
-  music(){audCfg.music=!audCfg.music;audSave();audUnlock();audMusicTick();toast(audCfg.music?'Music on':'Music off')},
+  music(){audCfg.music=!audCfg.music;audSave();audUnlock();if(typeof audSession==='function')audSession();if(audCfg.music&&!MUS.busy)musPlay(audMusicFor());else audMusicTick();toast(audCfg.music?'Music on':'Music off')},
   vol(d){const k=d.k,v=+d.v;if(k==='sv'){audCfg.sv=v;if(AUDIO.sfxG)AUDIO.sfxG.gain.value=v;audSave();audPlay('select')}else{audCfg.mv=v;if(AUDIO.musG)AUDIO.musG.gain.value=v*.6;audSave()}}
 });
 const _collect=collect;collect=function(p){_collect(p);if(!awayMode&&!simulating)snd('print_done')};
+
+/* 4.30: music that keeps playing on phones.
+   - iPhone mutes web audio in silent mode unless the page asks for media playback, so ask for it while sound is on.
+   - A blocked or stalled track is retried on the next tap, inside the tap, where phones always allow audio to start. */
+function audSession(){try{if(navigator.audioSession)navigator.audioSession.type=(sndOn&&audCfg.music)?'playback':'ambient'}catch(e){}}
+audSession();
+function musPlaying(){const el=MUS.els[MUS.cur];return !!(el&&!el.paused&&!el.ended&&el.readyState>2)}
+document.addEventListener('pointerdown',()=>{
+  audSession();
+  if(!AUDIO.ctx||!audCfg.music||!sndOn||document.hidden)return;
+  if(AUDIO.ctx.state==='suspended')AUDIO.ctx.resume();
+  if(MUS.blocked||(!MUS.busy&&!musPlaying())){MUS.blocked=false;MUS.busy=false;musPlay(audMusicFor())}
+},{passive:true});
