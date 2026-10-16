@@ -262,3 +262,5 @@ nav .in:has(button:nth-child(7)) button{font-size:9.5px}nav .in:has(button:nth-c
 .bd-card{border-color:color-mix(in srgb,var(--amber) 45%,transparent)}
 .chip.qt{color:var(--qc)!important;border:1px solid color-mix(in srgb,var(--qc) 50%,transparent)!important;background:color-mix(in srgb,var(--qc) 12%,transparent)!important;font-weight:800}.qt-help{margin-bottom:8px}.rc-card{padding:10px 12px;margin-bottom:10px}
 .ap-why{flex:1 1 100%;margin-top:6px;font-size:12px}
+.qb{background:#ffffff06;border:1px solid var(--hair);border-radius:12px;padding:10px;margin-bottom:10px}.qb-h{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px;margin-bottom:6px}
+.qb-rows div{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:3px 0;border-bottom:1px dashed var(--hair)}.qb-rows small{color:var(--muted);font-size:11px}.qb-rows b.good{color:var(--good)}.qb-rows b.bad{color:var(--bad)}.qb .s{margin-top:6px;font-size:11.5px}

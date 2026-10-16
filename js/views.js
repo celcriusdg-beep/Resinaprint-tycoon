@@ -127,7 +127,7 @@ function vBuy(){
     h+=label(PGROUPS[+sub.pg]+' printers',`${S.printers.length} of ${space().printers} spots`)+`<div class="group">`;
     for(const t in PRINTERS){const D=PRINTERS[t];if(D.grp!==+sub.pg)continue;const lk=printerLock(D);
       const kind=D.lab?'Next-gen':D.inj?'Injection moulding':D.pj?'PolyJet':D.fam==='carbon'?'Carbon DLS':D.form?'Cartridge':'Open vat';
-      h+=itemArt(artBox(printerArt(t),'','',['p',t]),D.name,lk?`<span class="f">${lk}</span>`:`${kind} · ${TIERS[D.tier]} · ${D.slots} slots · ${D.speed}× · ${Math.round(D.fail*1000)/10}% fail`,price('buyPrinter',t,D.cost,!!lk||S.cash<D.cost||S.printers.length>=space().printers))}
+      h+=itemArt(artBox(printerArt(t),'','',['p',t]),D.name,lk?`<span class="f">${lk}</span>`:`${kind} · ${TIERS[D.tier]} · ${D.slots} slots · ${D.speed}× · ${Math.round(D.fail*1000)/10}% fail · +${(D.q||0).toFixed(2)} quality`,price('buyPrinter',t,D.cost,!!lk||S.cash<D.cost||S.printers.length>=space().printers))}
     h+='</div>';
   }else if(sub.buy==='resin'){
     h+=label('Official resin',S.mk.resin>1.03||S.mk.resin<.97?`market ${S.mk.resin>1?'+':''}${Math.round((S.mk.resin-1)*100)}%${S.up.bulk?' · bulk −20%':''}`:S.up.bulk?'20% bulk discount':'market price')+'';
@@ -135,7 +135,7 @@ function vBuy(){
     for(const f in FAMS){if(!own.has(f))continue;
       h+=label(FAMS[f])+`<div class="group">`;
       for(const k in RESINS){const R2=RESINS[k];if(R2.fam!==f||R2.mix)continue;
-        h+=`<div class="item rsitem" style="flex-wrap:wrap">${artBox(resinArt(k),'rsart')}<div class="grow" style="min-width:50%"><div class="t">${R2.name} ${R2.q>0?`<span class="chip good">+${R2.q.toFixed(2)}★</span>`:''}</div><div class="s">${R2.note} · ${R2.pack} · <b class="num" style="color:var(--ink)">${amt(k,S.resin[k]||0)}</b> in stock</div></div>
+        h+=`<div class="item rsitem" style="flex-wrap:wrap">${artBox(resinArt(k),'rsart')}<div class="grow" style="min-width:50%"><div class="t">${R2.name} ${R2.q?`<span class="chip ${R2.q>0?'good':'bad'}">${R2.q>0?'+':''}${R2.q.toFixed(2)} quality</span>`:'<span class="chip">+0 quality</span>'}</div><div class="s">${R2.note} · ${R2.pack} · <b class="num" style="color:var(--ink)">${amt(k,S.resin[k]||0)}</b> in stock</div></div>
         <div style="display:flex;gap:6px"><button class="btn sm" data-a="resin" data-k="${k}" data-n="1" ${S.cash<resinPrice(k)?'disabled':''}>1× ${fmt(resinPrice(k))}</button>${S.ws>=1?`<button class="btn sm primary" data-a="resin" data-k="${k}" data-n="5" ${S.cash<resinPrice(k)*4.5?'disabled':''}>5× ${fmt(resinPrice(k)*4.5)}</button>`:''}</div></div>`}
       h+='</div>'}
     if(own.size<2)h+=`<div class="label"><small>Cartridge, PolyJet and pellet supplies show up once you own that kind of machine.</small></div>`;
@@ -163,7 +163,7 @@ function vTeam(){
   if(failMult()<1)bo.push(`${Math.round((1-failMult())*100)}% fewer failed prints`);
   if(resinMult()<1)bo.push(`${Math.round((1-resinMult())*100)}% less resin used`);
   if(wearMult()<1)bo.push(`${Math.round((1-wearMult())*100)}% less wear`);
-  if(qualBonus()>0)bo.push(`+${qualBonus().toFixed(2)}★ print quality`);
+  if(qualBonus()>0)bo.push(`+${qualBonus().toFixed(2)} figure quality`);
   if(supportPower()>0)bo.push(`+${supportPower().toFixed(2)}★ service`);
   if(socialHype()>0)bo.push(`+${socialHype().toFixed(1)} hype a day`);
   if(designMult()>1)bo.push(`Figures worth ${Math.round((designMult()-1)*100)}% more`);

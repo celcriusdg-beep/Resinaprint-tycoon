@@ -1,8 +1,12 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.47';
-const PATCH_TITLE='Resinaprint 4.47 · Smart auto price';
+const VERSION='4.48';
+const PATCH_TITLE='Resinaprint 4.48 · Quality score breakdown';
 const PATCH=[
+ {h:'New in 4.48',i:[
+  '<b>See where quality comes from.</b> Under More options every figure shows its quality score split up: resin, printer, upgrades, painters and post-processors, inspectors and paint tier, plus the score it is heading to with your current setup.',
+  'Everything that adds quality now says how much: resins and printers in the Shop (+0.25 quality), quality upgrades, and paint tiers in the paint studio.'
+ ]},
  {h:'New in 4.47',i:[
   '<b>Smart auto price.</b> Every night it tries a slightly lower and a slightly higher price and keeps whichever earns the most profit a day, after fees, material, shipping, royalty and the time each piece takes.',
   'Crowded or flooded markets get a higher price instead of a lower one, so you sell fewer pieces for more and the market calms down. When you are selling out the price goes up too.',
