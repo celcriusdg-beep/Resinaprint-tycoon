@@ -15,15 +15,15 @@ const IP_SCALE=[
 ];
 const IP_NODE_COST=[.12,.16,.22,.3,.4,.55,.7,.9,1.2,2];
 const IP_GAMES=[
-  {id:'lol',co:'Riot Games',game:'League of Legends',short:'LoL',cost:15000,roy:.15,pop:1,col:'#c8aa6e',
+  {id:'lol',co:'Riot Games',game:'League of Legends',short:'LoL',cost:250000,roy:.15,pop:1,col:'#c8aa6e',
    figs:[['missf','Miss Fortune'],['ashe','Ashe'],['lux','Lux'],['akali','Akali'],['yone','Yone'],['jhin','Jhin'],['jinx','Jinx'],['ahri','Ahri'],['seraphine','Seraphine'],['kaisa',"Kai'Sa"]]},
-  {id:'gi',co:'HoYoverse',game:'Genshin Impact',short:'Genshin',cost:30000,roy:.18,pop:1.2,col:'#7fd6c9',
+  {id:'gi',co:'HoYoverse',game:'Genshin Impact',short:'Genshin',cost:500000,roy:.18,pop:1.2,col:'#7fd6c9',
    figs:[['venti','Venti'],['zhongli','Zhongli'],['qiqi','Qiqi'],['klee','Klee'],['keqing','Keqing'],['nahida','Nahida'],['hutao','Hu Tao'],['ganyu','Ganyu'],['ayaka','Kamisato Ayaka'],['raiden','Raiden Shogun']]},
-  {id:'ww',co:'Kuro Games',game:'Wuthering Waves',short:'WuWa',cost:25000,roy:.15,pop:1.05,col:'#e8c872',
+  {id:'ww',co:'Kuro Games',game:'Wuthering Waves',short:'WuWa',cost:400000,roy:.15,pop:1.05,col:'#e8c872',
    figs:[['carlotta','Carlotta'],['cantarella','Cantarella'],['changli','Changli'],['shorekeeper','Shorekeeper'],['phoebe','Phoebe'],['verina','Verina'],['augusta','Augusta'],['yinlin','Yinlin'],['mornye','Mornye'],['jinhsi','Jinhsi']]},
-  {id:'zzz',co:'HoYoverse',game:'Zenless Zone Zero',short:'ZZZ',cost:40000,roy:.18,pop:1.1,col:'#ff9f2e',
+  {id:'zzz',co:'HoYoverse',game:'Zenless Zone Zero',short:'ZZZ',cost:650000,roy:.18,pop:1.1,col:'#ff9f2e',
    figs:[['belle','Belle'],['wise','Wise'],['grace','Grace Howard'],['yanagi','Tsukishiro Yanagi'],['nicole','Nicole Demara'],['anby','Anby Demara'],['jane','Jane Doe'],['evelyn','Evelyn Chevalier'],['ellen','Ellen Joe'],['miyabi','Hoshimi Miyabi']]},
-  {id:'e7',co:'Smilegate',game:'Epic Seven',short:'Epic 7',cost:20000,roy:.12,pop:.9,col:'#8fb8ff',
+  {id:'e7',co:'Smilegate',game:'Epic Seven',short:'Epic 7',cost:300000,roy:.12,pop:.9,col:'#8fb8ff',
    figs:[['vivian','Vivian'],['diene','Diene'],['ken','Ken'],['ras','Ras'],['tamarinne','Tamarinne'],['yufine','Yufine'],['iseria','Iseria'],['bellona','Seaside Bellona'],['eda','Festive Eda'],['luna','New Moon Luna']]}
 ];
 const IP_BY={},IP_GAME_OF={};
@@ -33,7 +33,7 @@ IP_GAMES.forEach((G,lane)=>{
   G.figs.forEach(([k,n],i)=>{
     const sc=IP_SCALE[i],id=`ip_${G.id}_${i+1}`,ref=Math.round(sc.ref*G.pop);
     PRODUCTS[k]={name:`${n} ${sc.n} (${G.short})`,ml:sc.ml,size:sc.size,h:sc.h,ref,effort:sc.effort,ship:sc.ship,base:sc.base*G.pop,tier:sc.tier,req:id,royalty:G.roy,official:1,col:G.col,ip:G.id,scale:i};
-    UPGRADES.push({id,cat:'ip',name:`${n} · ${sc.n}`,cost:Math.round(G.cost*IP_NODE_COST[i]/50)*50,lane,step:i+1,ipGame:G.id,ipKey:k,
+    UPGRADES.push({id,cat:'ip',name:`${n} · ${sc.n}`,cost:Math.round(G.cost*IP_NODE_COST[i]/1000)*1000,lane,step:i+1,ipGame:G.id,ipKey:k,
       desc:`Unlocks ${n} ${sc.n} from ${G.game}. Sells for about €${ref}${sc.tier?`, needs a ${['','pro','large'][sc.tier]} printer`:''}.`});
     if(!PKEYS.includes(k))PKEYS.push(k);IP_BY[k]=G;
   });

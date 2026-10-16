@@ -120,7 +120,7 @@ function vBuy(){
   let h='';
   const price=(a,k,cost,dis,extra='')=>`<button class="btn sm primary" data-a="${a}" data-k="${k}" ${extra} ${dis?'disabled':''}>${fmt(cost)}</button>`;
   if(sub.buy==='printers'){
-    h+=`<div style="margin-top:12px">${segs('pg',PGROUPS.map((n,i)=>[String(i),n])).replace('margin-top:18px','')}</div>`;
+    h+=`<div style="margin-top:12px">${segs('pg',PGROUPS.map((n,i)=>[String(i),(typeof REB_PGRP!=='undefined'&&REB_PGRP[i]&&rebN()<REB_PGRP[i]?'🔒 ':'')+n])).replace('margin-top:18px','')}</div>`;
     if(+sub.pg===4)h+=`<div class="card" style="margin-top:14px"><div class="t">Laboratorium</div><div class="s" style="margin-top:4px">Beyond PolyJet and injection moulding. Every Laboratorium printer makes every product without moulds or washing, in huge batches, with almost no failures and a quality bonus. Needs an industrial unit, the 3-phase power connection and the Laboratorium wing (Buy › Space).</div></div>`;
     h+=label(PGROUPS[+sub.pg]+' printers',`${S.printers.length} of ${space().printers} spots`)+`<div class="group">`;
     for(const t in PRINTERS){const D=PRINTERS[t];if(D.grp!==+sub.pg)continue;const lk=printerLock(D);

@@ -15,13 +15,13 @@ const CHAPTERS=[
   {t:'Factory floor',intro:'Forklifts. Pallets. A coffee machine that costs more than your first car.',reward:{chest:12,items:['tskip','xp']},objs:[
     O('Move into a factory hall',()=>S.ws>=3?1:0,1,['buy','space']),O('Own 15 printers',()=>S.printers.length,15,['buy','printers']),
     O('Merge a store',()=>storeMerged()?1:0,1,['buy','stores']),O('Sell 2,500 figures',()=>S.sold,2500,['studio'])]},
-  {t:'The Laboratorium',intro:'Behind the steel door, the printers hum like a choir. Nobody is allowed to sneeze.',reward:{chest:20,items:['charm','workshop']},objs:[
-    O('Build the Laboratorium wing',()=>S.up.labwing?1:0,1,['empire','upgrades']),O('Own a laboratory printer',()=>hasLab()?1:0,1,['buy','printers']),
-    O('Install an Omega Forge machine',()=>machOwned(true).length,1,['team','lab']),O('Reach level 25',()=>S.lv,25,['empire','more'])]},
   {t:'Going global',intro:'Time to take the name abroad. Same company, new country, new customers.',reward:{chest:30,items:['sale','finish']},objs:[
     O('Rebirth once',()=>rebOf(S).count,1,['empire','rebirth']),O('Sell 10,000 figures this run',()=>S.sold,10000,['studio'])]},
+  {t:'The Laboratorium',intro:'Behind the steel door, the printers hum like a choir. Nobody is allowed to sneeze.',reward:{chest:20,items:['charm','workshop']},objs:[
+    O('Rebirth 3 times',()=>rebOf(S).count,3,['empire','rebirth']),O('Build the Laboratorium wing',()=>S.up.labwing?1:0,1,['empire','upgrades']),O('Own a laboratory printer',()=>hasLab()?1:0,1,['buy','printers']),
+    O('Install an Omega Forge machine',()=>machOwned(true).length,1,['team','lab']),O('Reach level 25',()=>S.lv,25,['empire','more'])]},
   {t:'Resin legend',intro:'Collectors whisper your name. Your keychains hang from rear-view mirrors on three continents.',reward:{chest:40,items:['workshop','charm','xp']},objs:[
-    O('Rebirth 3 times',()=>rebOf(S).count,3,['empire','rebirth']),O('Own 8 Omega Forge machines',()=>machOwned(true).length,8,['team','lab']),O('Complete 4 figure sets',()=>Object.keys(shelfOf().claimed).length,4,['empire','shelf'])]}
+    O('Rebirth 4 times',()=>rebOf(S).count,4,['empire','rebirth']),O('Own 8 Omega Forge machines',()=>machOwned(true).length,8,['team','lab']),O('Complete 4 figure sets',()=>Object.keys(shelfOf().claimed).length,4,['empire','shelf'])]}
 ];
 const storyOf=s=>s.story||(s.story={ch:0,ff:0,done:0});
 const chDone=c=>c.objs.every(o=>{const [a,b]=o.f();return a>=b});

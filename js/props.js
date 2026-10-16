@@ -14,17 +14,17 @@ const PROP_LANES=[
   {id:'masks',n:'Masks & helmets',col:'#ffb547',items:[['pr_glove','Bladed nightmare glove'],['pr_tracker','Tracker hunter mask'],['pr_celtic','Celtic hunter mask'],['pr_panther','Panther king helmet'],['pr_berserker','Berserker hunter mask']]}
 ];
 const PROP_KEYS=[];
-UPGRADES.push({id:'pr_root',cat:'props',name:'Prop workshop',cost:50000,lane:1.5,step:0,parIds:[],
+UPGRADES.push({id:'pr_root',cat:'props',name:'Prop workshop',cost:1000000,lane:1.5,step:0,parIds:[],
   desc:'Opens life-size replica props: big prints, lots of painting, very high prices. Props need medium or large printers.'});
 PROP_LANES.forEach((L,lane)=>L.items.forEach(([k,n],i)=>{
   const st=PROP_STEP[i],id='prn_'+k;
   PRODUCTS[k]={name:`${n} (1:1 prop)`,ml:st.ml,size:st.size,h:st.h,ref:st.ref,effort:st.effort,ship:st.ship,base:st.base,tier:st.tier,req:id,official:1,col:L.col,prop:L.id};
-  UPGRADES.push({id,cat:'props',name:n,cost:[12000,25000,50000,100000,200000][i],lane,step:i+1,ipKey:k,parIds:[i?'prn_'+L.items[i-1][0]:'pr_root'],
+  UPGRADES.push({id,cat:'props',name:n,cost:[200000,400000,800000,1600000,3200000][i],lane,step:i+1,ipKey:k,parIds:[i?'prn_'+L.items[i-1][0]:'pr_root'],
     desc:`${L.n}: unlocks the ${n.toLowerCase()} replica. Sells for about €${st.ref}, needs a ${TIERS[st.tier].toLowerCase()} printer.`});
   if(!PKEYS.includes(k))PKEYS.push(k);PROP_KEYS.push(k);
 }));
 /* the crown of the branch: needs the top prop of every lane */
 PRODUCTS.pr_virtuous={name:'Virtuous Contract, Ascendent Abyss (1:1 prop)',ml:4000,size:40,h:30,ref:4999,effort:15,ship:20,base:.05,tier:2,req:'prn_pr_virtuous',official:1,col:'#c75bff',prop:'legend'};
-UPGRADES.push({id:'prn_pr_virtuous',cat:'props',name:'Virtuous Contract',cost:750000,lane:1.5,step:6,ipKey:'pr_virtuous',parIds:PROP_LANES.map(L=>'prn_'+L.items[4][0]),allPar:1,
+UPGRADES.push({id:'prn_pr_virtuous',cat:'props',name:'Virtuous Contract',cost:25000000,lane:1.5,step:6,ipKey:'pr_virtuous',parIds:PROP_LANES.map(L=>'prn_'+L.items[4][0]),allPar:1,
   desc:'The legendary blade of the Ascendent Abyss. Needs the top prop of all four lanes. Sells for about €4,999.'});
 PKEYS.push('pr_virtuous');PROP_KEYS.push('pr_virtuous');

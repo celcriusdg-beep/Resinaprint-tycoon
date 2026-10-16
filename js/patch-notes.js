@@ -1,8 +1,13 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.25';
-const PATCH_TITLE='Resinaprint 4.22 · Moulds';
+const VERSION='4.26';
+const PATCH_TITLE='Resinaprint 4.26 · Rebirth matters';
 const PATCH=[
+ {h:'New in 4.26',i:[
+  '<b>Rebirth unlocks.</b> Desktop and Pro printers are open from the start. Large printers unlock after 1 rebirth, Industrial after 2 and Laboratorium after 3. Machines: Basic and Pro from the start, then Industrial, Advanced, Elite, Quantum, Mythic and Apex open one rebirth at a time. The Omega Forge opens after 3 rebirths. You no longer need to own the previous generation. The Rebirth tab shows what is open and what the next rebirth brings.',
+  '<b>Licences and props cost far more.</b> IP licences now cost €250k to €650k, and their figures up to twice the licence. The prop workshop costs €1M, prop replicas €200k to €3.2M and the Virtuous Contract €25M. Anything you already own stays yours.',
+  '<b>Slower late game.</b> Hype counts in full up to 100, then with diminishing returns. 800 hype used to multiply demand by 17, now by about 5.'
+ ]},
  {h:'New in 4.25',i:[
   '<b>Rebirth boost.</b> Every rebirth now gives a permanent +10% on all income, and it stacks: Rebirth boost I is +10%, II is +20%, III is +30%, and so on. See your level on the Rebirth tab. Loans, refunds and selling your own equipment are not boosted.'
  ]},

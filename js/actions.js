@@ -3,7 +3,7 @@
 const LOANS={small:{name:'Small business loan',amt:5000,n:26,rate:.0015},mid:{name:'Business loan',amt:25000,n:52,rate:.0012},big:{name:'Expansion loan',amt:100000,n:104,rate:.001},inv:{name:'Investor round',amt:120000,pct:.12,n:78,bv:1,minValue:200000,desc:'€120.000 now for 12% of your weekly profit for 78 weeks'}};
 const mouldCost=k=>Math.round(PRODUCTS[k].ref*60/10)*10;
 const moveLock=i=>{const W=SPACES[i];if(W.kvk&&!S.biz.kvk)return 'Register at the KvK first';if(W.permit&&!S.biz.perm[W.permit])return `Needs the ${PERMITS[W.permit].name}`;return ''};
-const printerLock=D=>S.ws<D.ws?`Needs a ${SPACES[D.ws].name.toLowerCase()}`:D.req&&!S.up[D.req]?`Needs the ${UPGRADES.find(u=>u.id===D.req).name.toLowerCase()}`:'';
+const printerLock=D=>(typeof rebLock==='function'&&rebLock(D))||(S.ws<D.ws?`Needs a ${SPACES[D.ws].name.toLowerCase()}`:D.req&&!S.up[D.req]?`Needs the ${UPGRADES.find(u=>u.id===D.req).name.toLowerCase()}`:'');
 const needKvk=()=>{if(S.biz.kvk)return false;toast('Register at the KvK first (Empire › Company)');return true};
 const A={
   wait(){wait2()},

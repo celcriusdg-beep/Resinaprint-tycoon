@@ -80,7 +80,7 @@ function clubNeed(k){const C=S.club;if(!C||!C.open||C.next-S.day>7)return 0;let 
 function clubDay(){
   const C=clubOf();if(!C.open)return;
   CLUB_T.forEach((T,t)=>{const v=clubVal(t),p=C.price[t];if(!v){C.m[t]*=.97;return}
-    const join=Math.max(0,(S.rating-3.2)*.8+S.hype*.02)*Math.pow(v/p,1.6)*[.5,.22,.08][t]*(1+Math.log10(1+S.sold)/3);
+    const join=Math.max(0,(S.rating-3.2)*.8+(hypeMult()-1)*.5)*Math.pow(v/p,1.6)*[.5,.22,.08][t]*(1+Math.log10(1+S.sold)/3);
     const churn=.006+(p>v*1.1?.02*(p/v-1):0);
     C.m[t]=Math.max(0,C.m[t]*(1-churn)+join*r(.6,1.4))});
   if(S.day>=C.next)clubShip();

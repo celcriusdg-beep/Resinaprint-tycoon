@@ -136,10 +136,12 @@ const amt=(k,ml)=>RESINS[k].fam==='inj'?(ml/1000).toFixed(1)+' kg':L(ml);
 const energyBill=()=>Math.round(S.printers.reduce((a,p)=>{const D=PRINTERS[p.type];return a+(D.pow||[2,5,10,150][D.tier])},0)*(S.up.solar?.6:1)*(1-Math.min(.6,upv('pow'))));
 const wasteCost=()=>S.printers.length?Math.round(4+S.biz.waste/1000*3*(S.up.recycle?.4:1)):0;
 function value(s){return s.cash+s.printers.reduce((a,p)=>a+PRINTERS[p.type].cost*.5*(p.cond/100),0)+PKEYS.reduce((a,k)=>a+s.stock[k]*s.prices[k]*.6,0)+SPACES.slice(1,s.ws+1).reduce((a,w)=>a+w.cost*.3,0)+Object.keys(s.stores).reduce((a,k)=>a+(s.stores[k].open?STORES[k].cost*(.6+.3*(s.stores[k].level-1))*(s.stores[k].merged?1.5:1):0),0)-s.loans.reduce((a,l)=>a+l.bal,0)-Math.max(0,s.biz.vatOut-s.biz.vatIn)}
+/* 4.26: hype counts in full up to 100, then with diminishing returns (819 hype: ×5.4 instead of ×17) */
+const hypeMult=()=>{const h=Math.max(0,S.hype);return h<=100?1+h/50:3+Math.log10(1+(h-100)/50)*2};
 function demand(k){
   if(!sellable(k))return 0;
   const Pd=PRODUCTS[k];
-  let d=Pd.base*(1+S.hype/50)*Math.pow(S.rating/4.5,3)*Math.pow(Pd.ref*designMult()/S.prices[k],2.2)*(1+Math.log10(1+S.sold)/2);
+  let d=Pd.base*hypeMult()*Math.pow(S.rating/4.5,3)*Math.pow(Pd.ref*designMult()/S.prices[k],2.2)*(1+Math.log10(1+S.sold)/2);
   if(S.up.lightbox)d*=1.1; if(S.up.theme)d*=1.15; if(S.up.franchise)d*=1.5; if(S.up.ip)d*=1.1;
   d*=saleMult()*earlyBoost()*socDem()*boostMult()*(1+Math.min(.8,upv('dem')))*photoMult()*season().m*S.mk.comp*chanMult()*trendMult(k)*(1+lvDem())*diffM().dem*(1+rebDem())*cm('dem')*(1+ctryFav(k))*(1+regBonus(k)+shelfBonus())*evtDemand(k);
   return d;
