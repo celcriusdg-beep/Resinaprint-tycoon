@@ -59,7 +59,6 @@ const _reb2=doRebirth;
 doRebirth=function(dest){
   const old=S,cash=Math.max(0,old.cash),R=rebOf(old),bank=Math.floor(R.shards*.05*perk('bank'));
   const g=_reb2(dest);
-  const h=perk('heir');if(h){S.cash+=Math.round(cash*h*.02)}
   if(bank){rebOf(S).shards+=bank;rebOf(S).total+=bank}
   _newRun();return g+bank;
 };

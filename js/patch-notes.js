@@ -1,8 +1,13 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.33';
-const PATCH_TITLE='Resinaprint 4.33 · The Foundry';
+const VERSION='4.34';
+const PATCH_TITLE='Resinaprint 4.34 · New perks';
 const PATCH=[
+ {h:'New in 4.34',i:[
+  '<b>No more carrying money.</b> Heirloom (keep cash through a rebirth) and Head start (start with extra cash) are gone. Every shard you spent on them has been refunded.',
+  '<b>18 new rebirth perks:</b> Steady hands, Ultrasonic memory, Packing muscle, Calm vats, Golden plate, Mentor, Loyal crew, Friendly landlord, Courier deals, Marketplace VIP, Momentum, Fast start, Fan club, Five-star memory, Architect, Master smelter, Lucky streak and Shard quarry.',
+  '<b>Singularity printers in the shop.</b> Once you forge your first Singularity printer, a new ✦ Singularity tab appears in Shop › Printers. Every printer you have forged there can be bought for cash, as many as you have room for.'
+ ]},
  {h:'New in 4.33',i:[
   '<b>The Foundry.</b> Forge all six Singularity printers and a new Foundry tab appears: metal casting, a whole business of its own. The foundry costs €25M and stays yours through every rebirth.',
   'Five casting machines, each a tier up: Sand-casting cell (€10M), Lost-wax investment line (€30M), High-pressure die-cast press (€80M), Vacuum titanium caster (€200M) and Binder-jet & HIP foundry (€500M). They cost a fortune in upkeep every day and wear with every pour: service them or they cast defects and break down.',
