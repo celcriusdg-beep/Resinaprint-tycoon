@@ -144,9 +144,7 @@ function vBuy(){
     ks.forEach((k,i)=>{const W=WASHERS[k],lock=S.ws<W.ws;h+=item(`<span style="display:flex;align-items:center;gap:10px"><img class="gimg" src="${washImg(k)}" alt="">${W.name}</span>`,`${W.cap} per batch${lock?` · needs a ${SPACES[W.ws].name.toLowerCase()}`:''}`,k===S.washer?'<span class="chip amber">Yours</span>':i>cur?price('washer',k,W.cost,lock||S.cash<W.cost):'<span class="chip">Owned</span>')});
     h+='</div>';
     if(S.printers.some(p=>PRINTERS[p.type].inj)){
-      h+=label('Injection moulds','steel moulds make parts almost for free')+`<div class="group">`;
-      for(const k of PKEYS){if(!PRODUCTS[k].inj||!unlocked(k))continue;h+=item(PRODUCTS[k].name,`Mould for one product. Parts need no washing.`,S.moulds[k]?'<span class="chip good">Owned</span>':price('mould',k,mouldCost(k),S.cash<mouldCost(k)))}
-      h+='</div>';
+      h+=mouldView();
     }
   }else{
     h+=label('Workspace')+`<div class="group">`;

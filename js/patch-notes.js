@@ -1,8 +1,11 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.21';
-const PATCH_TITLE='Resinaprint 4.21 · Showroom';
+const VERSION='4.22';
+const PATCH_TITLE='Resinaprint 4.22 · Moulds';
 const PATCH=[
+ {h:'New in 4.22',i:[
+  '<b>A mould for every figure.</b> Every product can now be injection moulded: all your own designs, every licensed figure from all five games and every prop. Shop › Gear & moulds lists them in tabs per product line, with a button to buy all moulds of a line at once.'
+ ]},
  {h:'New in 4.21',i:[
   '<b>Showroom.</b> Lease a shop front (Studio tab) and build it tile by tile in an isometric room. 22 pieces of furniture: figure shelves, glass vitrines, a turning plinth, a prop wall, a hero statue, tills, a gacha machine, an arcade cabinet, an aquarium, a sakura tree, neon signs, a video wall, shop windows and more. Your real products stand on the shelves.',
   'Furniture adds traffic (people walking in), appeal (how many buy) and display slots. Every piece has a style tag: three, six or nine of a tag give a set bonus. Five floor and wall styles, and the shop grows from a corner shop to a flagship store.',

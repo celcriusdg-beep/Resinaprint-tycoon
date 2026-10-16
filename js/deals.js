@@ -17,7 +17,7 @@ const dealBonus=()=>Math.min(.25,.01*dealsOf().bonus);
 function dealLeft(d,k){const it=d.items.find(x=>x.p===k);return it?Math.max(0,it.qty-it.got):0}
 function dealLeftAll(k){return dealsOf().active.reduce((a,d)=>a+dealLeft(d,k),0)}
 function newDeal(){
-  const ks=PKEYS.filter(k=>makeable(k)&&!PRODUCTS[k].royalty&&!PRODUCTS[k].inj);if(!ks.length)return null;
+  const ks=PKEYS.filter(k=>makeable(k)&&!PRODUCTS[k].royalty&&!(PRODUCTS[k].inj0??PRODUCTS[k].inj));if(!ks.length)return null;
   const R=dealRank(),n=Math.min(ks.length,1+Math.floor(Math.random()*Math.min(3,1+R/2))),pick=ks.slice().sort(()=>Math.random()-.5).slice(0,n);
   const scale=(1+S.sold/400)*(0.7+R*.35);
   const items=pick.map(k=>{const P=PRODUCTS[k],base=Math.max(4,Math.round((24/Math.max(.5,P.size||1))*scale*(0.6+Math.random()*.8)));return{p:k,qty:Math.min(600,base),got:0}});
