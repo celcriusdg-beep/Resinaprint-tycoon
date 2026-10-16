@@ -1,8 +1,11 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.24';
+const VERSION='4.25';
 const PATCH_TITLE='Resinaprint 4.22 · Moulds';
 const PATCH=[
+ {h:'New in 4.25',i:[
+  '<b>Rebirth boost.</b> Every rebirth now gives a permanent +10% on all income, and it stacks: Rebirth boost I is +10%, II is +20%, III is +30%, and so on. See your level on the Rebirth tab. Loans, refunds and selling your own equipment are not boosted.'
+ ]},
  {h:'New in 4.24',i:[
   'Team: tap a job (Painter, Print, Production and more) to see only those machines or people. All shows everyone again. Works in People, Machines and the Omega Forge.'
  ]},
