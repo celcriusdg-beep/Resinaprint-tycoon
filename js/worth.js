@@ -1,6 +1,6 @@
 /* Company worth (4.35): cash no longer counts. Worth is everything the company owns, each at 90% of what it cost,
    minus loans and BTW owed. The foundry is a separate business and stays out of it. */
-const WORTH_KEEP=.9;
+const WORTH_KEEP=.9,WORTH_CASH=.15;
 const WORTH_LEDGER=['Equipment','Fleet upgrades','Paint studio','Resin lab','Megaprojects'];
 const _spW=spend;spend=function(cat,a){const c0=S.cash;const r=_spW(cat,a);if(WORTH_LEDGER.includes(cat)&&S.cash<c0){const L=S.assets||(S.assets={});L[cat]=(L[cat]||0)+(c0-S.cash)}return r};
 function worthParts(s){
@@ -20,10 +20,10 @@ function worthParts(s){
 }
 value=function(s){
   s=s||S;const P=worthParts(s),gross=Object.values(P).reduce((a,v)=>a+v,0)*WORTH_KEEP;
-  return gross-(s.loans||[]).reduce((a,l)=>a+(l.bal||0),0)-Math.max(0,((s.biz&&s.biz.vatOut)||0)-((s.biz&&s.biz.vatIn)||0));
+  return gross+Math.max(0,s.cash||0)*WORTH_CASH-(s.loans||[]).reduce((a,l)=>a+(l.bal||0),0)-Math.max(0,((s.biz&&s.biz.vatOut)||0)-((s.biz&&s.biz.vatIn)||0));
 };
 /* the company page explains it */
 const _cvW=companyView;companyView=function(){const h=_cvW.apply(this,arguments),P=worthParts(S);
   const rows=Object.entries(P).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
-  const card=`<div class="card wt-card"><div class="t">Company worth ${fmt(value(S))}</div><div class="s">Everything your company owns at 90% of what it cost, minus loans and BTW owed. Cash in the bank does not count.</div>${rows.length?`<div class="wt-rows">${rows.map(([k,v])=>`<div><span>${k}</span><b>${fmt(v*WORTH_KEEP)}</b></div>`).join('')}</div>`:''}</div>`;
+  const card=`<div class="card wt-card"><div class="t">Company worth ${fmt(value(S))}</div><div class="s">Everything your company owns at 90% of what it cost, plus 15% of your cash, minus loans and BTW owed.</div>${rows.length?`<div class="wt-rows">${rows.map(([k,v])=>`<div><span>${k}</span><b>${fmt(v*WORTH_KEEP)}</b></div>`).join('')}${S.cash>0?`<div><span>Cash (15%)</span><b>${fmt(S.cash*WORTH_CASH)}</b></div>`:''}</div>`:''}</div>`;
   const i=h.indexOf('</div>',h.indexOf('<div class="label">'));return i<0?card+h:h.slice(0,i+6)+card+h.slice(i+6)};

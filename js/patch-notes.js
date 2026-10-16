@@ -1,8 +1,11 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.35';
+const VERSION='4.36';
 const PATCH_TITLE='Resinaprint 4.34 · New perks';
 const PATCH=[
+ {h:'New in 4.36',i:[
+  '15% of the cash in your bank now counts towards company worth, on top of everything you own at 90% of its cost.'
+ ]},
  {h:'New in 4.35',i:[
   '<b>Company worth</b> no longer counts the cash in your bank. It is everything your company owns, each at 90% of what it cost: printers, machines, space, stores, upgrades, moulds, dispatch, vans, the showroom, equipment and stock, minus loans and BTW owed. Empire › Company shows the breakdown. Spending on your company now grows its worth, and the rebirth goal works the same way.'
  ]},
