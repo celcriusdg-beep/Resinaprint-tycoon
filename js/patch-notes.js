@@ -1,8 +1,12 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.40';
-const PATCH_TITLE='Resinaprint 4.40 · Rebirth rebalance';
+const VERSION='4.41';
+const PATCH_TITLE='Resinaprint 4.41 · Singles filters';
 const PATCH=[
+ {h:'New in 4.41',i:[
+  '<b>Singles filters.</b> Sort your singles by price (high or low), rarity, name, card number, most copies or how far your price sits above market. Filter by rarity, listed or not listed, and minimum worth.',
+  'List or unlist every card you are looking at in one tap, and see how many cards match and what they are worth. Long collections load 60 at a time with a Show more button.'
+ ]},
  {h:'New in 4.40',i:[
   '<b>Rebirth is harder to earn.</b> The goal now grows ×4 every rebirth: €1M, €4M, €16M, €64M, €256M, €1B and so on.',
   '<b>Your studio has to earn it.</b> Besides company worth, a rebirth needs studio sales this run of at least half the goal. Branches, stores, the foundry, the theme park and other side income do not count.',

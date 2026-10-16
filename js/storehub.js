@@ -61,6 +61,10 @@ Object.assign(A,{
   tsAcc(d){const T=tsInit(),A2=TS_ACC[d.k],n=+d.n||10,c=A2.w*n*(tsU('b2b')?.85:1);if(S.cash<c)return toast('Not enough cash');spend('Store stock',c);T.acc[d.k]=(T.acc[d.k]||0)+n;toast(`+${n} ${A2.n.toLowerCase()}`)},
   tsSellTog(){const T=tsInit();T.sell=T.sell?0:1},
   tsKeep(d){const T=tsInit();T.keep=Math.max(0,T.keep+(+d.d))},
+  tsSF(d){const f=tsSF();f[d.t]=d.t==='min'?+d.k:d.k;sub.tssN=60},
+  tsListAll(d){const T=tsInit(),f=tsSF();let n=0;for(const c of TCG_SET.cards){if(!(T.own[c.id]>0)||(f.r!=='all'&&c.r!==f.r)||(f.min>0&&tcgPrice(c)<f.min))continue;if(f.s==='on'&&!T.list[c.id]||f.s==='off'&&T.list[c.id])continue;
+    if(d.p==='off'){if(T.list[c.id]){delete T.list[c.id];n++}}else if(!T.list[c.id]){T.list[c.id]=Math.max(.05,Math.round(tcgPrice(c)*100)/100);n++}}
+    toast(d.p==='off'?`${n} card${n===1?'':'s'} unlisted`:`${n} card${n===1?'':'s'} listed at market price`)},
   tsList(d){const T=tsInit(),c=TCG_BY[d.k];if(!c)return;if(d.p==='off'){delete T.list[d.k];return}const cur=T.list[d.k]||tcgPrice(c),f=d.p==='up'?1.1:d.p==='down'?.9:1;T.list[d.k]=Math.max(.05,Math.round(cur*f*100)/100)},
   tsGrade(d){const T=tsInit(),c=TCG_BY[d.k];if(!c||!(T.own[d.k]>0))return;const ex=d.x==='1',fee=(ex?100:25)*(1-.3*tsU('psa')),days=Math.max(1,Math.round((ex?3:10)*(1-.3*tsU('psa'))));
     if(S.cash<fee)return toast('Not enough cash');spend('Grading',fee);T.own[d.k]--;if(!(T.own[d.k]>0))delete T.list[d.k];T.psa.push({c:d.k,due:S.day+days});toast(`${c.n} sent to PSA · back in ${days} days`);if(typeof snd==='function')snd('send')},
@@ -129,11 +133,25 @@ function tsShelf(){
   h+=label('Accessories','buy in, sell at your price')+`<div class="group">${Object.entries(TS_ACC).map(([k,A2])=>{const p=T.ap[k]||A2.m;return `<div class="item"><span class="ts-acc">${A2.ico}</span><div class="grow"><div class="t">${A2.n} <span class="chip">${T.acc[k]||0}</span></div><div class="s">Buy ${tcgF(A2.w*(tsU('b2b')?.85:1))} · market ${tcgF(A2.m)}</div></div><div style="display:grid;gap:5px;justify-items:end"><div class="stepper"><button class="btn sm" data-a="tsPrice" data-k="${k}" data-d="-1">−</button><b>${tcgF(p)}</b><button class="btn sm" data-a="tsPrice" data-k="${k}" data-d="1">+</button></div><button class="btn sm" data-a="tsAcc" data-k="${k}" data-n="10">+10 · ${tcgF(A2.w*10*(tsU('b2b')?.85:1))}</button></div></div>`}).join('')}</div>`;
   return h;
 }
+const tsSF=()=>sub.tssF||(sub.tssF={o:'hi',r:'all',s:'all',min:0});
 function tsSingles(){
-  const T=tsInit(),own=TCG_SET.cards.filter(c=>T.own[c.id]>0).sort((a,b)=>tcgPrice(b)-tcgPrice(a));
-  let h=label('Your singles',`${Object.keys(T.list).length} listed · set your own price`);
-  h+=own.length?`<div class="group">${own.slice(0,60).map(c=>{const L=T.list[c.id];return `<div class="item ts-single"><div class="ts-cimg r-${c.r}" style="--rc:${TCG_R[c.r].c}" data-a="tcgView" data-k="${c.id}">${tcgImg(c)}</div><div class="grow"><div class="t">${c.n} <span class="chip">×${T.own[c.id]}</span></div><div class="s"><span style="color:${TCG_R[c.r].c}">${TCG_R[c.r].n}</span> · market ${tcgF(tcgPrice(c))}${L?` · <b class="${L>tcgPrice(c)*1.2?'bad':'good'}">listed ${tcgF(L)}</b>`:''}</div></div>
-      <div style="display:grid;gap:5px;justify-items:end">${L?`<div class="stepper"><button class="btn sm" data-a="tsList" data-k="${c.id}" data-p="down">−</button><b>${tcgF(L)}</b><button class="btn sm" data-a="tsList" data-k="${c.id}" data-p="up">+</button></div><button class="btn sm ghost" data-a="tsList" data-k="${c.id}" data-p="off">Unlist</button>`:`<button class="btn sm primary" data-a="tsList" data-k="${c.id}" data-p="set">List at ${tcgF(tcgPrice(c))}</button>`}</div></div>`}).join('')}</div>`:`<div class="card"><div class="s">Open packs to get singles to sell.</div></div>`;
+  const T=tsInit(),all=TCG_SET.cards.filter(c=>T.own[c.id]>0),f=tsSF(),num=c=>parseInt(c.no)||0;
+  const shown=all.filter(c=>(f.r==='all'||c.r===f.r)&&(f.s==='all'||(f.s==='on'?!!T.list[c.id]:!T.list[c.id]))&&(f.min<=0||tcgPrice(c)>=f.min));
+  const SORT={hi:(a,b)=>tcgPrice(b)-tcgPrice(a),lo:(a,b)=>tcgPrice(a)-tcgPrice(b),rar:(a,b)=>(TCG_R[a.r].o-TCG_R[b.r].o)||tcgPrice(b)-tcgPrice(a),name:(a,b)=>a.n.localeCompare(b.n),no:(a,b)=>num(a)-num(b)||a.no.localeCompare(b.no),qty:(a,b)=>(T.own[b.id]-T.own[a.id])||tcgPrice(b)-tcgPrice(a),gap:(a,b)=>((T.list[b.id]||0)/tcgPrice(b))-((T.list[a.id]||0)/tcgPrice(a))};
+  shown.sort(SORT[f.o]||SORT.hi);
+  const chip=(t,k,n,on,cnt)=>`<button class="${on?'on':''}" data-a="tsSF" data-t="${t}" data-k="${k}">${n}${cnt!=null?` <i>${cnt}</i>`:''}</button>`;
+  const rs=Object.keys(TCG_R).filter(r=>all.some(c=>c.r===r));
+  let h=label('Your singles',`${Object.keys(T.list).length} listed · ${all.length} different cards · ${all.reduce((a,c)=>a+T.own[c.id],0)} in total`);
+  if(all.length)h+=`<div class="card ts-filt">
+    <div class="pinv-sort"><span>Sort</span>${[['hi','Price ↓'],['lo','Price ↑'],['rar','Rarity'],['name','Name'],['no','Number'],['qty','Most copies'],['gap','My price %']].map(([k,n])=>chip('o',k,n,f.o===k)).join('')}</div>
+    <div class="pinv-sort"><span>Rarity</span>${chip('r','all','All',f.r==='all',all.length)}${rs.map(r=>chip('r',r,TCG_R[r].n,f.r===r,all.filter(c=>c.r===r).length)).join('')}</div>
+    <div class="pinv-sort"><span>Show</span>${chip('s','all','All',f.s==='all')}${chip('s','on','Listed',f.s==='on',Object.keys(T.list).length)}${chip('s','off','Not listed',f.s==='off')}</div>
+    <div class="pinv-sort"><span>Worth</span>${[[0,'Any'],[1,'€1+'],[10,'€10+'],[50,'€50+'],[200,'€200+']].map(([k,n])=>chip('min',k,n,f.min===k)).join('')}</div>
+    <div class="kv" style="margin-top:4px"><span>${shown.length} shown · worth ${tcgF(shown.reduce((a,c)=>a+tcgPrice(c)*T.own[c.id],0))}</span><span style="display:flex;gap:6px"><button class="btn sm" data-a="tsListAll" data-p="set" ${shown.some(c=>!T.list[c.id])?'':'disabled'}>List shown</button><button class="btn sm ghost" data-a="tsListAll" data-p="off" ${shown.some(c=>T.list[c.id])?'':'disabled'}>Unlist shown</button></span></div></div>`;
+  const lim=sub.tssN||60;
+  h+=all.length&&!shown.length?`<div class="card"><div class="s">No cards match these filters.</div></div>`:'';
+  h+=shown.length?`<div class="group">${shown.slice(0,lim).map(c=>{const L=T.list[c.id];return `<div class="item ts-single"><div class="ts-cimg r-${c.r}" style="--rc:${TCG_R[c.r].c}" data-a="tcgView" data-k="${c.id}">${tcgImg(c)}</div><div class="grow"><div class="t">${c.n} <span class="chip">×${T.own[c.id]}</span></div><div class="s"><span style="color:${TCG_R[c.r].c}">${TCG_R[c.r].n}</span> · market ${tcgF(tcgPrice(c))}${L?` · <b class="${L>tcgPrice(c)*1.2?'bad':'good'}">listed ${tcgF(L)}</b>`:''}</div></div>
+      <div style="display:grid;gap:5px;justify-items:end">${L?`<div class="stepper"><button class="btn sm" data-a="tsList" data-k="${c.id}" data-p="down">−</button><b>${tcgF(L)}</b><button class="btn sm" data-a="tsList" data-k="${c.id}" data-p="up">+</button></div><button class="btn sm ghost" data-a="tsList" data-k="${c.id}" data-p="off">Unlist</button>`:`<button class="btn sm primary" data-a="tsList" data-k="${c.id}" data-p="set">List at ${tcgF(tcgPrice(c))}</button>`}</div></div>`}).join('')}</div>${shown.length>lim?`<div class="opts"><button class="btn sm" data-a="sub" data-t="tssN" data-k="${lim+60}">Show ${Math.min(60,shown.length-lim)} more</button></div>`:''}`:all.length?'':`<div class="card"><div class="s">Open packs to get singles to sell.</div></div>`;
   h+=`<div class="s cat-help">Customers and collectors buy listed singles over time. Below market they sell fast, above market they wait. Display cases speed it up.</div>`;
   return h;
 }
