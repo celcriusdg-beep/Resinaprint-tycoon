@@ -1,8 +1,14 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.32';
-const PATCH_TITLE='Resinaprint 4.32 · Megaprojects';
+const VERSION='4.33';
+const PATCH_TITLE='Resinaprint 4.33 · The Foundry';
 const PATCH=[
+ {h:'New in 4.33',i:[
+  '<b>The Foundry.</b> Forge all six Singularity printers and a new Foundry tab appears: metal casting, a whole business of its own. The foundry costs €25M and stays yours through every rebirth.',
+  'Five casting machines, each a tier up: Sand-casting cell (€10M), Lost-wax investment line (€30M), High-pressure die-cast press (€80M), Vacuum titanium caster (€200M) and Binder-jet & HIP foundry (€500M). They cost a fortune in upkeep every day and wear with every pour: service them or they cast defects and break down.',
+  'Buy aluminium, brass, bronze, steel, silver, titanium and gold by the kilo. Cast 15 metal products, from €1,800 die-cast cars to a €1.5M gold-leaf throne, set prices and sell to collectors. Museums, cities and film studios offer projects that pay fortunes.',
+  'Eight foundry upgrades and a hall that grows from 4 to 16 machine bays. Switch machines off to stop their upkeep: after a rebirth every machine starts switched off, so a fresh run is not drained.'
+ ]},
  {h:'New in 4.32',i:[
   '<b>Megaprojects</b> (Empire › Megaprojects). Six giant builds for the late game: the Resin Refinery, Global Logistics Hub, Resin Saga Anime Studio, Resinaland Theme Park, Orbital Print Lab and the Grand Resin Museum. Each has four stages: Groundwork, Structure, Fit-out and Grand opening. Every stage costs millions (scaled to your rebirth goal), a delivery of figures from your stock and days of building, and you watch the building grow.',
   'Finished projects give big bonuses for the rest of the run: cheaper resin and shipping, more demand, daily park income, faster printers, a chest every day. Every project you ever finish adds +2% income for good (Legacy) and 25 Resin Shards.',
