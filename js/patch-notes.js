@@ -1,8 +1,11 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.34';
+const VERSION='4.35';
 const PATCH_TITLE='Resinaprint 4.34 · New perks';
 const PATCH=[
+ {h:'New in 4.35',i:[
+  '<b>Company worth</b> no longer counts the cash in your bank. It is everything your company owns, each at 90% of what it cost: printers, machines, space, stores, upgrades, moulds, dispatch, vans, the showroom, equipment and stock, minus loans and BTW owed. Empire › Company shows the breakdown. Spending on your company now grows its worth, and the rebirth goal works the same way.'
+ ]},
  {h:'New in 4.34',i:[
   '<b>No more carrying money.</b> Heirloom (keep cash through a rebirth) and Head start (start with extra cash) are gone. Every shard you spent on them has been refunded.',
   '<b>18 new rebirth perks:</b> Steady hands, Ultrasonic memory, Packing muscle, Calm vats, Golden plate, Mentor, Loyal crew, Friendly landlord, Courier deals, Marketplace VIP, Momentum, Fast start, Fan club, Five-star memory, Architect, Master smelter, Lucky streak and Shard quarry.',

@@ -64,3 +64,4 @@
 /* money log (4.28) */
 .ml-row{min-height:0;padding:9px 16px}.ml-row .t{font-size:13.5px}.ml-row small{color:var(--faint);font-weight:400}
 .ml-big{margin-bottom:10px}.ml-b{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid var(--hair);font-size:13.5px}.ml-b:first-of-type{border-top:0;margin-top:6px}.ml-b small{color:var(--faint)}
+.wt-card{margin-bottom:12px}.wt-rows{display:grid;gap:4px;margin-top:10px}.wt-rows div{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-top:1px solid var(--hair)}.wt-rows span{color:var(--muted)}
