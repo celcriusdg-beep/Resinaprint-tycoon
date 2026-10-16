@@ -1,8 +1,14 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.45';
-const PATCH_TITLE='Resinaprint 4.45 · Clients ask for anything';
+const VERSION='4.46';
+const PATCH_TITLE='Resinaprint 4.46 · Calm the market';
 const PATCH=[
+ {h:'New in 4.46',i:[
+  '<b>Fix a flooded market.</b> Rest a product and its market recovers faster: 35% a day when unlisted, 25% a day when you stop making it, 15% a day while it keeps selling. The catalogue shows how many days until it is back to busy.',
+  '<b>Back in stock.</b> A product you rested for 3 days or more comes back with +25% demand for 4 days.',
+  '<b>Fresh campaign.</b> Pay for a campaign to calm one product\'s market by 35%, once a week per product.',
+  'Markets hold more buyers in bigger spaces (+20% per space level), so a large studio floods less easily.'
+ ]},
  {h:'New in 4.45',i:[
   '<b>Big deals can ask for any product</b>, including ones you cannot make yet (marked in red) and injection-moulded pieces. Things you can make come up most often.',
   'Now and then a client asks for a licensed or prop piece you have not unlocked yet (about 1 in 14 items, marked purple). Unlock it in time or let the offer go.'

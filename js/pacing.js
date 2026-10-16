@@ -8,20 +8,30 @@
 /* ---------- market saturation ---------- */
 const SAT_DECAY=.85;
 const satOf=()=>S.sat||(S.sat={});
-const satCap=k=>Math.max(4,(PRODUCTS[k].base||1)*150*(1+.15*Object.keys((S.reb&&S.reb.branches)||{}).length));
+/* 4.46: bigger spaces reach more buyers, so markets hold more. Recovery is faster when you rest a product:
+   unlisted 35% a day, production stopped 25%, selling 15%. A product rested 3+ days comes back with a 4-day
+   "back in stock" buzz (+25% demand). A fresh campaign clears 35% of the saturation, once a week per product. */
+const satCap=k=>Math.max(4,(PRODUCTS[k].base||1)*150*(1+.15*Object.keys((S.reb&&S.reb.branches)||{}).length)*(1+.2*(S.ws||0)));
+const satRate=k=>!S.listed[k]?.65:(S.stop&&S.stop[k])||(S.clear&&S.clear[k])?.75:SAT_DECAY;
+const satBuzz=k=>S.buzz&&S.buzz[k]>=S.day;
+const satAdCost=k=>Math.round((PRODUCTS[k].ref||20)*40*(1+(S.ws||0)));
+const satDays=k=>{const l=satLvl(k);if(l<=.6)return 0;return Math.ceil(Math.log(.6/l)/Math.log(satRate(k)))};
 const satLvl=k=>((S.sat&&S.sat[k])||0)/satCap(k);
 const satMult=k=>1/(1+Math.pow(satLvl(k),1.5));
-const _demPC=demand;demand=function(k){const d=_demPC(k);return d>0?d*satMult(k):d};
+const _demPC=demand;demand=function(k){const d=_demPC(k);return d>0?d*satMult(k)*(satBuzz(k)?1.25:1):d};
 const _toPC=takeOrders;takeOrders=function(k,n,wom){const t=_toPC(k,n,wom);if(t>0){const s=satOf();s[k]=(s[k]||0)+t}return t};
 const _eodPC=endOfDay;endOfDay=function(){_eodPC();
-  const s=satOf();for(const k in s){s[k]*=SAT_DECAY;if(s[k]<.5)delete s[k]}
+  const s=satOf();for(const k in s){s[k]*=satRate(k);if(s[k]<.5)delete s[k]}
+  S.rest=S.rest||{};S.buzz=S.buzz||{};
+  for(const k of PKEYS){if(!S.listed[k]||(S.stop&&S.stop[k]))S.rest[k]=(S.rest[k]||0)+1;else{if((S.rest[k]||0)>=3&&!(S.stop&&S.stop[k])){S.buzz[k]=S.day+4;if(!awayMode&&!simulating)log(`${PRODUCTS[k].name} is back after a break: +25% demand for 4 days.`,'good')}delete S.rest[k]}}
   if(S.wsBuild&&S.day>=S.wsBuild.done){S.ws=S.wsBuild.i;const W=SPACES[S.ws];delete S.wsBuild;log(`The ${W.name.toLowerCase()} is ready. You moved in: room for ${W.printers} printers and ${W.staff} staff.`,'good');if(!awayMode&&!simulating){toast(`Moved into the ${W.name.toLowerCase()}`);if(typeof confetti==='function')confetti(90)}}
   const F=S.fnd;if(F&&F.own){
     if(F.build&&S.day>=F.build){delete F.build;log('The foundry hall is built. Buy your first casting machine.','good')}
     for(const m of F.mach)if(m.build&&S.day>=m.build){delete m.build;m.off=0;log(`${FD_TIERS[m.t].n} is installed and switched on.`,'good')}
   }
 };
-const satTxt=k=>{const l=satLvl(k);return l<.25?'':`<div class="cat-sat"><span>Market ${l<.6?'busy':l<1?'crowded':'flooded'}</span>${bar(Math.min(100,l*50),l<.6?'var(--amber)':'var(--bad)')}<small>demand ×${satMult(k).toFixed(2)} · recovers when you sell less</small></div>`};
+const satTxt=k=>{const l=satLvl(k),bz=satBuzz(k)?`<div class="cat-sat"><span style="color:var(--good)">Back in stock · +25% demand until day ${S.buzz[k]}</span></div>`:'';return l<.25?bz:bz+`<div class="cat-sat"><span>Market ${l<.6?'busy':l<1?'crowded':'flooded'}</span>${bar(Math.min(100,l*50),l<.6?'var(--amber)':'var(--bad)')}<small>demand ×${satMult(k).toFixed(2)} · ${!S.listed[k]?'resting: recovers 35% a day':(S.stop&&S.stop[k])?'production stopped: recovers 25% a day':'recovers 15% a day while selling'}${satDays(k)?` · about ${satDays(k)} d to busy`:''}</small>${S.listed[k]?`<div class="cat-acts" style="margin-top:6px"><button class="btn sm" data-a="satAd" data-k="${k}" ${S.satCd&&S.satCd[k]>S.day?'disabled':''}>${S.satCd&&S.satCd[k]>S.day?`Campaign again day ${S.satCd[k]}`:`Fresh campaign · ${fmt(satAdCost(k))}`}</button><small style="margin:0">or stop making / unlist it for a few days</small></div>`:''}</div>`};
+A.satAd=function(d){const k=d.k,c=satAdCost(k);S.satCd=S.satCd||{};if(S.satCd[k]>S.day)return;if(S.cash<c)return toast('Not enough cash');spend('Marketing',c);const s=satOf();s[k]=(s[k]||0)*.65;S.satCd[k]=S.day+7;toast(`Fresh campaign for ${PRODUCTS[k].name}: market 35% calmer`)};
 const _ccPC=catCard;catCard=function(k){const h=_ccPC(k),i=h.indexOf('<div class="cat-acts">');return i<0?h:h.slice(0,i)+satTxt(k)+h.slice(i)};
 /* ---------- Dutch taxes ---------- */
 const NL_TAX={ib:[[38441,.3582],[76817,.3748],[Infinity,.495]],zelf:2470,mkb:.127,vpb:[[200000,.19],[Infinity,.258]],box2:[[67804,.245],[Infinity,.31]],payout:.5};
