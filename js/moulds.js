@@ -19,7 +19,7 @@ function mouldView(){
   const need=cur.keys.filter(k=>!S.moulds[k]),allC=need.reduce((a,k)=>a+mouldCost(k),0);
   let h=label('Injection moulds',`${own} of ${tot} owned`);
   h+=`<div class="cat-tabs">${G.map(g=>`<button class="${g.id===mouldTab?'on':''}" data-a="mouldTab" data-k="${g.id}" ${g.col?`style="--tc:${g.col}"`:''}>${g.n}<span>${g.keys.filter(k=>S.moulds[k]).length}/${g.keys.length}</span></button>`).join('')}</div>`;
-  h+=`<div class="group">${cur.keys.map(k=>`<div class="item">${artBox(prodArt(k),'cm-art','',['f',k])}<div class="grow"><div class="t">${PRODUCTS[k].name}</div><div class="s">${S.moulds[k]?'Ready for the injection machine':`Steel mould · parts need no washing`}</div></div>${S.moulds[k]?'<span class="chip good">Owned</span>':price('mould',k,mouldCost(k),S.cash<mouldCost(k))}</div>`).join('')}</div>`;
+  h+=`<div class="group">${cur.keys.map(k=>`<div class="item">${artBox(prodArt(k),'cm-art','',['f',k])}<div class="grow"><div class="t">${PRODUCTS[k].name}</div><div class="s">${S.moulds[k]?'Ready for the injection machine':`Steel mould · parts need no washing`}</div></div>${S.moulds[k]?'<span class="chip good">Owned</span>':`<button class="btn sm primary" data-a="mould" data-k="${k}" ${S.cash<mouldCost(k)?'disabled':''}>${fmt(mouldCost(k))}</button>`}</div>`).join('')}</div>`;
   if(need.length>1)h+=`<div class="opts" style="margin-top:10px"><button class="btn sm primary" data-a="mouldAll" data-k="${cur.id}" ${S.cash<allC?'disabled':''}>Buy all ${need.length} ${cur.n} moulds · ${fmt(allC)}</button></div>`;
   return h;
 }
