@@ -254,3 +254,9 @@ nav .in:has(button:nth-child(7)) button{font-size:9.5px}nav .in:has(button:nth-c
 .ts-slab.g10{box-shadow:0 6px 16px #0008,0 0 0 2px #ffd36b,0 0 18px #ffd36b88}.ts-slab.g10 .tcg-holo{opacity:.35}
 .rq-card .rq-row{margin-top:10px}.rq-card .rq-row .kv{margin-bottom:4px}
 .ts-filt{padding:10px 12px}.ts-filt .pinv-sort{flex-wrap:wrap;margin:0 0 6px}.ts-filt .pinv-sort span{min-width:44px}.ts-filt .pinv-sort button i{font-style:normal;opacity:.6;font-size:11px;margin-left:2px}
+/* 4.42 retail, till, tax, builds */
+.rt-top{display:flex;gap:12px;align-items:center}.rt-badge{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#7a3bff,#ff3fb4);display:grid;place-items:center;align-content:center;color:#fff;flex:none}.rt-badge b{font-size:22px;line-height:1}.rt-badge span{font-size:9px;text-transform:uppercase;letter-spacing:.08em;opacity:.85}
+.rt-unl{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}.rt-unl i{font-style:normal;font-size:11px;padding:3px 8px;border-radius:99px;border:1px solid var(--hair);color:var(--muted)}.rt-unl i.on{color:var(--good);border-color:color-mix(in srgb,var(--good) 40%,transparent)}
+.rt-wk{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}.rt-wk div{background:#ffffff08;border-radius:10px;padding:7px 6px;text-align:center}.rt-wk b{display:block;font-size:13px}.rt-wk span{font-size:10px;color:var(--muted)}
+.cat-sat{margin-top:8px;font-size:12px}.cat-sat span{font-weight:700;color:var(--amber)}.cat-sat small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.bd-card{border-color:color-mix(in srgb,var(--amber) 45%,transparent)}

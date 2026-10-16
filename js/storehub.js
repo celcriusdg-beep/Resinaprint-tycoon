@@ -212,6 +212,7 @@ function storesCarry(o){
   if(!o||!o.stores||!Object.keys(o.stores).length)return;
   S.stores=o.stores;for(const k in S.stores)S.stores[k].last=0;
   if(o.tcg){S.tcg=o.tcg;if(S.tcg.ev)S.tcg.ev.today=0}
+  if(o.retail)S.retail=o.retail;
   const clerks=(o.staff||[]).filter(x=>x.role==='clerk'&&S.stores[x.store]);
   clerks.forEach(x=>{x.id=nid();x.busy=0;x.cd=0;x.act=''});
   S.staff=S.staff.filter(x=>x.role!=='clerk').concat(clerks);

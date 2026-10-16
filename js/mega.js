@@ -13,7 +13,8 @@ const MEGA_STAGE=[{n:'Groundwork',c:.25,q:40,d:2},{n:'Structure',c:.5,q:80,d:3},
 const megaOf=()=>S.mega||(S.mega={});
 const megaP=id=>megaOf()[id]||(megaOf()[id]={st:0,run:null});
 const megaDone=id=>(S.mega&&S.mega[id]&&S.mega[id].st>=4);
-const megaOpen=()=>((S.reb&&S.reb.count)||0)>=1||value(S)>=5e6;
+/* 4.42: megaprojects open after 2 rebirths (projects already started stay open) */
+const megaOpen=()=>((S.reb&&S.reb.count)||0)>=2||Object.keys(S.mega||{}).length>0;
 const megaScale=()=>typeof rebGoal==='function'?rebGoal():1e6;
 const megaCost=(M,i)=>Math.round(M.base*MEGA_STAGE[i].c*megaScale()/1000)*1000;
 const megaQty=(M,i)=>Math.round(MEGA_STAGE[i].q*(1+((S.reb&&S.reb.count)||0)*.25));
@@ -64,7 +65,7 @@ function megaArt(M,st,building,blue){
   return `<svg viewBox="0 0 160 100" class="mg-art${blue?' blue':''}" style="--c:${c}">${g}${blue?'<text x="80" y="14" text-anchor="middle" font-size="7" font-weight="800" fill="#9fd3ff" letter-spacing="1.5">BLUEPRINT</text>':''}</svg>`;
 }
 function megaView(){
-  if(!megaOpen())return `<div class="card cm-lock" style="margin-top:16px"><div class="t">Megaprojects</div><div class="s">Huge builds for the late game. They open after your first rebirth or once your company is worth €5M (now ${fmt(value(S))}).</div></div>`;
+  if(!megaOpen())return `<div class="card cm-lock" style="margin-top:16px"><div class="t">Megaprojects</div><div class="s">Huge builds for the late game. They open after your second rebirth (you have done ${(S.reb&&S.reb.count)||0}).</div></div>`;
   const done=MEGA.filter(M=>megaDone(M.id)).length;
   let h=`<div class="card mg-hero"><div class="grow"><div class="t">Megaprojects</div><div class="s">Six giant builds with four stages each. Every stage costs cash, a delivery of figures from your stock and days of building. Finished projects give big bonuses for this run, and each one ever finished adds <b>+2% income for good</b>.</div></div><div class="mg-leg"><b>+${legacyN()*2}%</b><span>Legacy</span></div></div>`;
   h+=label('Projects',`${done} of ${MEGA.length} open this run · costs scale with your rebirth goal`);

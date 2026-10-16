@@ -48,7 +48,7 @@ const FD_UP=[
 ];
 const FD_CLIENTS=['Rijksmuseum shop','City of Rotterdam','Pinewood film studio','Resinaland theme park','A Saudi collector','Tokyo game studio','Louvre gift shop','Comic-con Europe','A Hollywood director','Esports world finals'];
 const fdOf=()=>S.fnd||(S.fnd={own:0,mach:[],metal:{},stock:{},listed:{},price:{},up:{},board:[],act:[],fame:0,sold:0,rev:0,made:0,next:0,nid:1});
-const fdUnlocked=()=>!!(S.fnd&&S.fnd.own)||(typeof SING_P!=='undefined'&&S.sing&&SING_P.every(x=>(S.sing.forged[x.k]||0)>0));
+const fdUnlocked=()=>!!(S.fnd&&S.fnd.own)||((S.reb&&S.reb.count)||0)>=3&&(typeof SING_P!=='undefined'&&S.sing&&SING_P.every(x=>(S.sing.forged[x.k]||0)>0));
 const fdUp=id=>(S.fnd&&S.fnd.up[id])||0;
 const fdTierOwned=()=>Math.max(-1,...fdOf().mach.map(m=>m.t));
 const fdPrice=k=>fdOf().price[k]||Math.round(FD_PROD[k].ref*(1+.15*fdUp('patina')));

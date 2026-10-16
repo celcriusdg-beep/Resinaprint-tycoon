@@ -1,8 +1,21 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.41';
-const PATCH_TITLE='Resinaprint 4.41 · Singles filters';
+const VERSION='4.42';
+const PATCH_TITLE='Resinaprint 4.42 · Retail & real taxes';
 const PATCH=[
+ {h:'New in 4.42 · Retail',i:[
+  '<b>Every store has its own till.</b> Store sales go into the till, and the till pays its own stock, rent, clerks and events. On payday the store keeps two weeks of costs and sends the rest to the studio as a dividend. If the till runs dry, the studio tops it up. Take money out or top it up any time.',
+  '<b>Retail level.</b> Every euro your stores take in is retail XP, kept through rebirths. Ten levels unlock extra clerks, store levels 3 to 5, prereleases (level 4), championships (level 8), faster fit-outs and a new store: the <b>Hobby & model shop</b> (retail level 5 and 2 rebirths).',
+  '<b>Studio shelf.</b> Stores sell figures from your studio stock. The studio gets its normal price and the store keeps a 25% markup. The hobby shop sells kits and statues, the card shop small pieces and deck boxes.',
+  '<b>Real store costs.</b> Rent grows with store level, clerks get raises over time, shoplifters strike (more clerks help) and every store has a reputation that grows when it is open and stocked, and drops when it is closed or empty. Store margins went up to make up for it.',
+  'New stores take 3 to 7 days to fit out before they open. The Anime café now needs 1 rebirth.'
+ ]},
+ {h:'New in 4.42 · Pacing',i:[
+  '<b>Market saturation.</b> Every product has a market. Sell lots of one product and its demand drops until the market recovers, so spread your catalogue. The catalogue shows when a market is busy, crowded or flooded.',
+  '<b>Dutch taxes.</b> Eenmanszaak: inkomstenbelasting 35,82% / 37,48% / 49,5% per tax year, after zelfstandigenaftrek and MKB-winstvrijstelling, minus algemene heffingskorting and arbeidskorting. BV: vennootschapsbelasting 19% / 25,8% plus box 2 on the half you pay yourself. Paid every payday on the profit so far this year. Small companies pay little, big ones a lot. See Empire › Company.',
+  '<b>Build times.</b> Moving to a bigger space takes 2 to 10 days, the foundry hall 7 days and each casting machine 3 to 10 days to install.',
+  '<b>Rebirth unlocks.</b> Megaprojects open after 2 rebirths and the Foundry after 3. The Rebirth tab shows them under Business.'
+ ]},
  {h:'New in 4.41',i:[
   '<b>Singles filters.</b> Sort your singles by price (high or low), rarity, name, card number, most copies or how far your price sits above market. Filter by rarity, listed or not listed, and minimum worth.',
   'List or unlist every card you are looking at in one tap, and see how many cards match and what they are worth. Long collections load 60 at a time with a Show more button.'
