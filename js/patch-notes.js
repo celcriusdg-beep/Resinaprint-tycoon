@@ -1,8 +1,12 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.43';
-const PATCH_TITLE='Resinaprint 4.43 · Quality tiers & market reach';
+const VERSION='4.44';
+const PATCH_TITLE='Resinaprint 4.44 · Big deals take their time';
 const PATCH=[
+ {h:'New in 4.44',i:[
+  '<b>Big deals are no longer endless.</b> One new client walks in every 2 to 4 days, with at most 3 waiting on the board. Offers leave after 5 days if you do not sign them, and the board no longer refills the moment you sign one.',
+  'Calling in new clients still costs money and now works once a week. The board shows when the next client comes and how long each offer stays.'
+ ]},
  {h:'New in 4.43',i:[
   '<b>Quality tiers.</b> Every figure shows a quality tier: D Rough, C Decent, B Good, A Excellent or S Masterpiece. It comes from what you made lately: resin, printer, painters, post-processing, inspectors and paint tier. Better tiers sell at higher prices (S: about +30%).',
   '<b>Market reach.</b> How many orders a day customers can find you for. It grows with your space (12 in the hok up to 1.400 on a campus), sales channels, level and every rebirth. Demand above your reach tapers off, so 2.000+ orders a day is a late-game thing. See the top of Orders › Catalog.',

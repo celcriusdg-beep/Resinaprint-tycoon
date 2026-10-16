@@ -27,9 +27,16 @@ function newDeal(){
   return{id:nid(),client:c[0],what:c[1],col:c[2],why:DEAL_FLAVOUR[Math.floor(Math.random()*DEAL_FLAVOUR.length)],items,days:Math.min(14,days),
     pay:Math.round(worth*(1.35+R*.08+Math.random()*.25)/10)*10,chest:Math.max(3,S.lv+R*2),auto:false};
 }
+/* 4.44: deals are no longer endless. One new client walks in every 2 to 4 days (at most 3 waiting), offers leave the board
+   after 5 days, and the board does not refill when you sign or let one go. Calling in new clients works once a week. */
+const DEAL_BOARD=3,DEAL_STAY=5,DEAL_RR=7;
+const dealGap=()=>2+Math.floor(Math.random()*3);
 function dealsRefresh(force){
   const D=dealsOf();if(!dealsOpen())return;
-  if(force||S.day>=D.next||!D.board.length){D.board=[];for(let i=0;i<3;i++){const d=newDeal();if(d)D.board.push(d)}D.next=S.day+3}
+  D.board.forEach(d=>{if(d.exp==null)d.exp=S.day+DEAL_STAY});
+  const gone=D.board.filter(d=>S.day>d.exp);if(gone.length){D.board=D.board.filter(d=>S.day<=d.exp);if(!awayMode&&!simulating&&gone.length===1)log(`${gone[0].client} found another maker. Their deal left the board.`,'')}
+  if(force){D.board=[];for(let i=0;i<2;i++){const d=newDeal();if(d){d.exp=S.day+DEAL_STAY;D.board.push(d)}}D.next=S.day+dealGap();return}
+  if(S.day>=D.next){if(D.board.length<DEAL_BOARD){const d=newDeal();if(d){d.exp=S.day+DEAL_STAY;D.board.push(d);if(D.next&&!awayMode)log(`New big deal on the board: ${d.client} (${d.what}).`,'amber')}}D.next=S.day+dealGap()}
 }
 function dealDeliver(d,quiet){
   let moved=0;
@@ -64,7 +71,7 @@ Object.assign(A,{
   dealGive(d){const x=dealsOf().active.find(y=>y.id==d.id);if(!x)return;if(!dealDeliver(x))toast('No free stock for this deal yet')},
   dealAuto(d){const x=dealsOf().active.find(y=>y.id==d.id);if(!x)return;x.auto=!x.auto;toast(x.auto?'Auto-deliver on':'Auto-deliver off');if(x.auto)dealDeliver(x,true)},
   dealDrop(d){const x=dealsOf().active.find(y=>y.id==d.id);if(!x)return;confirmBox('Walk away from this deal?','You keep what was paid for nothing. Rating and hype drop as if you missed it.',()=>{const D=dealsOf();D.active=D.active.filter(y=>y!==x);D.failed++;S.rating=Math.max(1,S.rating-.15);S.hype=Math.max(2,S.hype-10);log(`You walked away from ${x.client}.`,'bad')})},
-  dealReroll(){const c=Math.round(200+value(S)*.001);if(S.cash<c)return toast('Not enough cash');spend('Marketing',c);dealsRefresh(true);toast('New clients on the board')}
+  dealReroll(){const D0=dealsOf();if(D0.rr&&S.day<D0.rr)return toast(`You can call in new clients again on day ${D0.rr}`);const c=Math.round(200+value(S)*.001);if(S.cash<c)return toast('Not enough cash');D0.rr=S.day+DEAL_RR;spend('Marketing',c);dealsRefresh(true);toast('New clients on the board')}
 });
 function dealItems(d,active){
   return `<div class="dl-items">${d.items.map(it=>{const pct=Math.round(100*it.got/it.qty),free=Math.max(0,S.stock[it.p]-reserved(it.p));
@@ -83,7 +90,7 @@ function dealsView(){
   let h=`<div class="card dealrank"><div class="dl-h"><div class="grow"><div class="kicker">Supplier rank ${R} of 5</div><div class="t">${DEAL_RANKS[R]}</div><div class="s">${D.done} deals done${D.failed?` · ${D.failed} missed`:''} · demand +${Math.round(dealBonus()*100)}% from clients</div></div></div>${R<5?`<div class="bar" style="margin-top:10px"><i style="width:${(D.done%3)/3*100}%"></i></div><div class="s" style="margin-top:6px">${3-D.done%3} more to the next rank: bigger orders, bigger pay.</div>`:''}</div>`;
   h+=label('Active deals',`${D.active.length} of ${DEAL_MAX} · your printers plan for them`);
   h+=D.active.length?D.active.map(d=>dealCard(d,true)).join(''):`<div class="card"><div class="s">No active deals. Sign one from the board below. Stock goes in as it is finished, and a sales rep or Auto delivers it for you.</div></div>`;
-  h+=label('Deal board',`new clients in ${Math.max(0,D.next-S.day)} d`)+D.board.map(d=>dealCard(d,false)).join('');
-  h+=`<div class="opts"><button class="btn sm" data-a="dealReroll">Find other clients · ${fmt(Math.round(200+value(S)*.001))}</button></div>`;
+  h+=label('Deal board',`next client in ${Math.max(0,D.next-S.day)} d · ${D.board.length}/${DEAL_BOARD}`)+(D.board.length?D.board.map(d=>dealCard(d,false).replace('</div>',` <span class="chip">leaves in ${Math.max(0,d.exp-S.day)} d</span></div>`)).join(''):`<div class="card"><div class="s">No clients waiting. A new one walks in every 2 to 4 days.</div></div>`);
+  h+=`<div class="opts">${D.rr&&S.day<D.rr?`<button class="btn sm" disabled>Call in clients again on day ${D.rr}</button>`:`<button class="btn sm" data-a="dealReroll">Call in new clients · ${fmt(Math.round(200+value(S)*.001))} · once a week</button>`}</div>`;
   return h;
 }
