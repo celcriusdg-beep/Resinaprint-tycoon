@@ -1,7 +1,7 @@
 /* Rebirth (2.4): restart the company from the hok and keep Resin Shards, a permanent currency for perks. */
-/* 4.27: the goal grows ×3 with every rebirth: €1M, €3M, €9M, €27M... */
+/* 4.40: the goal grows ×4 with every rebirth: €1M, €4M, €16M, €64M... (was ×3 since 4.27) */
 const REBIRTH_BASE=1000000;
-const rebGoal=()=>REBIRTH_BASE*Math.pow(3,(S&&S.reb&&S.reb.count)||0);
+const rebGoal=()=>REBIRTH_BASE*Math.pow(4,(S&&S.reb&&S.reb.count)||0);
 const PERKS=[
   {id:'head',n:'Head start',base:2,max:10,d:l=>`Start every run with +${fmt(500*l)} cash`},
   {id:'dem',n:'Brand heat',base:3,max:10,d:l=>`+${l*3}% demand for everything`},
@@ -27,7 +27,7 @@ function shardGain(s){
   s=s||S;const v=value(s);
   return Math.max(0,Math.floor((Math.pow(Math.max(0,v)/100000,.6)+(s.lv||1)/5)*(1+((s.reb&&s.reb.perks.gain)||0)*.1)));
 }
-const canRebirth=()=>S.started&&!S.over&&value(S)>=rebGoal();
+const canRebirth=()=>S.started&&!S.over&&value(S)>=rebGoal()&&(typeof rebExtraOk!=='function'||rebExtraOk());
 function doRebirth(dest){
   const old=S,keep=rebOf(old),from=old.country||'nl';dest=dest||from;
   const gain=shardGain(old)+((!keep.branches[dest]&&dest!==from)?NEWCTRY_BONUS:0);

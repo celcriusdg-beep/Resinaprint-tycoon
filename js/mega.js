@@ -5,7 +5,7 @@ const MEGA=[
   {id:'refinery',n:'Resin Refinery',col:'#5bd6a6',base:1.5,min:20,fx:'Resin costs 40% less and 5 L of every resin you use arrives free each day.',feat:'tanks'},
   {id:'hub',n:'Global Logistics Hub',col:'#5aa6ff',base:2,min:25,fx:'Shipping costs 35% less.',feat:'plane'},
   {id:'studio',n:'Resin Saga Anime Studio',col:'#ff7fd0',base:3,min:40,fx:'Your own anime series: own designs sell 50% more often.',feat:'reel'},
-  {id:'park',n:'Resinaland Theme Park',col:'#ffb547',base:5,min:60,fx:'Visitors pay 1% of your rebirth goal every day, plus +5 hype a day.',feat:'wheel'},
+  {id:'park',n:'Resinaland Theme Park',col:'#ffb547',base:5,min:60,fx:'Visitors pay 0.4% of your rebirth goal every day, plus +5 hype a day.',feat:'wheel'},
   {id:'orbital',n:'Orbital Print Lab',col:'#9d89ff',base:8,min:100,fx:'Printers run 25% faster and fail half as often.',feat:'rocket'},
   {id:'museum',n:'The Grand Resin Museum',col:'#e8d9a8',base:12,min:150,fx:'A vault chest every day and reviews slowly climb towards 5 stars.',feat:'columns'}
 ];
@@ -28,7 +28,7 @@ const _ejMG=endJob;endJob=function(p){if(megaDone('orbital')&&p.job){const D=PRI
 const _earnMG=earn;earn=function(cat,a){if(a>0&&legacyN()&&typeof RB_SKIP!=='undefined'&&!RB_SKIP.includes(cat))a*=1+.02*legacyN();return _earnMG(cat,a)};
 const _eodMG=endOfDay;endOfDay=function(){_eodMG();if(!S.mega)return;
   if(megaDone('refinery'))for(const k of new Set(S.printers.map(p=>p.resin)))if(RESINS[k]&&!RESINS[k].mix)S.resin[k]=(S.resin[k]||0)+5000;
-  if(megaDone('park')){earn('Theme park',Math.round(megaScale()*.01));S.hype+=5}
+  if(megaDone('park')){earn('Theme park',Math.round(megaScale()*.004));S.hype+=5}
   if(megaDone('museum')){if(typeof vaultAdd==='function')vaultAdd(S,Math.max(1,S.lv||1));S.rating=Math.min(5,S.rating+(5-S.rating)*.01)}
   for(const M of MEGA){const P=S.mega[M.id];if(!P||!P.run)continue;P.run.left--;if(P.run.left<=0){P.run=null;P.st++;megaStageDone(M,P)}}
 };

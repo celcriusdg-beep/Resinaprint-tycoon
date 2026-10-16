@@ -252,3 +252,4 @@ nav .in:has(button:nth-child(7)) button{font-size:9.5px}nav .in:has(button:nth-c
 .ts-lab b{font-size:13px;color:#c4302b;grid-row:span 2}.ts-lab span{font-size:9px;font-weight:900}.ts-lab small{font-size:8px;color:#555;grid-column:span 2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ts-win{position:relative;margin-top:5px;border-radius:4px;overflow:hidden;aspect-ratio:744/1039;box-shadow:inset 0 0 0 1px #0002}.ts-win img{width:100%;height:100%;display:block}
 .ts-slab.g10{box-shadow:0 6px 16px #0008,0 0 0 2px #ffd36b,0 0 18px #ffd36b88}.ts-slab.g10 .tcg-holo{opacity:.35}
+.rq-card .rq-row{margin-top:10px}.rq-card .rq-row .kv{margin-bottom:4px}

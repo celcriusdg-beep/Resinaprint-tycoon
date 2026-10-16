@@ -1,8 +1,14 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.39';
-const PATCH_TITLE='Resinaprint 4.39 · Stores are forever';
+const VERSION='4.40';
+const PATCH_TITLE='Resinaprint 4.40 · Rebirth rebalance';
 const PATCH=[
+ {h:'New in 4.40',i:[
+  '<b>Rebirth is harder to earn.</b> The goal now grows ×4 every rebirth: €1M, €4M, €16M, €64M, €256M, €1B and so on.',
+  '<b>Your studio has to earn it.</b> Besides company worth, a rebirth needs studio sales this run of at least half the goal. Branches, stores, the foundry, the theme park and other side income do not count.',
+  '<b>Minimum run length.</b> A run has to last at least 7 days, plus 3 for every rebirth you have done (up to 30). The Rebirth tab shows all three goals with progress bars.',
+  'Branches pay half as much (√best × 0.25 a day) and the rebirth boost no longer multiplies branch income. The theme park pays 0.4% of the goal a day instead of 1%. Cash counts for 10% of company worth instead of 15%.'
+ ]},
  {h:'New in 4.39',i:[
   '<b>Stores are permanent.</b> A store you buy is its own business now, not part of the studio. Rebirths and restarts no longer touch it: its level, stock, clerks and the whole card shop (sealed stock, binder, singles, slabs, upgrades) carry over into every run.',
   'Stores no longer count towards company worth, just like the foundry, so keeping them does not make your next rebirth easier.'
