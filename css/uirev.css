@@ -1,0 +1,70 @@
+/* UI revamp (4.50) */
+/* ---------- compact header: stats and energy share one row, smaller cash ---------- */
+header{display:grid!important;grid-template-columns:auto 1fr;column-gap:10px;row-gap:6px;padding-top:8px!important;padding-bottom:8px!important;cursor:pointer}
+header .top{grid-column:1/-1;align-items:center!important}
+header .top .cash{font-size:30px!important;line-height:1.05!important}
+header .top .meta{font-size:12px}
+header .pills{grid-column:1;margin-top:0!important;flex-wrap:nowrap!important;gap:5px!important}
+header .pills .pill{padding:3px 8px!important;font-size:12px!important}
+header .pills .pill svg{width:12px;height:12px}
+header .energy{grid-column:2;margin-top:0!important;gap:6px!important;min-width:0}
+header .energy .lab{font-size:0!important;gap:0!important}header .energy .lab svg{width:10px;height:14px}
+header .energy .val{font-size:11px!important;white-space:nowrap}
+header .energy .linkbtn{font-size:12px!important;white-space:nowrap}
+header .goal{grid-column:1/-1;margin-top:0!important;padding:6px 10px!important;font-size:12px!important}
+/* tap the header to hide pills, energy and goal */
+body.hdr-min header .pills,body.hdr-min header .energy,body.hdr-min header .goal{display:none!important}
+body.hdr-min header .top .cash{font-size:24px!important}
+/* ---------- tips: smaller ---------- */
+.tipbar{padding:9px 12px!important;font-size:12.5px!important;margin:8px 0 2px!important}
+/* ---------- shop hub ---------- */
+.rec{border:1px solid color-mix(in srgb,var(--amber) 40%,transparent);background:linear-gradient(160deg,color-mix(in srgb,var(--amber) 12%,transparent),transparent 70%);border-radius:16px;padding:10px 12px;margin-bottom:12px}
+.rec-h{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--amber);font-weight:800;margin-bottom:4px}
+.rec-i{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--hair)}.rec-i:first-of-type{border-top:0}
+.rec-art{width:42px;height:42px;flex:none;border-radius:10px;overflow:hidden;display:grid;place-items:center;background:#ffffff08}.rec-art img,.rec-art svg{width:100%;height:100%;object-fit:contain}
+.rec-i b{display:block;font-size:13.5px;line-height:1.2}.rec-i small{color:var(--muted);font-size:12px}
+.sg-h{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:800;margin:14px 2px 6px}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stile2{position:relative;display:flex;align-items:center;gap:10px;text-align:left;padding:10px;min-height:62px;border-radius:14px;border:1px solid var(--line);background:linear-gradient(150deg,color-mix(in srgb,var(--c) 14%,var(--card)),var(--card) 75%);color:var(--ink);font:inherit}
+.stile2:active{transform:scale(.98)}
+.sico2{width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:10px;background:color-mix(in srgb,var(--c) 18%,transparent);color:var(--c)}.sico2 svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.4}.sico2.has-img{background:none}.sico2 img{width:38px;height:38px;object-fit:contain}
+.stt2{min-width:0}.stt2 b{display:block;font-size:13px;line-height:1.15}.stt2 small{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sbadge2{position:absolute;top:6px;right:6px;font-style:normal;font-size:10px;font-weight:800;background:var(--amber);color:#1a1306;border-radius:99px;padding:1px 6px}
+/* ---------- product cards ---------- */
+.pc-filt{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 2px}
+.pc-filt button{border:1px solid var(--hair);background:#ffffff08;color:var(--muted);border-radius:99px;padding:6px 12px;font:inherit;font-size:12px;font-weight:700;min-height:32px}
+.pc-filt button.on{background:var(--amber);color:#1a1306;border-color:transparent}
+.pc-list{display:grid;gap:8px}
+.pcard{display:grid;grid-template-columns:64px 1fr;grid-template-areas:"art body" "buy buy";gap:6px 10px;padding:10px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.pcard .pc-art{grid-area:art;width:64px;height:64px;border-radius:12px;overflow:hidden}
+.pcard .pc-body{grid-area:body;min-width:0}
+.pcard .pc-buy{grid-area:buy;display:flex;align-items:center;justify-content:flex-end;gap:8px}
+.pcard .pc-buy.col{justify-content:flex-end}
+.pcard .pc-buy small{font-size:11.5px;color:var(--muted)}.pcard .pc-buy small.bad{color:var(--bad)}
+.pcard .pc-buy .btn{min-height:38px;padding-inline:16px}
+.pc-h{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px}.pc-h b{font-size:14px;line-height:1.2}.pc-h .chip{font-size:10px}
+.pc-stats{display:grid;gap:3px;margin-top:4px}
+.pc-st{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:6px;font-size:11.5px}
+.pc-st span{color:var(--muted)}.pc-st i{height:5px;border-radius:9px;background:#ffffff10;overflow:hidden}.pc-st i b{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,var(--amber),#ffd36b)}
+.pc-st em{font-style:normal;font-weight:700;white-space:nowrap}.pc-st small{font-size:10.5px;margin-left:2px}.pc-st small.up{color:var(--good)}.pc-st small.dn{color:var(--bad)}
+.pcard.locked{opacity:.62}.pc-lock{font-size:12.5px;color:var(--amber);margin-top:4px}
+.pcard.rs .pc-st{grid-template-columns:56px 1fr auto}
+/* ---------- buy preview and pop ---------- */
+.bprev{display:grid;grid-template-columns:70px 1fr;gap:12px;align-items:center;margin-top:6px}.bprev .pc-art,.bprev img{width:70px;height:70px;border-radius:12px;object-fit:contain}.bprev .kv{margin:3px 0}
+.buypop{position:fixed;left:50%;bottom:120px;z-index:99;display:flex;align-items:center;gap:10px;padding:8px 14px 8px 8px;border-radius:16px;background:rgba(20,21,28,.95);border:1px solid color-mix(in srgb,var(--amber) 50%,transparent);box-shadow:0 12px 30px rgba(0,0,0,.5);transform:translateX(-50%);animation:buyPop 1.6s ease forwards;pointer-events:none;max-width:86vw}
+.buypop .bp-art{width:40px;height:40px;border-radius:10px;overflow:hidden;flex:none}.buypop .bp-art>*{width:100%;height:100%;object-fit:contain}.buypop b{font-size:13px}
+@keyframes buyPop{0%{opacity:0;transform:translate(-50%,30px) scale(.8)}15%{opacity:1;transform:translate(-50%,0) scale(1.04)}25%{transform:translate(-50%,0) scale(1)}80%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-40px)}}
+/* ---------- polish ---------- */
+.wrap{padding-bottom:132px!important}
+.btn.sm{min-height:36px}
+.item{border-radius:14px}
+.card{border-radius:16px}
+.sico2.has-img{overflow:hidden}.sico2.has-img>*{width:38px!important;height:38px!important;max-width:38px!important;position:static!important;margin:0!important;transform:none!important}
+.pcard{grid-template-columns:60px 1fr auto;grid-template-areas:"art body buy";align-items:center}
+.pcard .pc-art{width:60px;height:60px}
+.pcard .pc-buy{flex-direction:column;align-items:flex-end;gap:3px;align-self:end}
+.pcard .pc-buy .btn{padding-inline:12px}
+.pc-st{grid-template-columns:44px 1fr auto}
+.sgrid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}.stile2{min-width:0;overflow:hidden}.stt2 b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.buypop{bottom:190px}
+.bprev .kv{display:flex;justify-content:space-between;gap:12px}.buypop{bottom:auto!important;top:150px}

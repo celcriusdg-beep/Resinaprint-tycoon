@@ -1,8 +1,16 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.49';
-const PATCH_TITLE='Resinaprint 4.49 · Special chests & relics';
+const VERSION='4.50';
+const PATCH_TITLE='Resinaprint 4.50 · New shop and UI';
 const PATCH=[
+ {h:'New in 4.50',i:[
+  '<b>Slimmer header.</b> Rating, hype, payday and energy share one row, so you see more of the game. Tap an empty spot of the header to hide the stats and goal completely; tap again to bring them back.',
+  '<b>New shop.</b> "Recommended for you" shows up to 3 smart picks (running low on resin, your next printer upgrade, a better washer, better resin, upgrades ready), and the catalogues are compact tiles in Production, Business and Logistics.',
+  '<b>Product cards.</b> Printers and resin show their key stats as bars, with green and red arrows against your best printer or the resin you use now. Locked items say what unlocks them, and you see how much cash you are short.',
+  '<b>Filters and sorting.</b> Printers: All, Affordable or Upgrades, sorted by price, output or quality. Resin: All, In use, In stock or Better than mine, sorted by quality, price or name.',
+  '<b>Buy preview.</b> Big purchases (a quarter of your cash or more, or €50.000+) show what changes before you confirm: cash after, printer spots, output vs your best. Every purchase gets a small pop.',
+  'Tips now show once and go away when you leave the page. Bigger buttons and more room above the bottom bar.'
+ ]},
  {h:'New in 4.49',i:[
   '<b>42 new chest items</b>, from energy bars and tip jars to Turbo firmware, TV features, Time crystals, Angel investors, Lottery tickets and Black matter cores. Many give a timed boost: faster prints, more demand, more income, cheaper resin or shipping, double XP, lower wages, calm markets or better quality. Active boosts show at the top of Items.',
   '<b>8 relics.</b> Ultra rare, used straight away and kept forever, even through rebirth: +3% income, 5% faster prints, cheaper resin, more demand, chest luck, better quality, a morning energy boost or extra shards on rebirth. They drop from Cosmic and Ethern chests, Singularity caches and the very rare Relic map. Find them all in the Vault.',

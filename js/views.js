@@ -329,7 +329,7 @@ function render(){
   setT(document.getElementById('cash'),fmt(S.cash));document.getElementById('cash').classList.toggle('neg',S.cash<0);
   setT(document.getElementById('clock'),String(S.hour).padStart(2,'0')+':'+String(Math.floor(S.m)).padStart(2,'0')+(S.paused?' · paused':''));
   setT(document.getElementById('day'),`Day ${S.day}`);
-  const pd=7-((S.day-1)%7);setH(document.getElementById('mPay'),`Payday <b>${pd===1?'tonight':'in '+pd+' d'}</b>`);
+  const pd=7-((S.day-1)%7);setH(document.getElementById('mPay'),`<b>${pd===1?'tonight':pd+' d'}</b>`);
   const w=document.getElementById('waitBtn'),c2=skipCost(2);setH(w,`+2 h<small>${fmt(c2)}</small>`);w.disabled=S.cash<c2;
   const pb=document.getElementById('pauseBtn');setH(pb,S.paused?PLAY:PAUSE);pb.classList.toggle('on',!!S.paused);
   document.getElementById('drinkBtn').disabled=S.drinks>=drinkMax();
