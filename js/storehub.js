@@ -205,18 +205,12 @@ const _rST=render;render=function(){
 };
 /* Shop › TCG counter now opens the store */
 const _vbTS=VIEWS.buy;VIEWS.buy=function(){if(sub.buy==='tcg'){sub.buy='hub';tab='stores';sub.store='tcg';return storesTab()}return _vbTS.apply(this,arguments)};
-/* ---------- 4.39: stores are their own businesses and are kept forever ----------
-   A rebirth or a restart resets the studio only. Stores, their level, stock, clerks and the whole
-   card shop (sealed stock, binder, listings, slabs, upgrades) carry over into the new run. */
+/* ---------- 4.43: stores rebirth with the studio, but your card collection is kept ----------
+   (4.39 to 4.42 kept the whole store.) Now the stores, their level, till, clerks, upgrades and accessories reset,
+   while sealed packs and boxes, every card you pulled, your slabs and cards out at PSA carry over. Retail level is kept. */
 function storesCarry(o){
-  if(!o||!o.stores||!Object.keys(o.stores).length)return;
-  S.stores=o.stores;for(const k in S.stores)S.stores[k].last=0;
-  if(o.tcg){S.tcg=o.tcg;if(S.tcg.ev)S.tcg.ev.today=0}
-  if(o.retail)S.retail=o.retail;
-  const clerks=(o.staff||[]).filter(x=>x.role==='clerk'&&S.stores[x.store]);
-  clerks.forEach(x=>{x.id=nid();x.busy=0;x.cd=0;x.act=''});
-  S.staff=S.staff.filter(x=>x.role!=='clerk').concat(clerks);
-  if(clerks.length&&S.biz&&!S.biz.kvk){S.biz.kvk=true;S.biz.form=S.biz.form||'eenmanszaak';S.biz.kor=true;S.biz.qNext=S.day+QUARTER;S.biz.yrNext=S.day+YEAR}
+  if(o&&o.tcg){const T=o.tcg;S.tcg={packs:T.packs||0,boxes:T.boxes||0,own:T.own||{},opened:T.opened||0,best:T.best||null,spent:T.spent||0,sold:T.sold||0,seen:T.seen||{},slabs:T.slabs||[],psa:T.psa||[]}}
+  if(o&&o.retail)S.retail=o.retail;
 }
-const _rbSK=doRebirth;doRebirth=function(d){const o=S;const g=_rbSK(d);storesCarry(o);if(Object.keys(S.stores).length)log('Your stores stay open: they are their own businesses and carry over into every run.','good');return g};
+const _rbSK=doRebirth;doRebirth=function(d){const o=S;const g=_rbSK(d);storesCarry(o);if(o.tcg&&((o.tcg.packs||0)+Object.keys(o.tcg.own||{}).length))log('Your stores closed with the old company, but your Riftbound packs, cards and slabs came with you.','good');return g};
 const _rsSK=restartRun;restartRun=function(){const o=S;_rsSK();storesCarry(o)};

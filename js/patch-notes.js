@@ -1,8 +1,15 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.42';
-const PATCH_TITLE='Resinaprint 4.42 · Retail & real taxes';
+const VERSION='4.43';
+const PATCH_TITLE='Resinaprint 4.43 · Quality tiers & market reach';
 const PATCH=[
+ {h:'New in 4.43',i:[
+  '<b>Quality tiers.</b> Every figure shows a quality tier: D Rough, C Decent, B Good, A Excellent or S Masterpiece. It comes from what you made lately: resin, printer, painters, post-processing, inspectors and paint tier. Better tiers sell at higher prices (S: about +30%).',
+  '<b>Market reach.</b> How many orders a day customers can find you for. It grows with your space (12 in the hok up to 1.400 on a campus), sales channels, level and every rebirth. Demand above your reach tapers off, so 2.000+ orders a day is a late-game thing. See the top of Orders › Catalog.',
+  '<b>Stores rebirth with the company again.</b> Stores, levels, tills, clerks and upgrades reset on rebirth, but your Riftbound packs, boxes, cards, slabs and cards out at PSA come with you. Retail level is kept.',
+  '<b>Stores count towards company worth again:</b> fit-out, levels, merges, shelf stock and card shop upgrades at 90%, store tills like cash at 10%.',
+  '<b>The Foundry stands on its own.</b> It no longer needs the Singularity printers. It opens after 5 rebirths and costs €500M. Casting tier 1 opens with it, and every next tier and its metal products needs one more rebirth (tier 5 at 9). A foundry you already own is kept.'
+ ]},
  {h:'New in 4.42 · Retail',i:[
   '<b>Every store has its own till.</b> Store sales go into the till, and the till pays its own stock, rent, clerks and events. On payday the store keeps two weeks of costs and sends the rest to the studio as a dividend. If the till runs dry, the studio tops it up. Take money out or top it up any time.',
   '<b>Retail level.</b> Every euro your stores take in is retail XP, kept through rebirths. Ten levels unlock extra clerks, store levels 3 to 5, prereleases (level 4), championships (level 8), faster fit-outs and a new store: the <b>Hobby & model shop</b> (retail level 5 and 2 rebirths).',

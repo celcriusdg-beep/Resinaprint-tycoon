@@ -260,3 +260,4 @@ nav .in:has(button:nth-child(7)) button{font-size:9.5px}nav .in:has(button:nth-c
 .rt-wk{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}.rt-wk div{background:#ffffff08;border-radius:10px;padding:7px 6px;text-align:center}.rt-wk b{display:block;font-size:13px}.rt-wk span{font-size:10px;color:var(--muted)}
 .cat-sat{margin-top:8px;font-size:12px}.cat-sat span{font-weight:700;color:var(--amber)}.cat-sat small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
 .bd-card{border-color:color-mix(in srgb,var(--amber) 45%,transparent)}
+.chip.qt{color:var(--qc)!important;border:1px solid color-mix(in srgb,var(--qc) 50%,transparent)!important;background:color-mix(in srgb,var(--qc) 12%,transparent)!important;font-weight:800}.qt-help{margin-bottom:8px}.rc-card{padding:10px 12px;margin-bottom:10px}

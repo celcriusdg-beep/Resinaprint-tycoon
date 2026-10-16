@@ -79,7 +79,7 @@ const A={
   sub(d){sub[d.t]=d.k;if(d.t==='empire'&&d.k==='goals')S.unread=0},
   repair(){confirmBox('Repair the app?','This clears the offline cache and reloads the newest files. Your save is not touched.',()=>{repairCache().then(()=>location.reload())})},
   cheatCash(d){S.cash+=+d.n||0;toast('Added '+fmt(+d.n||0))},
-  restart(){confirmBox('Restart this run?',`You start again in the hok with ${fmt(800+500*perk('head'))}. Cash, printers, staff and upgrades are reset. Your stores, their clerks and stock stay yours. Your Resin Shards, perks, branches and vault are kept, but this run earns no shards.`,()=>{restartRun();toast('New run started')})},
+  restart(){confirmBox('Restart this run?',`You start again in the hok with ${fmt(800+500*perk('head'))}. Cash, printers, staff and upgrades are reset. Your Riftbound packs and cards stay yours. Your Resin Shards, perks, branches and vault are kept, but this run earns no shards.`,()=>{restartRun();toast('New run started')})},
   reset(){confirmBox('Delete everything?','This erases your whole save: this run, Resin Shards, perks, branches and the vault. It cannot be undone.',()=>{confirmBox('Really delete everything?','Last chance. All progress will be gone.',()=>{S=fresh();S.started=true;S.lastT=Date.now();refreshOffers();newTrend();lastHTML='';toast('Save deleted')})})}
 };
 function addStaff(role,store,c){const used=S.staff.map(s=>s.name);const name=(c&&c.name)||pick(NAMES.filter(n=>!used.includes(n)))||'Alex';

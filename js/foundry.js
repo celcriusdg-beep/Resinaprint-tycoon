@@ -2,7 +2,11 @@
    Buy the foundry, then casting machines in five tiers (€10M to €500M). Machines burn money every day and wear with every pour:
    service them or they cast defects and break down. Buy metal by the kilo, cast metal products, sell them to collectors and take on
    huge projects for museums, cities and film studios. The foundry stays yours through rebirths. */
-const FD_COST=25e6;
+/* 4.43: the foundry no longer needs the Singularity printers. It costs €500M and opens after 5 rebirths;
+   each casting tier (and the products it makes) needs one more rebirth: tier 1 at 5, tier 5 at 9. */
+const FD_COST=500e6,FD_REB=5;
+const fdTierReb=t=>FD_REB+t;
+const fdRebN=()=>(S&&S.reb&&S.reb.count)||0;
 const METALS={
   al:{n:'Aluminium',kg:3,col:'#c9d2dc',step:[100,1000,10000]},
   brass:{n:'Brass',kg:8,col:'#d9b45a',step:[100,1000,10000]},
@@ -48,7 +52,8 @@ const FD_UP=[
 ];
 const FD_CLIENTS=['Rijksmuseum shop','City of Rotterdam','Pinewood film studio','Resinaland theme park','A Saudi collector','Tokyo game studio','Louvre gift shop','Comic-con Europe','A Hollywood director','Esports world finals'];
 const fdOf=()=>S.fnd||(S.fnd={own:0,mach:[],metal:{},stock:{},listed:{},price:{},up:{},board:[],act:[],fame:0,sold:0,rev:0,made:0,next:0,nid:1});
-const fdUnlocked=()=>!!(S.fnd&&S.fnd.own)||((S.reb&&S.reb.count)||0)>=3&&(typeof SING_P!=='undefined'&&S.sing&&SING_P.every(x=>(S.sing.forged[x.k]||0)>0));
+const fdUnlocked=()=>!!(S.fnd&&S.fnd.own)||fdRebN()>=FD_REB;
+const fdUnlockedOld=()=>(typeof SING_P!=='undefined'&&S.sing&&SING_P.every(x=>(S.sing.forged[x.k]||0)>0));
 const fdUp=id=>(S.fnd&&S.fnd.up[id])||0;
 const fdTierOwned=()=>Math.max(-1,...fdOf().mach.map(m=>m.t));
 const fdPrice=k=>fdOf().price[k]||Math.round(FD_PROD[k].ref*(1+.15*fdUp('patina')));
@@ -99,7 +104,7 @@ const _rbFD=doRebirth;doRebirth=function(d){const o=S.fnd;const g=_rbFD(d);if(o)
 const _rsFD=restartRun;restartRun=function(){const o=S.fnd;_rsFD();if(o){S.fnd=o;o.mach.forEach(m=>{m.run=null;m.off=1});o.act=[]}};
 Object.assign(A,{
   fdBuy(){if(!fdUnlocked())return;if(S.cash<FD_COST)return toast('Not enough cash');spend('Foundry',FD_COST);fdOf().own=1;log('You bought the foundry. Metal casting is open: buy your first casting machine.','good');if(typeof confetti==='function')confetti(150);if(typeof snd==='function')snd('level')},
-  fdMach(d){const T=FD_TIERS[+d.t];if(!T||!fdOf().own)return;if(S.cash<T.cost)return toast('Not enough cash');if(fdOf().mach.length>=fdBays())return toast('No free bay. Expand the foundry hall');
+  fdMach(d){const T=FD_TIERS[+d.t];if(!T||!fdOf().own)return;if(fdRebN()<fdTierReb(+d.t))return toast(`Needs ${fdTierReb(+d.t)} rebirths`);if(S.cash<T.cost)return toast('Not enough cash');if(fdOf().mach.length>=fdBays())return toast('No free bay. Expand the foundry hall');
     spend('Foundry machines',T.cost);const F=fdOf();const k=Object.keys(FD_PROD).find(x=>FD_PROD[x].t===+d.t);F.mach.push({id:F.nid++,t:+d.t,prod:k,cond:100});F.listed[k]=true;toast(`${T.n} installed`);if(typeof snd==='function')snd('buy');if(typeof confetti==='function')confetti(60)},
   fdProd(d){const m=fdOf().mach.find(x=>x.id==d.id);if(!m)return;const ks=Object.keys(FD_PROD).filter(k=>FD_PROD[k].t<=m.t);m.prod=ks[(ks.indexOf(m.prod)+1)%ks.length];fdOf().listed[m.prod]=true},
   fdServ(d){const m=fdOf().mach.find(x=>x.id==d.id);if(!m)return;if(m.broken){const c=Math.round(FD_TIERS[m.t].cost*.08);if(S.cash<c)return toast('Not enough cash');spend('Foundry repairs',c);m.broken=0;m.cond=100;toast('Repaired')}else if(fdService(m))toast('Serviced')},
@@ -145,8 +150,8 @@ function fdHeroArt(){
 if(!sub.fd)sub.fd='floor';
 function fdView(){
   const F=fdOf();
-  if(!fdUnlocked())return `<div class="card" style="margin-top:16px"><div class="t">Foundry</div><div class="s">Forge all six Singularity printers to open metal casting.</div></div>`;
-  if(!F.own)return `<div class="card fd-hero">${fdHeroArt()}<div class="t" style="margin-top:12px">The Foundry</div><div class="s">A whole new business beside your resin empire: metal casting. Buy the foundry, then casting machines from €10M to €500M. They burn money every day and wear with every pour, but metal pieces sell for thousands to millions, and museums, cities and film studios pay fortunes for big projects. The foundry stays yours through every rebirth.</div><div class="opts"><button class="btn primary" data-a="fdBuy" ${S.cash<FD_COST?'disabled':''}>Buy the foundry · ${fmt(FD_COST)}</button></div></div>`;
+  if(!fdUnlocked())return `<div class="card" style="margin-top:16px"><div class="t">Foundry</div><div class="s">Metal casting opens after ${FD_REB} rebirths (you have ${fdRebN()}). The foundry costs ${fmt(FD_COST)}.</div></div>`;
+  if(!F.own)return `<div class="card fd-hero">${fdHeroArt()}<div class="t" style="margin-top:12px">The Foundry</div><div class="s">A whole new business beside your resin empire: metal casting. Buy the foundry, then casting machines from €10M to €500M. Tier 1 opens now, and every next tier and its products needs one more rebirth. They burn money every day and wear with every pour, but metal pieces sell for thousands to millions, and museums, cities and film studios pay fortunes for big projects. The foundry stays yours through every rebirth.</div><div class="opts"><button class="btn primary" data-a="fdBuy" ${S.cash<FD_COST?'disabled':''}>Buy the foundry · ${fmt(FD_COST)}</button></div></div>`;
   const up=F.mach.filter(m=>!m.off).reduce((a,m)=>a+fdUpkeep(m),0);
   let h=`<div class="fd-top">${fdHeroArt()}<div class="fd-sum"><div><b>${F.mach.length}/${fdBays()}</b><span>machines</span></div><div><b>${fmt(up)}</b><span>upkeep a day</span></div><div><b>${fmt(F.rev)}</b><span>earned</span></div><div><b>×${fdFame().toFixed(2)}</b><span>fame</span></div></div></div>`;
   h+=segs('fd',[['floor','Floor',F.mach.filter(m=>m.broken||m.cond<40).length],['metal','Metal'],['prod','Products'],['proj','Projects',F.board.length],['up','Upgrades']]);
@@ -160,7 +165,7 @@ function fdView(){
       <div class="fd-cond"><span>Condition</span>${bar(m.cond,m.cond>=60?'var(--good)':m.cond>=30?'var(--warn)':'var(--bad)')}<b>${Math.round(m.cond)}%</b></div>${m.run?`<div class="fd-cond"><span>Pour</span>${bar(m.run.prog*100,'var(--mc,#ff8a3c)')}<b>${Math.round(m.run.prog*100)}%</b></div>`:''}</div></div>
       <div class="opts"><button class="btn sm" data-a="fdProd" data-id="${m.id}">Product: ${P?P.n.split(' ').slice(0,2).join(' '):'none'} ↻</button><button class="btn sm ${m.broken||m.cond<50?'primary':''}" data-a="fdServ" data-id="${m.id}">${m.broken?`Repair ${fmt(Math.round(T.cost*.08))}`:`Service ${fmt(Math.round(T.cost*.02*(100-m.cond)/100))}`}</button><button class="btn sm ${m.off?'primary':'ghost'}" data-a="fdTog" data-id="${m.id}">${m.off?'Switch on':'Switch off'}</button><button class="btn sm ghost" data-a="fdSell" data-id="${m.id}">Sell</button></div>
       <div class="s" style="margin-top:6px">${m.off?'Switched off: no upkeep, no casting':`Upkeep ${fmt(fdUpkeep(m))} a day`} · ${m.pours||0} pours</div></div>`}).join(''):`<div class="card"><div class="s">No machines yet. Buy your first one below.</div></div>`;
-  h+=label('Casting machines','five tiers')+`<div class="group">${FD_TIERS.map((T,i)=>`<div class="item fd-cat"><div class="fd-tier" style="--c:${T.col}">${i+1}</div><div class="grow"><div class="t">${T.n}</div><div class="s">${T.d} ${fdBatch(T)} pieces every ${fdHours(T).toFixed(1)} h · upkeep ${fmt(T.up)}/day</div></div><button class="btn sm primary" data-a="fdMach" data-t="${i}" ${S.cash<T.cost||F.mach.length>=fdBays()?'disabled':''}>${fmt(T.cost)}</button></div>`).join('')}</div>`;
+  h+=label('Casting machines','five tiers')+`<div class="group">${FD_TIERS.map((T,i)=>`<div class="item fd-cat"><div class="fd-tier" style="--c:${T.col}">${i+1}</div><div class="grow"><div class="t">${T.n}</div><div class="s">${T.d} ${fdBatch(T)} pieces every ${fdHours(T).toFixed(1)} h · upkeep ${fmt(T.up)}/day</div></div>${fdRebN()<fdTierReb(i)?`<span class="chip">🔒 ${fdTierReb(i)} rebirths</span>`:`<button class="btn sm primary" data-a="fdMach" data-t="${i}" ${S.cash<T.cost||F.mach.length>=fdBays()?'disabled':''}>${fmt(T.cost)}</button>`}</div>`).join('')}</div>`;
   const hc=fdHallCost();if(hc)h+=`<div class="opts"><button class="btn sm" data-a="fdHall" ${S.cash<hc?'disabled':''}>Expand the hall to ${fdBays()+4} bays · ${fmt(hc)}</button></div>`;
   return h;
 }
@@ -195,4 +200,4 @@ const _rFD=render;render=function(){
   return _rFD.apply(this,arguments);
 };
 /* a teaser in the Singularity reactor */
-if(typeof singView==='function'){const _svFD=singView;singView=function(){const h=_svFD.apply(this,arguments);if(fdUnlocked())return h;const n=SING_P.filter(x=>S.sing&&S.sing.forged[x.k]).length;return h+`<div class="card" style="margin-top:12px"><div class="t">Next: the Foundry</div><div class="s">Forge all six Singularity printers (${n}/6) to open metal casting: a whole new business with machines from €10M to €500M.</div></div>`}}
+if(typeof singView==='function'){const _svFD=singView;singView=function(){const h=_svFD.apply(this,arguments);if(fdUnlocked())return h;return h+`<div class="card" style="margin-top:12px"><div class="t">Next: the Foundry</div><div class="s">Separate from the Singularity: metal casting opens after ${FD_REB} rebirths (${fdRebN()}/${FD_REB}) and the foundry costs ${fmt(FD_COST)}. Each casting tier needs one more rebirth.</div></div>`}}

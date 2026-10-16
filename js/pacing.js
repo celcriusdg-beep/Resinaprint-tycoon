@@ -61,14 +61,13 @@ const FD_BUILD=7,FD_MDAYS=[3,4,6,8,10];
 {const f=A.fdTog;A.fdTog=function(d){const m=fdOf().mach.find(x=>x.id==d.id);if(m&&m.build&&m.build>S.day)return toast(`Still being installed: ready on day ${m.build}`);return f.call(this,d)}}
 const _fvPC=VIEWS.foundry;VIEWS.foundry=function(){
   const F=S.fnd;
-  if(!fdUnlocked()&&rtRebN()<3)return `<div class="card" style="margin-top:16px"><div class="t">Foundry</div><div class="s">Metal casting opens after <b>3 rebirths</b> (you have ${rtRebN()}) and once you have forged all six Singularity printers.</div></div>`;
-  const h=_fvPC.apply(this,arguments);if(!F||!F.own)return h;let b='';
+    const h=_fvPC.apply(this,arguments);if(!F||!F.own)return h;let b='';
   if(F.build&&F.build>S.day)b+=`<div class="card bd-card"><div class="t">🏗️ The foundry hall is being built</div><div style="margin-top:8px">${bar((1-(F.build-S.day)/FD_BUILD)*100,'var(--amber)')}<div class="kv"><span>Ready on day ${F.build}</span><span>${F.build-S.day} days to go</span></div></div></div>`;
   for(const m of F.mach)if(m.build&&m.build>S.day)b+=`<div class="card bd-card"><div class="t">🔧 Installing the ${FD_TIERS[m.t].n}</div><div style="margin-top:8px">${bar((1-(m.build-S.day)/FD_MDAYS[m.t])*100,'var(--amber)')}<div class="kv"><span>Ready on day ${m.build}</span><span>${m.build-S.day} days to go</span></div></div></div>`;
   return b+h};
 /* ---------- rebirth unlocks for the bigger systems ---------- */
 const rtRebN=()=>(S&&S.reb&&S.reb.count)||0;
-const REB_OTHER={1:['Anime café'],2:['Megaprojects','Hobby & model shop (with retail level 5)'],3:['The Foundry']};
+const REB_OTHER={1:['Anime café'],2:['Megaprojects','Hobby & model shop (with retail level 5)'],5:['The Foundry (€500M)','Casting tier 1'],6:['Casting tier 2'],7:['Casting tier 3'],8:['Casting tier 4'],9:['Casting tier 5']};
 const _rnuPC=rebNextUnlocks;rebNextUnlocks=function(n){return _rnuPC(n).concat(REB_OTHER[n]||[])};
 const _rgcPC=rebGateCard;rebGateCard=function(){const h=_rgcPC.apply(this,arguments),n=rtRebN();
   const row=`<div class="rg-row"><span>Business</span><div>${Object.keys(REB_OTHER).flatMap(k=>REB_OTHER[k].map(x=>n>=k?`<i class="on">${x}</i>`:`<i>🔒 ${x} · ${k}</i>`)).join('')}</div></div>`;
