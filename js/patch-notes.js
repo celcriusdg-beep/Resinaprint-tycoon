@@ -1,8 +1,13 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.36';
-const PATCH_TITLE='Resinaprint 4.34 · New perks';
+const VERSION='4.37';
+const PATCH_TITLE='Resinaprint 4.37 · TCG counter';
 const PATCH=[
+ {h:'New in 4.37',i:[
+  '<b>TCG counter.</b> Own the trading card shop and Shop gets a TCG counter for Riftbound: League of Legends TCG – Spiritforged. Buy booster packs, boxes (24 packs) and cases (6 boxes) at TCGplayer market prices, then rip packs open card by card: commons first, the best card last, with holo foils.',
+  'The set has 122 official Spiritforged cards with their real art: all 30 Overnumbered cards, all 12 Signatures and 80 others across every rarity, each priced at its market value. Build your binder, chase the €3,334 Ahri Signature, and sell singles, duplicates or bulk at 90% of market price.',
+  'Printers in storage can now be sorted by price.'
+ ]},
  {h:'New in 4.36',i:[
   '15% of the cash in your bank now counts towards company worth, on top of everything you own at 90% of its cost.'
  ]},
