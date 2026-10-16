@@ -1,5 +1,5 @@
 /* Company worth (4.35): cash no longer counts. Worth is everything the company owns, each at 90% of what it cost,
-   minus loans and BTW owed. The foundry is a separate business and stays out of it. */
+   minus loans and BTW owed. The foundry and the stores are separate businesses and stay out of it. */
 const WORTH_KEEP=.9,WORTH_CASH=.15;
 const WORTH_LEDGER=['Equipment','Fleet upgrades','Paint studio','Resin lab','Megaprojects'];
 const _spW=spend;spend=function(cat,a){const c0=S.cash;const r=_spW(cat,a);if(WORTH_LEDGER.includes(cat)&&S.cash<c0){const L=S.assets||(S.assets={});L[cat]=(L[cat]||0)+(c0-S.cash)}return r};
@@ -8,7 +8,7 @@ function worthParts(s){
   P.Printers=(s.printers||[]).reduce((a,p)=>a+(PRINTERS[p.type]?PRINTERS[p.type].cost:0),0)+(s.pinv||[]).reduce((a,p)=>a+(PRINTERS[p.type]?PRINTERS[p.type].cost:0),0);
   P.Machines=(s.staff||[]).filter(x=>x.mach).reduce((a,x)=>{const m=typeof MACH!=='undefined'&&MACH.find(y=>y.id===x.mach);return a+(m?m.cost:0)+(x.tuned||0)},0);
   P.Space=SPACES.slice(1,(s.ws||0)+1).reduce((a,w)=>a+w.cost,0);
-  P.Stores=Object.keys(s.stores||{}).reduce((a,k)=>{const st=s.stores[k];return a+(st&&st.open?STORES[k].cost*(1+.5*((st.level||1)-1))+(st.merged?STORES[k].merge||0:0):0)},0);
+  /* stores (4.39) are their own businesses and survive rebirth, so they stay out of company worth */
   P.Upgrades=UPGRADES.reduce((a,u)=>a+(s.up&&s.up[u.id]&&typeof u.cost==='number'?u.cost:0),0);
   P.Moulds=Object.keys(s.moulds||{}).reduce((a,k)=>a+(s.moulds[k]&&PRODUCTS[k]&&typeof mouldCost==='function'?mouldCost(k):0),0);
   if(typeof DSP_UP!=='undefined'&&s.dsp)P.Dispatch=DSP_UP.reduce((a,u)=>{let t=0;for(let i=0;i<(s.dsp[u.id]||0);i++)t+=u.cost(i)||0;return a+t},0);

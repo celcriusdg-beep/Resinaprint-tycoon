@@ -1,8 +1,12 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.38';
-const PATCH_TITLE='Resinaprint 4.38 · Stores';
+const VERSION='4.39';
+const PATCH_TITLE='Resinaprint 4.39 · Stores are forever';
 const PATCH=[
+ {h:'New in 4.39',i:[
+  '<b>Stores are permanent.</b> A store you buy is its own business now, not part of the studio. Rebirths and restarts no longer touch it: its level, stock, clerks and the whole card shop (sealed stock, binder, singles, slabs, upgrades) carry over into every run.',
+  'Stores no longer count towards company worth, just like the foundry, so keeping them does not make your next rebirth easier.'
+ ]},
  {h:'New in 4.38',i:[
   '<b>Stores tab.</b> Own a store and a Stores tab appears next to Studio. Pick any store you own and run it from an animated scene: customers walk in, shelves fill with your stock, the sign glows.',
   '<b>The card shop goes deep.</b> Stock sealed packs, boxes and accessories (binders, sleeves, deck boxes, playmats, toploaders) and sell them at your own prices. Unlock distributor accounts (B2B) to buy at 80%, 70% or 60% of market.',

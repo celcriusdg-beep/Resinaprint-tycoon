@@ -47,7 +47,7 @@ Object.assign(A,{
   rebirth(){
     if(!canRebirth())return toast(`Reach a company worth ${fmt(rebGoal())} first`);
     const g=shardGain();
-    confirmBox('Rebirth Resinaprint?',`Your current company becomes a branch that keeps earning. You start over in the hok (${fmt(800+500*perk('head'))}) in a country you choose on the globe, and keep your Resin Shards, perks and vault. You will earn ${g} Resin Shard${g===1?'':'s'}. Cash, printers, staff, stores and upgrades are reset.`,()=>{
+    confirmBox('Rebirth Resinaprint?',`Your current company becomes a branch that keeps earning. You start over in the hok (${fmt(800+500*perk('head'))}) in a country you choose on the globe, and keep your Resin Shards, perks and vault. You will earn ${g} Resin Shard${g===1?'':'s'}. Cash, printers, staff and upgrades are reset. Your stores, their clerks and stock stay yours.`,()=>{
       openWorld('pick',dest=>{
         const gain=doRebirth(dest);tab='empire';sub.empire='rebirth';
         pending=[{f:()=>{}}];

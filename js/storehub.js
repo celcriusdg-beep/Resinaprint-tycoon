@@ -187,3 +187,17 @@ const _rST=render;render=function(){
 };
 /* Shop › TCG counter now opens the store */
 const _vbTS=VIEWS.buy;VIEWS.buy=function(){if(sub.buy==='tcg'){sub.buy='hub';tab='stores';sub.store='tcg';return storesTab()}return _vbTS.apply(this,arguments)};
+/* ---------- 4.39: stores are their own businesses and are kept forever ----------
+   A rebirth or a restart resets the studio only. Stores, their level, stock, clerks and the whole
+   card shop (sealed stock, binder, listings, slabs, upgrades) carry over into the new run. */
+function storesCarry(o){
+  if(!o||!o.stores||!Object.keys(o.stores).length)return;
+  S.stores=o.stores;for(const k in S.stores)S.stores[k].last=0;
+  if(o.tcg){S.tcg=o.tcg;if(S.tcg.ev)S.tcg.ev.today=0}
+  const clerks=(o.staff||[]).filter(x=>x.role==='clerk'&&S.stores[x.store]);
+  clerks.forEach(x=>{x.id=nid();x.busy=0;x.cd=0;x.act=''});
+  S.staff=S.staff.filter(x=>x.role!=='clerk').concat(clerks);
+  if(clerks.length&&S.biz&&!S.biz.kvk){S.biz.kvk=true;S.biz.form=S.biz.form||'eenmanszaak';S.biz.kor=true;S.biz.qNext=S.day+QUARTER;S.biz.yrNext=S.day+YEAR}
+}
+const _rbSK=doRebirth;doRebirth=function(d){const o=S;const g=_rbSK(d);storesCarry(o);if(Object.keys(S.stores).length)log('Your stores stay open: they are their own businesses and carry over into every run.','good');return g};
+const _rsSK=restartRun;restartRun=function(){const o=S;_rsSK();storesCarry(o)};
