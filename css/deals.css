@@ -60,3 +60,7 @@
 .sp-nums span{display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0}
 .sp-nums input{width:100%;min-width:0;font:inherit;font-size:16px;padding:8px 10px;border-radius:10px;border:1px solid var(--line,#ffffff22);background:#0006;color:inherit}
 .sp-card{margin-bottom:12px}.sp-card .item{padding-left:0;padding-right:0}
+
+/* money log (4.28) */
+.ml-row{min-height:0;padding:9px 16px}.ml-row .t{font-size:13.5px}.ml-row small{color:var(--faint);font-weight:400}
+.ml-big{margin-bottom:10px}.ml-b{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid var(--hair);font-size:13.5px}.ml-b:first-of-type{border-top:0;margin-top:6px}.ml-b small{color:var(--faint)}
