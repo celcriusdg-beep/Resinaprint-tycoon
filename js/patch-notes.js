@@ -1,8 +1,12 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.28';
+const VERSION='4.29';
 const PATCH_TITLE='Resinaprint 4.26 · Rebirth matters';
 const PATCH=[
+ {h:'New in 4.29',i:[
+  '<b>Branch income fixed.</b> A branch used to pay 0.01% of its best company value every day, so one huge run could pay hundreds of thousands every midnight. It now scales with the square root: €1M best pays €500 a day, €100M pays €5,000 and €5B pays €35,000.',
+  'The money log now merges every sale of the same kind within an hour into one line.'
+ ]},
  {h:'New in 4.28',i:[
   '<b>Money log</b> (Empire › Company). Every change to your cash, grouped per hour and category, with the biggest moves since yesterday at the top. Now you can see exactly why your money jumps.',
   '<b>Copy save</b> (same place): copies your save as text so it can be checked when something looks wrong.'

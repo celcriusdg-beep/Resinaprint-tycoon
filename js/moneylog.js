@@ -3,8 +3,8 @@
 const mlogOf=()=>S.mlog||(S.mlog=[]);
 function mlogAdd(cat,a){
   if(!a||!S||simulating&&awayMode&&Math.abs(a)<1)return;
-  const L=mlogOf(),top=L[0];
-  if(top&&top.d===S.day&&top.h===S.hour&&top.c===cat&&Math.sign(top.a)===Math.sign(a)){top.a+=a;top.n++}
+  const L=mlogOf(),hit=L.slice(0,40).find(x=>x.d===S.day&&x.h===S.hour&&x.c===cat&&Math.sign(x.a)===Math.sign(a));
+  if(hit){hit.a+=a;hit.n++}
   else{L.unshift({d:S.day,h:S.hour,c:cat,a,n:1});if(L.length>120)L.length=120}
 }
 const _earnML=earn;earn=function(cat,a){const c0=S.cash;const r=_earnML(cat,a);mlogAdd(cat,S.cash-c0);return r};

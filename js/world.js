@@ -16,7 +16,8 @@ const cm=k=>ctryOf().m[k]||1;
 const ctryFav=k=>ctryOf().fav[k]||0;
 const branchOf=()=>(S&&S.reb&&S.reb.branches)||{};
 const hasBranch=id=>!!branchOf()[id];
-const branchIncome=b=>Math.round(b.best*.0001);
+/* 4.29: square-root scaling, so one giant run cannot pay half a million a day forever (€1M best: €500/day, €100M: €5k, €5B: €35k) */
+const branchIncome=b=>Math.round(Math.sqrt(Math.max(0,b.best))*.5);
 const branchTotal=()=>Object.values(branchOf()).reduce((a,b)=>a+branchIncome(b),0);
 const MOD_TXT={dem:'Demand',rent:'Rent',wage:'Wages',ship:'Shipping',resin:'Resin',tax:'Tax'};
 const modChips=(m,fav)=>{const c=[];for(const k in m){const d=Math.round((m[k]-1)*100);if(!d)continue;const good=(k==='dem')?d>0:d<0;c.push(`<span class="chip ${good?'good':'bad'}">${MOD_TXT[k]} ${d>0?'+':''}${d}%</span>`)}
