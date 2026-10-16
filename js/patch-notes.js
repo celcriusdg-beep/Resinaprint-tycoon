@@ -1,8 +1,12 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.44';
-const PATCH_TITLE='Resinaprint 4.44 · Big deals take their time';
+const VERSION='4.45';
+const PATCH_TITLE='Resinaprint 4.45 · Clients ask for anything';
 const PATCH=[
+ {h:'New in 4.45',i:[
+  '<b>Big deals can ask for any product</b>, including ones you cannot make yet (marked in red) and injection-moulded pieces. Things you can make come up most often.',
+  'Now and then a client asks for a licensed or prop piece you have not unlocked yet (about 1 in 14 items, marked purple). Unlock it in time or let the offer go.'
+ ]},
  {h:'New in 4.44',i:[
   '<b>Big deals are no longer endless.</b> One new client walks in every 2 to 4 days, with at most 3 waiting on the board. Offers leave after 5 days if you do not sign them, and the board no longer refills the moment you sign one.',
   'Calling in new clients still costs money and now works once a week. The board shows when the next client comes and how long each offer stays.'

@@ -16,9 +16,15 @@ const dealsOpen=()=>(S.lv||1)>=DEAL_MIN_LV;
 const dealBonus=()=>Math.min(.25,.01*dealsOf().bonus);
 function dealLeft(d,k){const it=d.items.find(x=>x.p===k);return it?Math.max(0,it.qty-it.got):0}
 function dealLeftAll(k){return dealsOf().active.reduce((a,d)=>a+dealLeft(d,k),0)}
+const dealIP=k=>{const P=PRODUCTS[k];return !!(P.ip||P.prop||P.royalty)};
+const DEAL_IPL=.07;
+const dealLockedIP=k=>dealIP(k)&&!unlocked(k);
+function dealWeight(k){if(dealLockedIP(k))return 0;const ip=dealIP(k);if(makeable(k))return ip?.6:1;return ip?.25:.45}
 function newDeal(){
-  const ks=PKEYS.filter(k=>makeable(k)&&!PRODUCTS[k].royalty&&!(PRODUCTS[k].inj0??PRODUCTS[k].inj));if(!ks.length)return null;
-  const R=dealRank(),n=Math.min(ks.length,1+Math.floor(Math.random()*Math.min(3,1+R/2))),pick=ks.slice().sort(()=>Math.random()-.5).slice(0,n);
+  /* 4.45: clients can ask for any product, also ones you cannot make yet. Licensed and prop pieces you have not unlocked are rare. */
+  const R=dealRank(),n=1+Math.floor(Math.random()*Math.min(3,1+R/2)),w={};for(const k of PKEYS)w[k]=dealWeight(k);
+  const pick=[],lk=PKEYS.filter(dealLockedIP);for(let i=0;i<n;i++){if(lk.length&&Math.random()<DEAL_IPL){const c=lk.splice(Math.floor(Math.random()*lk.length),1)[0];pick.push(c);delete w[c];continue}let t=0;for(const k in w)t+=w[k];if(t<=0)break;let x=Math.random()*t,c=null;for(const k in w){x-=w[k];if(x<=0){c=k;break}}c=c||Object.keys(w).pop();pick.push(c);delete w[c]}
+  if(!pick.length)return null;
   const scale=(1+S.sold/400)*(0.7+R*.35);
   const items=pick.map(k=>{const P=PRODUCTS[k],base=Math.max(4,Math.round((24/Math.max(.5,P.size||1))*scale*(0.6+Math.random()*.8)));return{p:k,qty:Math.min(600,base),got:0}});
   const worth=items.reduce((a,it)=>a+it.qty*(S.prices[it.p]||PRODUCTS[it.p].ref),0);
@@ -75,7 +81,7 @@ Object.assign(A,{
 });
 function dealItems(d,active){
   return `<div class="dl-items">${d.items.map(it=>{const pct=Math.round(100*it.got/it.qty),free=Math.max(0,S.stock[it.p]-reserved(it.p));
-    return `<div class="dl-it"><span class="dl-art">${prodArt(it.p)}</span><div class="grow"><div class="dl-n">${PRODUCTS[it.p].short||PRODUCTS[it.p].name}</div>${active?`<div class="bar"><i style="width:${pct}%"></i></div>`:''}</div><b class="num">${active?`${it.got}/${it.qty}`:'×'+it.qty}</b>${active&&it.got<it.qty?`<small class="${free?'ok':''}">${free} ready</small>`:''}</div>`}).join('')}</div>`;
+    return `<div class="dl-it"><span class="dl-art">${prodArt(it.p)}</span><div class="grow"><div class="dl-n">${PRODUCTS[it.p].short||PRODUCTS[it.p].name}${makeable(it.p)?'':` <span class="chip ${dealIP(it.p)&&!unlocked(it.p)?'uv':'bad'}">${dealIP(it.p)&&!unlocked(it.p)?'Rare · licence locked':'You cannot make this yet'}</span>`}</div>${active?`<div class="bar"><i style="width:${pct}%"></i></div>`:''}</div><b class="num">${active?`${it.got}/${it.qty}`:'×'+it.qty}</b>${active&&it.got<it.qty?`<small class="${free?'ok':''}">${free} ready</small>`:''}</div>`}).join('')}</div>`;
 }
 function dealCard(d,active){
   const left=active?d.due-S.day:d.days;
