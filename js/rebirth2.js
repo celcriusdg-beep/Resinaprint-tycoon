@@ -79,7 +79,7 @@ rebirthView=function(){
   let h=label('Rebirth',`${R.count} rebirth${R.count===1?'':'s'} · ${R.total} shards earned`)+
   `<div class="card shardcard rbhero"><div class="rb-orb">${shardSvg(112,'big')}</div><div class="rb-n"><div class="s">Resin Shards</div><div class="shardbig num">${glit(R.shards,'lg')}</div></div>
   <div class="s" style="margin-top:6px;text-align:center">Black matter, pulled out of the resin. It does not stay where you put it.</div>
-  <div style="margin-top:14px">${bar(Math.min(100,v/REBIRTH_MIN*100),'var(--uv)')}<div class="kv"><span>Company worth <b>${fmt(v)}</b> of <b>${fmt(REBIRTH_MIN)}</b></span></div></div>
+  <div style="margin-top:14px">${bar(Math.min(100,v/rebGoal()*100),'var(--uv)')}<div class="kv"><span>Company worth <b>${fmt(v)}</b> of <b>${fmt(rebGoal())}</b></span><span>Rebirth ${rebOf(S).count+1} goal · next one ×3</span></div></div>
   <div class="rbcols"><div><div class="k">You keep</div><ul><li>Resin Shards and perks</li><li>Vault, items, storage</li><li>Figure shelf, regulars</li><li>Branches in other countries</li>${carry?`<li>${fmt(carry)} heirloom cash</li>`:''}</ul></div><div><div class="k">You lose</div><ul><li>Cash, printers, staff</li><li>Stores and upgrades</li><li>Orders and stock</li></ul></div></div>
   <div class="opts"><button class="btn primary" data-a="rebirth" ${ok?'':'disabled'}>${ok?`Rebirth · +${g} shard${g===1?'':'s'}`:'Not ready yet'}</button></div></div>`;
   const br=Object.keys(R.branches||{});

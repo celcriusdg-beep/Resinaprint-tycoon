@@ -1,5 +1,7 @@
 /* Rebirth (2.4): restart the company from the hok and keep Resin Shards, a permanent currency for perks. */
-const REBIRTH_MIN=1000000;
+/* 4.27: the goal grows ×3 with every rebirth: €1M, €3M, €9M, €27M... */
+const REBIRTH_BASE=1000000;
+const rebGoal=()=>REBIRTH_BASE*Math.pow(3,(S&&S.reb&&S.reb.count)||0);
 const PERKS=[
   {id:'head',n:'Head start',base:2,max:10,d:l=>`Start every run with +${fmt(500*l)} cash`},
   {id:'dem',n:'Brand heat',base:3,max:10,d:l=>`+${l*3}% demand for everything`},
@@ -25,7 +27,7 @@ function shardGain(s){
   s=s||S;const v=value(s);
   return Math.max(0,Math.floor((Math.pow(Math.max(0,v)/100000,.6)+(s.lv||1)/5)*(1+((s.reb&&s.reb.perks.gain)||0)*.1)));
 }
-const canRebirth=()=>S.started&&!S.over&&value(S)>=REBIRTH_MIN;
+const canRebirth=()=>S.started&&!S.over&&value(S)>=rebGoal();
 function doRebirth(dest){
   const old=S,keep=rebOf(old),from=old.country||'nl';dest=dest||from;
   const gain=shardGain(old)+((!keep.branches[dest]&&dest!==from)?NEWCTRY_BONUS:0);
@@ -43,7 +45,7 @@ function doRebirth(dest){
 }
 Object.assign(A,{
   rebirth(){
-    if(!canRebirth())return toast(`Reach a company worth ${fmt(REBIRTH_MIN)} first`);
+    if(!canRebirth())return toast(`Reach a company worth ${fmt(rebGoal())} first`);
     const g=shardGain();
     confirmBox('Rebirth Resinaprint?',`Your current company becomes a branch that keeps earning. You start over in the hok (${fmt(800+500*perk('head'))}) in a country you choose on the globe, and keep your Resin Shards, perks and vault. You will earn ${g} Resin Shard${g===1?'':'s'}. Cash, printers, staff, stores and upgrades are reset.`,()=>{
       openWorld('pick',dest=>{
@@ -66,7 +68,7 @@ function rebirthView(){
   let h=label('Rebirth',`${R.count} rebirth${R.count===1?'':'s'} · ${R.total} shards earned`)+
   `<div class="card shardcard"><div class="shardhero">${shardSvg(84,'big')}<div class="grow"><div class="s">Resin Shards</div><div class="shardbig num">${R.shards}</div></div></div>
   <div class="s" style="margin-top:12px">Restart in the hok and keep your shards, perks and vault. Every run goes a bit faster than the last.</div>
-  <div style="margin-top:12px">${bar(Math.min(100,v/REBIRTH_MIN*100),'var(--uv)')}<div class="kv"><span>Company worth <b>${fmt(v)}</b> of <b>${fmt(REBIRTH_MIN)}</b></span></div></div>
+  <div style="margin-top:12px">${bar(Math.min(100,v/rebGoal()*100),'var(--uv)')}<div class="kv"><span>Company worth <b>${fmt(v)}</b> of <b>${fmt(rebGoal())}</b></span></div></div>
   <div class="opts"><button class="btn primary" data-a="rebirth" ${ok?'':'disabled'}>${ok?`Rebirth · +${g} shard${g===1?'':'s'}`:'Not ready yet'}</button></div></div>`;
   const br=Object.keys(R.branches||{});
   h+=label('World',`${ctryOf().f} ${ctryOf().n} · ${br.length} branch${br.length===1?'':'es'}`)+`<div class="card"><div class="bonus">${modChips(ctryOf().m,ctryOf().fav)||'<span class="chip">Standard rules</span>'}</div><div class="s" style="margin-top:10px">${br.length?`Your branches earn <b style="color:var(--ink)">${fmt(branchTotal())}</b> a day and give permanent perks.`:'Rebirth to open a new company in another country. The old one stays open as a branch and keeps paying out.'}</div>${br.length?`<div class="bonus" style="margin-top:8px">${br.map(k=>`<span class="chip amber">${COUNTRIES[k].f} ${COUNTRIES[k].bp}</span>`).join('')}</div>`:''}<div class="opts"><button class="btn sm uv" data-a="world">Open the world map</button></div></div>`;
