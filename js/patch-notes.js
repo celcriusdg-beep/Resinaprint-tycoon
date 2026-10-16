@@ -1,8 +1,14 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.46';
-const PATCH_TITLE='Resinaprint 4.46 · Calm the market';
+const VERSION='4.47';
+const PATCH_TITLE='Resinaprint 4.47 · Smart auto price';
 const PATCH=[
+ {h:'New in 4.47',i:[
+  '<b>Smart auto price.</b> Every night it tries a slightly lower and a slightly higher price and keeps whichever earns the most profit a day, after fees, material, shipping, royalty and the time each piece takes.',
+  'Crowded or flooded markets get a higher price instead of a lower one, so you sell fewer pieces for more and the market calms down. When you are selling out the price goes up too.',
+  'The step grows while it keeps moving the same way (up to 15%) and gets smaller once it is close (down to 2%). The price never drops below cost + 15% or 65% of the base price, and better quality raises the ceiling (S tier up to 234% of the base price).',
+  'Under More options you see its price range, the reason for the last change and the expected profit a day.'
+ ]},
  {h:'New in 4.46',i:[
   '<b>Fix a flooded market.</b> Rest a product and its market recovers faster: 35% a day when unlisted, 25% a day when you stop making it, 15% a day while it keeps selling. The catalogue shows how many days until it is back to busy.',
   '<b>Back in stock.</b> A product you rested for 3 days or more comes back with +25% demand for 4 days.',
