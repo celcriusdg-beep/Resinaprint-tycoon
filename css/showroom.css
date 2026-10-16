@@ -228,3 +228,27 @@ body.lowfx .fd-art *,body.lowfx .fd-hero-art *{animation:none!important}
 .pinv-sort{display:flex;align-items:center;gap:6px;margin:0 0 8px}.pinv-sort span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:2px}
 .pinv-sort button{border:1px solid var(--hair);background:#ffffff08;color:var(--muted);border-radius:99px;padding:5px 11px;font:inherit;font-size:12px;font-weight:700}.pinv-sort button.on{background:var(--amber);color:var(--amber-ink);border-color:transparent}
 body.lowfx .tcg-holo{animation:none}
+
+/* Stores tab (4.38) */
+nav .in{grid-template-columns:none!important;grid-auto-flow:column;grid-auto-columns:1fr}nav .in button{min-width:0}
+nav .in:has(button:nth-child(7)) button{font-size:9.5px}nav .in:has(button:nth-child(6)) button{font-size:10.5px}
+.st-tab{color:#9fd3ff}
+.ts-pick{display:flex;gap:6px;overflow-x:auto;margin-top:16px;scrollbar-width:none}.ts-pick::-webkit-scrollbar{display:none}
+.ts-pick button{flex:0 0 auto;display:flex;gap:6px;align-items:center;border:1px solid var(--hair);background:var(--card);color:var(--muted);border-radius:14px;padding:9px 13px;font:inherit;font-weight:800;font-size:13px}
+.ts-pick button i{font-style:normal;font-size:16px}.ts-pick button.on{background:var(--amber-soft);border-color:var(--amber);color:var(--ink)}
+.ts-scene{margin-top:12px;border-radius:18px;overflow:hidden;border:1px solid var(--hair);background:#120e1c}.ts-scene svg{width:100%;height:auto;display:block;aspect-ratio:340/190}
+.ts-walker{animation:tsWalk var(--s,8s) linear infinite;animation-delay:calc(var(--d,0s)*-1)}
+@keyframes tsWalk{0%{transform:translate(-20px,var(--y,160px))}45%{transform:translate(230px,var(--y,160px))}55%{transform:translate(250px,calc(var(--y,160px) - 30px))}100%{transform:translate(360px,var(--y,160px))}}
+.ts-walker .leg{animation:srLeg .4s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 0}.ts-walker .leg.l2{animation-direction:reverse}
+.ts-neon{animation:srNeon 3s infinite;filter:drop-shadow(0 0 4px #c79bff)}
+.ts-card{animation:tsFlip 1.6s ease-in-out infinite}.ts-card.c2{animation-delay:-.8s}@keyframes tsFlip{50%{transform:translateY(-3px);fill:#ffd36b}}
+.ts-today{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}.ts-today div{background:var(--card);border:1px solid var(--hair);border-radius:12px;padding:8px 4px;text-align:center;display:grid}
+.ts-today b{font-family:var(--f-num);font-size:15px}.ts-today span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.ts-ic{width:30px;flex:0 0 30px}.ts-acc{font-size:22px;width:30px;text-align:center}
+.ts-single .ts-cimg{width:46px;flex:0 0 46px;aspect-ratio:744/1039;border-radius:4px;overflow:hidden;box-shadow:0 0 0 1px var(--rc)}.ts-cimg img{width:100%;height:100%;display:block}
+.ts-slabs{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.ts-slabc{display:grid;gap:5px}.ts-sa{display:flex;gap:4px;flex-wrap:wrap}
+.ts-slab{background:linear-gradient(#f4f6fa,#d9dee6);border-radius:8px;padding:6px;box-shadow:0 6px 16px #0008,inset 0 0 0 1px #fff}
+.ts-lab{background:#fff;border:2px solid #c4302b;border-radius:3px;padding:3px 5px;display:grid;grid-template-columns:auto 1fr;gap:0 6px;align-items:center;color:#14121b}
+.ts-lab b{font-size:13px;color:#c4302b;grid-row:span 2}.ts-lab span{font-size:9px;font-weight:900}.ts-lab small{font-size:8px;color:#555;grid-column:span 2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ts-win{position:relative;margin-top:5px;border-radius:4px;overflow:hidden;aspect-ratio:744/1039;box-shadow:inset 0 0 0 1px #0002}.ts-win img{width:100%;height:100%;display:block}
+.ts-slab.g10{box-shadow:0 6px 16px #0008,0 0 0 2px #ffd36b,0 0 18px #ffd36b88}.ts-slab.g10 .tcg-holo{opacity:.35}
