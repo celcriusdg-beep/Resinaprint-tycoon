@@ -77,7 +77,7 @@ Object.assign(A,{
     const P=puOf(),ref=P.items.find(x=>x.id==d.id);if(!ref)return;
     const list=ref.cat==='printer'?S.printers.map(p=>({v:'p:'+p.id,l:`${short(p)} <small>${puAt('p:'+p.id).length} held</small>`})):S.staff.filter(s=>ref.cat==='mach'?s.mach:!s.mach&&s.role!=='clerk').map(s=>({v:'s:'+s.id,l:`${s.name} <small>${ROLES[s.role]?ROLES[s.role].name:''} · ${puAt('s:'+s.id).length} held</small>`}));
     if(!list.length)return toast(`You have no ${PU_CAT[ref.cat].who} to equip`);
-    chooseTarget(`Equip ${puLabel(ref)}`,`+${Math.round(PU_VAL[ref.r]*100)}% ${PU_STAT_TXT[ref.stat]}. A unit can hold any number of power-ups.`,list,k=>{ref.at=k;toast(`Equipped on ${unitName(k)}`);if(typeof snd==='function')snd('perk');render()});
+    puPick(ref,list.map(o=>o.v),k=>{ref.at=k;toast(`Equipped on ${unitName(k)}`);if(typeof snd==='function')snd('perk');render()});
   },
   puAuto(){ /* hand out every free power-up to the unit of the right kind with the fewest */
     let n=0;for(const it of puFree()){const ks=it.cat==='printer'?S.printers.map(p=>'p:'+p.id):S.staff.filter(s=>it.cat==='mach'?s.mach:!s.mach&&s.role!=='clerk').map(s=>'s:'+s.id);if(!ks.length)continue;
@@ -135,4 +135,22 @@ function powersView(){
   for(const k of units){const r=unitRar(k),n=puAt(k).length,cat=unitCat(k),stats=Object.keys(PU_CAT[cat].stats);
     h+=`<button class="pu-unit${puCls(k)}" data-a="puUnit" data-k="${k}" style="--rc:${r>=0?PU_RAR[r].c:'#3a3d48'}">${puFx(k)}<span class="pu-uk">${PU_CAT[cat].n}</span><b>${unitName(k)}</b><span class="pu-un">${n?`${n} power-up${n>1?'s':''}`:'No power-ups'}</span><span class="pu-us">${stats.map(st=>{const b=puBonus(k,st);return b?`+${Math.round(b*100)}% ${PU_STAT_TXT[st].split(' ')[0]}`:''}).filter(Boolean).join(' · ')||'&nbsp;'}</span></button>`}
   return h+'</div>';
+}
+
+/* 4.23: the equip picker shows every unit as a card with its picture, what it is doing and what it already holds */
+function puUnitCard(k,i,best){
+  const [t,id]=k.split(':'),held=puAt(k),tot=held.reduce((a,x)=>a+PU_VAL[x.r],0),r=unitRar(k);let art='',nm='',sub='';
+  if(t==='p'){const p=S.printers.find(x=>x.id==id);if(!p)return '';const D=PRINTERS[p.type];art=printerArt(p.type);nm=short(p);
+    sub=`${p.state==='printing'&&p.job?`Printing ${PRODUCTS[p.job.prod].name.split(' (')[0].toLowerCase()}`:p.state==='done'?'Plate ready':p.state==='failed'?'Needs cleaning':'Idle'} · ${D.speed}× speed`}
+  else{const s2=S.staff.find(x=>x.id==id);if(!s2)return '';const m=s2.mach&&typeof MACH!=='undefined'?MACH.find(x=>x.id===s2.mach):null;
+    art=m&&typeof machArt==='function'?machArt(m):typeof avatar==='function'?avatar(s2):'';nm=s2.name;sub=`${ROLES[s2.role]?ROLES[s2.role].name:''}${s2.lvl?` · Lv ${s2.lvl}`:''}`}
+  return `<button class="pu-pick${puCls(k)}${best?' best':''}" data-choice="${i}">${best?'<span class="pu-best">Fewest power-ups</span>':''}<div class="pu-pick-art">${art}</div><div class="pu-pick-t"><b>${nm}</b><small>${sub}</small>
+    <span class="pu-pick-h">${held.length?`${held.slice(0,10).map(x=>`<i style="background:${PU_RAR[x.r].c}" title="${PU_RAR[x.r].n}"></i>`).join('')}${held.length>10?`<em>+${held.length-10}</em>`:''} <em>${held.length} held · +${Math.round(tot*100)}%</em>`:'<em>No power-ups yet</em>'}</span></div>${r>=0?`<span class="pu-pick-r" style="color:${PU_RAR[r].c}">${PU_RAR[r].n}</span>`:''}</button>`;
+}
+function puPick(ref,keys,apply){
+  const min=Math.min(...keys.map(k=>puAt(k).length)),first=keys.findIndex(k=>puAt(k).length===min);
+  modal(`<div class="pu-pick-head"><span class="pu-pick-dot" style="background:${PU_RAR[ref.r].c};box-shadow:0 0 12px ${PU_RAR[ref.r].c}"></span><div><h3>Equip ${puLabel(ref)}</h3><p>+${Math.round(PU_VAL[ref.r]*100)}% ${PU_STAT_TXT[ref.stat]}. Pick who gets it. A unit can hold any number of power-ups.</p></div></div>
+    <div class="pu-picks">${keys.map((k,i)=>puUnitCard(k,i,i===first&&keys.length>1)).join('')}</div>
+    <div class="acts"><button class="btn ghost" data-choice="${keys.length}">Cancel</button></div>`);
+  pending=[...keys.map(k=>({f:()=>apply(k)})),{f:()=>{}}];
 }

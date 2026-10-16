@@ -1,8 +1,11 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.22';
+const VERSION='4.23';
 const PATCH_TITLE='Resinaprint 4.22 · Moulds';
 const PATCH=[
+ {h:'New in 4.23',i:[
+  'Equipping a power-up now shows every printer, machine or person as a card with its picture, what it is doing and the power-ups it already holds. The one with the fewest is marked.'
+ ]},
  {h:'New in 4.22',i:[
   '<b>A mould for every figure.</b> Every product can now be injection moulded: all your own designs, every licensed figure from all five games and every prop. Shop › Gear & moulds lists them in tabs per product line, with a button to buy all moulds of a line at once.'
  ]},
