@@ -1,6 +1,9 @@
 /* Moulds (4.22): every product can now be injection moulded, so every figure, licensed figure and prop has its own steel mould.
    The Gear catalogue lists them in tabs per product line with a buy-all button. */
 for(const k of PKEYS){PRODUCTS[k].inj0=!!PRODUCTS[k].inj;if(PRODUCTS[k].req!=='retired')PRODUCTS[k].inj=1}
+/* 4.31: now that everything can be moulded, the injection machines match their class: Babyplast medium, Arburg large, Engel industrial */
+if(PRINTERS.arburg)PRINTERS.arburg.tier=2;if(PRINTERS.engel)PRINTERS.engel.tier=3;
+const tierA=t=>(/^[aeiou]/i.test(TIERS[t])?'an ':'a ')+TIERS[t].toLowerCase();
 let mouldTab='own';
 function mouldGroups(){
   const ks=PKEYS.filter(k=>unlocked(k)&&PRODUCTS[k].inj),g=[{id:'own',n:'Own designs',keys:ks.filter(k=>!PRODUCTS[k].ip&&!PRODUCTS[k].prop)}];

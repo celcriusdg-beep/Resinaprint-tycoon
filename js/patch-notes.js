@@ -1,8 +1,11 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.30';
+const VERSION='4.31';
 const PATCH_TITLE='Resinaprint 4.26 · Rebirth matters';
 const PATCH=[
+ {h:'New in 4.31',i:[
+  'Injection machines now match their class: the Arburg Allrounder counts as a large machine and the Engel e-mac 180 as an industrial one, so they can mould statues, full-colour figures and other big products (buy the mould first). The Babyplast stays medium.'
+ ]},
  {h:'New in 4.30',i:[
   '<b>Music fixed on phones.</b> The soundtrack no longer goes quiet after one blocked song: any track the phone blocks starts again on your next tap. On iPhone the game now asks to play its audio even with the silent switch on, as long as sound and music are on in Settings.'
  ]},

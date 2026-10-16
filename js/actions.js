@@ -26,7 +26,7 @@ const A={
   limited(d){const P=S.pre[d.k]||(S.pre[d.k]={on:false,cap:10,ltd:false});if(P.ltd){P.ltd=false;P.on=false;return toast('Limited run cancelled')}P.ltd=true;P.on=true;if(P.cap<5)P.cap=10;toast(`Limited run: ${P.cap} figures`)},
   preCap(d){const P=S.pre[d.k]||(S.pre[d.k]={on:false,cap:5,ltd:false});const st=P.cap>=20?5:1;P.cap=clamp(P.cap+d.d*st,1,200)},
   list(d){if(S.listed[d.k]){S.listed[d.k]=false;S.offers=S.offers.filter(o=>o.p!==d.k);return}
-  if(!makeable(d.k))return toast(`Needs a ${TIERS[PRODUCTS[d.k].tier].toLowerCase()} printer`);S.listed[d.k]=!S.listed[d.k]},
+  if(!makeable(d.k))return toast(`Needs ${typeof tierA==='function'?tierA(PRODUCTS[d.k].tier):'a '+TIERS[PRODUCTS[d.k].tier].toLowerCase()} printer`);S.listed[d.k]=!S.listed[d.k]},
   dm(d){answerDM(d.id,+d.i)},
   accept(d){if(S.contracts.length>=4)return toast('You can run 4 contracts at once');const o=S.offers.find(x=>x.id==d.id);if(o)acceptOffer(o)},
   deliver(d){const c=S.contracts.find(x=>x.id==d.id);if(!c)return;if(S.stock[c.p]<c.qty)return toast('Not enough finished stock');if(!useE(E.deliver()))return;deliverContract(c);did('Contracts delivered');toast(c.pay?`+${fmt(c.pay)}`:'Delivered')},
