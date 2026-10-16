@@ -170,8 +170,10 @@ function vTeam(){
   if(salesMult()>1)bo.push(`+${Math.round((salesMult()-1)*100)}% contract pay`);
   let h=label('Team',`${st.length} of ${space().staff} · ${fmt(wages())}/day`)+`<div class="group">`;
   h+=item('You <span class="chip uv">Owner</span>',`${Math.round(S.energy)}/${maxE()} energy · +${regen().toFixed(1)}/h · more in Shop › Upgrades`)+crunchRow();
+  {const pr={},ppl=S.staff.filter(s=>!s.mach&&s.role!=='clerk');ppl.forEach(s=>pr[s.role]=(pr[s.role]||0)+1);if(ppl.length>1&&typeof roleFilter==='function')h+=`<div class="item" style="display:block;padding-top:6px;padding-bottom:10px">${roleFilter('pf',pr,ppl.length)}</div>`}
   for(const s of S.staff){
     if(s.mach)continue;
+    if(sub.pf&&sub.pf!=='all'&&s.role!=='clerk'&&s.role!==sub.pf)continue;
     if(s.role==='clerk'){h+=`<div class="item"><div class="grow"><div class="t">${s.name} ${moodChip(s.mood)}</div><div class="s">${STORES[s.store].name} clerk · ${fmt(s.wage)}/day</div></div><button class="btn sm ghost" data-a="fire" data-id="${s.id}">Let go</button></div>`;continue}
     const lv=s.lvl||1,lo=lv>1?XPN[lv-2]:0,hi=XPN[lv-1]||lo+1,xpct=lv>=5?100:100*((s.xp||0)-lo)/(hi-lo);
     h+=`<div class="item${typeof puCls==='function'?puCls('s:'+s.id):''}" style="align-items:flex-start">${typeof puFx==='function'?puFx('s:'+s.id):''}<div class="grow"><div class="t">${s.name} <span class="chip amber">Lv ${lv}</span> ${moodChip(s.mood)}</div>

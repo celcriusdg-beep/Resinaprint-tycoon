@@ -1,8 +1,11 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.23';
+const VERSION='4.24';
 const PATCH_TITLE='Resinaprint 4.22 · Moulds';
 const PATCH=[
+ {h:'New in 4.24',i:[
+  'Team: tap a job (Painter, Print, Production and more) to see only those machines or people. All shows everyone again. Works in People, Machines and the Omega Forge.'
+ ]},
  {h:'New in 4.23',i:[
   'Equipping a power-up now shows every printer, machine or person as a card with its picture, what it is doing and the power-ups it already holds. The one with the fewest is marked.'
  ]},

@@ -46,12 +46,18 @@ function fleetCard(s){
         <button class="btn sm ${next?'primary':'ghost'}" data-a="tuneMach" data-id="${s.id}" ${!next||S.cash<next?'disabled':''}>${next?`Tune to ${MK_NAMES[mk+1]} ${fmt(next)}`:'Max tuned'}</button>
         <button class="btn sm ghost" data-a="sellMach" data-id="${s.id}">Sell</button></div></div></div>`;
 }
+/* 4.24: tap a job to see only those workers or machines */
+function roleFilter(key,roles,total){
+  const cur=sub[key]||'all',order=[...MROLE_ORDER,...Object.keys(roles).filter(r=>!MROLE_ORDER.includes(r))];
+  if(cur!=='all'&&!roles[cur])sub[key]='all';
+  return `<div class="rolechips rf">${[['all','All',total],...order.filter(r=>roles[r]).map(r=>[r,ROLES[r]?ROLES[r].name.split(' ')[0]:r,roles[r]])].map(([k,n,c])=>`<button class="rc on ${(sub[key]||'all')===k?'cur':''}" data-a="sub" data-t="${key}" data-k="${k}">${n} <b>${c}</b></button>`).join('')}</div>`;
+}
 function fleetSummary(lab,own){
   const bays=machBays(lab),up=own.reduce((a,s)=>a+s.wage,0),eq=own.reduce((a,s)=>a+mkPw(MACH.find(x=>x.id===s.mach),s.mk),0),
     saved=own.reduce((a,s)=>{const m=MACH.find(x=>x.id===s.mach);return a+mstat(m,s.mk).save},0),roles={};
   own.forEach(s=>roles[s.role]=(roles[s.role]||0)+1);
   return `<div class="fleet"><div class="ft"><b>${own.length}<small>/${bays}</small></b><span>Bays used</span></div><div class="ft"><b>${eq.toFixed(1)}×</b><span>Workforce power</span></div><div class="ft"><b>${fmt(up)}</b><span>Upkeep a day</span></div><div class="ft ${saved>0?'good':''}"><b>${fmt(saved)}</b><span>Saved vs hiring</span></div></div>
-    <div class="rolechips">${MROLE_ORDER.map(r=>`<span class="rc ${roles[r]?'on':''}">${ROLES[r].name.split(' ')[0]}${roles[r]?` <b>${roles[r]}</b>`:''}</span>`).join('')}</div>`;
+    ${roleFilter(lab?'mvfl':'mvf',roles,own.length)}`;
 }
 function machView(lab){
   const own=machOwned(lab);
@@ -61,7 +67,8 @@ function machView(lab){
   h+=`<div class="card mhero ${lab?'lab':''}"><div class="chk"><span>${lab?'Laboratory-grade automation':'Automation'}</span><b>${lab?'The Omega Forge':'Machines'}</b></div><div class="s" style="margin-top:4px">${lab?'Far faster than any person. Works through the night and never asks for a raise.':'The same jobs as people, but they never get tired or unhappy, work round the clock and only cost upkeep. More bays come with a bigger space.'}</div></div>`;
   if(sub.mv==='fleet'){
     h+=fleetSummary(lab,own);
-    h+=own.length?`<div class="mlist">${own.map(fleetCard).join('')}</div>`:`<div class="card empty" style="margin-top:12px">No machines yet. Open the catalogue to buy your first one.</div>`;
+    const f=sub[lab?'mvfl':'mvf'],shown=f&&f!=='all'?own.filter(s=>s.role===f):own;
+    h+=own.length?(shown.length?`<div class="mlist">${shown.map(fleetCard).join('')}</div>`:`<div class="card empty" style="margin-top:12px">No ${ROLES[f]?ROLES[f].name.toLowerCase():''} machines yet.</div>`):`<div class="card empty" style="margin-top:12px">No machines yet. Open the catalogue to buy your first one.</div>`;
     return h;
   }
   const tierSegs=lab?[['all','All'],['lab4','Prototype'],['lab5','Prime'],...(typeof FORGE_TIERS!=='undefined'?FORGE_TIERS.map(t=>[t,TIER_LABEL[t]]):[])]:[['all','All'],['basic','Basic'],['pro','Pro'],['ind','Industrial'],...(typeof NEW_TIERS!=='undefined'?NEW_TIERS.map(t=>[t,TIER_LABEL[t]]):[])];

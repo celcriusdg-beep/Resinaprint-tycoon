@@ -425,3 +425,9 @@ body.noanim *{animation:none!important;transition:none!important}body.noanim .fl
 .cw.work .gear{opacity:1;animation:spin 1s linear infinite;filter:drop-shadow(0 0 3px #7ff3ff)}
 @media (prefers-reduced-motion:reduce){.rider,.beltrow .tread,.sticon svg{animation:none!important}}
 .beltrow{height:38px}.rider{bottom:12px;width:22px;height:22px;margin-left:-11px}
+
+/* 4.24 role filter */
+.rolechips.rf{gap:6px;margin-top:10px}
+.rolechips.rf .rc{font:inherit;font-size:12px;font-weight:800;padding:6px 11px;cursor:pointer;color:var(--muted);background:#0003}
+.rolechips.rf .rc b{color:var(--amber);margin-left:2px}
+.rolechips.rf .rc.cur{background:var(--amber);color:var(--amber-ink);border-color:transparent}.rolechips.rf .rc.cur b{color:var(--amber-ink)}
