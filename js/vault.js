@@ -39,7 +39,7 @@ function vaultGive(i,lv){
   const e0=S.energy;S.energy=Math.min(Math.max(S.energy,maxE()),S.energy+e);
   if(S.energy>e0)got.push({k:'energy',t:'Energy',v:'+'+Math.round(S.energy-e0)});
   S.hype+=R.hype;got.push({k:'hype',t:'Hype',v:'+'+R.hype});
-  if(R.res){const key=VAULT_RESIN[Math.min(i,VAULT_RESIN.length-1)];S.resin[key]=(S.resin[key]||0)+1000*R.res;got.push({k:'resin',t:'Resin',v:`${R.res} × ${RESINS[key].name}`})}
+  if(R.res){const band=[0,.05,.12,.2,.25,.3,.4,.5,.6,.6][i],key=typeof resinPick==='function'?resinPick(Math.max(0,band-.15),band):VAULT_RESIN[Math.min(i,VAULT_RESIN.length-1)];S.resin[key]=(S.resin[key]||0)+(RESINS[key].vol||1000)*R.res;got.push({k:'resin',t:'Resin',v:`${R.res} × ${RESINS[key].name}`,art:resinArt(key)})}
   if(R.boost&&(!boostMult()||R.boost[0]>boostMult())){S.boost={m:R.boost[0],until:S.abs+R.boost[1]*24};got.push({k:'boost',t:'Demand boost',v:`+${Math.round((R.boost[0]-1)*100)}% for ${R.boost[1]} days`})}
   if(Math.random()<VAULT_PRINTER[i]){
     const pool=vaultPool(i),k=pool[Math.floor(Math.random()*pool.length)],D=PRINTERS[k];

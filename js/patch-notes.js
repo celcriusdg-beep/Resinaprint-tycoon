@@ -1,8 +1,14 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.48';
-const PATCH_TITLE='Resinaprint 4.48 · Quality score breakdown';
+const VERSION='4.49';
+const PATCH_TITLE='Resinaprint 4.49 · Special chests & relics';
 const PATCH=[
+ {h:'New in 4.49',i:[
+  '<b>42 new chest items</b>, from energy bars and tip jars to Turbo firmware, TV features, Time crystals, Angel investors, Lottery tickets and Black matter cores. Many give a timed boost: faster prints, more demand, more income, cheaper resin or shipping, double XP, lower wages, calm markets or better quality. Active boosts show at the top of Items.',
+  '<b>8 relics.</b> Ultra rare, used straight away and kept forever, even through rebirth: +3% income, 5% faster prints, cheaper resin, more demand, chest luck, better quality, a morning energy boost or extra shards on rebirth. They drop from Cosmic and Ethern chests, Singularity caches and the very rare Relic map. Find them all in the Vault.',
+  '<b>5 special chests:</b> Golden chest, Resin crate, Collector\'s chest, Singularity cache and Mystery box. They drop from good chests, big deals (30%) and every rebirth, and you can buy them with Resin Shards in the Vault.',
+  '<b>Resin rewards show their own bottle</b>, and chests now give a resin that fits your printers, better at higher rarities.'
+ ]},
  {h:'New in 4.48',i:[
   '<b>See where quality comes from.</b> Under More options every figure shows its quality score split up: resin, printer, upgrades, painters and post-processors, inspectors and paint tier, plus the score it is heading to with your current setup.',
   'Everything that adds quality now says how much: resins and printers in the Shop (+0.25 quality), quality upgrades, and paint tiers in the paint studio.'
