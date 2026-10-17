@@ -1,8 +1,13 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.52';
-const PATCH_TITLE='Resinaprint 4.52 · Fair company worth';
+const VERSION='4.53';
+const PATCH_TITLE='Resinaprint 4.53 · Save protection';
 const PATCH=[
+ {h:'New in 4.53',i:[
+  '<b>Your save is protected.</b> If a save ever fails to load, the game no longer starts a new game over it. It keeps the save, tries a safe mode, and shows a recovery screen: restore a backup, copy the save text to send in, or start over on purpose.',
+  '<b>Automatic backups.</b> The game keeps up to 3 backups: one every 20 minutes of play and one right before every update. Restore or copy them in Empire › Company › Save backups, where you can also load a save from text.',
+  'Printers you get from chests count towards company worth, in storage and once placed in the studio.'
+ ]},
  {h:'New in 4.52',i:[
   '<b>Company worth counts everything you bought at 90% of its price.</b> New in the count: your wash & cure setup, carriers, permits, sales channels, paint studio equipment, resin lab, resin in stock, a space that is still being built and prints that are not finished yet.',
   'Figures in stock now count at what they cost to make (resin, printer time and labour, at least 35% of their base price) instead of only the resin, so a full stock room adds real worth.',

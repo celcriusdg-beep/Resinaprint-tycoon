@@ -167,3 +167,5 @@ function spend(cat,a){
 }
 function did(k,n=1,team){const o=team?S.rep.team:S.rep.you;o[k]=(o[k]||0)+n}
 
+/* the unwrapped patch, used by the save guard (savesafe.js) as a fallback if a later patch step fails */
+const patchBase=patch;
