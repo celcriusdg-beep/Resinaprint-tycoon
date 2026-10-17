@@ -607,6 +607,150 @@ const Art = (() => {
     return im ? im.naturalWidth * spriteScale(s) * 0.5 : 30 * s;
   }
 
+  // ---- part rigs (RIGS in data.js): the sprite is cut into parts that rotate around their joints ----
+  const rigs = {}, PAD = 26; // composition canvas margin, room for limbs swinging outside the sprite
+  function inPoly(poly, x, y) {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const [xi, yi] = poly[i], [xj, yj] = poly[j];
+      if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+  }
+  function buildRig(h) {
+    const defs = RIGS[h.id], im = sprites[h.id];
+    if (!defs || !im) return null;
+    const W = im.naturalWidth, H = im.naturalHeight;
+    let src;
+    try {
+      const c = document.createElement('canvas'); c.width = W; c.height = H;
+      const x = c.getContext('2d'); x.drawImage(im, 0, 0);
+      src = x.getImageData(0, 0, W, H).data;
+    } catch { return null; } // file:// pages can't read pixels; the sprite then moves as one piece
+    // which part owns each opaque pixel
+    const owner = new Int16Array(W * H).fill(-1);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      if (src[(y * W + x) * 4 + 3] < 20) continue;
+      let k = defs.findIndex(d => inPoly(d.poly, x + 0.5, y + 0.5));
+      if (k < 0) k = defs.length - 1;
+      owner[y * W + x] = k;
+    }
+    const parts = defs.map((d, k) => {
+      const c = document.createElement('canvas'); c.width = W; c.height = H;
+      const x = c.getContext('2d'), img = x.createImageData(W, H), out = img.data;
+      const fillPoly = d.fill === true ? d.poly : d.fill || null;
+      for (let y = 0; y < H; y++) for (let xx = 0; xx < W; xx++) {
+        const i = y * W + xx, o = i * 4;
+        let from = -1;
+        if (owner[i] === k) from = i;
+        else if (fillPoly && owner[i] >= 0 && inPoly(fillPoly, xx + 0.5, y + 0.5)) {
+          // paint in from the nearest pixel this part owns
+          for (let r = 1; r < 14 && from < 0; r++) {
+            for (const [dx, dy] of [[-r, 0], [r, 0], [0, r], [0, -r], [-r, r], [r, r], [-r, -r], [r, -r]]) {
+              const sx = xx + dx, sy = y + dy;
+              if (sx >= 0 && sy >= 0 && sx < W && sy < H && owner[sy * W + sx] === k) { from = sy * W + sx; break; }
+            }
+          }
+        }
+        if (from >= 0) for (let c2 = 0; c2 < 4; c2++) out[o + c2] = src[from * 4 + c2];
+      }
+      x.putImageData(img, 0, 0);
+      return { ...d, canvas: c };
+    });
+    const byName = {}; parts.forEach(p => (byName[p.n] = p));
+    const order = [...parts].sort((a, b) => a.z - b.z);
+    const comp = document.createElement('canvas'); comp.width = W + PAD * 2; comp.height = H + PAD * 2;
+    const white = document.createElement('canvas'); white.width = comp.width; white.height = comp.height;
+    return { W, H, parts, byName, order, comp, white };
+  }
+  function rigFor(h) {
+    if (!(h.id in rigs)) rigs[h.id] = buildRig(h);
+    return rigs[h.id];
+  }
+
+  // Joint angles (degrees, + turns clockwise; sprites face right so + lowers an arm) and offsets for one moment.
+  function rigPose(h, anim, p, t) {
+    const R = { body: [0, 0, 0], head: [0, 0, 0], armF: [0, 0, 0], armB: [0, 0, 0], legF: [0, 0, 0], legB: [0, 0, 0], tail: [0, 0, 0], base: [0, 0, 0] };
+    const set = (k, a, dx = 0, dy = 0) => { R[k][0] += a; R[k][1] += dx; R[k][2] += dy; };
+    const sw = (a, b, k) => a + (b - a) * k, ez = k => (k <= 0 ? 0 : k >= 1 ? 1 : k * k * (3 - 2 * k));
+    const wpn = h.look.wpn, br = Math.sin(t * 2.6);
+    set('tail', Math.sin(t * 3.1) * 9);
+    switch (anim) {
+      case 'idle':
+        set('body', br * 1.5, 0, br > 0.3 ? -1 : 0); set('head', Math.sin(t * 2.6 - 0.6) * 3);
+        set('armF', Math.sin(t * 2.6 + 0.4) * 3); set('armB', -br * 4);
+        break;
+      case 'run': {
+        const c = Math.sin(t * 13);
+        set('legF', c * 22); set('legB', -c * 22); set('body', 7, 0, -Math.abs(c) * 1.5);
+        set('armB', -c * 14); set('armF', c * 6); set('head', -4); set('tail', c * 12);
+        break;
+      }
+      case 'melee': {
+        if (p < 0.38) { const k = ez(p / 0.38); set('armF', -72 * k); set('body', -7 * k); set('armB', 14 * k); set('head', -4 * k); }
+        else if (p < 0.56) { const k = ez((p - 0.38) / 0.18); set('armF', sw(-72, 38, k)); set('body', sw(-7, 11, k)); set('armB', sw(14, -10, k)); set('legF', 10 * k); set('legB', -8 * k); }
+        else { const k = ez((p - 0.56) / 0.44); set('armF', 38 * (1 - k)); set('body', 11 * (1 - k)); set('armB', -10 * (1 - k)); set('legF', 10 * (1 - k)); set('legB', -8 * (1 - k)); }
+        break;
+      }
+      case 'shoot':
+        if (wpn === 'gun') { // gatling burst: aim, then recoil jitter
+          const k = ez(Math.min(1, p / 0.2)), fire = p > 0.2 && p < 0.85, kick = fire ? (Math.floor(t * 24) % 2) : 0;
+          set('armF', -4 * k - kick * 3, -kick * 2, 0); set('body', -3 * k - kick, 0, 0); set('head', -2 * k); set('armB', 6 * k);
+        } else { // bow: draw back, release
+          if (p < 0.55) { const k = ez(p / 0.55); set('armB', -4 * k, -5 * k, 0); set('armF', -3 * k); set('body', -3 * k); set('head', -2 * k); }
+          else { const k = ez((p - 0.55) / 0.45); set('armB', -4 * (1 - k), 1 - 6 * (1 - k), 0); set('armF', 6 * (1 - k) - 3 * (1 - k)); set('body', -3 * (1 - k)); }
+        }
+        break;
+      case 'cast': case 'ult': {
+        const k = Math.sin(Math.PI * Math.min(1, p));
+        set('armF', -45 * k); set('armB', -55 * k); set('head', -6 * k); set('body', -5 * k);
+        set('legF', -8 * k); set('legB', 8 * k); set('tail', 15 * k);
+        break;
+      }
+      case 'hit': {
+        const k = 1 - ez(p);
+        set('body', -12 * k); set('head', -14 * k); set('armF', -20 * k); set('armB', 18 * k); set('legF', -6 * k);
+        break;
+      }
+      case 'die': {
+        const k = ez(Math.min(1, p * 1.6));
+        set('head', -20 * k); set('armF', 50 * k); set('armB', 40 * k); set('legF', -15 * k);
+        break;
+      }
+      case 'win': {
+        const k = Math.abs(Math.sin(t * 5));
+        set('armF', -70); set('armB', -80 + Math.sin(t * 10) * 10); set('head', -8); set('legF', -10 * k); set('legB', 10 * k);
+        break;
+      }
+    }
+    return R;
+  }
+
+  // Composes the posed sprite at its own pixel size (rotations sample nearest pixels, so it stays pixel art).
+  function composeRig(rig, h, anim, p, t) {
+    const x = rig.comp.getContext('2d');
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    x.clearRect(0, 0, rig.comp.width, rig.comp.height);
+    x.imageSmoothingEnabled = false;
+    const R = rigPose(h, anim, p, Math.floor(t * 12) / 12); // 12 fps, like hand-made sprite animation
+    const mats = {};
+    const matOf = part => {
+      if (mats[part.n]) return mats[part.n];
+      const parent = part.par ? matOf(rig.byName[part.par]) : new DOMMatrix().translate(PAD, PAD);
+      const [a, dx, dy] = R[part.role] || [0, 0, 0];
+      const m = parent.translate(part.pv[0] + dx, part.pv[1] + dy).rotate(a).translate(-part.pv[0], -part.pv[1]);
+      return (mats[part.n] = m);
+    };
+    for (const part of rig.order) {
+      const m = matOf(part);
+      // snap translation to whole pixels so parts never sit between pixels
+      x.setTransform(m.a, m.b, m.c, m.d, Math.round(m.e), Math.round(m.f));
+      x.drawImage(part.canvas, 0, 0);
+    }
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    return rig.comp;
+  }
+
   function drawSprite(ctx, h, o, P, alpha) {
     const im = sprites[h.id], ps = spriteScale(o.s || 1), k = ps * REF / 125; // k: screen px per rig unit
     const W = im.naturalWidth * ps, H = im.naturalHeight * ps, face = o.face || 1, t = o.t || 0, anim = o.anim || 'idle';
@@ -632,13 +776,26 @@ const Art = (() => {
     ctx.imageSmoothingEnabled = false;
     ctx.scale(face, 1);
     let dy = P.dy + P.bob * 0.6;
-    if (anim === 'idle') dy -= Math.sin(t * 2.6) > 0.2 ? 1.2 : 0; // one-pixel breathing bob
+    if (anim === 'idle' && !RIGS[h.id]) dy -= Math.sin(t * 2.6) > 0.2 ? 1.2 : 0; // one-pixel breathing bob
     ctx.translate(snap(P.dx * k * 1.4), snap(dy * k));
-    const rot = P.rot + P.lean * 0.45;
+    const rot = P.rot + (RIGS[h.id] ? 0 : P.lean * 0.45);
     if (rot) ctx.rotate(rot);
     const x0 = -Math.round((h.fx || 0.5) * im.naturalWidth) * ps;
-    ctx.drawImage(im, x0, -H, W, H);
-    if ((o.flash || 0) > 0.02) { ctx.globalAlpha = alpha * Math.min(1, o.flash); ctx.drawImage(spriteWhite[h.id], x0, -H, W, H); }
+    const rig = rigFor(h);
+    if (rig) {
+      const comp = composeRig(rig, h, anim, Math.min(1, o.p || 0), t), cw = comp.width * ps, ch = comp.height * ps;
+      ctx.drawImage(comp, x0 - PAD * ps, -H - PAD * ps, cw, ch);
+      if ((o.flash || 0) > 0.02) {
+        const wx = rig.white.getContext('2d');
+        wx.globalCompositeOperation = 'copy'; wx.drawImage(comp, 0, 0);
+        wx.globalCompositeOperation = 'source-in'; wx.fillStyle = '#fff'; wx.fillRect(0, 0, comp.width, comp.height);
+        wx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = alpha * Math.min(1, o.flash); ctx.drawImage(rig.white, x0 - PAD * ps, -H - PAD * ps, cw, ch);
+      }
+    } else {
+      ctx.drawImage(im, x0, -H, W, H);
+      if ((o.flash || 0) > 0.02) { ctx.globalAlpha = alpha * Math.min(1, o.flash); ctx.drawImage(spriteWhite[h.id], x0, -H, W, H); }
+    }
     ctx.restore();
   }
 

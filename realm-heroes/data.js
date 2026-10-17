@@ -49,6 +49,46 @@ const HEROES = [
     ult: { name: 'Moonfang Volley', type: 'back', mult: 1.3 },
     look: { skin: '#f0d8c0', hair: '#9aa0a8', hs: 'long', hat: 'ears', armor: '#5a7a3a', armor2: '#6a4a2a', trim: '#c8b080', wpn: 'bow' } },
 ];
+// Part rigs for the sprites, in sprite pixels. Each part: role (what animation drives it), poly (the pixels it
+// owns; earlier parts win where polygons overlap), pv (joint it rotates around), par (parent part), z (draw order).
+// fill: pixels of this part hidden under other parts (inside its poly, or inside the given polygon) are painted in
+// from its own nearby pixels, so moving an arm away leaves no hole. Any pixel no polygon claims goes to the last part.
+const RIGS = {
+  scarlet: [
+    { n: 'head', role: 'head', poly: [[9, 0], [25, 0], [26, 17], [8, 17]], pv: [17, 17], par: 'body', z: 5 },
+    { n: 'sword', role: 'armF', poly: [[22, 17], [33, 8], [36, 0], [62, 0], [62, 26], [35, 34], [28, 34], [22, 28]], pv: [23, 20], par: 'body', z: 6 },
+    { n: 'armB', role: 'armB', poly: [[0, 7], [10, 7], [11, 24], [0, 25]], pv: [9, 20], par: 'body', z: 1 },
+    { n: 'legB', role: 'legB', poly: [[0, 33], [13, 33], [14, 55], [0, 55]], pv: [10, 33], par: null, z: 0 },
+    { n: 'legF', role: 'legF', poly: [[17, 36], [33, 36], [33, 55], [17, 55]], pv: [21, 36], par: null, z: 3 },
+    { n: 'body', role: 'body', poly: [[5, 15], [28, 15], [28, 40], [5, 40]], pv: [16, 38], par: null, z: 2, fill: true },
+  ],
+  nova: [
+    { n: 'head', role: 'head', poly: [[8, 0], [23, 0], [23, 15], [8, 15]], pv: [15, 15], par: 'body', z: 5 },
+    { n: 'gun', role: 'armF', poly: [[19, 17], [26, 17], [30, 22], [49, 24], [49, 42], [22, 42], [19, 36]], pv: [22, 20], par: 'body', z: 6 },
+    { n: 'armB', role: 'armB', poly: [[0, 15], [11, 15], [13, 22], [12, 31], [0, 31]], pv: [11, 17], par: 'body', z: 1 },
+    { n: 'legB', role: 'legB', poly: [[0, 37], [14, 37], [14, 60], [0, 60]], pv: [11, 38], par: null, z: 0 },
+    { n: 'legF', role: 'legF', poly: [[17, 38], [30, 38], [30, 60], [17, 60]], pv: [20, 38], par: null, z: 3 },
+    { n: 'body', role: 'body', poly: [[7, 13], [24, 13], [24, 42], [7, 42]], pv: [15, 40], par: null, z: 2, fill: true },
+  ],
+  sszira: [
+    { n: 'head', role: 'head', poly: [[19, 0], [42, 0], [42, 15], [19, 15]], pv: [30, 15], par: 'torso', z: 5 },
+    { n: 'staff', role: 'armB', poly: [[0, 6], [13, 6], [27, 17], [28, 30], [18, 31], [12, 20], [0, 16]], pv: [26, 19], par: 'torso', z: 3 },
+    { n: 'glaive', role: 'armF', poly: [[38, 20], [44, 26], [46, 32], [56, 32], [63, 32], [74, 46], [74, 58], [60, 58], [42, 40], [38, 34]], pv: [39, 22], par: 'torso', z: 6 },
+    { n: 'tail', role: 'tail', poly: [[8, 27], [21, 27], [21, 44], [8, 44]], pv: [15, 44], par: null, z: 0 },
+    { n: 'torso', role: 'body', poly: [[18, 14], [43, 14], [43, 42], [18, 42]], pv: [31, 42], par: null, z: 4, fill: true },
+    { n: 'coil', role: 'base', poly: [[0, 0], [74, 0], [74, 65], [0, 65]], pv: [31, 60], par: null, z: 1, fill: [[18, 38], [43, 38], [43, 48], [18, 48]] },
+  ],
+  lupa: [
+    { n: 'head', role: 'head', poly: [[11, 4], [31, 4], [31, 21], [11, 21]], pv: [21, 21], par: 'body', z: 5 },
+    { n: 'bow', role: 'armF', poly: [[29, 0], [49, 0], [49, 49], [33, 49], [29, 40], [30, 28], [26, 27], [26, 21]], pv: [26, 23], par: 'body', z: 6 },
+    { n: 'armB', role: 'armB', poly: [[7, 21], [26, 21], [26, 30], [7, 30]], pv: [18, 23], par: 'body', z: 4 },
+    { n: 'tail', role: 'tail', poly: [[0, 38], [16, 38], [16, 52], [0, 52]], pv: [14, 43], par: 'body', z: 0 },
+    { n: 'legB', role: 'legB', poly: [[10, 41], [21, 41], [21, 59], [10, 59]], pv: [16, 41], par: null, z: 1 },
+    { n: 'legF', role: 'legF', poly: [[23, 41], [37, 41], [37, 59], [23, 59]], pv: [27, 41], par: null, z: 3 },
+    { n: 'body', role: 'body', poly: [[8, 20], [30, 20], [30, 45], [8, 45]], pv: [20, 42], par: null, z: 2, fill: true },
+  ],
+};
+
 // Heroes from earlier rosters are gone; saves that only had those start again with the starters.
 const RENAMED = {};
 const HMAP = {};
@@ -68,4 +108,4 @@ const THEMES = [
 const STAGES_PER_CHAPTER = 10;
 const MAX_ROUNDS = 15;
 
-if (typeof module !== 'undefined') module.exports = { FACTIONS, BEATS, ROLES, RARITY, MAX_STARS, SUMMON, MELEE, HEROES, HMAP, RENAMED, STARTERS, THEMES, STAGES_PER_CHAPTER, MAX_ROUNDS };
+if (typeof module !== 'undefined') module.exports = { FACTIONS, BEATS, ROLES, RARITY, MAX_STARS, SUMMON, MELEE, HEROES, HMAP, RENAMED, RIGS, STARTERS, THEMES, STAGES_PER_CHAPTER, MAX_ROUNDS };
