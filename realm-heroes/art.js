@@ -161,7 +161,7 @@ const Art = (() => {
     ctx.fillStyle = C(L.skin, -0.08);
     ctx.fillRect(-2, -81, 7, 6);
     ctx.save(); // chibi proportions: head scaled up around the neck
-    ctx.translate(2, -79); ctx.scale(1.28, 1.28); ctx.translate(-2, 79);
+    const hk = BIG ? 1.55 : 1.28; ctx.translate(2, -79); ctx.scale(hk, hk); ctx.translate(-2, 79);
     const hair = C(L.hair), hs = L.hs;
     if (L.hat === 'hood') {
       ctx.fillStyle = C(L.cape || L.armor, -0.1);
@@ -209,9 +209,16 @@ const Art = (() => {
     const eye = L.hat === 'hood' ? C(L.eye || '#ffffff') : C(L.eye || '#2a1e18');
     const blink = (t % 4.2) < 0.12 ? 0.3 : 1;
     ctx.fillStyle = eye;
-    ctx.beginPath(); ctx.ellipse(6.5, -89, 1.5, 2 * blink, 0, 0, PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(11, -89, 1.3, 1.9 * blink, 0, 0, PI * 2); ctx.fill();
-    if (L.hat !== 'hood') {
+    const ek = BIG ? 1.7 : 1; // pixel frames need chunkier eyes to keep them after shrinking
+    ctx.beginPath(); ctx.ellipse(6.5, -89, 1.5 * ek, 2 * blink * ek, 0, 0, PI * 2); ctx.fill();
+    if (!L.patch) { ctx.beginPath(); ctx.ellipse(11.5, -89, 1.3 * ek, 1.9 * blink * ek, 0, 0, PI * 2); ctx.fill(); }
+    if (L.patch) {
+      ctx.fillStyle = C('#141018');
+      ctx.beginPath(); ctx.ellipse(11.5, -89.5, 3.2, 3, 0, 0, PI * 2); ctx.fill();
+      ctx.strokeStyle = C('#141018'); ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(-8, -94); ctx.lineTo(12, -91); ctx.stroke();
+    }
+    if (L.hat !== 'hood' && !BIG) {
       ctx.strokeStyle = C(L.skin, -0.45); ctx.lineWidth = 1.1;
       ctx.beginPath(); ctx.moveTo(7.5, -82.5); ctx.lineTo(10.5, -83); ctx.stroke();
     }
@@ -260,6 +267,26 @@ const Art = (() => {
         ctx.fillStyle = C(L.trim, -0.2);
         ctx.fillRect(hx - 10, hy - 7, 22, 4);
         ctx.beginPath(); ctx.moveTo(hx - 10, hy - 6); ctx.lineTo(hx - 20, hy - 3 + Math.sin(t * 5) * 2); ctx.lineTo(hx - 19, hy + 2 + Math.sin(t * 5 + 1) * 2); ctx.closePath(); ctx.fill();
+        break;
+      case 'tricorn':
+        ctx.fillStyle = C('#1e1a22');
+        ctx.beginPath(); ctx.moveTo(hx - 17, hy - 9); ctx.quadraticCurveTo(hx, hy - 4, hx + 17, hy - 10);
+        ctx.quadraticCurveTo(hx + 10, hy - 24, hx, hy - 22); ctx.quadraticCurveTo(hx - 10, hy - 24, hx - 17, hy - 9); ctx.fill();
+        ctx.strokeStyle = C('#e0b040'); ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(hx - 16, hy - 9); ctx.quadraticCurveTo(hx, hy - 4, hx + 16, hy - 10); ctx.stroke();
+        ctx.fillStyle = C('#c8202e');
+        ctx.beginPath(); ctx.moveTo(hx - 4, hy - 20); ctx.quadraticCurveTo(hx - 18, hy - 34, hx - 22 + Math.sin(t * 3), hy - 22); ctx.quadraticCurveTo(hx - 12, hy - 24, hx - 2, hy - 18); ctx.fill();
+        break;
+      case 'antlers':
+        ctx.strokeStyle = C('#6a4a2a'); ctx.lineWidth = 3; ctx.lineCap = 'round';
+        for (const sd of [-1, 1]) {
+          const bx = hx + sd * 6;
+          ctx.beginPath(); ctx.moveTo(bx, hy - 9); ctx.lineTo(bx + sd * 8, hy - 24); ctx.lineTo(bx + sd * 6, hy - 36);
+          ctx.moveTo(bx + sd * 8, hy - 24); ctx.lineTo(bx + sd * 17, hy - 30);
+          ctx.moveTo(bx + sd * 4, hy - 16); ctx.lineTo(bx + sd * 13, hy - 17); ctx.stroke();
+        }
+        ctx.fillStyle = C('#5aa04a');
+        for (const [ax, ay] of [[hx - 14, hy - 30], [hx + 16, hy - 36], [hx - 4, hy - 38]]) { circle(ctx, ax, ay, 3); ctx.fill(); }
         break;
       case 'hood':
         ctx.strokeStyle = C(L.cape || L.armor, 0.05); ctx.lineWidth = 3;
@@ -349,68 +376,12 @@ const Art = (() => {
 
   function hexA(h, a) { const [r, g, b] = rgb(h); return `rgba(${r},${g},${b},${a})`; }
 
-  // ---- painted sprites (img/<id>.webp) ----
-  const sprites = {}, ghosts = {};
-  const SPRITE_H = 122; // sprite height in rig units (the rig is ~120 tall with its chibi head)
-  function loadSprites() {
-    return Promise.all(HEROES.filter(h => h.img).map(h => new Promise(res => {
-      const im = new Image();
-      im.onload = () => {
-        sprites[h.id] = im;
-        // white silhouette used for the hit flash
-        const g = document.createElement('canvas');
-        g.width = im.naturalWidth; g.height = im.naturalHeight;
-        const x = g.getContext('2d');
-        x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fff'; x.fillRect(0, 0, g.width, g.height);
-        ghosts[h.id] = g;
-        res();
-      };
-      im.onerror = () => res();
-      im.src = 'img/' + h.id + '.webp';
-    })));
-  }
-  const hasSprite = h => !!sprites[h.id];
-
-  function drawSprite(ctx, h, o, P) {
-    const im = sprites[h.id], s = (o.s || 1) * (h.sz || 1), t = o.t || 0;
-    const Hs = SPRITE_H * s, Ws = Hs * im.naturalWidth / im.naturalHeight;
-    const alpha = (o.alpha == null ? 1 : o.alpha) * P.alpha;
-    if (alpha <= 0.01) return;
-    const face = o.face || 1;
-    ctx.save();
-    ctx.translate(o.x, o.y);
-    if (!o.noShadow) {
-      ctx.globalAlpha = 0.32 * alpha; ctx.fillStyle = '#000';
-      ctx.beginPath(); ctx.ellipse(P.dx * s * face, 0, Ws * 0.36, 6 * s, 0, 0, PI * 2); ctx.fill();
-    }
-    ctx.globalAlpha = alpha;
-    ctx.scale(face, 1);
-    ctx.translate(P.dx * s * 1.4, (P.dy + P.bob * 0.6) * s);
-    const aura = Math.max(P.glow, o.aura || 0);
-    if (aura > 0.02) {
-      const g = ctx.createRadialGradient(0, -Hs * 0.45, 4, 0, -Hs * 0.45, Hs * 0.7);
-      g.addColorStop(0, hexA(FACTIONS[h.fac].glow, 0.6 * aura)); g.addColorStop(1, hexA(FACTIONS[h.fac].glow, 0));
-      ctx.fillStyle = g; circle(ctx, 0, -Hs * 0.45, Hs * 0.7); ctx.fill();
-    }
-    // whole-body motion: lean/fall pivot at the feet, breathing squash while idle
-    ctx.rotate(P.rot + P.lean * 0.55);
-    const br = o.anim === 'idle' || !o.anim ? Math.sin(t * 2.6) * 0.012 : 0;
-    const strike = o.anim === 'melee' ? Math.sin(PI * Math.min(1, o.p || 0)) * 0.05 : 0;
-    ctx.scale(1 - br * 0.5 + strike, 1 + br - strike * 0.6);
-    if ((h.face || 1) < 0) ctx.scale(-1, 1);
-    ctx.drawImage(im, -Ws / 2, -Hs, Ws, Hs);
-    const fl = o.flash || 0;
-    if (fl > 0.02) { ctx.globalAlpha = alpha * fl * 0.85; ctx.drawImage(ghosts[h.id], -Ws / 2, -Hs, Ws, Hs); }
-    ctx.restore();
-  }
-
-  // o: {x, y, s, face, anim, p, t, flash, flashCol, alpha, aura}
-  function drawHero(ctx, h, o) {
+  // Vector rig, used only to build pixel frames. o: {x, y, s, anim, p, t, solid}
+  function rig(ctx, h, o) {
     const L = h.look, P = pose(o.anim || 'idle', o.p || 0, o.t || 0, L.wpn);
-    if (sprites[h.id]) return drawSprite(ctx, h, o, P);
     FL = o.flash || 0; FLC = o.flashCol ? rgb(o.flashCol) : [255, 255, 255];
     const s = (o.s || 1) * (L.size || 1), b = L.build || 1, t = o.t || 0;
-    const alpha = (o.alpha == null ? 1 : o.alpha) * P.alpha;
+    const alpha = o.solid ? 1 : (o.alpha == null ? 1 : o.alpha) * P.alpha;
     if (alpha <= 0.01) return;
     ctx.save();
     ctx.translate(o.x, o.y);
@@ -422,7 +393,7 @@ const Art = (() => {
     ctx.globalAlpha = alpha;
     ctx.scale(s * (o.face || 1), s);
     ctx.translate(P.dx, P.dy);
-    const aura = Math.max(P.glow, o.aura || 0);
+    const aura = o.solid ? 0 : Math.max(P.glow, o.aura || 0);
     if (aura > 0.02) {
       const g = ctx.createRadialGradient(0, -50, 4, 0, -50, 70);
       g.addColorStop(0, hexA(FACTIONS[h.fac].glow, 0.55 * aura));
@@ -462,7 +433,150 @@ const Art = (() => {
     FL = 0;
   }
 
-  // Static head-and-shoulders portrait, cached as a data URL per hero and size.
+  // ---- pixel sprites ----
+  // Each animation frame is the rig drawn at 4x, shrunk to sprite size, snapped to the hero's palette
+  // and given a dark outline. Frames are built on first use and cached.
+  const PX = 0.36;                                       // sprite pixels per rig unit
+  const WIN = { x0: -135, x1: 100, y0: -178, y1: 10 };   // rig-unit window one frame covers
+  const FW = Math.ceil((WIN.x1 - WIN.x0) * PX), FH = Math.ceil((WIN.y1 - WIN.y0) * PX);
+  const OX = Math.round(-WIN.x0 * PX), OY = Math.round(-WIN.y0 * PX); // feet inside the frame
+  const FRAMES = { idle: 4, run: 6, win: 4, melee: 7, shoot: 6, cast: 7, ult: 7, hit: 2, die: 7 };
+  const OUTLINE = [28, 18, 34];
+  const EXTRA = ['#3a2a1e', '#dfe6ee', '#b8c2cc', '#9aa6b4', '#6b4426', '#7a5432', '#5a3a22', '#ffcf3a', '#ff3a5a', '#efe6d0',
+    '#ffffff', '#2a1e18', '#d6c8ee', '#2a1f30', '#cfd8e2', '#d8c8a8', '#9fe8ff', '#141018'];
+  const frames = new Map(), whites = new Map(), palettes = new Map();
+  let BIG = false; // set while building frames: bigger eyes so they survive the shrink
+
+  function shadeRGB(h, k) {
+    let [r, g, b] = rgb(h);
+    if (k > 0) { r += (255 - r) * k; g += (255 - g) * k; b += (255 - b) * k; } else { r *= 1 + k; g *= 1 + k; b *= 1 + k; }
+    return [r | 0, g | 0, b | 0];
+  }
+  function palette(h) {
+    let out = palettes.get(h.id);
+    if (out) return out;
+    const L = h.look, f = FACTIONS[h.fac];
+    out = [];
+    [L.skin, L.hair, L.armor, L.armor2, L.trim, L.cape, L.shield, L.beard, L.eye, f.col, f.glow].forEach(c => {
+      if (c) for (const k of [-0.5, -0.28, 0, 0.22, 0.5]) out.push(shadeRGB(c, k));
+    });
+    EXTRA.forEach(c => out.push(rgb(c)));
+    palettes.set(h.id, out);
+    return out;
+  }
+  function frameIndex(anim, p, t) {
+    const n = FRAMES[anim] || 4;
+    if (anim === 'idle') return Math.floor(t * 5) % n;
+    if (anim === 'run') return Math.floor(t * 12) % n;
+    if (anim === 'win') return Math.floor(t * 7) % n;
+    return Math.min(n - 1, Math.max(0, Math.floor(p * n)));
+  }
+  function frameParams(anim, i) {
+    const n = FRAMES[anim] || 4;
+    if (anim === 'idle') return { p: 0, t: 1 + i / n * (2 * PI / 2.6) };
+    if (anim === 'run') return { p: 0, t: 1 + i / n * (2 * PI / 13) };
+    if (anim === 'win') return { p: 0, t: 1 + i / n * (PI / 5) };
+    return { p: (i + 0.5) / n, t: 1.3 };
+  }
+  function buildFrame(h, anim, i) {
+    const S = 4, hi = document.createElement('canvas');
+    hi.width = FW * S; hi.height = FH * S;
+    BIG = true;
+    rig(hi.getContext('2d'), h, { x: OX * S, y: OY * S, s: PX * S, anim, ...frameParams(anim, i), noShadow: true, solid: true });
+    BIG = false;
+    const c = document.createElement('canvas');
+    c.width = FW; c.height = FH;
+    const x = c.getContext('2d');
+    x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+    x.drawImage(hi, 0, 0, FW, FH);
+    const img = x.getImageData(0, 0, FW, FH), d = img.data, pal = palette(h), solid = new Uint8Array(FW * FH);
+    for (let k = 0; k < FW * FH; k++) {
+      const o = k * 4;
+      if (d[o + 3] < 110) { d[o + 3] = 0; continue; }
+      const a = d[o + 3] / 255, r = d[o] / a, g = d[o + 1] / a, b = d[o + 2] / a; // un-premultiply edge pixels
+      let best = 0, bd = 1e9;
+      for (let j = 0; j < pal.length; j++) {
+        const q = pal[j], e = (q[0] - r) ** 2 * 0.3 + (q[1] - g) ** 2 * 0.59 + (q[2] - b) ** 2 * 0.11;
+        if (e < bd) { bd = e; best = j; }
+      }
+      d[o] = pal[best][0]; d[o + 1] = pal[best][1]; d[o + 2] = pal[best][2]; d[o + 3] = 255;
+      solid[k] = 1;
+    }
+    for (let y = 0; y < FH; y++) for (let xx = 0; xx < FW; xx++) {
+      const k = y * FW + xx;
+      if (solid[k]) continue;
+      if ((xx > 0 && solid[k - 1]) || (xx < FW - 1 && solid[k + 1]) || (y > 0 && solid[k - FW]) || (y < FH - 1 && solid[k + FW])) {
+        const o = k * 4; d[o] = OUTLINE[0]; d[o + 1] = OUTLINE[1]; d[o + 2] = OUTLINE[2]; d[o + 3] = 255;
+      }
+    }
+    x.putImageData(img, 0, 0);
+    return c;
+  }
+  function frame(h, anim, i) {
+    const key = h.id + '|' + anim + '|' + i;
+    let f = frames.get(key);
+    if (!f) { f = buildFrame(h, anim, i); frames.set(key, f); }
+    return f;
+  }
+  function white(h, anim, i) {
+    const key = h.id + '|' + anim + '|' + i;
+    let w = whites.get(key);
+    if (!w) {
+      const f = frame(h, anim, i);
+      w = document.createElement('canvas'); w.width = FW; w.height = FH;
+      const x = w.getContext('2d');
+      x.drawImage(f, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fff'; x.fillRect(0, 0, FW, FH);
+      whites.set(key, w);
+    }
+    return w;
+  }
+  // Screen pixels per sprite pixel; whole numbers once large enough so pixels stay square.
+  function pixelSize(s) { const ps = s / PX; return ps >= 1.5 ? Math.round(ps) : ps; }
+
+  // o: {x, y, s, face, anim, p, t, flash, alpha, aura, noShadow}
+  function drawHero(ctx, h, o) {
+    const anim = o.anim || 'idle', t = o.t || 0, P = pose(anim, o.p || 0, t, h.look.wpn);
+    const alpha = (o.alpha == null ? 1 : o.alpha) * P.alpha;
+    if (alpha <= 0.01) return;
+    const i = frameIndex(anim, o.p || 0, t), fr = frame(h, anim, i), ps = pixelSize(o.s || 1);
+    const face = o.face || 1, sz = h.look.size || 1;
+    ctx.save();
+    ctx.translate(Math.round(o.x), Math.round(o.y));
+    const aura = Math.max(P.glow, o.aura || 0);
+    if (aura > 0.02) { // stepped glow rings behind the sprite
+      const cy = -50 * PX * ps * sz, f = FACTIONS[h.fac];
+      for (let r = 4; r >= 1; r--) {
+        ctx.fillStyle = hexA(f.glow, 0.08 * aura * (5 - r));
+        const w = r * 9 * ps * sz, hgt = w * 1.3, c = w * 0.22; // octagon from two overlapping bars
+        ctx.fillRect(Math.round(-w / 2), Math.round(cy - hgt / 2 + c), Math.round(w), Math.round(hgt - c * 2));
+        ctx.fillRect(Math.round(-w / 2 + c), Math.round(cy - hgt / 2), Math.round(w - c * 2), Math.round(hgt));
+      }
+    }
+    if (!o.noShadow) {
+      ctx.globalAlpha = 0.3 * alpha; ctx.fillStyle = '#000';
+      const w = 14 * ps * sz, u = Math.max(1, ps);
+      ctx.fillRect(Math.round(-w / 2), -u, Math.round(w), u * 2);
+      ctx.fillRect(Math.round(-w / 2 + u * 2), -u * 2, Math.round(w - u * 4), u * 4);
+    }
+    ctx.globalAlpha = alpha;
+    ctx.imageSmoothingEnabled = false;
+    ctx.scale(face, 1);
+    ctx.drawImage(fr, -OX * ps, -OY * ps, FW * ps, FH * ps);
+    if ((o.flash || 0) > 0.02) { ctx.globalAlpha = alpha * Math.min(1, o.flash); ctx.drawImage(white(h, anim, i), -OX * ps, -OY * ps, FW * ps, FH * ps); }
+    ctx.restore();
+  }
+
+  // Low-resolution canvas for chunky pixel backgrounds: draw at (w/k, h/k), then blow up without smoothing.
+  function pixCanvas(w, h, k, paint) {
+    const c = document.createElement('canvas');
+    c.width = Math.ceil(w / k); c.height = Math.ceil(h / k);
+    const x = c.getContext('2d');
+    paint(x, c.width, c.height);
+    return c;
+  }
+  function blit(dst, src, w, h) { dst.imageSmoothingEnabled = false; dst.drawImage(src, 0, 0, w, h); }
+
+  // Head-and-shoulders portrait, cached as a data URL per hero and size.
   const portraits = new Map();
   function portrait(h, size = 96) {
     const key = h.id + size;
@@ -470,23 +584,23 @@ const Art = (() => {
     const c = document.createElement('canvas');
     c.width = c.height = size;
     const x = c.getContext('2d'), f = FACTIONS[h.fac];
-    const g = x.createRadialGradient(size * 0.5, size * 0.35, 4, size * 0.5, size * 0.5, size * 0.75);
-    g.addColorStop(0, hexA(f.glow, 0.9)); g.addColorStop(0.5, hexA(f.col, 0.55)); g.addColorStop(1, '#14101e');
-    x.fillStyle = g; x.fillRect(0, 0, size, size);
-    const im = sprites[h.id];
-    if (im) { // head and shoulders of the painting, centred on the head
-      const dh = size * 2.7, dw = dh * im.naturalWidth / im.naturalHeight;
-      x.drawImage(im, size / 2 - dw * (h.hx || 0.5), size * 0.32 - dh * (h.hy || 0.1), dw, dh);
-    } else {
-      const s = 1.45 * size / 96;
-      drawHero(x, h, { x: size * 0.44, y: size * 0.36 + 89 * s, s, face: 1, anim: 'idle', t: 0.6, noShadow: true });
-    }
-    const url = toURL(c, h);
+    blit(x, pixCanvas(size, size, size / 32, (b, w, hh) => {
+      for (let y = 0; y < hh; y++) for (let xx = 0; xx < w; xx++) {
+        const d = Math.hypot(xx - w / 2, y - hh * 0.4) / (w * 0.7);
+        b.fillStyle = d < 0.35 ? f.glow : d < 0.6 || (d < 0.75 && (xx + y) % 2) ? f.col : '#1a1226';
+        b.fillRect(xx, y, 1, 1);
+      }
+    }), size, size);
+    const ps = Math.max(1, Math.round(size / 32)), sz = h.look.size || 1, fr = frame(h, 'idle', 0);
+    const hx = OX + 2 * PX * sz, hy = OY - 97 * PX * sz; // head centre inside the frame
+    x.imageSmoothingEnabled = false;
+    x.drawImage(fr, Math.round(size / 2 - hx * ps), Math.round(size * 0.4 - hy * ps), FW * ps, FH * ps);
+    const url = c.toDataURL();
     portraits.set(key, url);
     return url;
   }
 
-  // Tall roster-card splash: hero in an action pose over rays and a faction glow, cached per hero.
+  // Tall roster-card splash: the hero in an action pose over pixel rays, cached per hero.
   const cards = new Map();
   function cardArt(h, w = 184, hgt = 300) {
     const key = h.id + w + 'x' + hgt;
@@ -494,41 +608,39 @@ const Art = (() => {
     const c = document.createElement('canvas');
     c.width = w; c.height = hgt;
     const x = c.getContext('2d'), f = FACTIONS[h.fac];
-    let g = x.createLinearGradient(0, 0, 0, hgt);
-    g.addColorStop(0, '#3a2a2a'); g.addColorStop(1, '#140c10');
-    x.fillStyle = g; x.fillRect(0, 0, w, hgt);
-    x.save(); x.translate(w * 0.5, hgt * 0.32);
-    for (let i = 0; i < 14; i++) {
-      x.rotate(Math.PI / 7);
-      x.fillStyle = hexA(i % 2 ? f.glow : '#ffd27a', 0.07);
-      x.beginPath(); x.moveTo(0, 0); x.lineTo(-hgt * 0.12, -hgt); x.lineTo(hgt * 0.12, -hgt); x.fill();
-    }
-    x.restore();
-    g = x.createRadialGradient(w * 0.5, hgt * 0.38, 4, w * 0.5, hgt * 0.38, w * 0.85);
-    g.addColorStop(0, hexA(f.glow, 0.6)); g.addColorStop(0.45, hexA(f.col, 0.3)); g.addColorStop(1, hexA(f.col, 0));
-    x.fillStyle = g; x.fillRect(0, 0, w, hgt);
-    const im = sprites[h.id];
-    if (im) { // splash: the painting from head to knees
-      const dh = hgt * 1.3, dw = dh * im.naturalWidth / im.naturalHeight;
-      x.drawImage(im, w / 2 - dw * (0.5 + ((h.hx || 0.5) - 0.5) * 0.6), hgt * 0.04, dw, dh);
-    } else {
-      const wpn = h.look.wpn;
-      const pose = MELEE.has(wpn) ? ['melee', 0.3] : wpn === 'bow' ? ['shoot', 0.5] : ['cast', 0.45];
-      const s = hgt / 108;
-      drawHero(x, h, { x: w * 0.47, y: hgt + 16 * s, s, face: 1, anim: pose[0], p: pose[1], t: 0.6, noShadow: true });
-    }
-    g = x.createLinearGradient(0, hgt * 0.62, 0, hgt);
-    g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(10,4,6,.75)');
-    x.fillStyle = g; x.fillRect(0, 0, w, hgt);
-    const url = toURL(c, h);
+    blit(x, pixCanvas(w, hgt, 4, (b, W, H) => {
+      const g = b.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, '#3a2638'); g.addColorStop(1, '#120a14');
+      b.fillStyle = g; b.fillRect(0, 0, W, H);
+      b.save(); b.translate(W / 2, H * 0.36);
+      for (let i = 0; i < 12; i++) {
+        b.rotate(PI / 6);
+        b.fillStyle = hexA(i % 2 ? f.glow : '#ffd27a', 0.12);
+        b.beginPath(); b.moveTo(0, 0); b.lineTo(-H * 0.1, -H); b.lineTo(H * 0.1, -H); b.fill();
+      }
+      b.restore();
+      for (let r = 5; r >= 1; r--) { b.fillStyle = hexA(f.glow, 0.09); b.beginPath(); b.arc(W / 2, H * 0.42, r * W * 0.11, 0, PI * 2); b.fill(); }
+      for (let i = 0; i < 26; i++) { b.fillStyle = hexA('#fff6c0', 0.5); b.fillRect((i * 37) % W, (i * 53) % (H * 0.7), 1, 1); }
+      b.fillStyle = hexA(f.col, 0.35); b.fillRect(0, H * 0.86, W, H * 0.14);
+    }), w, hgt);
+    const wpn = h.look.wpn, sz = h.look.size || 1;
+    const anim = MELEE.has(wpn) ? 'melee' : wpn === 'bow' ? 'shoot' : 'cast';
+    const ps = Math.max(1, Math.floor(hgt * 0.78 / (125 * PX * sz)));
+    x.imageSmoothingEnabled = false;
+    x.drawImage(frame(h, anim, anim === 'melee' ? 2 : 3), Math.round(w * 0.47 - OX * ps), Math.round(hgt * 0.9 - OY * ps), FW * ps, FH * ps);
+    const url = c.toDataURL();
     cards.set(key, url);
     return url;
   }
 
-  // Pages opened from file:// can't export canvases that drew local images; fall back to the raw sprite.
-  function toURL(c, h) {
-    try { return c.toDataURL(); } catch { return 'img/' + h.id + '.webp'; }
+  // Waits for the pixel fonts so canvas text uses them from the first frame.
+  function ready() {
+    if (!document.fonts || !document.fonts.load) return Promise.resolve();
+    return Promise.race([
+      Promise.all([document.fonts.load('16px "Press Start 2P"'), document.fonts.load('16px "Pixelify Sans"')]),
+      new Promise(r => setTimeout(r, 2500)),
+    ]).catch(() => {});
   }
 
-  return { drawHero, portrait, cardArt, hexA, rgb, loadSprites, hasSprite };
+  return { drawHero, portrait, cardArt, hexA, rgb, ready, pixelSize, pixCanvas, blit };
 })();

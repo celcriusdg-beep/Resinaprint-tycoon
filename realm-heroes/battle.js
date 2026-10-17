@@ -5,14 +5,16 @@
 
 const Scenery = (() => {
   const cache = new Map();
-  // Painted backdrop for a theme, cached per size. Horizon at hzFrac of the height.
-  function backdrop(theme, W, H, dpr, hzFrac = 0.45) {
-    const key = theme.name + W + 'x' + H + '@' + dpr + ':' + hzFrac.toFixed(3);
+  // Backdrop for a theme, painted at 1/k resolution so it reads as pixel art when drawn W x H without
+  // smoothing. Cached per size. Horizon at hzFrac of the height.
+  function backdrop(theme, W, H, k = 3, hzFrac = 0.45) {
+    const key = theme.name + W + 'x' + H + '/' + k + ':' + hzFrac.toFixed(3);
     if (cache.has(key)) return cache.get(key);
     const c = document.createElement('canvas');
-    c.width = W * dpr; c.height = H * dpr;
+    c.width = Math.ceil(W / k); c.height = Math.ceil(H / k);
     const x = c.getContext('2d');
-    x.scale(dpr, dpr);
+    x.scale(1 / k, 1 / k);
+    W = c.width * k; H = c.height * k; // paint every low-res pixel, including a partial last column
     const rng = rngFrom(theme.name.length * 977);
     const hz = H * hzFrac;
     let g = x.createLinearGradient(0, 0, 0, hz);
@@ -99,7 +101,9 @@ const Battle = (() => {
       this.fh = Math.min(this.H, this.W * 1.35);
       this.fy = this.H - this.fh;
       this.hz = (this.fy + this.fh * 0.45) / this.H;
-      this.sc = Math.min(this.W / 470, this.fh / 400);
+      // sprite pixels map to whole screen pixels: pick that pixel size, then derive the world scale from it
+      this.pix = Math.max(2, Math.round(Math.min(this.W / 470, this.fh / 400) / 0.36));
+      this.sc = this.pix * 0.36;
       for (const u of Object.values(this.units)) {
         const [x, y] = slotPos(u.side, u.slot, this.W, this.fy, this.fh);
         u.hx = x; u.hy = y;
@@ -232,7 +236,7 @@ const Battle = (() => {
     async meleeAct(u, e, targets, ult) {
       const sc = this.sc, distinct = [...new Set(targets)];
       let tx, ty;
-      if (distinct.length === 1) { tx = distinct[0].x - u.face * (Art.hasSprite(distinct[0].h) || Art.hasSprite(u.h) ? 62 : 46) * sc * (distinct[0].boss ? 1.3 : 1); ty = distinct[0].y + 1; }
+      if (distinct.length === 1) { tx = distinct[0].x - u.face * 50 * sc * (distinct[0].boss ? 1.3 : 1); ty = distinct[0].y + 1; }
       else {
         tx = distinct.reduce((s, t) => s + t.x, 0) / distinct.length - u.face * 70 * sc;
         ty = distinct.reduce((s, t) => s + t.y, 0) / distinct.length;
@@ -344,14 +348,22 @@ const Battle = (() => {
     }
 
     draw(dt) {
-      const { ctx, W, H, sc } = this;
-      ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+      const { W, H, sc, pix } = this, screen = this.ctx;
+      // The world is drawn into a buffer at 1/pix resolution and blown up, so sprites, scenery, particles
+      // and projectiles all share one pixel grid. Bars and text go on top at full resolution.
+      const bw = Math.ceil(W / pix), bh = Math.ceil(H / pix);
+      if (!this.buf || this.buf.width !== bw || this.buf.height !== bh) {
+        this.buf = document.createElement('canvas'); this.buf.width = bw; this.buf.height = bh;
+      }
+      const ctx = this.buf.getContext('2d');
+      this.ctx = ctx;
+      ctx.setTransform(1 / pix, 0, 0, 1 / pix, 0, 0);
+      ctx.imageSmoothingEnabled = false;
       const sh = this.shake > 0.3 ? this.shake : 0;
       this.shake *= Math.pow(0.9, dt / 16);
-      ctx.save();
-      if (sh) ctx.translate((Math.random() - 0.5) * sh, (Math.random() - 0.5) * sh);
-      ctx.drawImage(Scenery.backdrop(this.opts.theme, W, H, this.dpr, this.hz), 0, 0, W, H);
+      ctx.drawImage(Scenery.backdrop(this.opts.theme, W, H, pix, this.hz), 0, 0, W, H);
       if (this.dim > 0) { ctx.fillStyle = 'rgba(10,6,24,.35)'; ctx.fillRect(0, 0, W, H); }
+      const drawn = [];
       const list = Object.values(this.units).filter(u => !u.dead).sort((a, b) => a.y - b.y);
       for (const u of list) {
         if (u.tw) {
@@ -367,15 +379,23 @@ const Battle = (() => {
         }
         u.flash = Math.max(0, u.flash - dt / 260);
         const s = sc * (u.boss ? 1.35 : 1), t = this.time / 1000 + u.seed;
-        Art.drawHero(ctx, u.h, { x: u.x, y: u.y, s, face: u.face, anim: u.anim, p: Math.min(1, p), t, flash: u.flash * 0.85,
-          flashCol: '#ffffff', aura: u.up ? 0.25 + Math.sin(t * 4) * 0.1 : 0 });
-        if (!u.dying) this.drawBars(u, s, t);
+        Art.drawHero(ctx, u.h, { x: Math.round(u.x / pix) * pix, y: Math.round(u.y / pix) * pix, s, face: u.face, anim: u.anim,
+          p: Math.min(1, p), t, flash: u.flash * 0.85, aura: u.up ? 0.25 + Math.sin(t * 4) * 0.1 : 0 });
+        if (!u.dying) drawn.push([u, s, t]);
       }
       this.drawProjs();
       this.drawFx();
+      this.ctx = screen;
+      screen.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+      screen.imageSmoothingEnabled = false;
+      screen.fillStyle = '#000'; screen.fillRect(0, 0, W, H);
+      const ox = sh ? Math.round((Math.random() - 0.5) * sh / pix) * pix : 0, oy = sh ? Math.round((Math.random() - 0.5) * sh / pix) * pix : 0;
+      screen.drawImage(this.buf, ox, oy, bw * pix, bh * pix);
+      screen.save(); screen.translate(ox, oy);
+      for (const [u, s, t] of drawn) this.drawBars(u, s, t);
       if (this.banner) this.drawBanner();
       this.drawTexts();
-      ctx.restore();
+      screen.restore();
     }
 
     drawBars(u, s, t) {
@@ -386,11 +406,12 @@ const Battle = (() => {
       if (u.sh > 0) { ctx.fillStyle = 'rgba(200,235,255,.9)'; ctx.fillRect(x, y, Math.min(w, w * u.sh / u.maxHp), 2); }
       ctx.fillStyle = u.en >= 100 ? `rgba(255,${200 + Math.sin(t * 8) * 40 | 0},60,1)` : '#f0c040';
       ctx.fillRect(x, y + 5, w * Math.min(100, u.en) / 100, 2.5);
-      ctx.font = `bold ${Math.max(9, 10 * s + 2)}px system-ui,sans-serif`;
-      ctx.textAlign = 'right'; ctx.fillStyle = '#fff'; ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.lineWidth = 2.5;
+      ctx.font = `${Math.max(7, Math.round(6 * s + 3))}px "Press Start 2P", monospace`;
+      ctx.textAlign = 'right'; ctx.fillStyle = '#fff'; ctx.strokeStyle = 'rgba(0,0,0,.8)'; ctx.lineWidth = 3;
       const lv = u.boss ? 'BOSS' : String(u.lvl);
       ctx.strokeText(lv, x - 3, y + 7); ctx.fillText(lv, x - 3, y + 7);
-      ctx.beginPath(); ctx.arc(x + w + 6, y + 3.5, 3.5, 0, Math.PI * 2); ctx.fillStyle = FACTIONS[u.h.fac].col; ctx.fill();
+      ctx.fillStyle = '#000'; ctx.fillRect(x + w + 2, y - 1, 9, 9);
+      ctx.fillStyle = FACTIONS[u.h.fac].col; ctx.fillRect(x + w + 3, y, 7, 7);
       let ix = x;
       const icon = (txt) => { ctx.textAlign = 'left'; ctx.font = `${Math.max(9, 11 * s)}px system-ui`; ctx.fillText(txt, ix, y - 3); ix += 13; };
       if (u.up) icon('⬆');
@@ -398,7 +419,8 @@ const Battle = (() => {
       if (u.stun) {
         for (let i = 0; i < 3; i++) {
           const a = t * 4 + i * 2.1, sx = u.x + Math.cos(a) * 12 * s, sy = u.y - 122 * s + Math.sin(a) * 3 * s;
-          ctx.fillStyle = '#ffe14a'; ctx.font = `${Math.max(9, 12 * s)}px system-ui`; ctx.textAlign = 'center'; ctx.fillText('★', sx, sy);
+          ctx.fillStyle = '#ffe14a'; ctx.fillRect(Math.round(sx) - 3, Math.round(sy) - 3, 6, 6);
+          ctx.fillStyle = '#fff8c0'; ctx.fillRect(Math.round(sx) - 1, Math.round(sy) - 1, 2, 2);
         }
       }
     }
@@ -418,9 +440,11 @@ const Battle = (() => {
           ctx.restore();
         } else {
           const r = (p.kind === 'meteor' ? 16 : 9) * Math.max(0.7, sc);
-          const g = ctx.createRadialGradient(x, y, 0, x, y, r * 2.2);
-          g.addColorStop(0, '#ffffff'); g.addColorStop(0.3, p.col); g.addColorStop(1, Art.hexA(p.col.startsWith('#') ? p.col : '#ffffff', 0));
-          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * 2.2, 0, Math.PI * 2); ctx.fill();
+          // stepped glow: three nested squares
+          [[2.2, 0.3], [1.4, 0.7], [0.8, 1]].forEach(([k, a], i) => {
+            ctx.fillStyle = i === 2 ? '#ffffff' : Art.hexA(p.col, a);
+            ctx.fillRect(x - r * k, y - r * k, r * k * 2, r * k * 2);
+          });
           if (Math.random() < 0.8) this.fx.push({ k: 'spark', x, y, vx: (Math.random() - 0.5) * 0.04, vy: (Math.random() - 0.5) * 0.04, g: 0, col: p.col, r: r * 0.35, t0: this.time, life: 260 });
         }
       }
@@ -442,9 +466,10 @@ const Battle = (() => {
         } else {
           const x = f.x + f.vx * age, y = f.y + f.vy * age + 0.5 * f.g * age * age;
           ctx.fillStyle = f.col;
-          if (f.k === 'up') { ctx.font = `${f.r * 4}px system-ui`; ctx.textAlign = 'center'; ctx.fillText('▲', x, y); }
-          else if (f.k === 'heal') { ctx.font = `bold ${f.r * 4}px system-ui`; ctx.textAlign = 'center'; ctx.fillText('+', x, y); }
-          else { ctx.beginPath(); ctx.arc(x, y, f.r * (f.k === 'flame' ? 1 - k * 0.5 : 1), 0, Math.PI * 2); ctx.fill(); }
+          const r = f.r * (f.k === 'flame' ? 1 - k * 0.5 : 1);
+          if (f.k === 'up') { ctx.fillRect(x - r * 0.5, y - r, r, r * 2); ctx.fillRect(x - r * 1.2, y - r * 0.4, r * 2.4, r * 0.8); }
+          else if (f.k === 'heal') { ctx.fillRect(x - r * 0.4, y - r * 1.2, r * 0.8, r * 2.4); ctx.fillRect(x - r * 1.2, y - r * 0.4, r * 2.4, r * 0.8); }
+          else ctx.fillRect(x - r, y - r, r * 2, r * 2);
         }
       }
       ctx.globalAlpha = 1;
@@ -458,8 +483,8 @@ const Battle = (() => {
         const age = this.time - t.t0, k = age / t.life;
         const pop = age < 120 ? 0.6 + age / 120 * 0.5 : 1.1 - Math.min(0.1, (age - 120) / 1200);
         ctx.globalAlpha = k > 0.7 ? (1 - k) / 0.3 : 1;
-        ctx.font = `900 ${t.size * pop}px system-ui,sans-serif`;
-        ctx.lineWidth = 3.5; ctx.strokeStyle = t.stroke; ctx.lineJoin = 'round';
+        ctx.font = `${Math.round(t.size * pop * 0.7)}px "Press Start 2P", monospace`;
+        ctx.lineWidth = 4; ctx.strokeStyle = t.stroke; ctx.lineJoin = 'miter';
         const y = t.y + t.vy * age;
         ctx.strokeText(t.txt, t.x, y); ctx.fillStyle = t.col; ctx.fillText(t.txt, t.x, y);
       }
@@ -480,10 +505,10 @@ const Battle = (() => {
       ctx.fillStyle = g; ctx.fillRect(0, y - h / 2, W, h);
       ctx.textAlign = b.side === 'a' ? 'left' : 'right';
       const tx = b.side === 'a' ? 16 : W - 16;
-      ctx.font = `900 italic ${h * 0.5}px system-ui,sans-serif`;
+      ctx.font = `${Math.round(h * 0.34)}px "Press Start 2P", monospace`;
       ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.6)';
       ctx.strokeText(b.txt, tx, y + h * 0.1); ctx.fillStyle = '#fff'; ctx.fillText(b.txt, tx, y + h * 0.1);
-      ctx.font = `700 ${h * 0.26}px system-ui,sans-serif`; ctx.fillStyle = '#ffeec0';
+      ctx.font = `600 ${Math.round(h * 0.3)}px "Pixelify Sans", monospace`; ctx.fillStyle = '#ffeec0';
       ctx.fillText(b.sub, tx, y + h * 0.42);
       ctx.restore();
       ctx.globalAlpha = 1;

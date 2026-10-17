@@ -1,6 +1,6 @@
 :root{--bg:#1c130d;--card:#2c1f16;--card2:#3e2c1e;--line:#6b4e2e;--ink:#fbefd9;--mut:#bba585;--gold:#ffc83d;--good:#6ee07a;--bad:#ff6a5f;--pri:#d9822b;--parch:#ecdfc2;--parch2:#dccaa3;--brown:#4a3220}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:manipulation}
-html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.35 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overscroll-behavior:none}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.35 'Pixelify Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overscroll-behavior:none}
 body{background:radial-gradient(ellipse at 50% -10%,#4a3020 0,var(--bg) 60%) fixed}
 #app{max-width:720px;margin:0 auto;min-height:100vh;padding:0 10px calc(74px + env(safe-area-inset-bottom))}
 .hide{display:none!important}
@@ -32,7 +32,7 @@ h2,h3{margin:8px 0}h2 small{font-size:13px;font-weight:500}
 #btnSet{border-radius:50%;width:36px;height:36px;padding:0;font-size:17px;flex:none}
 
 #tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;justify-content:center;gap:2px;padding:4px 6px calc(4px + env(safe-area-inset-bottom));background:linear-gradient(#3a2818,#1e140c);border-top:3px solid #7a5a32;box-shadow:0 -4px 12px #0008}
-#tabs button{flex:1;max-width:200px;background:none;border:none;border-radius:6px;color:#e8d6b0;display:flex;flex-direction:column;align-items:center;gap:1px;font:800 13px Georgia,'Times New Roman',serif;padding:5px 4px;text-shadow:0 1px 2px #000}
+#tabs button{flex:1;max-width:200px;background:none;border:none;border-radius:6px;color:#e8d6b0;display:flex;flex-direction:column;align-items:center;gap:1px;font:800 13px 'Pixelify Sans',monospace;padding:5px 4px;text-shadow:0 1px 2px #000}
 #tabs button i{font-style:normal;font-size:24px;filter:sepia(.6) saturate(1.4) brightness(.9)}
 #tabs button.on{background:radial-gradient(ellipse at 50% 100%,#ffb04a 0,#d0601a 55%,#7a2e0a 100%);box-shadow:inset 0 0 0 1px #ffcf7a,0 0 12px #ff8a2a88;color:#fff}
 #tabs button.on i{filter:none;transform:scale(1.12)}
@@ -163,11 +163,11 @@ textarea{width:100%;background:#0006;color:var(--ink);border:1px solid var(--lin
 .parch::before{content:'';position:absolute;inset:4px;border:1px solid #c9ad7c;border-radius:4px;pointer-events:none}
 .ptop{display:flex;align-items:center;justify-content:space-between;gap:6px;position:relative;margin-bottom:6px}
 .pbtn{background:none;border:none;padding:0;display:flex;flex-direction:column;align-items:center;color:#fff;min-width:74px}
-.pbtn small{font:800 12px Georgia,serif;color:#fff;text-shadow:0 0 2px #000,0 1px 2px #000,0 0 4px #000;margin-top:-4px}
+.pbtn small{font:800 12px 'Pixelify Sans',monospace;color:#fff;text-shadow:0 0 2px #000,0 1px 2px #000,0 0 4px #000;margin-top:-4px}
 .dia{display:inline-grid;place-items:center;width:22px;height:22px;transform:rotate(45deg);background:linear-gradient(135deg,#5a4630,#2a1e14);border:1px solid #c9a35a;border-radius:3px;font-size:11px}
 .dia>span{display:block;transform:rotate(-45deg);line-height:1}
 .dia.big{width:38px;height:38px;font-size:18px;background:linear-gradient(135deg,#6a5236,#2a1e14);border:2px solid #d9b56a;box-shadow:0 2px 6px #0008}
-.pcount{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;font:700 17px Georgia,serif;background:linear-gradient(90deg,transparent,#fff6 20%,#fff6 80%,transparent);padding:6px 0;border-top:1px solid #c9ad7c;border-bottom:1px solid #c9ad7c}
+.pcount{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;font:700 17px 'Pixelify Sans',monospace;background:linear-gradient(90deg,transparent,#fff6 20%,#fff6 80%,transparent);padding:6px 0;border-top:1px solid #c9ad7c;border-bottom:1px solid #c9ad7c}
 .dia.add{width:24px;height:24px;padding:0;color:#e8d6b0;font-size:16px;font-weight:900;border-radius:3px}
 .roster{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 7px;padding:4px 2px}
 .rcd{position:relative;padding:0;background:none;border:none;border-radius:0;display:block;text-align:left;font-weight:400}
@@ -198,6 +198,25 @@ textarea{width:100%;background:#0006;color:var(--ink);border:1px solid var(--lin
 .fdia[data-f=all] span{font:800 10px system-ui;color:#fff}
 .fdia.on{background:linear-gradient(135deg,#a07a3a,#5a3a14);border-color:#ffd27a;box-shadow:0 0 8px #ffc04a}
 .subtabs{display:flex;justify-content:flex-end;gap:4px;margin:10px 0 0}
-.subtabs button{font:800 16px Georgia,serif;padding:8px 22px;border-radius:8px 8px 0 0;background:linear-gradient(#5a4030,#3a281c);border:1px solid #7a5a3a;color:#c9b08a}
+.subtabs button{font:800 16px 'Pixelify Sans',monospace;padding:8px 22px;border-radius:8px 8px 0 0;background:linear-gradient(#5a4030,#3a281c);border:1px solid #7a5a3a;color:#c9b08a}
 .subtabs button.on{background:linear-gradient(#c87a3a,#8a4a1a);color:#fff3d8;border-color:#ffb060}
 @media (max-width:360px){.roster{grid-template-columns:repeat(3,1fr)}}
+
+/* ---- pixel art skin ---- */
+*,*::before,*::after{border-radius:0!important}
+img,canvas{image-rendering:pixelated;image-rendering:crisp-edges}
+button,input,textarea{font-family:'Pixelify Sans',system-ui,sans-serif}
+button{border-width:2px;box-shadow:inset -3px -3px 0 rgba(0,0,0,.35),inset 3px 3px 0 rgba(255,255,255,.14)}
+button:active:not(:disabled){box-shadow:inset 3px 3px 0 rgba(0,0,0,.35);transform:translateY(1px)}
+.card,.sheet,.parch,.scene,.banner{border-width:3px;box-shadow:0 0 0 3px #0008,4px 4px 0 3px #0006}
+.parch::before{border-style:dashed}
+h1,h2,.result h1,.legtxt h1,.btxt h2,.rw,.lootrow{font-family:'Press Start 2P',monospace;letter-spacing:0;line-height:1.4}
+h1,.result h1,.legtxt h1{font-size:24px}h2,.btxt h2{font-size:15px}.rw,.lootrow{font-size:13px}
+.ppow,#pName,.pcount,.rcd .lvl,.rcd .plusn,.lv{font-family:'Press Start 2P',monospace;font-size:11px}
+.pill b{font:700 14px 'Pixelify Sans',monospace}
+.pill{gap:2px;padding-left:4px}.plus{width:16px;height:16px;font-size:12px;box-shadow:none}
+.rcd .lvl{font-size:12px}
+#tabs button{font-family:'Press Start 2P',monospace;font-size:9px;gap:5px}
+.subtabs button{font-size:15px}
+.bar,.pbar,.pity .bar,.bcard i{border:1px solid #000}
+.dia,.fdia{transform:rotate(45deg)}

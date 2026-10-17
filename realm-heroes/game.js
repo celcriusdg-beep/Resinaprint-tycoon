@@ -194,8 +194,9 @@ function bindCampaign() {
   const acts = team.map(() => ({ anim: 'run', t0: 0, dur: 0 }));
   let nextAct = 1.5, coins = [];
   mountLive($('#idleCv'), (ctx, W, H, t) => {
-    const bg = Scenery.backdrop(theme, W, H, Math.min(2, devicePixelRatio || 1));
-    const off = (t * 40) % (W * 2);
+    const bg = Scenery.backdrop(theme, W, H, 3);
+    ctx.imageSmoothingEnabled = false;
+    const off = Math.round((t * 40) % (W * 2) / 3) * 3;
     // mirrored tiles so the scroll has no seam
     for (let k = -1; k < 2; k++) {
       const x0 = k * W * 2 - off;
@@ -221,8 +222,10 @@ function bindCampaign() {
     for (const c of coins) {
       const k = t - c.t0; if (k < 0) continue;
       ctx.globalAlpha = 1 - k / 1.2;
-      ctx.font = `${16 * Math.max(0.8, sc)}px system-ui`;
-      ctx.fillText('🪙', c.x, c.y - k * 40);
+      const u = Math.max(2, Math.round(2 * sc)), cx = Math.round(c.x / u) * u, cy = Math.round((c.y - k * 40) / u) * u;
+      ctx.fillStyle = '#8a5a00'; ctx.fillRect(cx - 3 * u, cy - 3 * u, 6 * u, 6 * u);
+      ctx.fillStyle = '#ffcf3a'; ctx.fillRect(cx - 2 * u, cy - 3 * u, 4 * u, 6 * u); ctx.fillRect(cx - 3 * u, cy - 2 * u, 6 * u, 4 * u);
+      ctx.fillStyle = '#fff3a0'; ctx.fillRect(cx - u, cy - 2 * u, u, 2 * u);
       ctx.globalAlpha = 1;
     }
   });
@@ -421,7 +424,7 @@ function openHero(id) {
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     let k = t % total, anim = 'idle', p = 0;
     for (const [a, d] of seq) { if (k < d) { anim = a; p = k / d; break; } k -= d; }
-    const s = Art.hasSprite(h) ? H * 0.86 / 122 / (h.sz || 1) : Math.min(H / 150, W / 160);
+    const s = Math.min(H * 0.8 / 125, W / 160);
     Art.drawHero(ctx, h, { x: W / 2 - 10, y: H * 0.95, s, face: 1, anim, p, t });
   });
   const lvlUp = n => {
@@ -638,6 +641,6 @@ $('#bspeed').onclick = () => {
   const r = Battle.current(); if (r) r.speed = S.speed;
 };
 $('#bskip').onclick = () => { const r = Battle.current(); if (r) r.skip(); };
-Art.loadSprites().then(() => { render(); save(); });
+Art.ready().then(() => { render(); save(); });
 setInterval(() => { if (tab === 'camp' && $('#modal').classList.contains('hide') && $('#battle').classList.contains('hide')) render(); }, 30000);
 addEventListener('visibilitychange', () => { if (!document.hidden && tab === 'camp' && $('#modal').classList.contains('hide')) render(); });

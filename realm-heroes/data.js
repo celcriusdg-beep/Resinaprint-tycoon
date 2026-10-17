@@ -32,41 +32,40 @@ const SUMMON = { SSR: 0.04, SR: 0.24, pity: 40, cost1: 100, cost10: 900 };
 
 const MELEE = new Set(['sword', 'axe', 'hammer', 'spear', 'dagger', 'scythe']);
 
-// look: drawn fallback rig (skin, hair, hs, hat, armor, armor2, trim, cape, wpn, shield, eye, beard, build, size).
-// img: painted sprite in img/<id>.webp; face: which way the painting faces (1 right, -1 left);
-// hx: head position across the sprite (0..1) for portrait framing; sz: battle size.
+// look: the character rig art.js turns into pixel sprites
+// (skin, hair, hs, hat, armor, armor2, trim, cape, wpn, shield, eye, beard, patch, build, size).
 // ult types: single, aoe, back, random, burn, stun, heal, healLow, buff, drain
 const HEROES = [
   // Legendary
-  { id: 'vesper', name: 'Vesper', title: 'Blackpowder Captain', fac: 'fire', role: 'warrior', rar: 'SSR', img: 1, face: 1, hx: 0.43,
+  { id: 'vesper', name: 'Vesper', title: 'Blackpowder Captain', fac: 'fire', role: 'warrior', rar: 'SSR',
     ult: { name: 'Broadside Barrage', type: 'random', hits: 5, mult: 0.8 },
-    look: { skin: '#f0c8a8', hair: '#b8202e', hs: 'long', hat: 'none', armor: '#1f2a4a', armor2: '#5a3a22', trim: '#e0b040', cape: '#1f2a4a', wpn: 'sword' } },
-  { id: 'morwen', name: 'Morwen', title: 'the Tidecaller', fac: 'water', role: 'mage', rar: 'SSR', img: 1, face: 1, hx: 0.53,
+    look: { skin: '#f0c8a8', hair: '#b8202e', hs: 'long', hat: 'tricorn', patch: 1, armor: '#1f2a4a', armor2: '#5a3a22', trim: '#e0b040', cape: '#1f2a4a', wpn: 'sword' } },
+  { id: 'morwen', name: 'Morwen', title: 'the Tidecaller', fac: 'water', role: 'mage', rar: 'SSR',
     ult: { name: 'Maelstrom', type: 'stun', mult: 1.0, chance: 0.4, aoe: true },
     look: { skin: '#f2d6c4', hair: '#2ab0c0', hs: 'long', hat: 'tiara', armor: '#1e8a9a', armor2: '#145a6a', trim: '#ffd0e0', wpn: 'staff' } },
-  { id: 'thornmaw', name: 'Thornmaw', title: 'Elder of the Wildwood', fac: 'nature', role: 'tank', rar: 'SSR', img: 1, face: 1, hx: 0.45, hy: 0.2, sz: 1.12,
+  { id: 'thornmaw', name: 'Thornmaw', title: 'Elder of the Wildwood', fac: 'nature', role: 'tank', rar: 'SSR',
     ult: { name: 'Wildroot Oath', type: 'buff', mult: 1.3, atkUp: 0.3, turns: 2 },
-    look: { skin: '#5a4a2a', hair: '#4a8a3a', hs: 'bald', hat: 'viking', armor: '#3a3020', armor2: '#2a2418', trim: '#7adf6a', wpn: 'hammer', build: 1.3 } },
-  { id: 'amunet', name: 'Amunet', title: 'Sun of the Dunes', fac: 'light', role: 'healer', rar: 'SSR', img: 1, face: 1, hx: 0.41,
+    look: { skin: '#6a5236', hair: '#4a8a3a', hs: 'spiky', hat: 'antlers', armor: '#4a3a24', armor2: '#3a2c1c', trim: '#7adf6a', wpn: 'hammer', beard: '#4a8a3a', eye: '#ffb030', build: 1.35, size: 1.12 } },
+  { id: 'amunet', name: 'Amunet', title: 'Sun of the Dunes', fac: 'light', role: 'healer', rar: 'SSR',
     ult: { name: 'Sunwell Blessing', type: 'heal', mult: 1.6 },
-    look: { skin: '#8a5a3a', hair: '#1a1410', hs: 'braid', hat: 'crown', armor: '#efe6d0', armor2: '#d8c8a0', trim: '#e8b830', wpn: 'staff' } },
-  { id: 'odette', name: 'Odette', title: 'the Porcelain Doll', fac: 'dark', role: 'assassin', rar: 'SSR', img: 1, face: 1, hx: 0.5,
+    look: { skin: '#8a5a3a', hair: '#1a1410', hs: 'braid', hat: 'crown', eye: '#ffe08a', armor: '#efe6d0', armor2: '#d8c8a0', trim: '#e8b830', wpn: 'staff' } },
+  { id: 'odette', name: 'Odette', title: 'the Porcelain Doll', fac: 'dark', role: 'assassin', rar: 'SSR',
     ult: { name: 'Strings of Sorrow', type: 'back', mult: 1.7 },
     look: { skin: '#f0e4ea', hair: '#e890c8', hs: 'long', hat: 'none', armor: '#5a2a7a', armor2: '#2a1a30', trim: '#e04a8a', wpn: 'dagger', eye: '#7a3aaa' } },
-  { id: 'kestrel', name: 'Kestrel', title: 'Windborne Huntress', fac: 'nature', role: 'archer', rar: 'SSR', img: 1, face: 1, hx: 0.46,
+  { id: 'kestrel', name: 'Kestrel', title: 'Windborne Huntress', fac: 'nature', role: 'archer', rar: 'SSR',
     ult: { name: 'Gale Volley', type: 'aoe', mult: 1.05 },
     look: { skin: '#f2dccc', hair: '#e8e8f0', hs: 'braid', hat: 'ears', armor: '#2a7a3a', armor2: '#3a2a1a', trim: '#d8c060', cape: '#1f5a2a', wpn: 'bow' } },
   // Epic
-  { id: 'grimhold', name: 'Grimhold', title: 'Forge Warden', fac: 'fire', role: 'tank', rar: 'SR', img: 1, face: -1, hx: 0.48, sz: 0.95,
+  { id: 'grimhold', name: 'Grimhold', title: 'Forge Warden', fac: 'fire', role: 'tank', rar: 'SR',
     ult: { name: 'Molten Slam', type: 'stun', mult: 1.6, chance: 0.7, aoe: false },
     look: { skin: '#e0a882', hair: '#c8401a', hs: 'bald', hat: 'viking', armor: '#3a2a22', armor2: '#2a1a14', trim: '#ff7a2a', wpn: 'hammer', shield: '#5a3a2a', beard: '#c8401a', build: 1.3, size: 0.9 } },
-  { id: 'selka', name: 'Selka', title: 'the Coral Knight', fac: 'water', role: 'warrior', rar: 'SR', img: 1, face: -1, hx: 0.55,
+  { id: 'selka', name: 'Selka', title: 'the Coral Knight', fac: 'water', role: 'warrior', rar: 'SR',
     ult: { name: 'Riptide Lance', type: 'single', mult: 2.6 },
     look: { skin: '#f0d6c0', hair: '#5ac0a8', hs: 'short', hat: 'helmet', armor: '#cfe8ec', armor2: '#7ab8c0', trim: '#2a9aaa', cape: '#1e7a8a', wpn: 'spear' } },
-  { id: 'willow', name: 'Willow', title: 'Dryad Healer', fac: 'nature', role: 'healer', rar: 'SR', img: 1, face: 1, hx: 0.53,
+  { id: 'willow', name: 'Willow', title: 'Dryad Healer', fac: 'nature', role: 'healer', rar: 'SR',
     ult: { name: 'Blossom Ward', type: 'healLow', mult: 2.2, shield: 1.2 },
     look: { skin: '#a8c890', hair: '#6aa04a', hs: 'long', hat: 'none', armor: '#4a8a3a', armor2: '#3a6a2a', trim: '#f0a0c0', wpn: 'staff' } },
-  { id: 'aurelia', name: 'Aurelia', title: 'Sunlance Paladin', fac: 'light', role: 'warrior', rar: 'SR', img: 1, face: 1, hx: 0.5,
+  { id: 'aurelia', name: 'Aurelia', title: 'Sunlance Paladin', fac: 'light', role: 'warrior', rar: 'SR',
     ult: { name: 'Dawnbreaker', type: 'buff', mult: 1.2, atkUp: 0.25, turns: 2 },
     look: { skin: '#f2d0b0', hair: '#f0c860', hs: 'short', hat: 'helmet', armor: '#f0e0b0', armor2: '#c8a860', trim: '#ffd84a', cape: '#f4ecd8', wpn: 'spear' } },
   { id: 'malachar', name: 'Malachar', title: 'the Hexknight', fac: 'dark', role: 'warrior', rar: 'SR',
