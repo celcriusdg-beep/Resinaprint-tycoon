@@ -56,7 +56,7 @@ const HEROES = [
 const RIGS = {
   scarlet: [
     { n: 'head', role: 'head', poly: [[9, 0], [25, 0], [26, 17], [8, 17]], pv: [17, 17], par: 'body', z: 5 },
-    { n: 'sword', role: 'armF', poly: [[22, 17], [33, 8], [36, 0], [62, 0], [62, 26], [35, 34], [28, 34], [22, 28]], pv: [23, 20], par: 'body', z: 6 },
+    { n: 'sword', role: 'armF', tip: [61, 10], base: [29, 29], poly: [[22, 17], [33, 8], [36, 0], [62, 0], [62, 26], [35, 34], [28, 34], [22, 28]], pv: [23, 20], par: 'body', z: 6 },
     { n: 'armB', role: 'armB', poly: [[0, 7], [10, 7], [11, 24], [0, 25]], pv: [9, 20], par: 'body', z: 1 },
     { n: 'legB', role: 'legB', poly: [[0, 33], [13, 33], [14, 55], [0, 55]], pv: [10, 33], par: null, z: 0 },
     { n: 'legF', role: 'legF', poly: [[17, 36], [33, 36], [33, 55], [17, 55]], pv: [21, 36], par: null, z: 3 },
@@ -64,7 +64,7 @@ const RIGS = {
   ],
   nova: [
     { n: 'head', role: 'head', poly: [[8, 0], [23, 0], [23, 15], [8, 15]], pv: [15, 15], par: 'body', z: 5 },
-    { n: 'gun', role: 'armF', poly: [[19, 17], [26, 17], [30, 22], [49, 24], [49, 42], [22, 42], [19, 36]], pv: [22, 20], par: 'body', z: 6 },
+    { n: 'gun', role: 'armF', tip: [48, 33], base: [30, 33], poly: [[19, 17], [26, 17], [30, 22], [49, 24], [49, 42], [22, 42], [19, 36]], pv: [22, 20], par: 'body', z: 6 },
     { n: 'armB', role: 'armB', poly: [[0, 15], [11, 15], [13, 22], [12, 31], [0, 31]], pv: [11, 17], par: 'body', z: 1 },
     { n: 'legB', role: 'legB', poly: [[0, 37], [14, 37], [14, 60], [0, 60]], pv: [11, 38], par: null, z: 0 },
     { n: 'legF', role: 'legF', poly: [[17, 38], [30, 38], [30, 60], [17, 60]], pv: [20, 38], par: null, z: 3 },
@@ -73,20 +73,56 @@ const RIGS = {
   sszira: [
     { n: 'head', role: 'head', poly: [[19, 0], [42, 0], [42, 15], [19, 15]], pv: [30, 15], par: 'torso', z: 5 },
     { n: 'staff', role: 'armB', poly: [[0, 6], [13, 6], [27, 17], [28, 30], [18, 31], [12, 20], [0, 16]], pv: [26, 19], par: 'torso', z: 3 },
-    { n: 'glaive', role: 'armF', poly: [[38, 20], [44, 26], [46, 32], [56, 32], [63, 32], [74, 46], [74, 58], [60, 58], [42, 40], [38, 34]], pv: [39, 22], par: 'torso', z: 6 },
+    { n: 'glaive', role: 'armF', tip: [72, 52], base: [44, 36], poly: [[38, 20], [44, 26], [46, 32], [56, 32], [63, 32], [74, 46], [74, 58], [60, 58], [42, 40], [38, 34]], pv: [39, 22], par: 'torso', z: 6 },
     { n: 'tail', role: 'tail', poly: [[8, 27], [21, 27], [21, 44], [8, 44]], pv: [15, 44], par: null, z: 0 },
     { n: 'torso', role: 'body', poly: [[18, 14], [43, 14], [43, 42], [18, 42]], pv: [31, 42], par: null, z: 4, fill: true },
     { n: 'coil', role: 'base', poly: [[0, 0], [74, 0], [74, 65], [0, 65]], pv: [31, 60], par: null, z: 1, fill: [[18, 38], [43, 38], [43, 48], [18, 48]] },
   ],
   lupa: [
     { n: 'head', role: 'head', poly: [[11, 4], [31, 4], [31, 21], [11, 21]], pv: [21, 21], par: 'body', z: 5 },
-    { n: 'bow', role: 'armF', poly: [[29, 0], [49, 0], [49, 49], [33, 49], [29, 40], [30, 28], [26, 27], [26, 21]], pv: [26, 23], par: 'body', z: 6 },
-    { n: 'armB', role: 'armB', poly: [[7, 21], [26, 21], [26, 30], [7, 30]], pv: [18, 23], par: 'body', z: 4 },
+    { n: 'bow', role: 'armF', tip: [42, 24], poly: [[29, 0], [49, 0], [49, 49], [33, 49], [29, 40], [30, 28], [26, 27], [26, 21]], pv: [26, 23], par: 'body', z: 6 },
+    { n: 'armB', role: 'armB', hand: [24, 24], poly: [[7, 21], [26, 21], [26, 30], [7, 30]], pv: [18, 23], par: 'body', z: 4 },
     { n: 'tail', role: 'tail', poly: [[0, 38], [16, 38], [16, 52], [0, 52]], pv: [14, 43], par: 'body', z: 0 },
     { n: 'legB', role: 'legB', poly: [[10, 41], [21, 41], [21, 59], [10, 59]], pv: [16, 41], par: null, z: 1 },
     { n: 'legF', role: 'legF', poly: [[23, 41], [37, 41], [37, 59], [23, 59]], pv: [27, 41], par: null, z: 3 },
     { n: 'body', role: 'body', poly: [[8, 20], [30, 20], [30, 45], [8, 45]], pv: [20, 42], par: null, z: 2, fill: true },
   ],
+};
+
+// Attack animations per hero as keyframes over the move (at: 0..1). Each key sets joint channels
+// [angle, dx, dy] (degrees and sprite pixels) for body, head, armF, armB, legF, legB, tail; ease shapes the
+// approach to that key. hit: when the blow lands. fire: [from, to] window for guns. release: when an arrow leaves.
+const CLIPS = {
+  scarlet: { melee: { dur: 720, hit: 0.5, trail: [0.43, 0.66], keys: [
+    { at: 0 },
+    { at: 0.3, ease: 'out', body: [-8, -1, 2], armF: [-118], armB: [22], head: [-6], legF: [8], legB: [-6] },
+    { at: 0.43, ease: 'in', body: [-11, -2, 3], armF: [-128], armB: [28], head: [-9], legF: [10], legB: [-8] },
+    { at: 0.5, ease: 'out', body: [13, 5, 1], armF: [52], armB: [-22], head: [6], legF: [20], legB: [-16] },
+    { at: 0.64, ease: 'out', body: [15, 6, 1], armF: [66], armB: [-26], head: [8], legF: [20], legB: [-16] },
+    { at: 1, ease: 'inout' },
+  ] } },
+  sszira: { melee: { dur: 780, hit: 0.52, trail: [0.44, 0.66], slam: true, keys: [
+    { at: 0 },
+    { at: 0.32, ease: 'out', body: [-9, -1, -1], armF: [-96], armB: [-24], head: [-8], tail: [28] },
+    { at: 0.44, ease: 'in', body: [-10, -1, -1], armF: [-108], armB: [-30], head: [-10], tail: [34] },
+    { at: 0.52, ease: 'out', body: [10, 3, 1], armF: [16], armB: [12], head: [6], tail: [-22] },
+    { at: 0.66, ease: 'out', body: [12, 3, 1], armF: [22], armB: [14], head: [8], tail: [-26] },
+    { at: 1, ease: 'inout' },
+  ] } },
+  nova: { shoot: { dur: 950, fire: [0.24, 0.82], keys: [
+    { at: 0 },
+    { at: 0.2, ease: 'out', body: [-5, -1, 1], armF: [-8], armB: [10], head: [-3], legF: [7], legB: [-7] },
+    { at: 0.82, body: [-5, -1, 1], armF: [-8], armB: [10], head: [-3], legF: [7], legB: [-7] },
+    { at: 1, ease: 'inout' },
+  ] } },
+  lupa: { shoot: { dur: 820, release: 0.6, keys: [
+    { at: 0 },
+    { at: 0.16, ease: 'out', armF: [-6], body: [-2] },
+    { at: 0.58, ease: 'inout', armB: [-6, -8, 0], armF: [-11], body: [-7, -1, 0], head: [-5], tail: [12], legB: [-5] },
+    { at: 0.63, ease: 'out', armB: [5, 3, 0], armF: [3], body: [3, 1, 0], head: [2] },
+    { at: 0.8, ease: 'out', armB: [2, 1, 0], armF: [0], body: [1] },
+    { at: 1, ease: 'inout' },
+  ] } },
 };
 
 // Heroes from earlier rosters are gone; saves that only had those start again with the starters.
@@ -108,4 +144,4 @@ const THEMES = [
 const STAGES_PER_CHAPTER = 10;
 const MAX_ROUNDS = 15;
 
-if (typeof module !== 'undefined') module.exports = { FACTIONS, BEATS, ROLES, RARITY, MAX_STARS, SUMMON, MELEE, HEROES, HMAP, RENAMED, RIGS, STARTERS, THEMES, STAGES_PER_CHAPTER, MAX_ROUNDS };
+if (typeof module !== 'undefined') module.exports = { FACTIONS, BEATS, ROLES, RARITY, MAX_STARS, SUMMON, MELEE, HEROES, HMAP, RENAMED, RIGS, CLIPS, STARTERS, THEMES, STAGES_PER_CHAPTER, MAX_ROUNDS };

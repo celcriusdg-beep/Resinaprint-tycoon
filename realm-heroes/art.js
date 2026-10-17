@@ -668,6 +668,20 @@ const Art = (() => {
     return rigs[h.id];
   }
 
+  const EASE = { out: k => 1 - (1 - k) ** 3, in: k => k ** 3, inout: k => k * k * (3 - 2 * k), linear: k => k };
+  const clipOf = (h, anim) => (CLIPS[h.id] && CLIPS[h.id][anim]) || null;
+  // Plays a keyframe clip at progress p into R.
+  function playClip(R, clip, p) {
+    const ks = clip.keys;
+    let i = 1;
+    while (i < ks.length - 1 && p > ks[i].at) i++;
+    const a = ks[i - 1], b = ks[i], k = (EASE[b.ease] || EASE.linear)(Math.min(1, Math.max(0, (p - a.at) / ((b.at - a.at) || 1))));
+    for (const ch of ['body', 'head', 'armF', 'armB', 'legF', 'legB', 'tail']) {
+      const va = a[ch] || [], vb = b[ch] || [];
+      for (let j = 0; j < 3; j++) R[ch][j] += (va[j] || 0) + ((vb[j] || 0) - (va[j] || 0)) * k;
+    }
+  }
+
   // Joint angles (degrees, + turns clockwise; sprites face right so + lowers an arm) and offsets for one moment.
   function rigPose(h, anim, p, t) {
     const R = { body: [0, 0, 0], head: [0, 0, 0], armF: [0, 0, 0], armB: [0, 0, 0], legF: [0, 0, 0], legB: [0, 0, 0], tail: [0, 0, 0], base: [0, 0, 0] };
@@ -675,10 +689,17 @@ const Art = (() => {
     const sw = (a, b, k) => a + (b - a) * k, ez = k => (k <= 0 ? 0 : k >= 1 ? 1 : k * k * (3 - 2 * k));
     const wpn = h.look.wpn, br = Math.sin(t * 2.6);
     set('tail', Math.sin(t * 3.1) * 9);
+    const clip = clipOf(h, anim);
+    if (clip) {
+      playClip(R, clip, p);
+      if (clip.fire && p > clip.fire[0] && p < clip.fire[1] && Math.floor(t * 24) % 2) { set('armF', -4, -3, 0); set('body', -2, -1, 0); set('head', -2); } // recoil
+      return R;
+    }
     switch (anim) {
       case 'idle':
-        set('body', br * 1.5, 0, br > 0.3 ? -1 : 0); set('head', Math.sin(t * 2.6 - 0.6) * 3);
-        set('armF', Math.sin(t * 2.6 + 0.4) * 3); set('armB', -br * 4);
+        set('body', br * 2, 0, br > 0.3 ? -1 : 0); set('head', Math.sin(t * 2.6 - 0.7) * 4);
+        set('armF', Math.sin(t * 2.6 + 0.5) * 4); set('armB', -Math.sin(t * 2.6 + 0.3) * 5);
+        set('legF', Math.sin(t * 1.3) * 2); set('legB', -Math.sin(t * 1.3) * 2);
         break;
       case 'run': {
         const c = Math.sin(t * 13);
@@ -708,8 +729,8 @@ const Art = (() => {
         break;
       }
       case 'hit': {
-        const k = 1 - ez(p);
-        set('body', -12 * k); set('head', -14 * k); set('armF', -20 * k); set('armB', 18 * k); set('legF', -6 * k);
+        const k = p < 0.15 ? p / 0.15 : 1 - ez((p - 0.15) / 0.85);
+        set('body', -16 * k, -2 * k, 0); set('head', -20 * k); set('armF', -26 * k); set('armB', 24 * k); set('legF', -10 * k); set('legB', 6 * k); set('tail', -20 * k);
         break;
       }
       case 'die': {
@@ -741,14 +762,36 @@ const Art = (() => {
       const m = parent.translate(part.pv[0] + dx, part.pv[1] + dy).rotate(a).translate(-part.pv[0], -part.pv[1]);
       return (mats[part.n] = m);
     };
-    for (const part of rig.order) {
+    // a weapon arm raised far back (sword wound up overhead) passes behind the body and head
+    const order = R.armF[0] < -60 ? [...rig.order].sort((a, b) => (a.role === 'armF' ? 1.5 : a.z) - (b.role === 'armF' ? 1.5 : b.z)) : rig.order;
+    for (const part of order) {
       const m = matOf(part);
       // snap translation to whole pixels so parts never sit between pixels
       x.setTransform(m.a, m.b, m.c, m.d, Math.round(m.e), Math.round(m.f));
       x.drawImage(part.canvas, 0, 0);
     }
     x.setTransform(1, 0, 0, 1, 0, 0);
-    return rig.comp;
+    const pt = (part, q) => { const r = matOf(part).transformPoint(new DOMPoint(q[0], q[1])); return [Math.round(r.x), Math.round(r.y)]; };
+    const out = { comp: rig.comp };
+    const weapon = rig.parts.find(q => q.tip);
+    if (weapon) { out.tip = pt(weapon, weapon.tip); if (weapon.base) out.base = pt(weapon, weapon.base); }
+    const clip = clipOf(h, anim), px = (cx, cy, c) => { x.fillStyle = c; x.fillRect(cx, cy, 1, 1); };
+    // gatling muzzle flash, every other frame while firing
+    if (clip && clip.fire && out.tip && p > clip.fire[0] && p < clip.fire[1] && Math.floor(t * 24) % 2) {
+      const [mx, my] = out.tip;
+      x.fillStyle = '#ffd040'; x.fillRect(mx + 1, my - 2, 4, 5); x.fillRect(mx + 5, my - 1, 3, 3);
+      x.fillStyle = '#fff8d0'; x.fillRect(mx + 1, my - 1, 3, 3); x.fillRect(mx + 4, my, 4, 1);
+      px(mx + 2, my - 4, '#ff9020'); px(mx + 3, my + 4, '#ff9020'); px(mx + 9, my, '#ffd040');
+    }
+    // nocked arrow from the drawing hand to past the bow while the bow is drawn
+    if (clip && clip.release && p < clip.release && p > 0.05 && out.tip) {
+      const hand = rig.parts.find(q => q.hand), [hx, hy] = pt(hand, hand.hand), [gx, gy] = out.tip;
+      const n = Math.max(Math.abs(gx + 6 - hx), Math.abs(gy - hy));
+      for (let i = 0; i <= n; i++) px(Math.round(hx + (gx + 6 - hx) * i / n), Math.round(hy + (gy - hy) * i / n), '#c8b080');
+      px(gx + 7, gy, '#e8f0f0'); px(gx + 8, gy, '#e8f0f0'); px(gx + 7, gy - 1, '#a8b8b8'); px(gx + 7, gy + 1, '#a8b8b8');
+      px(hx - 1, hy - 1, '#e8e8e8'); px(hx - 1, hy + 1, '#e8e8e8');
+    }
+    return out;
   }
 
   function drawSprite(ctx, h, o, P, alpha) {
@@ -782,8 +825,13 @@ const Art = (() => {
     if (rot) ctx.rotate(rot);
     const x0 = -Math.round((h.fx || 0.5) * im.naturalWidth) * ps;
     const rig = rigFor(h);
+    let result = null;
     if (rig) {
-      const comp = composeRig(rig, h, anim, Math.min(1, o.p || 0), t), cw = comp.width * ps, ch = comp.height * ps;
+      const posed = composeRig(rig, h, anim, Math.min(1, o.p || 0), t), comp = posed.comp, cw = comp.width * ps, ch = comp.height * ps;
+      // where the weapon is on screen, for trails (no rotation here except while falling)
+      const tx = snap(P.dx * k * 1.4), ty = snap(dy * k);
+      const toWorld = q => q && [Math.round(o.x) + face * (tx + x0 - PAD * ps + (q[0] + 0.5) * ps), Math.round(o.y) + ty - H - PAD * ps + (q[1] + 0.5) * ps];
+      result = { tip: toWorld(posed.tip), base: toWorld(posed.base) };
       ctx.drawImage(comp, x0 - PAD * ps, -H - PAD * ps, cw, ch);
       if ((o.flash || 0) > 0.02) {
         const wx = rig.white.getContext('2d');
@@ -797,6 +845,7 @@ const Art = (() => {
       if ((o.flash || 0) > 0.02) { ctx.globalAlpha = alpha * Math.min(1, o.flash); ctx.drawImage(spriteWhite[h.id], x0, -H, W, H); }
     }
     ctx.restore();
+    return result;
   }
 
   // o: {x, y, s, face, anim, p, t, flash, alpha, aura, noShadow}
@@ -925,5 +974,5 @@ const Art = (() => {
     ]).catch(() => {}).then(loadSprites);
   }
 
-  return { drawHero, portrait, cardArt, hexA, rgb, ready, pixelSize, pixCanvas, blit, spriteRef, spriteScale, halfWidth };
+  return { drawHero, portrait, cardArt, hexA, rgb, ready, pixelSize, pixCanvas, blit, spriteRef, spriteScale, halfWidth, clipOf };
 })();

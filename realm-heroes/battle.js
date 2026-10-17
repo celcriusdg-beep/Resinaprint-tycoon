@@ -117,7 +117,13 @@ const Battle = (() => {
       return new Promise(r => { if (this.skipping) return r(); this.waiters.push({ at: this.time + ms, r }); });
     }
     setAnim(u, a, dur) { u.anim = a; u.a0 = this.time; u.adur = dur; }
+    dust(x, y, n = 6) {
+      const sc = this.sc;
+      for (let i = 0; i < n; i++) this.fx.push({ k: 'spark', x: x + (Math.random() - 0.5) * 20 * sc, y: y - 2, vx: (Math.random() - 0.5) * 0.08, vy: -0.03 - Math.random() * 0.04,
+        g: 0.00012, col: Math.random() < 0.5 ? '#d8c8a0' : '#b8a880', r: (1.5 + Math.random() * 2) * sc, t0: this.time, life: 380 + Math.random() * 200 });
+    }
     moveTo(u, x, y, dur) {
+      if (Math.abs(x - u.x) > 8) this.dust(u.x, u.y, 5);
       u.tw = { x0: u.x, y0: u.y, x1: x, y1: y, t0: this.time, d: dur };
       this.setAnim(u, 'run', dur);
       u.face = x >= u.x ? 1 : -1;
@@ -168,6 +174,7 @@ const Battle = (() => {
 
     impact(att, hit, opts = {}) {
       const t = this.units[hit.u];
+      if (!this.skipping) this.hitstop = Math.max(this.hitstop || 0, hit.crit ? 120 : MELEE.has(att.h.look.wpn) ? 75 : 35);
       t.hp = Math.max(0, t.hp - Math.max(0, hit.dmg - (opts.absorbed || 0)));
       const [cx, cy] = this.centre(t);
       const col = FACTIONS[att.h.fac].col;
@@ -248,14 +255,21 @@ const Battle = (() => {
       }
       await this.moveTo(u, tx, ty, ult ? 240 : 300);
       u.face = u.side === 'a' ? 1 : -1;
+      this.dust(u.x, u.y, 6);
       const groups = e.type === 'random' ? e.hits.map(x => [x]) : [e.hits];
+      const clip = Art.clipOf(u.h, 'melee'), dur = clip ? clip.dur : ult ? 380 : 440, hitAt = clip ? clip.hit : 0.48;
       for (const g of groups) {
-        this.setAnim(u, 'melee', ult ? 380 : 440);
+        this.setAnim(u, 'melee', dur);
+        await this.sleep(dur * hitAt * 0.8);
         Sfx.play('swing');
-        await this.sleep(ult ? 170 : 210);
+        await this.sleep(dur * hitAt * 0.2);
         if (ult && distinct.length > 1) { this.shake = 9; this.ring(tx + u.face * 70 * sc, ty - 40 * sc, FACTIONS[u.h.fac].glow, 120 * sc, 500); }
-        g.forEach(hit => this.impact(u, hit, { slash: true }));
-        await this.sleep(ult ? 200 : 230);
+        if (clip && clip.slam) { // the blow hits the ground: shockwave and dust
+          const gx = (u.tip ? u.tip[0] : tx + u.face * 60 * sc), gy = ty;
+          this.ring(gx, gy, '#e8d8b0', 90 * sc, 420); this.dust(gx, gy, 14); this.shake = Math.max(this.shake, 10);
+        }
+        g.forEach(hit => this.impact(u, hit, { slash: !clip }));
+        await this.sleep(dur * (1 - hitAt) * 0.75);
       }
       await this.moveTo(u, u.hx, u.hy, 260);
       u.face = u.side === 'a' ? 1 : -1;
@@ -265,8 +279,41 @@ const Battle = (() => {
     async rangedAct(u, e, targets, ult) {
       const sc = this.sc, gun = u.h.look.wpn === 'gun', bow = u.h.look.wpn === 'bow' || gun, fac = FACTIONS[u.h.fac];
       const meteor = ult && !bow && ['aoe', 'burn', 'back', 'stun'].includes(e.type);
+      const muzzle = () => u.tip ? [...u.tip] : [u.x + u.face * Art.halfWidth(u.h, sc), u.y - 52 * sc];
+      const gclip = gun && Art.clipOf(u.h, 'shoot');
+      if (gclip) { // one long burst: bullets stream out across the firing window, spread over the targets
+        this.setAnim(u, 'shoot', gclip.dur);
+        await this.sleep(gclip.dur * gclip.fire[0]);
+        const span = gclip.dur * (gclip.fire[1] - gclip.fire[0]), shots = Math.max(2, Math.round(8 / e.hits.length));
+        for (const hit of e.hits) {
+          const t = this.units[hit.u];
+          for (let b = 0; b < shots; b++) {
+            const to = this.centre(t), from = muzzle();
+            this.proj('bullet', from, [to[0] + (Math.random() - 0.5) * 10 * sc, to[1] + (Math.random() - 0.5) * 14 * sc], '#ffe066', 130);
+            this.fx.push({ k: 'spark', x: from[0] - u.face * 14 * sc, y: from[1] - 2 * sc, vx: -u.face * (0.03 + Math.random() * 0.04), vy: -0.12 - Math.random() * 0.05,
+              g: 0.0009, col: '#e8b830', r: 1.3 * sc, t0: this.time, life: 420 }); // shell casing
+            Sfx.play('gun');
+            await this.sleep(span / e.hits.length / shots);
+          }
+          this.impact(u, hit);
+        }
+        await this.sleep(gclip.dur * (1 - gclip.fire[1]) + 120);
+        return;
+      }
+      const bclip = !gun && bow && Art.clipOf(u.h, 'shoot');
       const groups = e.type === 'random' ? e.hits.map(x => [x]) : [e.hits];
       for (const g of groups) {
+        if (bclip) { // full draw, then loose
+          this.setAnim(u, 'shoot', bclip.dur);
+          await this.sleep(bclip.dur * bclip.release);
+          const from = muzzle(), dur = 260;
+          g.forEach(hit => this.proj('arrow', from, this.centre(this.units[hit.u]), fac.col, dur));
+          Sfx.play('bow');
+          await this.sleep(dur);
+          g.forEach(hit => this.impact(u, hit));
+          await this.sleep(Math.max(120, bclip.dur * (1 - bclip.release) - dur));
+          continue;
+        }
         this.setAnim(u, bow ? 'shoot' : 'cast', bow ? 480 : 560);
         await this.sleep(bow ? 270 : 300);
         const from = gun ? [u.x + u.face * Art.halfWidth(u.h, sc), u.y - 52 * sc]
@@ -334,7 +381,7 @@ const Battle = (() => {
 
     skip() {
       if (this.over) return;
-      this.skipping = true;
+      this.skipping = true; this.hitstop = 0;
       const w = this.waiters; this.waiters = [];
       w.forEach(x => x.r());
       // play() notices skipping at its next await and calls finish()
@@ -344,7 +391,9 @@ const Battle = (() => {
       if (run !== this) return;
       const dtReal = Math.min(50, now - this.last);
       this.last = now;
-      const dt = dtReal * this.speed;
+      // hitstop: the whole battle holds still for a moment when a blow lands
+      let dt = dtReal * this.speed;
+      if (this.hitstop > 0) { this.hitstop -= dtReal; dt = 0; }
       this.time += dt;
       if (this.waiters.length) {
         const due = this.waiters.filter(w => w.at <= this.time);
@@ -370,7 +419,7 @@ const Battle = (() => {
       this.shake *= Math.pow(0.9, dt / 16);
       ctx.drawImage(Scenery.backdrop(this.opts.theme, W, H, pix * 3, this.hz), 0, 0, W, H);
       if (this.dim > 0) { ctx.fillStyle = 'rgba(10,6,24,.35)'; ctx.fillRect(0, 0, W, H); }
-      const drawn = [];
+      const drawn = [], trails = [];
       const list = Object.values(this.units).filter(u => !u.dead).sort((a, b) => a.y - b.y);
       for (const u of list) {
         if (u.tw) {
@@ -386,10 +435,23 @@ const Battle = (() => {
         }
         u.flash = Math.max(0, u.flash - dt / 260);
         const s = sc * (u.boss ? 1.35 : 1), t = this.time / 1000 + u.seed;
-        Art.drawHero(ctx, u.h, { x: Math.round(u.x / pix) * pix, y: Math.round(u.y / pix) * pix, s, face: u.face, anim: u.anim,
+        // afterimages while dashing
+        u.ghosts = (u.ghosts || []).filter(g => this.time - g.at < 200);
+        if (u.tw && Math.abs(u.tw.x1 - u.tw.x0) > 8 && (!u.ghosts.length || this.time - u.ghosts[u.ghosts.length - 1].at > 45))
+          u.ghosts.push({ at: this.time, x: u.x, y: u.y, face: u.face, p: Math.min(1, p), t });
+        for (const g of u.ghosts) Art.drawHero(ctx, u.h, { x: Math.round(g.x / pix) * pix, y: Math.round(g.y / pix) * pix, s, face: g.face, anim: 'run',
+          p: g.p, t: g.t, alpha: 0.35 * (1 - (this.time - g.at) / 200), flash: 0.7, noShadow: true });
+        const r = Art.drawHero(ctx, u.h, { x: Math.round(u.x / pix) * pix, y: Math.round(u.y / pix) * pix, s, face: u.face, anim: u.anim,
           p: Math.min(1, p), t, flash: u.flash * 0.85, aura: u.up ? 0.25 + Math.sin(t * 4) * 0.1 : 0 });
+        if (r && r.tip) { u.tip = r.tip; u.base = r.base; }
+        // weapon smear along the swing
+        const clip = u.anim === 'melee' && Art.clipOf(u.h, 'melee');
+        u.trail = (u.trail || []).filter(q => this.time - q.at < 170);
+        if (clip && clip.trail && r && r.tip && r.base && p >= clip.trail[0] && p <= clip.trail[1]) u.trail.push({ at: this.time, tip: r.tip, base: r.base });
+        if (u.trail.length > 1) trails.push(u);
         if (!u.dying) drawn.push([u, s, t]);
       }
+      for (const u of trails) this.drawTrail(ctx, u);
       this.drawProjs();
       this.drawFx();
       this.ctx = screen;
@@ -403,6 +465,26 @@ const Battle = (() => {
       if (this.banner) this.drawBanner();
       this.drawTexts();
       screen.restore();
+    }
+
+    // Smear arc: the band swept between the weapon's base and tip over the last few frames.
+    drawTrail(ctx, u) {
+      const pts = u.trail, col = FACTIONS[u.h.fac].glow;
+      const newest = pts[pts.length - 1].at;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, 1 - (this.time - newest) / 170) * 0.75;
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      pts.forEach((q, i) => (i ? ctx.lineTo(q.tip[0], q.tip[1]) : ctx.moveTo(q.tip[0], q.tip[1])));
+      for (let i = pts.length - 1; i >= 0; i--) {
+        const q = pts[i], m = [q.base[0] + (q.tip[0] - q.base[0]) * 0.45, q.base[1] + (q.tip[1] - q.base[1]) * 0.45];
+        ctx.lineTo(m[0], m[1]);
+      }
+      ctx.closePath(); ctx.fill();
+      ctx.globalAlpha *= 1.2;
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(2, this.pix * 1.5);
+      ctx.beginPath(); pts.forEach((q, i) => (i ? ctx.lineTo(q.tip[0], q.tip[1]) : ctx.moveTo(q.tip[0], q.tip[1]))); ctx.stroke();
+      ctx.restore();
     }
 
     drawBars(u, s, t) {
