@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#140f24"><title>Realm Heroes</title>
+<link rel="stylesheet" href="style.css"></head>
+<body>
+<div id="app">
+ <header id="top">
+  <div class="res"><span>🪙</span><b id="rGold">0</b></div>
+  <div class="res"><span>✨</span><b id="rXp">0</b></div>
+  <div class="res"><span>💎</span><b id="rGems">0</b></div>
+  <button id="btnSet" aria-label="Settings">⚙</button>
+ </header>
+ <main id="view"></main>
+ <nav id="tabs">
+  <button data-tab="camp" class="on"><i>⚔</i>Campaign</button>
+  <button data-tab="heroes"><i>🛡</i>Heroes</button>
+  <button data-tab="summon"><i>🔮</i>Summon</button>
+ </nav>
+</div>
+<div id="battle" class="hide">
+ <div id="btop"><b id="bstage"></b><span id="bround"></span><span class="sp"></span><button id="bspeed">1×</button><button id="bskip">Skip ⏭</button></div>
+ <div id="bfoes"></div>
+ <canvas id="bcv"></canvas>
+ <div id="bteam"></div>
+</div>
+<div id="modal" class="hide"></div>
+<div id="toast"></div>
+<script src="data.js"></script>
+<script src="sim.js"></script>
+<script src="art.js"></script>
+<script src="battle.js"></script>
+<script src="game.js"></script>
+</body></html>

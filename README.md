@@ -58,6 +58,14 @@ the game falls back to the drawn picture.
 ## Age of Resin
 A second game in `age-of-resin/` (open `age-of-resin/index.html`, or Empire > More in Resinaprint). Five ages, four units each, turrets, specials and an enemy AI. Saves only win counts in localStorage.
 
+## Realm Heroes
+A hero-collector gacha game in `realm-heroes/` (open `realm-heroes/index.html`, or Empire > More in Resinaprint).
+18 heroes in 5 factions and 3 rarities, drawn as animated 2D characters (`art.js`). Summon with gems (40-pull
+Legendary pity), build a 5-hero formation, and clear a 10-stage-per-chapter campaign in auto-battles; idle loot
+builds up for 12 hours. `sim.js` computes each battle up front as an event list (no DOM, runs in Node);
+`battle.js` plays it back with movement, projectiles, ultimates and damage numbers. Saves to localStorage
+(`realm-heroes-v1`), with export/import in Settings.
+
 ## 3.5 The Workshop Update
 Studio scene (js/workshop.js), story chapters, regulars, events and figure shelf (js/story.js), tech tree (js/tree.js), painting mini-game (js/minigame.js), sounds and confetti (js/fx.js), styles in css/game.css.
 
