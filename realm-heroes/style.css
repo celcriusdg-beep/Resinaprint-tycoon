@@ -99,7 +99,7 @@ textarea{width:100%;background:#0006;color:var(--ink);border:1px solid var(--lin
 .slot small{position:absolute;bottom:0;left:0;right:0;background:#000a;font-size:10px;color:#fff}
 
 /* hero detail */
-.detail canvas{width:100%;height:220px;display:block;border-radius:14px;background:linear-gradient(#1c1640,#0d0a20);border:2px solid var(--rc)}
+.detail canvas{width:100%;height:clamp(240px,38vh,340px);display:block;border-radius:14px;background:linear-gradient(#1c1640,#0d0a20);border:2px solid var(--rc)}
 .dhead h2{margin:10px 0 2px}.tags{color:var(--mut)}
 .st.big{color:var(--gold);font-size:20px;letter-spacing:1px}.st i{color:#ffffff22;font-style:normal}
 .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:10px 0}

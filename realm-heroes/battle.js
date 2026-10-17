@@ -232,7 +232,7 @@ const Battle = (() => {
     async meleeAct(u, e, targets, ult) {
       const sc = this.sc, distinct = [...new Set(targets)];
       let tx, ty;
-      if (distinct.length === 1) { tx = distinct[0].x - u.face * 46 * sc * (distinct[0].boss ? 1.3 : 1); ty = distinct[0].y + 1; }
+      if (distinct.length === 1) { tx = distinct[0].x - u.face * (Art.hasSprite(distinct[0].h) || Art.hasSprite(u.h) ? 62 : 46) * sc * (distinct[0].boss ? 1.3 : 1); ty = distinct[0].y + 1; }
       else {
         tx = distinct.reduce((s, t) => s + t.x, 0) / distinct.length - u.face * 70 * sc;
         ty = distinct.reduce((s, t) => s + t.y, 0) / distinct.length;

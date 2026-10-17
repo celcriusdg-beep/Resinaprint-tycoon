@@ -32,71 +32,77 @@ const SUMMON = { SSR: 0.04, SR: 0.24, pity: 40, cost1: 100, cost10: 900 };
 
 const MELEE = new Set(['sword', 'axe', 'hammer', 'spear', 'dagger', 'scythe']);
 
-// look: skin, hair, hs (hair style), hat, armor, armor2 (legs), trim, cape, wpn, shield, eye, beard, build, size
+// look: drawn fallback rig (skin, hair, hs, hat, armor, armor2, trim, cape, wpn, shield, eye, beard, build, size).
+// img: painted sprite in img/<id>.webp; face: which way the painting faces (1 right, -1 left);
+// hx: head position across the sprite (0..1) for portrait framing; sz: battle size.
 // ult types: single, aoe, back, random, burn, stun, heal, healLow, buff, drain
 const HEROES = [
   // Legendary
-  { id: 'pyra', name: 'Pyra', title: 'Ember Empress', fac: 'fire', role: 'mage', rar: 'SSR',
-    ult: { name: 'Inferno Rain', type: 'burn', mult: 0.95, dot: 0.35, turns: 2 },
-    look: { skin: '#f6d0b0', hair: '#e2332a', hs: 'long', hat: 'crown', armor: '#9c1c2c', armor2: '#4a1018', trim: '#ffc44d', cape: '#5c0f1b', wpn: 'staff', eye: '#ff9d00' } },
-  { id: 'thalor', name: 'Thalor', title: 'Tide Warden', fac: 'water', role: 'warrior', rar: 'SSR',
-    ult: { name: 'Riptide', type: 'stun', mult: 1.0, chance: 0.45, aoe: true },
-    look: { skin: '#e0b48f', hair: '#1d3d6b', hs: 'short', hat: 'helmet', armor: '#2563a8', armor2: '#1a3256', trim: '#9fe3ff', cape: '#123a66', wpn: 'spear', beard: '#1d3d6b', build: 1.1 } },
-  { id: 'sylvara', name: 'Sylvara', title: 'Grove Mother', fac: 'nature', role: 'healer', rar: 'SSR',
-    ult: { name: 'Bloom of Life', type: 'heal', mult: 1.6 },
-    look: { skin: '#f2d6b8', hair: '#7fdc6a', hs: 'long', hat: 'ears', armor: '#2f7a3b', armor2: '#1d4a26', trim: '#e9f7a1', cape: '#3f9b4a', wpn: 'staff', eye: '#2c8a3a' } },
-  { id: 'aurelion', name: 'Aurelion', title: 'Dawn Paladin', fac: 'light', role: 'tank', rar: 'SSR',
-    ult: { name: 'Sunforge Oath', type: 'buff', mult: 1.3, atkUp: 0.3, turns: 2 },
-    look: { skin: '#f0c8a0', hair: '#f5e08a', hs: 'short', hat: 'halo', armor: '#e8c25a', armor2: '#8a6a2a', trim: '#fff6c8', cape: '#c4302b', wpn: 'hammer', shield: '#f4d26b', build: 1.2 } },
-  { id: 'nyx', name: 'Nyx', title: 'Night Reaper', fac: 'dark', role: 'assassin', rar: 'SSR',
-    ult: { name: 'Shadow Harvest', type: 'back', mult: 1.7 },
-    look: { skin: '#d9c6e8', hair: '#2a1840', hs: 'long', hat: 'hood', armor: '#2d1b47', armor2: '#1a1029', trim: '#c08bff', cape: '#1f1233', wpn: 'scythe', eye: '#e05cff' } },
-  { id: 'kael', name: 'Kael', title: 'Phoenix Archer', fac: 'fire', role: 'archer', rar: 'SSR',
-    ult: { name: 'Phoenix Volley', type: 'random', hits: 5, mult: 0.75 },
-    look: { skin: '#e8bf98', hair: '#ff8a3d', hs: 'spiky', hat: 'bandana', armor: '#7a3e1c', armor2: '#3d2412', trim: '#ffcf6b', cape: '#b8401a', wpn: 'bow' } },
+  { id: 'vesper', name: 'Vesper', title: 'Blackpowder Captain', fac: 'fire', role: 'warrior', rar: 'SSR', img: 1, face: 1, hx: 0.43,
+    ult: { name: 'Broadside Barrage', type: 'random', hits: 5, mult: 0.8 },
+    look: { skin: '#f0c8a8', hair: '#b8202e', hs: 'long', hat: 'none', armor: '#1f2a4a', armor2: '#5a3a22', trim: '#e0b040', cape: '#1f2a4a', wpn: 'sword' } },
+  { id: 'morwen', name: 'Morwen', title: 'the Tidecaller', fac: 'water', role: 'mage', rar: 'SSR', img: 1, face: 1, hx: 0.53,
+    ult: { name: 'Maelstrom', type: 'stun', mult: 1.0, chance: 0.4, aoe: true },
+    look: { skin: '#f2d6c4', hair: '#2ab0c0', hs: 'long', hat: 'tiara', armor: '#1e8a9a', armor2: '#145a6a', trim: '#ffd0e0', wpn: 'staff' } },
+  { id: 'thornmaw', name: 'Thornmaw', title: 'Elder of the Wildwood', fac: 'nature', role: 'tank', rar: 'SSR', img: 1, face: 1, hx: 0.45, hy: 0.2, sz: 1.12,
+    ult: { name: 'Wildroot Oath', type: 'buff', mult: 1.3, atkUp: 0.3, turns: 2 },
+    look: { skin: '#5a4a2a', hair: '#4a8a3a', hs: 'bald', hat: 'viking', armor: '#3a3020', armor2: '#2a2418', trim: '#7adf6a', wpn: 'hammer', build: 1.3 } },
+  { id: 'amunet', name: 'Amunet', title: 'Sun of the Dunes', fac: 'light', role: 'healer', rar: 'SSR', img: 1, face: 1, hx: 0.41,
+    ult: { name: 'Sunwell Blessing', type: 'heal', mult: 1.6 },
+    look: { skin: '#8a5a3a', hair: '#1a1410', hs: 'braid', hat: 'crown', armor: '#efe6d0', armor2: '#d8c8a0', trim: '#e8b830', wpn: 'staff' } },
+  { id: 'odette', name: 'Odette', title: 'the Porcelain Doll', fac: 'dark', role: 'assassin', rar: 'SSR', img: 1, face: 1, hx: 0.5,
+    ult: { name: 'Strings of Sorrow', type: 'back', mult: 1.7 },
+    look: { skin: '#f0e4ea', hair: '#e890c8', hs: 'long', hat: 'none', armor: '#5a2a7a', armor2: '#2a1a30', trim: '#e04a8a', wpn: 'dagger', eye: '#7a3aaa' } },
+  { id: 'kestrel', name: 'Kestrel', title: 'Windborne Huntress', fac: 'nature', role: 'archer', rar: 'SSR', img: 1, face: 1, hx: 0.46,
+    ult: { name: 'Gale Volley', type: 'aoe', mult: 1.05 },
+    look: { skin: '#f2dccc', hair: '#e8e8f0', hs: 'braid', hat: 'ears', armor: '#2a7a3a', armor2: '#3a2a1a', trim: '#d8c060', cape: '#1f5a2a', wpn: 'bow' } },
   // Epic
-  { id: 'brann', name: 'Brann', title: 'Ironhide', fac: 'nature', role: 'warrior', rar: 'SR',
-    ult: { name: 'Earthsplitter', type: 'single', mult: 2.6 },
-    look: { skin: '#d9a982', hair: '#6b3f1f', hs: 'bald', hat: 'viking', armor: '#5a6b3a', armor2: '#3a2e1f', trim: '#c9a35a', wpn: 'axe', beard: '#8b5a2b', build: 1.25 } },
-  { id: 'mira', name: 'Mira', title: 'Frost Seer', fac: 'water', role: 'mage', rar: 'SR',
-    ult: { name: 'Blizzard', type: 'aoe', mult: 1.0 },
-    look: { skin: '#f4dcd0', hair: '#cfefff', hs: 'pony', hat: 'wizard', armor: '#3b6fb5', armor2: '#26457a', trim: '#e6f7ff', wpn: 'staff' } },
-  { id: 'vex', name: 'Vex', title: 'Hexblade', fac: 'dark', role: 'warrior', rar: 'SR',
-    ult: { name: 'Soul Rend', type: 'drain', mult: 2.0, heal: 0.6 },
-    look: { skin: '#c7b2b2', hair: '#d9d9e6', hs: 'spiky', hat: 'none', armor: '#3a2340', armor2: '#221522', trim: '#ff4d7a', cape: '#5a1030', wpn: 'sword', eye: '#ff3355' } },
-  { id: 'lumi', name: 'Lumi', title: 'Star Cleric', fac: 'light', role: 'healer', rar: 'SR',
-    ult: { name: 'Starlight Ward', type: 'healLow', mult: 2.2, shield: 1.2 },
-    look: { skin: '#ffe2c8', hair: '#fff2a8', hs: 'braid', hat: 'tiara', armor: '#f5f0e0', armor2: '#c9b98a', trim: '#ffcc33', wpn: 'staff' } },
-  { id: 'rook', name: 'Rook', title: 'Cinder Knight', fac: 'fire', role: 'tank', rar: 'SR',
+  { id: 'grimhold', name: 'Grimhold', title: 'Forge Warden', fac: 'fire', role: 'tank', rar: 'SR', img: 1, face: -1, hx: 0.48, sz: 0.95,
     ult: { name: 'Molten Slam', type: 'stun', mult: 1.6, chance: 0.7, aoe: false },
-    look: { skin: '#d9a17a', hair: '#3a2a20', hs: 'short', hat: 'helmet', armor: '#6b2a1c', armor2: '#2e1a14', trim: '#ff7a2a', wpn: 'hammer', shield: '#8a3a22', build: 1.25 } },
-  { id: 'fenna', name: 'Fenna', title: 'Thorn Archer', fac: 'nature', role: 'archer', rar: 'SR',
-    ult: { name: 'Thorn Barrage', type: 'back', mult: 1.3 },
-    look: { skin: '#efcfae', hair: '#c8641f', hs: 'pony', hat: 'ears', armor: '#4f7d34', armor2: '#2f4a20', trim: '#d6e88a', cape: '#3d6b2a', wpn: 'bow' } },
+    look: { skin: '#e0a882', hair: '#c8401a', hs: 'bald', hat: 'viking', armor: '#3a2a22', armor2: '#2a1a14', trim: '#ff7a2a', wpn: 'hammer', shield: '#5a3a2a', beard: '#c8401a', build: 1.3, size: 0.9 } },
+  { id: 'selka', name: 'Selka', title: 'the Coral Knight', fac: 'water', role: 'warrior', rar: 'SR', img: 1, face: -1, hx: 0.55,
+    ult: { name: 'Riptide Lance', type: 'single', mult: 2.6 },
+    look: { skin: '#f0d6c0', hair: '#5ac0a8', hs: 'short', hat: 'helmet', armor: '#cfe8ec', armor2: '#7ab8c0', trim: '#2a9aaa', cape: '#1e7a8a', wpn: 'spear' } },
+  { id: 'willow', name: 'Willow', title: 'Dryad Healer', fac: 'nature', role: 'healer', rar: 'SR', img: 1, face: 1, hx: 0.53,
+    ult: { name: 'Blossom Ward', type: 'healLow', mult: 2.2, shield: 1.2 },
+    look: { skin: '#a8c890', hair: '#6aa04a', hs: 'long', hat: 'none', armor: '#4a8a3a', armor2: '#3a6a2a', trim: '#f0a0c0', wpn: 'staff' } },
+  { id: 'aurelia', name: 'Aurelia', title: 'Sunlance Paladin', fac: 'light', role: 'warrior', rar: 'SR', img: 1, face: 1, hx: 0.5,
+    ult: { name: 'Dawnbreaker', type: 'buff', mult: 1.2, atkUp: 0.25, turns: 2 },
+    look: { skin: '#f2d0b0', hair: '#f0c860', hs: 'short', hat: 'helmet', armor: '#f0e0b0', armor2: '#c8a860', trim: '#ffd84a', cape: '#f4ecd8', wpn: 'spear' } },
+  { id: 'malachar', name: 'Malachar', title: 'the Hexknight', fac: 'dark', role: 'warrior', rar: 'SR',
+    ult: { name: 'Soul Rend', type: 'drain', mult: 2.0, heal: 0.6 },
+    look: { skin: '#c7b2b2', hair: '#e8e8f0', hs: 'long', hat: 'none', armor: '#22181e', armor2: '#140e12', trim: '#ff2a3a', cape: '#6a1020', wpn: 'sword', eye: '#ff3355', build: 1.1 } },
+  { id: 'cinder', name: 'Cinder', title: 'the Flame Witch', fac: 'fire', role: 'mage', rar: 'SR',
+    ult: { name: 'Inferno Rain', type: 'burn', mult: 0.9, dot: 0.35, turns: 2 },
+    look: { skin: '#f6d0b0', hair: '#ff7a2a', hs: 'long', hat: 'wizard', armor: '#2a1418', armor2: '#1a0e10', trim: '#ff6a2a', wpn: 'staff', eye: '#ff9d00' } },
   // Rare
-  { id: 'tobin', name: 'Tobin', title: 'Village Guard', fac: 'fire', role: 'warrior', rar: 'R',
-    ult: { name: 'Power Strike', type: 'single', mult: 1.9 },
-    look: { skin: '#f0c8a0', hair: '#7a4a2a', hs: 'short', hat: 'none', armor: '#a5452c', armor2: '#4a3324', trim: '#d9b27a', wpn: 'sword' } },
+  { id: 'brakka', name: 'Brakka', title: 'Orc Raider', fac: 'fire', role: 'warrior', rar: 'R',
+    ult: { name: 'Skull Splitter', type: 'single', mult: 1.9 },
+    look: { skin: '#7a9a4a', hair: '#1a1a14', hs: 'pony', hat: 'none', armor: '#6a4a2a', armor2: '#3a2a1a', trim: '#c84a2a', wpn: 'axe', build: 1.2 } },
+  { id: 'garrick', name: 'Garrick', title: 'Shieldbearer', fac: 'water', role: 'tank', rar: 'R',
+    ult: { name: 'Rally', type: 'buff', mult: 1.0, atkUp: 0.2, turns: 2 },
+    look: { skin: '#e0b08a', hair: '#4a3a2a', hs: 'short', hat: 'helmet', armor: '#5a7d99', armor2: '#33495a', trim: '#c9d8e6', wpn: 'spear', shield: '#4a6d8a', build: 1.2 } },
   { id: 'wren', name: 'Wren', title: 'Forest Scout', fac: 'nature', role: 'archer', rar: 'R',
     ult: { name: 'Aimed Shot', type: 'single', mult: 1.8 },
     look: { skin: '#e7c39d', hair: '#3e2a1a', hs: 'short', hat: 'hood', armor: '#5f7a3a', armor2: '#3b3020', trim: '#a8c070', cape: '#4a6a2a', wpn: 'bow' } },
-  { id: 'marlo', name: 'Marlo', title: 'Tide Apprentice', fac: 'water', role: 'mage', rar: 'R',
+  { id: 'pip', name: 'Pip', title: 'Tide Apprentice', fac: 'water', role: 'mage', rar: 'R',
     ult: { name: 'Ripple', type: 'aoe', mult: 0.75 },
-    look: { skin: '#f2d2b6', hair: '#5a4a8a', hs: 'spiky', hat: 'wizard', armor: '#4a6fa5', armor2: '#2e3e5e', trim: '#bcd8ff', wpn: 'staff' } },
-  { id: 'sela', name: 'Sela', title: 'Acolyte', fac: 'light', role: 'healer', rar: 'R',
+    look: { skin: '#f2d2b6', hair: '#5a4a8a', hs: 'spiky', hat: 'wizard', armor: '#4a6fa5', armor2: '#2e3e5e', trim: '#bcd8ff', wpn: 'staff', size: 0.9 } },
+  { id: 'mae', name: 'Sister Mae', title: 'Acolyte', fac: 'light', role: 'healer', rar: 'R',
     ult: { name: 'Prayer', type: 'heal', mult: 1.1 },
-    look: { skin: '#f6d8bc', hair: '#d9a441', hs: 'long', hat: 'none', armor: '#efe6cc', armor2: '#a89a72', trim: '#e6c25a', wpn: 'staff' } },
-  { id: 'grub', name: 'Grub', title: 'Goblin Raider', fac: 'dark', role: 'assassin', rar: 'R',
+    look: { skin: '#f6d8bc', hair: '#d9a441', hs: 'long', hat: 'hood', armor: '#efe6cc', armor2: '#a89a72', trim: '#e6c25a', cape: '#e8e0c8', wpn: 'staff' } },
+  { id: 'skrit', name: 'Skrit', title: 'Goblin Cutthroat', fac: 'dark', role: 'assassin', rar: 'R',
     ult: { name: 'Flurry', type: 'random', hits: 4, mult: 0.6 },
     look: { skin: '#7fa35a', hair: '#2a2a1a', hs: 'bald', hat: 'ears', ears: 1.8, armor: '#4a3a2a', armor2: '#2a2018', trim: '#9a7a4a', wpn: 'dagger', size: 0.82, eye: '#ffde3a' } },
-  { id: 'dorn', name: 'Dorn', title: 'Shieldbearer', fac: 'water', role: 'tank', rar: 'R',
-    ult: { name: 'Rally', type: 'buff', mult: 1.0, atkUp: 0.2, turns: 2 },
-    look: { skin: '#e0b08a', hair: '#4a3a2a', hs: 'short', hat: 'helmet', armor: '#5a7d99', armor2: '#33495a', trim: '#c9d8e6', wpn: 'spear', shield: '#4a6d8a', build: 1.2 } },
 ];
+// Heroes from the first roster, mapped to their replacements so old saves carry over.
+const RENAMED = { pyra: 'vesper', thalor: 'morwen', sylvara: 'amunet', aurelion: 'thornmaw', nyx: 'odette', kael: 'kestrel',
+  brann: 'selka', mira: 'cinder', vex: 'malachar', lumi: 'willow', rook: 'grimhold', fenna: 'aurelia',
+  tobin: 'brakka', dorn: 'garrick', marlo: 'pip', sela: 'mae', grub: 'skrit' };
 const HMAP = {};
 HEROES.forEach(h => (HMAP[h.id] = h));
 
-const STARTERS = ['tobin', 'dorn', 'wren', 'marlo', 'sela'];
+const STARTERS = ['brakka', 'garrick', 'wren', 'pip', 'mae'];
 
 // Campaign backdrops, one per chapter of 10 stages (cycles after the last).
 const THEMES = [
@@ -110,4 +116,4 @@ const THEMES = [
 const STAGES_PER_CHAPTER = 10;
 const MAX_ROUNDS = 15;
 
-if (typeof module !== 'undefined') module.exports = { FACTIONS, BEATS, ROLES, RARITY, MAX_STARS, SUMMON, MELEE, HEROES, HMAP, STARTERS, THEMES, STAGES_PER_CHAPTER, MAX_ROUNDS };
+if (typeof module !== 'undefined') module.exports = { FACTIONS, BEATS, ROLES, RARITY, MAX_STARS, SUMMON, MELEE, HEROES, HMAP, RENAMED, STARTERS, THEMES, STAGES_PER_CHAPTER, MAX_ROUNDS };

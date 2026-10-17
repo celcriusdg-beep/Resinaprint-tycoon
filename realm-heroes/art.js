@@ -349,9 +349,65 @@ const Art = (() => {
 
   function hexA(h, a) { const [r, g, b] = rgb(h); return `rgba(${r},${g},${b},${a})`; }
 
+  // ---- painted sprites (img/<id>.webp) ----
+  const sprites = {}, ghosts = {};
+  const SPRITE_H = 122; // sprite height in rig units (the rig is ~120 tall with its chibi head)
+  function loadSprites() {
+    return Promise.all(HEROES.filter(h => h.img).map(h => new Promise(res => {
+      const im = new Image();
+      im.onload = () => {
+        sprites[h.id] = im;
+        // white silhouette used for the hit flash
+        const g = document.createElement('canvas');
+        g.width = im.naturalWidth; g.height = im.naturalHeight;
+        const x = g.getContext('2d');
+        x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fff'; x.fillRect(0, 0, g.width, g.height);
+        ghosts[h.id] = g;
+        res();
+      };
+      im.onerror = () => res();
+      im.src = 'img/' + h.id + '.webp';
+    })));
+  }
+  const hasSprite = h => !!sprites[h.id];
+
+  function drawSprite(ctx, h, o, P) {
+    const im = sprites[h.id], s = (o.s || 1) * (h.sz || 1), t = o.t || 0;
+    const Hs = SPRITE_H * s, Ws = Hs * im.naturalWidth / im.naturalHeight;
+    const alpha = (o.alpha == null ? 1 : o.alpha) * P.alpha;
+    if (alpha <= 0.01) return;
+    const face = o.face || 1;
+    ctx.save();
+    ctx.translate(o.x, o.y);
+    if (!o.noShadow) {
+      ctx.globalAlpha = 0.32 * alpha; ctx.fillStyle = '#000';
+      ctx.beginPath(); ctx.ellipse(P.dx * s * face, 0, Ws * 0.36, 6 * s, 0, 0, PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = alpha;
+    ctx.scale(face, 1);
+    ctx.translate(P.dx * s * 1.4, (P.dy + P.bob * 0.6) * s);
+    const aura = Math.max(P.glow, o.aura || 0);
+    if (aura > 0.02) {
+      const g = ctx.createRadialGradient(0, -Hs * 0.45, 4, 0, -Hs * 0.45, Hs * 0.7);
+      g.addColorStop(0, hexA(FACTIONS[h.fac].glow, 0.6 * aura)); g.addColorStop(1, hexA(FACTIONS[h.fac].glow, 0));
+      ctx.fillStyle = g; circle(ctx, 0, -Hs * 0.45, Hs * 0.7); ctx.fill();
+    }
+    // whole-body motion: lean/fall pivot at the feet, breathing squash while idle
+    ctx.rotate(P.rot + P.lean * 0.55);
+    const br = o.anim === 'idle' || !o.anim ? Math.sin(t * 2.6) * 0.012 : 0;
+    const strike = o.anim === 'melee' ? Math.sin(PI * Math.min(1, o.p || 0)) * 0.05 : 0;
+    ctx.scale(1 - br * 0.5 + strike, 1 + br - strike * 0.6);
+    if ((h.face || 1) < 0) ctx.scale(-1, 1);
+    ctx.drawImage(im, -Ws / 2, -Hs, Ws, Hs);
+    const fl = o.flash || 0;
+    if (fl > 0.02) { ctx.globalAlpha = alpha * fl * 0.85; ctx.drawImage(ghosts[h.id], -Ws / 2, -Hs, Ws, Hs); }
+    ctx.restore();
+  }
+
   // o: {x, y, s, face, anim, p, t, flash, flashCol, alpha, aura}
   function drawHero(ctx, h, o) {
     const L = h.look, P = pose(o.anim || 'idle', o.p || 0, o.t || 0, L.wpn);
+    if (sprites[h.id]) return drawSprite(ctx, h, o, P);
     FL = o.flash || 0; FLC = o.flashCol ? rgb(o.flashCol) : [255, 255, 255];
     const s = (o.s || 1) * (L.size || 1), b = L.build || 1, t = o.t || 0;
     const alpha = (o.alpha == null ? 1 : o.alpha) * P.alpha;
@@ -417,9 +473,15 @@ const Art = (() => {
     const g = x.createRadialGradient(size * 0.5, size * 0.35, 4, size * 0.5, size * 0.5, size * 0.75);
     g.addColorStop(0, hexA(f.glow, 0.9)); g.addColorStop(0.5, hexA(f.col, 0.55)); g.addColorStop(1, '#14101e');
     x.fillStyle = g; x.fillRect(0, 0, size, size);
-    const s = 1.45 * size / 96;
-    drawHero(x, h, { x: size * 0.44, y: size * 0.36 + 89 * s, s, face: 1, anim: 'idle', t: 0.6, noShadow: true });
-    const url = c.toDataURL();
+    const im = sprites[h.id];
+    if (im) { // head and shoulders of the painting, centred on the head
+      const dh = size * 2.7, dw = dh * im.naturalWidth / im.naturalHeight;
+      x.drawImage(im, size / 2 - dw * (h.hx || 0.5), size * 0.32 - dh * (h.hy || 0.1), dw, dh);
+    } else {
+      const s = 1.45 * size / 96;
+      drawHero(x, h, { x: size * 0.44, y: size * 0.36 + 89 * s, s, face: 1, anim: 'idle', t: 0.6, noShadow: true });
+    }
+    const url = toURL(c, h);
     portraits.set(key, url);
     return url;
   }
@@ -445,17 +507,28 @@ const Art = (() => {
     g = x.createRadialGradient(w * 0.5, hgt * 0.38, 4, w * 0.5, hgt * 0.38, w * 0.85);
     g.addColorStop(0, hexA(f.glow, 0.6)); g.addColorStop(0.45, hexA(f.col, 0.3)); g.addColorStop(1, hexA(f.col, 0));
     x.fillStyle = g; x.fillRect(0, 0, w, hgt);
-    const wpn = h.look.wpn;
-    const pose = MELEE.has(wpn) ? ['melee', 0.3] : wpn === 'bow' ? ['shoot', 0.5] : ['cast', 0.45];
-    const s = hgt / 108;
-    drawHero(x, h, { x: w * 0.47, y: hgt + 16 * s, s, face: 1, anim: pose[0], p: pose[1], t: 0.6, noShadow: true });
+    const im = sprites[h.id];
+    if (im) { // splash: the painting from head to knees
+      const dh = hgt * 1.3, dw = dh * im.naturalWidth / im.naturalHeight;
+      x.drawImage(im, w / 2 - dw * (0.5 + ((h.hx || 0.5) - 0.5) * 0.6), hgt * 0.04, dw, dh);
+    } else {
+      const wpn = h.look.wpn;
+      const pose = MELEE.has(wpn) ? ['melee', 0.3] : wpn === 'bow' ? ['shoot', 0.5] : ['cast', 0.45];
+      const s = hgt / 108;
+      drawHero(x, h, { x: w * 0.47, y: hgt + 16 * s, s, face: 1, anim: pose[0], p: pose[1], t: 0.6, noShadow: true });
+    }
     g = x.createLinearGradient(0, hgt * 0.62, 0, hgt);
     g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(10,4,6,.75)');
     x.fillStyle = g; x.fillRect(0, 0, w, hgt);
-    const url = c.toDataURL();
+    const url = toURL(c, h);
     cards.set(key, url);
     return url;
   }
 
-  return { drawHero, portrait, cardArt, hexA, rgb };
+  // Pages opened from file:// can't export canvases that drew local images; fall back to the raw sprite.
+  function toURL(c, h) {
+    try { return c.toDataURL(); } catch { return 'img/' + h.id + '.webp'; }
+  }
+
+  return { drawHero, portrait, cardArt, hexA, rgb, loadSprites, hasSprite };
 })();

@@ -60,7 +60,8 @@ A second game in `age-of-resin/` (open `age-of-resin/index.html`, or Empire > Mo
 
 ## Realm Heroes
 A hero-collector gacha game in `realm-heroes/` (open `realm-heroes/index.html`, or Empire > More in Resinaprint).
-18 heroes in 5 factions and 3 rarities, drawn as animated 2D characters (`art.js`). Summon with gems (40-pull
+18 original heroes in 5 factions and 3 rarities. Heroes with a painting in `realm-heroes/img/` (AI-generated, see
+`tools/hero_prompts.md`; cut out with `tools/hero_cutout.py`) are animated as sprites; the rest use the drawn rig in `art.js`. Summon with gems (40-pull
 Legendary pity), build a 5-hero formation, and clear a 10-stage-per-chapter campaign in auto-battles; idle loot
 builds up for 12 hours. `sim.js` computes each battle up front as an event list (no DOM, runs in Node);
 `battle.js` plays it back with movement, projectiles, ultimates and damage numbers. Saves to localStorage

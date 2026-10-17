@@ -13,7 +13,7 @@ const PENNANT = { SSR: '#b8292f', SR: '#d9822b', R: '#2f62b8' };
 function fresh() {
   const heroes = {};
   STARTERS.forEach(id => (heroes[id] = { lvl: 1, stars: RARITY[HMAP[id].rar].stars, copies: 0 }));
-  return { v: 1, gold: 3000, xp: 2000, gems: 2000, heroes, team: ['tobin', 'dorn', 'wren', 'marlo', 'sela'],
+  return { v: 1, gold: 3000, xp: 2000, gems: 2000, heroes, team: ['brakka', 'garrick', 'wren', 'pip', 'mae'],
     stage: 1, idleT: Date.now(), pity: 0, pulls: 0, freeDay: '', lootDay: '', sound: true, speed: 1, wins: 0 };
 }
 function load() {
@@ -26,8 +26,11 @@ function sanitize(d) {
   if (!d || typeof d !== 'object' || !d.heroes) return f;
   const s = Object.assign(f, d);
   const heroes = {};
-  for (const [id, h] of Object.entries(d.heroes || {})) {
-    if (!HMAP[id] || !h) continue;
+  const rn = id => RENAMED[id] || id;
+  if (d.team) d.team = d.team.map(id => (id ? rn(id) : id));
+  for (const [old, h] of Object.entries(d.heroes || {})) {
+    const id = rn(old);
+    if (!HMAP[id] || !h || heroes[id]) continue;
     const base = RARITY[HMAP[id].rar].stars;
     const stars = Math.min(MAX_STARS, Math.max(base, h.stars | 0));
     heroes[id] = { stars, lvl: Math.min(maxLevel(stars), Math.max(1, h.lvl | 0)), copies: Math.max(0, h.copies | 0) };
@@ -418,7 +421,8 @@ function openHero(id) {
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     let k = t % total, anim = 'idle', p = 0;
     for (const [a, d] of seq) { if (k < d) { anim = a; p = k / d; break; } k -= d; }
-    Art.drawHero(ctx, h, { x: W / 2 - 10, y: H * 0.93, s: Math.min(H / 150, W / 160), face: 1, anim, p, t });
+    const s = Art.hasSprite(h) ? H * 0.86 / 122 / (h.sz || 1) : Math.min(H / 150, W / 160);
+    Art.drawHero(ctx, h, { x: W / 2 - 10, y: H * 0.95, s, face: 1, anim, p, t });
   });
   const lvlUp = n => {
     let done = 0;
@@ -634,7 +638,6 @@ $('#bspeed').onclick = () => {
   const r = Battle.current(); if (r) r.speed = S.speed;
 };
 $('#bskip').onclick = () => { const r = Battle.current(); if (r) r.skip(); };
-render();
-save();
+Art.loadSprites().then(() => { render(); save(); });
 setInterval(() => { if (tab === 'camp' && $('#modal').classList.contains('hide') && $('#battle').classList.contains('hide')) render(); }, 30000);
 addEventListener('visibilitychange', () => { if (!document.hidden && tab === 'camp' && $('#modal').classList.contains('hide')) render(); });
