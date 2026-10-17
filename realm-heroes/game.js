@@ -36,8 +36,9 @@ function sanitize(d) {
     heroes[id] = { stars, lvl: Math.min(maxLevel(stars), Math.max(1, h.lvl | 0)), copies: Math.max(0, h.copies | 0) };
   }
   if (!Object.keys(heroes).length) { // none of the saved heroes exist any more: keep progress, hand out starters
-    Object.assign(heroes, f.heroes);
-    d.team = fresh().team;
+    const start = fresh(); // not f: Object.assign above already copied the old save's heroes into it
+    Object.assign(heroes, start.heroes);
+    d.team = start.team;
   }
   s.heroes = heroes;
   s.team = Array.from({ length: 5 }, (_, i) => (d.team && heroes[d.team[i]] ? d.team[i] : null));
