@@ -600,7 +600,6 @@ function openSettings() {
     <textarea id="saveTxt" rows="3" spellcheck="false"></textarea>
     <div class="btnrow"><button id="exp">Copy save code</button><button id="imp">Load from code</button></div>
     <h3>Danger zone</h3><div class="btnrow"><button class="bad" id="reset">Reset progress</button></div>
-    <p class="mut"><a href="../index.html">← Back to Resinaprint Tycoon</a></p>
     <div class="btnrow"><button id="sClose">Close</button></div>`);
   $('#snd').onclick = () => { S.sound = !S.sound; Sfx.set(S.sound); save(); openSettings(); };
   $('#exp').onclick = () => {
@@ -615,8 +614,9 @@ function openSettings() {
       S = sanitize(d); save(); closeModal(); render(); toast('Save loaded');
     } catch { toast('That save code is not valid'); }
   };
+  let armed = false;
   $('#reset').onclick = () => {
-    if (!confirm('Erase all Realm Heroes progress? This cannot be undone.')) return;
+    if (!armed) { armed = true; $('#reset').textContent = 'Tap again to erase everything'; return; }
     S = fresh(); save(); closeModal(); tab = 'camp'; render(); toast('Progress reset');
   };
   $('#sClose').onclick = closeModal;
