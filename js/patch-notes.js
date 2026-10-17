@@ -1,8 +1,9 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.54';
-const PATCH_TITLE='Resinaprint 4.54 · Worth fix';
+const VERSION='4.55';
+const PATCH_TITLE='Resinaprint 4.55 · More cheats';
 const PATCH=[
+ {h:'New in 4.55',i:['Cheats now also add Resin Shards (+10, +100, +1.000) and have a Rebirth now button that skips the rebirth requirements.']},
  {h:'New in 4.54',i:['Printers waiting in storage no longer count towards company worth. A printer counts once you place it in your studio.']},
  {h:'New in 4.53',i:[
   '<b>Your save is protected.</b> If a save ever fails to load, the game no longer starts a new game over it. It keeps the save, tries a safe mode, and shows a recovery screen: restore a backup, copy the save text to send in, or start over on purpose.',
