@@ -1,8 +1,13 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.55';
-const PATCH_TITLE='Resinaprint 4.55 · More cheats';
+const VERSION='4.56';
+const PATCH_TITLE='Resinaprint 4.56 · Gacha chest openings';
 const PATCH=[
+ {h:'New in 4.56',i:[
+  '<b>Chest openings got a lot cooler,</b> and the rarer the pull, the bigger the show. Common and Uncommon pop open quickly. Rare and Epic build up with glowing pulses, a light burst and a flash. Legendary brings golden god rays, heavy shakes, a screen shake and a coin shower.',
+  '<b>Mythic and above is a full gacha pull.</b> The screen goes dark, the chest cracks, a light pillar shoots up and an orb climbs through the rarity colours, sometimes upgrading on the way. Then a huge flash, the rarity name slams in and your rewards flip over one by one. Cosmic and Ethern add a shattered screen and rainbow rays.',
+  'Tap anywhere to skip straight to the result.'
+ ]},
  {h:'New in 4.55',i:['Cheats now also add Resin Shards (+10, +100, +1.000) and have a Rebirth now button that skips the rebirth requirements.']},
  {h:'New in 4.54',i:['Printers waiting in storage no longer count towards company worth. A printer counts once you place it in your studio.']},
  {h:'New in 4.53',i:[
