@@ -161,7 +161,7 @@ const Art = (() => {
     ctx.fillStyle = C(L.skin, -0.08);
     ctx.fillRect(-2, -81, 7, 6);
     ctx.save(); // chibi proportions: head scaled up around the neck
-    const hk = BIG ? 1.55 : 1.28; ctx.translate(2, -79); ctx.scale(hk, hk); ctx.translate(-2, 79);
+    const hk = BIG ? 1.38 : 1.28; ctx.translate(2, -79); ctx.scale(hk, hk); ctx.translate(-2, 79);
     const hair = C(L.hair), hs = L.hs;
     if (L.hat === 'hood') {
       ctx.fillStyle = C(L.cape || L.armor, -0.1);
@@ -195,6 +195,12 @@ const Art = (() => {
       ctx.beginPath();
       ctx.moveTo(-10, -92); ctx.lineTo(-14, -103); ctx.lineTo(-5, -99); ctx.lineTo(-4, -109); ctx.lineTo(2, -101); ctx.lineTo(6, -108); ctx.lineTo(8, -99); ctx.lineTo(13, -99); ctx.lineTo(10, -92);
       ctx.closePath(); ctx.fill();
+    } else if (hs !== 'bald' && L.hat !== 'hood' && BIG) {
+      ctx.fillStyle = hair; // jagged anime bangs
+      ctx.beginPath(); ctx.moveTo(hx - 11, hy - 2); ctx.lineTo(hx - 9, hy - 11); ctx.quadraticCurveTo(hx + 2, hy - 17, hx + 13, hy - 8);
+      ctx.lineTo(hx + 12.5, hy - 3); ctx.lineTo(hx + 9.5, hy - 7.5); ctx.lineTo(hx + 7.5, hy - 3.5); ctx.lineTo(hx + 4.5, hy - 8.5);
+      ctx.lineTo(hx + 1.5, hy - 4.5); ctx.lineTo(hx - 1.5, hy - 9); ctx.lineTo(hx - 5, hy - 3); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(hx + 11, hy - 6); ctx.quadraticCurveTo(hx + 14.5, hy + 1, hx + 12, hy + 7); ctx.lineTo(hx + 10.5, hy - 1); ctx.fill(); // side lock
     } else if (hs !== 'bald' && L.hat !== 'hood') {
       ctx.fillStyle = hair; // fringe
       ctx.beginPath(); ctx.ellipse(hx + 2, hy - 8, 10, 4.5, 0.15, PI, PI * 2.05); ctx.fill();
@@ -209,9 +215,24 @@ const Art = (() => {
     const eye = L.hat === 'hood' ? C(L.eye || '#ffffff') : C(L.eye || '#2a1e18');
     const blink = (t % 4.2) < 0.12 ? 0.3 : 1;
     ctx.fillStyle = eye;
-    const ek = BIG ? 1.7 : 1; // pixel frames need chunkier eyes to keep them after shrinking
-    ctx.beginPath(); ctx.ellipse(6.5, -89, 1.5 * ek, 2 * blink * ek, 0, 0, PI * 2); ctx.fill();
-    if (!L.patch) { ctx.beginPath(); ctx.ellipse(11.5, -89, 1.3 * ek, 1.9 * blink * ek, 0, 0, PI * 2); ctx.fill(); }
+    if (BIG && L.hat !== 'hood') {
+      // anime eyes for pixel frames: white, coloured iris with a dark top, highlight, lash line
+      const iris = L.eye || '#6a4a3a';
+      const eyeAt = (ex, w) => {
+        ctx.fillStyle = C('#ffffff'); ctx.fillRect(ex - w, -91.6, w * 2, 4.4);
+        ctx.fillStyle = C(iris); ctx.fillRect(ex - w * 0.7, -91.6, w * 1.4, 4.4);
+        ctx.fillStyle = C(iris, -0.55); ctx.fillRect(ex - w * 0.7, -91.6, w * 1.4, 1.6);
+        ctx.fillStyle = C('#ffffff'); ctx.fillRect(ex - w * 0.55, -90.2, 1, 1.1);
+        ctx.fillStyle = C('#1a1018'); ctx.fillRect(ex - w - 0.5, -92.9, w * 2 + 1, 1.4);
+      };
+      eyeAt(6.2, 1.8);
+      if (!L.patch) eyeAt(11.8, 1.45);
+      ctx.fillStyle = C(L.skin, -0.35); ctx.fillRect(8.2, -83.6, 2.2, 0.9); // mouth
+    } else {
+      const ek = BIG ? 1.7 : 1;
+      ctx.beginPath(); ctx.ellipse(6.5, -89, 1.5 * ek, 2 * blink * ek, 0, 0, PI * 2); ctx.fill();
+      if (!L.patch) { ctx.beginPath(); ctx.ellipse(11.5, -89, 1.3 * ek, 1.9 * blink * ek, 0, 0, PI * 2); ctx.fill(); }
+    }
     if (L.patch) {
       ctx.fillStyle = C('#141018');
       ctx.beginPath(); ctx.ellipse(11.5, -89.5, 3.2, 3, 0, 0, PI * 2); ctx.fill();
@@ -436,7 +457,7 @@ const Art = (() => {
   // ---- pixel sprites ----
   // Each animation frame is the rig drawn at 4x, shrunk to sprite size, snapped to the hero's palette
   // and given a dark outline. Frames are built on first use and cached.
-  const PX = 0.36;                                       // sprite pixels per rig unit
+  const PX = 0.7;                                        // sprite pixels per rig unit
   const WIN = { x0: -135, x1: 100, y0: -178, y1: 10 };   // rig-unit window one frame covers
   const FW = Math.ceil((WIN.x1 - WIN.x0) * PX), FH = Math.ceil((WIN.y1 - WIN.y0) * PX);
   const OX = Math.round(-WIN.x0 * PX), OY = Math.round(-WIN.y0 * PX); // feet inside the frame
@@ -479,7 +500,7 @@ const Art = (() => {
     return { p: (i + 0.5) / n, t: 1.3 };
   }
   function buildFrame(h, anim, i) {
-    const S = 4, hi = document.createElement('canvas');
+    const S = 3, hi = document.createElement('canvas');
     hi.width = FW * S; hi.height = FH * S;
     BIG = true;
     rig(hi.getContext('2d'), h, { x: OX * S, y: OY * S, s: PX * S, anim, ...frameParams(anim, i), noShadow: true, solid: true });
@@ -490,17 +511,38 @@ const Art = (() => {
     x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
     x.drawImage(hi, 0, 0, FW, FH);
     const img = x.getImageData(0, 0, FW, FH), d = img.data, pal = palette(h), solid = new Uint8Array(FW * FH);
+    const near = new Map();
     for (let k = 0; k < FW * FH; k++) {
       const o = k * 4;
       if (d[o + 3] < 110) { d[o + 3] = 0; continue; }
       const a = d[o + 3] / 255, r = d[o] / a, g = d[o + 1] / a, b = d[o + 2] / a; // un-premultiply edge pixels
-      let best = 0, bd = 1e9;
-      for (let j = 0; j < pal.length; j++) {
-        const q = pal[j], e = (q[0] - r) ** 2 * 0.3 + (q[1] - g) ** 2 * 0.59 + (q[2] - b) ** 2 * 0.11;
-        if (e < bd) { bd = e; best = j; }
+      const key = ((r >> 2) << 12) | ((g >> 2) << 6) | (b >> 2);
+      let best = near.get(key);
+      if (best === undefined) {
+        let bd = 1e9; best = 0;
+        for (let j = 0; j < pal.length; j++) {
+          const q = pal[j], e = (q[0] - r) ** 2 * 0.3 + (q[1] - g) ** 2 * 0.59 + (q[2] - b) ** 2 * 0.11;
+          if (e < bd) { bd = e; best = j; }
+        }
+        near.set(key, best);
       }
       d[o] = pal[best][0]; d[o + 1] = pal[best][1]; d[o + 2] = pal[best][2]; d[o + 3] = 255;
       solid[k] = 1;
+    }
+    // cel shading: light from the top left. Pixels on a top/left edge get a highlight,
+    // a two-pixel band along bottom/right edges gets shadow.
+    const at = (xx, yy) => xx >= 0 && yy >= 0 && xx < FW && yy < FH && solid[yy * FW + xx];
+    const tone = new Int8Array(FW * FH);
+    for (let y = 0; y < FH; y++) for (let xx = 0; xx < FW; xx++) {
+      if (!solid[y * FW + xx]) continue;
+      if (!at(xx + 1, y) || !at(xx, y + 1) || !at(xx + 1, y + 1)) tone[y * FW + xx] = -2;
+      else if (!at(xx + 2, y) || !at(xx, y + 2)) tone[y * FW + xx] = -1;
+      else if (!at(xx - 1, y) || !at(xx, y - 1)) tone[y * FW + xx] = 1;
+    }
+    for (let k = 0; k < FW * FH; k++) {
+      const tn = tone[k]; if (!tn) continue;
+      const o = k * 4, f = tn > 0 ? 0.28 : tn === -1 ? -0.14 : -0.26;
+      for (let c = 0; c < 3; c++) d[o + c] = f > 0 ? d[o + c] + (255 - d[o + c]) * f : d[o + c] * (1 + f);
     }
     for (let y = 0; y < FH; y++) for (let xx = 0; xx < FW; xx++) {
       const k = y * FW + xx;
@@ -531,7 +573,7 @@ const Art = (() => {
     return w;
   }
   // Screen pixels per sprite pixel; whole numbers once large enough so pixels stay square.
-  function pixelSize(s) { const ps = s / PX; return ps >= 1.5 ? Math.round(ps) : ps; }
+  function pixelSize(s) { const ps = s / PX; return ps >= 0.75 ? Math.max(1, Math.round(ps)) : ps; }
 
   // o: {x, y, s, face, anim, p, t, flash, alpha, aura, noShadow}
   function drawHero(ctx, h, o) {
@@ -544,19 +586,18 @@ const Art = (() => {
     ctx.translate(Math.round(o.x), Math.round(o.y));
     const aura = Math.max(P.glow, o.aura || 0);
     if (aura > 0.02) { // stepped glow rings behind the sprite
-      const cy = -50 * PX * ps * sz, f = FACTIONS[h.fac];
+      const cy = -50 * PX * ps * sz, f = FACTIONS[h.fac], gk = PX * ps * sz / 0.36;
       for (let r = 4; r >= 1; r--) {
         ctx.fillStyle = hexA(f.glow, 0.08 * aura * (5 - r));
-        const w = r * 9 * ps * sz, hgt = w * 1.3, c = w * 0.22; // octagon from two overlapping bars
+        const w = r * 9 * gk, hgt = w * 1.3, c = w * 0.22; // octagon from two overlapping bars
         ctx.fillRect(Math.round(-w / 2), Math.round(cy - hgt / 2 + c), Math.round(w), Math.round(hgt - c * 2));
         ctx.fillRect(Math.round(-w / 2 + c), Math.round(cy - hgt / 2), Math.round(w - c * 2), Math.round(hgt));
       }
     }
-    if (!o.noShadow) {
-      ctx.globalAlpha = 0.3 * alpha; ctx.fillStyle = '#000';
-      const w = 14 * ps * sz, u = Math.max(1, ps);
-      ctx.fillRect(Math.round(-w / 2), -u, Math.round(w), u * 2);
-      ctx.fillRect(Math.round(-w / 2 + u * 2), -u * 2, Math.round(w - u * 4), u * 4);
+    if (!o.noShadow) { // solid oval shadow
+      ctx.globalAlpha = 0.55 * alpha; ctx.fillStyle = '#1a1024';
+      const k = PX * ps * sz * (h.look.build || 1);
+      ctx.beginPath(); ctx.ellipse(0, 0, 24 * k, 6 * k, 0, 0, PI * 2); ctx.fill();
     }
     ctx.globalAlpha = alpha;
     ctx.imageSmoothingEnabled = false;
@@ -591,8 +632,8 @@ const Art = (() => {
         b.fillRect(xx, y, 1, 1);
       }
     }), size, size);
-    const ps = Math.max(1, Math.round(size / 32)), sz = h.look.size || 1, fr = frame(h, 'idle', 0);
-    const hx = OX + 2 * PX * sz, hy = OY - 97 * PX * sz; // head centre inside the frame
+    const ps = Math.max(1, Math.round(size / 48)), sz = h.look.size || 1, fr = frame(h, 'idle', 0);
+    const hx = OX + 4 * PX * sz, hy = OY - 92 * PX * sz; // head centre inside the frame
     x.imageSmoothingEnabled = false;
     x.drawImage(fr, Math.round(size / 2 - hx * ps), Math.round(size * 0.4 - hy * ps), FW * ps, FH * ps);
     const url = c.toDataURL();

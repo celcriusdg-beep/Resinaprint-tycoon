@@ -102,8 +102,8 @@ const Battle = (() => {
       this.fy = this.H - this.fh;
       this.hz = (this.fy + this.fh * 0.45) / this.H;
       // sprite pixels map to whole screen pixels: pick that pixel size, then derive the world scale from it
-      this.pix = Math.max(2, Math.round(Math.min(this.W / 470, this.fh / 400) / 0.36));
-      this.sc = this.pix * 0.36;
+      this.pix = Math.max(1, Math.round(Math.min(this.W / 470, this.fh / 400) / 0.7));
+      this.sc = this.pix * 0.7;
       for (const u of Object.values(this.units)) {
         const [x, y] = slotPos(u.side, u.slot, this.W, this.fy, this.fh);
         u.hx = x; u.hy = y;
@@ -361,7 +361,7 @@ const Battle = (() => {
       ctx.imageSmoothingEnabled = false;
       const sh = this.shake > 0.3 ? this.shake : 0;
       this.shake *= Math.pow(0.9, dt / 16);
-      ctx.drawImage(Scenery.backdrop(this.opts.theme, W, H, pix, this.hz), 0, 0, W, H);
+      ctx.drawImage(Scenery.backdrop(this.opts.theme, W, H, pix * 3, this.hz), 0, 0, W, H);
       if (this.dim > 0) { ctx.fillStyle = 'rgba(10,6,24,.35)'; ctx.fillRect(0, 0, W, H); }
       const drawn = [];
       const list = Object.values(this.units).filter(u => !u.dead).sort((a, b) => a.y - b.y);
