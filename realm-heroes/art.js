@@ -424,5 +424,38 @@ const Art = (() => {
     return url;
   }
 
-  return { drawHero, portrait, hexA, rgb };
+  // Tall roster-card splash: hero in an action pose over rays and a faction glow, cached per hero.
+  const cards = new Map();
+  function cardArt(h, w = 184, hgt = 300) {
+    const key = h.id + w + 'x' + hgt;
+    if (cards.has(key)) return cards.get(key);
+    const c = document.createElement('canvas');
+    c.width = w; c.height = hgt;
+    const x = c.getContext('2d'), f = FACTIONS[h.fac];
+    let g = x.createLinearGradient(0, 0, 0, hgt);
+    g.addColorStop(0, '#3a2a2a'); g.addColorStop(1, '#140c10');
+    x.fillStyle = g; x.fillRect(0, 0, w, hgt);
+    x.save(); x.translate(w * 0.5, hgt * 0.32);
+    for (let i = 0; i < 14; i++) {
+      x.rotate(Math.PI / 7);
+      x.fillStyle = hexA(i % 2 ? f.glow : '#ffd27a', 0.07);
+      x.beginPath(); x.moveTo(0, 0); x.lineTo(-hgt * 0.12, -hgt); x.lineTo(hgt * 0.12, -hgt); x.fill();
+    }
+    x.restore();
+    g = x.createRadialGradient(w * 0.5, hgt * 0.38, 4, w * 0.5, hgt * 0.38, w * 0.85);
+    g.addColorStop(0, hexA(f.glow, 0.6)); g.addColorStop(0.45, hexA(f.col, 0.3)); g.addColorStop(1, hexA(f.col, 0));
+    x.fillStyle = g; x.fillRect(0, 0, w, hgt);
+    const wpn = h.look.wpn;
+    const pose = MELEE.has(wpn) ? ['melee', 0.3] : wpn === 'bow' ? ['shoot', 0.5] : ['cast', 0.45];
+    const s = hgt / 108;
+    drawHero(x, h, { x: w * 0.47, y: hgt + 16 * s, s, face: 1, anim: pose[0], p: pose[1], t: 0.6, noShadow: true });
+    g = x.createLinearGradient(0, hgt * 0.62, 0, hgt);
+    g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(10,4,6,.75)');
+    x.fillStyle = g; x.fillRect(0, 0, w, hgt);
+    const url = c.toDataURL();
+    cards.set(key, url);
+    return url;
+  }
+
+  return { drawHero, portrait, cardArt, hexA, rgb };
 })();

@@ -6,15 +6,22 @@
 <body>
 <div id="app">
  <header id="top">
-  <div class="res"><span>🪙</span><b id="rGold">0</b></div>
-  <div class="res"><span>✨</span><b id="rXp">0</b></div>
-  <div class="res"><span>💎</span><b id="rGems">0</b></div>
+  <div class="prof"><img id="pAva" alt=""><span id="pLv">1</span></div>
+  <div class="pmain">
+   <div class="prow"><b id="pName">Commander</b><span class="ppow">⚔ <b id="rPow">0</b></span></div>
+   <div class="pbar"><i id="pXp"></i></div>
+   <div class="prow pills">
+    <span class="pill">🪙<b id="rGold">0</b><button class="plus" data-go="camp" aria-label="Get gold">+</button></span>
+    <span class="pill">✨<b id="rXp">0</b></span>
+    <span class="pill">💎<b id="rGems">0</b><button class="plus" data-go="summon" aria-label="Summon">+</button></span>
+   </div>
+  </div>
   <button id="btnSet" aria-label="Settings">⚙</button>
  </header>
  <main id="view"></main>
  <nav id="tabs">
   <button data-tab="camp" class="on"><i>⚔</i>Campaign</button>
-  <button data-tab="heroes"><i>🛡</i>Heroes</button>
+  <button data-tab="heroes"><i>🛡️</i>Heroes</button>
   <button data-tab="summon"><i>🔮</i>Summon</button>
  </nav>
 </div>

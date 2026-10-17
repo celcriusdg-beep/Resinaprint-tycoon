@@ -5,7 +5,10 @@ const SAVE_KEY = 'realm-heroes-v1';
 const IDLE_CAP_H = 12;
 const $ = s => document.querySelector(s);
 
-let S, tab = 'camp', heroFilter = 'all';
+let S, tab = 'camp', heroFilter = 'all', heroSub = 'heroes', heroSort = 0;
+const SORTS = ['Power', 'Level', 'Rarity'];
+const ROLE_ICON = { tank: '🛡️', warrior: '⚔️', mage: '🔮', archer: '🏹', assassin: '🗡️', healer: '✚' };
+const PENNANT = { SSR: '#b8292f', SR: '#d9822b', R: '#2f62b8' };
 
 function fresh() {
   const heroes = {};
@@ -111,6 +114,12 @@ function mountLive(cv, draw) { live.push({ cv, draw, w: 0, h: 0 }); }
 
 // ---------- top bar, tabs, toast, modal ----------
 function renderTop() {
+  const best = Object.keys(S.heroes).sort((a, b) => power(b) - power(a))[0];
+  const ava = Art.portrait(HMAP[best], 96);
+  if ($('#pAva').getAttribute('src') !== ava) $('#pAva').src = ava;
+  $('#pLv').textContent = 1 + Math.floor((S.stage - 1) / 3);
+  $('#pXp').style.width = (((S.stage - 1) % 3) / 3 * 100 + 4) + '%';
+  $('#rPow').textContent = fmt(myPower());
   $('#rGold').textContent = fmt(S.gold);
   $('#rXp').textContent = fmt(S.xp);
   $('#rGems').textContent = fmt(S.gems);
@@ -308,18 +317,78 @@ function heroCard(id, o = {}) {
     <div class="nm">${esc(h.name)}</div><div class="st">${stars(own.stars)}</div>
     ${o.compact ? '' : `<div class="pw">⚡${fmt(power(id))}</div>`}</button>`;
 }
+// Gold winged crest shown for Legendary-tier stars (5+); extra stars add pips under it.
+const CREST = `<svg viewBox="0 0 100 40" class="crest" aria-hidden="true"><defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2a8"/><stop offset=".5" stop-color="#ffc533"/><stop offset="1" stop-color="#c47a0a"/></linearGradient></defs>
+  <path fill="url(#cg)" stroke="#6b3a05" stroke-width="1.5" d="M50 2 L58 20 L98 10 L70 26 L58 24 L50 38 L42 24 L30 26 L2 10 L42 20 Z"/></svg>`;
+function starMarks(st) {
+  if (st < 5) return `<span class="sparks">${'✦'.repeat(st)}</span>`;
+  return CREST + (st > 5 ? `<span class="pips">${'●'.repeat(st - 5)}</span>` : '');
+}
+function canLevel(id) {
+  const o = owned(id); if (!o || o.lvl >= maxLevel(o.stars)) return false;
+  const c = levelCost(o.lvl); return S.gold >= c.gold && S.xp >= c.xp;
+}
+function rosterCard(id) {
+  const h = HMAP[id], o = owned(id), r = RARITY[h.rar], f = FACTIONS[h.fac];
+  const st = o ? o.stars : r.stars, inTeam = S.team.includes(id);
+  const alert = o && ((o.copies >= starCost(id, o.stars) && o.stars < MAX_STARS) || (inTeam && canLevel(id)));
+  return `<button class="rcd ${o ? '' : 'off'} ${inTeam ? 'team' : ''}" data-id="${id}" style="--pc:${PENNANT[h.rar]};--fc:${f.col}">
+    <div class="art"><img src="${Art.cardArt(h)}" alt="${esc(h.name)}">
+      <div class="icons"><span class="dia" title="${ROLES[h.role].name}"><span>${ROLE_ICON[h.role]}</span></span><span class="dia" title="${f.name}"><span>${f.icon}</span></span></div>
+      ${o && o.copies ? `<span class="plusn">+${o.copies}</span>` : ''}
+      ${inTeam ? '<span class="tt">TEAM</span>' : ''}
+      <span class="lvl">${o ? o.lvl : '—'}</span>
+      <div class="marks">${starMarks(st)}</div>
+    </div>
+    <div class="pen"><span class="emb">${f.icon}</span></div>
+    ${alert ? '<span class="alert"></span>' : ''}
+    <span class="nm">${esc(h.name)}</span></button>`;
+}
+function sortedIds(ids) {
+  const rank = { SSR: 3, SR: 2, R: 1 };
+  const key = [id => power(id), id => (owned(id) ? owned(id).lvl * 1e6 : 0) + power(id), id => rank[HMAP[id].rar] * 1e7 + power(id)][heroSort];
+  return ids.sort((a, b) => key(b) - key(a));
+}
 function heroesHTML() {
   const ids = HEROES.map(h => h.id).filter(id => heroFilter === 'all' || HMAP[id].fac === heroFilter);
-  const mine = ids.filter(owned).sort((a, b) => power(b) - power(a));
-  const rest = ids.filter(id => !owned(id));
-  const chips = ['all', ...Object.keys(FACTIONS)].map(f => `<button class="chip ${heroFilter === f ? 'on' : ''}" data-f="${f}">${f === 'all' ? 'All' : FACTIONS[f].icon}</button>`).join('');
-  return `<div class="hhead"><h2>Heroes <small class="mut">${Object.keys(S.heroes).length}/${HEROES.length}</small></h2><div class="chips">${chips}</div></div>
-    <div class="grid">${mine.map(id => heroCard(id, { inTeam: S.team.includes(id) })).join('')}</div>
-    ${rest.length ? `<h3 class="mut">Not yet summoned</h3><div class="grid">${rest.map(id => heroCard(id)).join('')}</div>` : ''}`;
+  const list = heroSub === 'heroes' ? sortedIds(ids.filter(owned)) : [...sortedIds(ids.filter(owned)), ...ids.filter(id => !owned(id))];
+  const dias = ['all', ...Object.keys(FACTIONS)].map(f => `<button class="fdia ${heroFilter === f ? 'on' : ''}" data-f="${f}" aria-label="${f}"><span>${f === 'all' ? 'All' : FACTIONS[f].icon}</span></button>`).join('');
+  return `<div class="parch">
+    <div class="ptop">
+      <button class="pbtn" id="hBest"><span class="dia big"><span>⚔️</span></span><small>Best Team</small></button>
+      <div class="pcount"><span>🛡️</span><b>${Object.keys(S.heroes).length}/${HEROES.length}</b><button class="dia add" id="hAdd" aria-label="Summon heroes"><span>+</span></button></div>
+      <button class="pbtn" id="hQuick"><span class="dia big"><span>⭐</span></span><small>Quick Advance</small></button>
+    </div>
+    ${list.length ? `<div class="roster">${list.map(rosterCard).join('')}</div>` : '<p class="empty">No heroes of this faction yet. Summon to find some!</p>'}
+    <div class="pfilter"><button class="sortb" id="hSort" aria-label="Sort"><span>⇅</span></button><small class="sortl">${SORTS[heroSort]}</small>${dias}</div>
+  </div>
+  <div class="subtabs"><button class="${heroSub === 'heroes' ? 'on' : ''}" data-sub="heroes">Heroes</button><button class="${heroSub === 'arch' ? 'on' : ''}" data-sub="arch">Archives</button></div>`;
+}
+function quickAdvance() {
+  const team = S.team.filter(Boolean);
+  if (!team.length) return toast('Set a team first');
+  let n = 0;
+  for (;;) {
+    const id = team.filter(canLevel).sort((a, b) => owned(a).lvl - owned(b).lvl)[0];
+    if (!id) break;
+    const c = levelCost(owned(id).lvl);
+    S.gold -= c.gold; S.xp -= c.xp; owned(id).lvl++; n++;
+  }
+  if (!n) return toast('Not enough gold or hero XP (or the team is at its level cap)');
+  Sfx.play('coin'); toast(`Quick Advance: +${n} levels across the team`);
+  save(); render();
 }
 function bindHeroes() {
-  document.querySelectorAll('.chip').forEach(b => (b.onclick = () => { heroFilter = b.dataset.f; render(); }));
-  document.querySelectorAll('#view .hcard[data-id]').forEach(b => (b.onclick = () => openHero(b.dataset.id)));
+  document.querySelectorAll('.fdia').forEach(b => (b.onclick = () => { heroFilter = b.dataset.f; Sfx.play('tap'); render(); }));
+  document.querySelectorAll('.subtabs button').forEach(b => (b.onclick = () => { heroSub = b.dataset.sub; Sfx.play('tap'); render(); }));
+  $('#hSort').onclick = () => { heroSort = (heroSort + 1) % SORTS.length; render(); };
+  $('#hBest').onclick = () => { autoTeam(); save(); render(); toast('Strongest team set'); };
+  $('#hQuick').onclick = quickAdvance;
+  $('#hAdd').onclick = () => { tab = 'summon'; render(); };
+  document.querySelectorAll('#view .rcd').forEach(b => (b.onclick = () => {
+    if (owned(b.dataset.id)) openHero(b.dataset.id);
+    else toast(`${HMAP[b.dataset.id].name} is not yet summoned. Find them in Summon.`);
+  }));
 }
 function openHero(id) {
   const h = HMAP[id], o = owned(id), r = RARITY[h.rar], f = FACTIONS[h.fac];
@@ -558,6 +627,7 @@ S = load();
 Sfx.set(S.sound);
 document.querySelectorAll('#tabs button').forEach(b => (b.onclick = () => { tab = b.dataset.tab; Sfx.unlock(); Sfx.play('tap'); render(); }));
 $('#btnSet').onclick = openSettings;
+document.querySelectorAll('#top .plus').forEach(b => (b.onclick = () => { tab = b.dataset.go; render(); }));
 $('#bspeed').onclick = () => {
   S.speed = S.speed >= 3 ? 1 : S.speed + 1; save();
   $('#bspeed').textContent = S.speed + '×';
