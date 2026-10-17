@@ -21,7 +21,7 @@ if(typeof tipBanner==='function'){const _tb=tipBanner;tipBanner=function(){const
 const pOut=D=>D.slots*D.speed;
 const pKind=D=>D.lab?'Next-gen':D.inj?'Injection':D.pj?'PolyJet':D.fam==='carbon'?'Carbon DLS':D.form?'Cartridge':'Open vat';
 function bestOwned(inj){let b=null;for(const p of S.printers){const D=PRINTERS[p.type];if(!!D.inj!==!!inj)continue;if(!b||pOut(D)>pOut(b))b=D}return b}
-const PMAX=(()=>{const L=Object.values(PRINTERS);return {out:Math.max(...L.map(pOut)),fail:Math.max(...L.map(D=>D.fail)),q:Math.max(.01,...L.map(D=>D.q||0)),slots:Math.max(...L.map(D=>D.slots)),speed:Math.max(...L.map(D=>D.speed))}})();
+const PMAX=(()=>{const L=Object.values(PRINTERS);return {out:Math.max(...L.map(pOut)),fail:Math.max(...L.map(D=>D.fail)),q:Math.max(.01,...L.map(D=>D.q||0)),slots:Math.max(...L.map(D=>D.slots)),speed:Math.max(...L.map(D=>D.speed)),wear:Math.max(...L.map(D=>D.wear||0))}})();
 const lg=(v,m)=>Math.log(1+Math.max(0,v))/Math.log(1+m)*100;
 const statBar=(n,val,pct,delta)=>`<div class="pc-st"><span>${n}</span><i><b style="width:${Math.max(3,Math.min(100,pct))}%"></b></i><em>${val}${delta||''}</em></div>`;
 const dArrow=(v,b,lowerBetter)=>{if(b==null||!isFinite(v)||!isFinite(b)||b===v)return '';const up=lowerBetter?v<b:v>b,pct=b?Math.round(Math.abs(v-b)/Math.abs(b)*100):0;if(!pct)return '';return ` <small class="${up?'up':'dn'}">${up?'▲':'▼'}${pct}%</small>`};
@@ -30,8 +30,8 @@ const chipRow=(key,list,cur)=>`<div class="pc-filt">${list.map(([k,n])=>`<button
 /* ---------- 3+4. printer cards ---------- */
 function printerCardShop(t,best){
   const D=PRINTERS[t],lk=printerLock(D),full=S.printers.length>=space().printers,cmp=D.inj?best.inj:best.vat;
-  return `<div class="pcard ${lk?'locked':''}">${artBox(printerArt(t),'pc-art','',['p',t])}<div class="pc-body"><div class="pc-h"><b>${D.name}</b><span class="chip">${pKind(D)} · ${D.slots} slots · ${D.speed}×</span></div>
-    ${lk?`<div class="pc-lock">🔒 ${lk}</div>`:`<div class="pc-stats">${statBar('Output',`${Math.round(pOut(D))}`,lg(pOut(D),PMAX.out),dArrow(pOut(D),cmp&&pOut(cmp)))}${statBar('Fail',(Math.round(D.fail*1000)/10)+'%',(1-D.fail/PMAX.fail)*100,dArrow(D.fail,cmp&&cmp.fail,true))}${D.q?statBar('Quality','+'+D.q.toFixed(2),D.q/PMAX.q*100,''):''}</div>`}
+  return `<div class="pcard ${lk?'locked':''}">${artBox(printerArt(t),'pc-art','',['p',t])}<div class="pc-body"><div class="pc-h"><b>${D.name}</b><span class="chip">${pKind(D)} · ${TIERS[D.tier]}</span></div>
+    ${lk?`<div class="pc-lock">🔒 ${lk}</div>`:`<div class="pc-stats">${statBar('Output',`${Math.round(pOut(D))}`,lg(pOut(D),PMAX.out),dArrow(pOut(D),cmp&&pOut(cmp)))}${statBar('Slots',D.slots,lg(D.slots,PMAX.slots),dArrow(D.slots,cmp&&cmp.slots))}${statBar('Speed',D.speed+'×',lg(D.speed,PMAX.speed),dArrow(D.speed,cmp&&cmp.speed))}${statBar('Fail',(Math.round(D.fail*1000)/10)+'%',(1-D.fail/PMAX.fail)*100,dArrow(D.fail,cmp&&cmp.fail,true))}${statBar('Quality','+'+(D.q||0).toFixed(2),(D.q||0)/PMAX.q*100,(()=>{const d=(D.q||0)-((cmp&&cmp.q)||0);return cmp&&Math.abs(d)>=.005?` <small class="${d>0?'up':'dn'}">${d>0?'▲+':'▼'}${d.toFixed(2)}</small>`:''})())}${statBar('Wear',D.wear+'%/job',(1-D.wear/PMAX.wear)*100,dArrow(D.wear,cmp&&cmp.wear,true))}</div>`}
     </div>${lk?`<div class="pc-buy"><span class="chip">${fmt(D.cost)}</span></div>`:full?`<div class="pc-buy"><button class="btn sm" disabled>${fmt(D.cost)}</button><small>no free spot</small></div>`:shortBtn('buyPrinter',t,D.cost,false)}</div>`;
 }
 function shopPrinters(){

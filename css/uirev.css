@@ -68,3 +68,4 @@ body.hdr-min header .top .cash{font-size:24px!important}
 .sgrid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}.stile2{min-width:0;overflow:hidden}.stt2 b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .buypop{bottom:190px}
 .bprev .kv{display:flex;justify-content:space-between;gap:12px}.buypop{bottom:auto!important;top:150px}
+.pc-st{grid-template-columns:48px 1fr auto}

@@ -1,8 +1,11 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.50';
-const PATCH_TITLE='Resinaprint 4.50 · New shop and UI';
+const VERSION='4.51';
+const PATCH_TITLE='Resinaprint 4.51 · Full printer stats';
 const PATCH=[
+ {h:'New in 4.51',i:[
+  '<b>Printer cards show every stat:</b> output, slots, speed, fail rate, quality and wear per job, each with a bar and a green or red arrow against your best printer.'
+ ]},
  {h:'New in 4.50',i:[
   '<b>Slimmer header.</b> Rating, hype, payday and energy share one row, so you see more of the game. Tap an empty spot of the header to hide the stats and goal completely; tap again to bring them back.',
   '<b>New shop.</b> "Recommended for you" shows up to 3 smart picks (running low on resin, your next printer upgrade, a better washer, better resin, upgrades ready), and the catalogues are compact tiles in Production, Business and Logistics.',
