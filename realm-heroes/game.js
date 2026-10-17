@@ -612,6 +612,7 @@ function openSettings() {
     <h3>Save</h3><small class="mut">Progress saves automatically in this browser. Copy the code below to move it to another device.</small>
     <textarea id="saveTxt" rows="3" spellcheck="false"></textarea>
     <div class="btnrow"><button id="exp">Copy save code</button><button id="imp">Load from code</button></div>
+    <h3>Cheats</h3><div class="btnrow"><button id="chGems">+10,000 💎</button></div>
     <h3>Danger zone</h3><div class="btnrow"><button class="bad" id="reset">Reset progress</button></div>
     <div class="btnrow"><button id="sClose">Close</button></div>`);
   $('#snd').onclick = () => { S.sound = !S.sound; Sfx.set(S.sound); save(); openSettings(); };
@@ -627,6 +628,7 @@ function openSettings() {
       S = sanitize(d); save(); closeModal(); render(); toast('Save loaded');
     } catch { toast('That save code is not valid'); }
   };
+  $('#chGems').onclick = () => { S.gems += 10000; save(); render(); toast('+10,000 💎'); };
   let armed = false;
   $('#reset').onclick = () => {
     if (!armed) { armed = true; $('#reset').textContent = 'Tap again to erase everything'; return; }
