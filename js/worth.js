@@ -6,7 +6,8 @@ const WORTH_LEDGER=['Equipment','Fleet upgrades','Paint studio','Resin lab','Meg
 const _spW=spend;spend=function(cat,a){const c0=S.cash;const r=_spW(cat,a);if(WORTH_LEDGER.includes(cat)&&S.cash<c0){const L=S.assets||(S.assets={});L[cat]=(L[cat]||0)+(c0-S.cash)}return r};
 function worthParts(s){
   const P={};
-  P.Printers=(s.printers||[]).reduce((a,p)=>a+(PRINTERS[p.type]?PRINTERS[p.type].cost:0),0)+(s.pinv||[]).reduce((a,p)=>a+(PRINTERS[p.type]?PRINTERS[p.type].cost:0),0);
+  /* 4.54: only printers placed in the studio count; printers waiting in storage do not */
+  P.Printers=(s.printers||[]).reduce((a,p)=>a+(PRINTERS[p.type]?PRINTERS[p.type].cost:0),0);
   P.Machines=(s.staff||[]).filter(x=>x.mach).reduce((a,x)=>{const m=typeof MACH!=='undefined'&&MACH.find(y=>y.id===x.mach);return a+(m?m.cost:0)+(x.tuned||0)},0);
   P.Space=SPACES.slice(1,(s.ws||0)+1).reduce((a,w)=>a+w.cost,0)+(s.wsBuild&&SPACES[s.wsBuild.i]?SPACES[s.wsBuild.i].cost:0)+Object.keys((s.biz&&s.biz.perm)||{}).reduce((a,k)=>a+(s.biz.perm[k]&&PERMITS[k]?PERMITS[k].cost:0),0);
   /* 4.52: gear, channels, paint studio, resin lab and supplies count from what you own, so older purchases count too */
