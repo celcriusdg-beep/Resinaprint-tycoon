@@ -1,4 +1,4 @@
-/* Company worth (4.35): cash no longer counts. Worth is everything the company owns, each at 90% of what it cost,
+/* Company worth (4.35, fuller in 4.52): cash counts 10%. Worth is everything the company owns, each at 90% of what it cost,
    minus loans and BTW owed. The foundry is a separate business and stays out of it. */
 const WORTH_KEEP=.9,WORTH_CASH=.10;
 const tillSum=s=>Object.values((s&&s.stores)||{}).reduce((a,st)=>a+Math.max(0,st.till||0),0);
@@ -8,7 +8,13 @@ function worthParts(s){
   const P={};
   P.Printers=(s.printers||[]).reduce((a,p)=>a+(PRINTERS[p.type]?PRINTERS[p.type].cost:0),0)+(s.pinv||[]).reduce((a,p)=>a+(PRINTERS[p.type]?PRINTERS[p.type].cost:0),0);
   P.Machines=(s.staff||[]).filter(x=>x.mach).reduce((a,x)=>{const m=typeof MACH!=='undefined'&&MACH.find(y=>y.id===x.mach);return a+(m?m.cost:0)+(x.tuned||0)},0);
-  P.Space=SPACES.slice(1,(s.ws||0)+1).reduce((a,w)=>a+w.cost,0);
+  P.Space=SPACES.slice(1,(s.ws||0)+1).reduce((a,w)=>a+w.cost,0)+(s.wsBuild&&SPACES[s.wsBuild.i]?SPACES[s.wsBuild.i].cost:0)+Object.keys((s.biz&&s.biz.perm)||{}).reduce((a,k)=>a+(s.biz.perm[k]&&PERMITS[k]?PERMITS[k].cost:0),0);
+  /* 4.52: gear, channels, paint studio, resin lab and supplies count from what you own, so older purchases count too */
+  P.Gear=(WASHERS[s.washer]?WASHERS[s.washer].cost:0)+Object.keys(s.car||{}).reduce((a,k)=>a+(s.car[k]&&CARRIERS[k]?CARRIERS[k].cost||0:0),0)
+    +(typeof PAINT_EQ!=='undefined'&&s.paint?PAINT_EQ.reduce((a,e)=>a+(s.paint.eq&&s.paint.eq[e.id]?e.cost:0),0):0)
+    +(typeof MIX_LV!=='undefined'&&s.mix?MIX_LV.slice(0,(s.mix.lv|0)+1).reduce((a,x)=>a+x.cost,0):0);
+  P['Sales channels']=Object.keys(s.ch||{}).reduce((a,k)=>a+(s.ch[k]&&CHANNELS[k]?CHANNELS[k].cost||0:0),0);
+  P.Resin=Object.keys(s.resin||{}).reduce((a,k)=>{const R=RESINS[k];return a+(R&&!R.mix?(s.resin[k]||0)/(R.vol||1000)*R.cost:0)},0);
   /* stores (4.43) count again now that they rebirth with the company: fit-out, levels, merges, shelf stock and card shop upgrades.
      Till money counts like cash. Riftbound packs and cards are kept through rebirth, so they stay out. */
   P.Stores=Object.keys(s.stores||{}).reduce((a,k)=>{const st=s.stores[k],D=STORES[k];if(!st||!D)return a;let t=D.cost+(st.merged?D.merge||0:0);for(let l=1;l<(st.level||1);l++)t+=Math.round(D.cost*[.4,.8,1.6,3.2][l-1]);return a+t+(st.stock||0)*D.unit},0);
@@ -18,8 +24,11 @@ function worthParts(s){
   if(typeof DSP_UP!=='undefined'&&s.dsp)P.Dispatch=DSP_UP.reduce((a,u)=>{let t=0;for(let i=0;i<(s.dsp[u.id]||0);i++)t+=u.cost(i)||0;return a+t},0);
   if(typeof VEH!=='undefined'&&s.fleet&&s.fleet.own)P.Fleet=Object.keys(s.fleet.own).reduce((a,k)=>a+(VEH[k]?VEH[k].cost*(s.fleet.own[k]||0):0),0);
   if(typeof SR_ITEMS!=='undefined'&&s.show&&s.show.own){const Sh=s.show;P.Showroom=SR_LEASE+SR_SIZES.slice(1,(Sh.size||0)+1).reduce((a,z)=>a+z.cost,0)+Object.keys(Sh.styles||{}).reduce((a,k)=>a+(SR_STYLES[k]?SR_STYLES[k].cost:0),0)+(Sh.items||[]).reduce((a,it)=>a+(SR_ITEMS[it.t]?SR_ITEMS[it.t].cost:0),0)}
-  P['Equipment & builds']=Object.values(s.assets||{}).reduce((a,v)=>a+v,0);
-  P.Stock=PKEYS.reduce((a,k)=>a+((s.stock&&s.stock[k])||0)*(typeof unitCost==='function'?unitCost(k):0),0);
+  P['Builds & fleet upgrades']=Object.keys(s.assets||{}).filter(k=>!['Equipment','Paint studio','Resin lab'].includes(k)).reduce((a,k)=>a+s.assets[k],0);
+  /* figures: what one costs to make (resin, printer time, labour), and never less than 35% of its base price */
+  const mk=k=>{const Pd=PRODUCTS[k];return Math.max((typeof unitCost==='function'?unitCost(k):0)+1.5+.12*Pd.ref+(Pd.h||2)*.3,Pd.ref*.35)};
+  P['Figures in stock']=PKEYS.reduce((a,k)=>a+((s.stock&&s.stock[k])||0)*mk(k),0);
+  P['Prints in progress']=PKEYS.reduce((a,k)=>a+(((s.unwashed&&s.unwashed[k])||0)+((s.cured&&s.cured[k])||0))*mk(k)*.8,0);
   return P;
 }
 value=function(s){

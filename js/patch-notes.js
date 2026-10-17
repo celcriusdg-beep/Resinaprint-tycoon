@@ -1,8 +1,13 @@
 /* Version number and patch notes popup. */
 /* ---------- 2.0: levels, trends, difficulty, stats, themes, patch notes ---------- */
-const VERSION='4.51';
-const PATCH_TITLE='Resinaprint 4.51 · Full printer stats';
+const VERSION='4.52';
+const PATCH_TITLE='Resinaprint 4.52 · Fair company worth';
 const PATCH=[
+ {h:'New in 4.52',i:[
+  '<b>Company worth counts everything you bought at 90% of its price.</b> New in the count: your wash & cure setup, carriers, permits, sales channels, paint studio equipment, resin lab, resin in stock, a space that is still being built and prints that are not finished yet.',
+  'Figures in stock now count at what they cost to make (resin, printer time and labour, at least 35% of their base price) instead of only the resin, so a full stock room adds real worth.',
+  'Gear, paint studio and resin lab are counted from what you own, so things you bought before company worth changed count too.'
+ ]},
  {h:'New in 4.51',i:[
   '<b>Printer cards show every stat:</b> output, slots, speed, fail rate, quality and wear per job, each with a bar and a green or red arrow against your best printer.'
  ]},
