@@ -89,6 +89,12 @@ const RIGS = {
   ],
 };
 
+// Frame-by-frame sheets that replace the part rig for one animation: n frames of fw x fh side by side, played over
+// the move; fx is where the body stands horizontally in a frame. Feet sit on the bottom edge.
+const SHEETS = {
+  scarlet: { melee: { src: 'img/scarlet_melee.png', n: 8, fw: 70, fh: 70, fx: 0.31 } },
+};
+
 // Attack animations per hero as keyframes over the move (at: 0..1). Each key sets joint channels
 // [angle, dx, dy] (degrees and sprite pixels) for body, head, armF, armB, legF, legB, tail; ease shapes the
 // approach to that key. hit: when the blow lands. fire: [from, to] window for guns. release: when an arrow leaves.

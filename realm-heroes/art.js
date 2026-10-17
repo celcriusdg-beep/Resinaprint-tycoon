@@ -593,7 +593,12 @@ const Art = (() => {
       };
       im.onerror = () => res();
       im.src = 'img/' + h.id + '.png';
-    }))).then(() => {
+    })).concat(Object.entries(SHEETS).flatMap(([id, byAnim]) => Object.entries(byAnim).map(([anim, sh]) => new Promise(res => {
+      const im = new Image();
+      im.onload = () => { sh.img = im; res(); };
+      im.onerror = () => res();
+      im.src = sh.src;
+    }))))).then(() => {
       const hs = Object.values(sprites).map(im => im.naturalHeight).sort((a, b) => a - b);
       if (hs.length) REF = hs[hs.length >> 1];
     });
@@ -866,7 +871,18 @@ const Art = (() => {
     const x0 = -Math.round((h.fx || 0.5) * im.naturalWidth) * ps;
     const rig = rigFor(h);
     let result = null;
-    if (rig) {
+    const sh = SHEETS[h.id] && SHEETS[h.id][anim];
+    if (sh && sh.img) { // hand-animated frames
+      const i = Math.min(sh.n - 1, Math.floor(Math.min(1, o.p || 0) * sh.n)), fw = sh.fw * ps, fh = sh.fh * ps, fx0 = -Math.round(sh.fx * sh.fw) * ps;
+      ctx.drawImage(sh.img, i * sh.fw, 0, sh.fw, sh.fh, fx0, -fh, fw, fh);
+      if ((o.flash || 0) > 0.02) {
+        const w = sh.white || (sh.white = document.createElement('canvas')), wx = w.getContext('2d');
+        w.width = sh.fw; w.height = sh.fh;
+        wx.drawImage(sh.img, i * sh.fw, 0, sh.fw, sh.fh, 0, 0, sh.fw, sh.fh);
+        wx.globalCompositeOperation = 'source-in'; wx.fillStyle = '#fff'; wx.fillRect(0, 0, sh.fw, sh.fh);
+        ctx.globalAlpha = alpha * Math.min(1, o.flash); ctx.drawImage(w, fx0, -fh, fw, fh);
+      }
+    } else if (rig) {
       const posed = composeRig(rig, h, anim, Math.min(1, o.p || 0), t), comp = posed.comp, cw = comp.width * ps, ch = comp.height * ps;
       // where the weapon is on screen, for trails (no rotation here except while falling)
       const tx = snap(P.dx * k * 1.4), ty = snap(dy * k);
