@@ -101,12 +101,12 @@ const CLIPS = {
     { at: 0.64, ease: 'out', body: [15, 6, 1], armF: [66], armB: [-26], head: [8], legF: [20], legB: [-16] },
     { at: 1, ease: 'inout' },
   ] } },
-  sszira: { melee: { dur: 780, hit: 0.52, trail: [0.44, 0.66], slam: true, keys: [
+  sszira: { melee: { dur: 760, hit: 0.52, trail: [0.45, 0.64], keys: [
     { at: 0 },
-    { at: 0.32, ease: 'out', body: [-9, -1, -1], armF: [-96], armB: [-24], head: [-8], tail: [28] },
-    { at: 0.44, ease: 'in', body: [-10, -1, -1], armF: [-108], armB: [-30], head: [-10], tail: [34] },
-    { at: 0.52, ease: 'out', body: [10, 3, 1], armF: [16], armB: [12], head: [6], tail: [-22] },
-    { at: 0.66, ease: 'out', body: [12, 3, 1], armF: [22], armB: [14], head: [8], tail: [-26] },
+    { at: 0.32, ease: 'out', body: [-6, -2, 0], armF: [-36, -6, -1], armB: [-12], head: [-4], tail: [20] },
+    { at: 0.45, ease: 'in', body: [-8, -3, 0], armF: [-40, -8, -1], armB: [-16], head: [-5], tail: [26] },
+    { at: 0.52, ease: 'out', body: [8, 4, 0], armF: [-30, 10, 0], armB: [8], head: [4], tail: [-18] },
+    { at: 0.66, ease: 'out', body: [9, 5, 0], armF: [-26, 11, 0], armB: [10], head: [5], tail: [-22] },
     { at: 1, ease: 'inout' },
   ] } },
   nova: { shoot: { dur: 950, fire: [0.24, 0.82], keys: [

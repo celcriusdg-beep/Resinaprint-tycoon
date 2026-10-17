@@ -655,7 +655,7 @@ const Art = (() => {
         if (from >= 0) for (let c2 = 0; c2 < 4; c2++) out[o + c2] = src[from * 4 + c2];
       }
       x.putImageData(img, 0, 0);
-      return { ...d, canvas: c };
+      return { ...d, canvas: c, data: out, rot: new Map() };
     });
     const byName = {}; parts.forEach(p => (byName[p.n] = p));
     const order = [...parts].sort((a, b) => a.z - b.z);
@@ -663,6 +663,46 @@ const Art = (() => {
     const white = document.createElement('canvas'); white.width = comp.width; white.height = comp.height;
     return { W, H, parts, byName, order, comp, white };
   }
+  // Rotates a part about its joint without losing pixels: every target pixel samples its nearest source
+  // pixel, then any source pixel that no target picked is placed where it lands, so thin lines (bowstrings,
+  // shafts, blade edges) never break up. Cached per 2-degree step.
+  function rotatedPart(part, W, H, deg) {
+    const step = Math.round(deg / 2) * 2;
+    if (!step) return { canvas: part.canvas, px: part.pv[0], py: part.pv[1] };
+    let r = part.rot.get(step);
+    if (r) return r;
+    const a = step * Math.PI / 180, cs = Math.cos(a), sn = Math.sin(a), [pvx, pvy] = part.pv, src = part.data;
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    for (const [cx, cy] of [[0, 0], [W, 0], [0, H], [W, H]]) {
+      const rx = cx - pvx, ry = cy - pvy, X = rx * cs - ry * sn, Y = rx * sn + ry * cs;
+      x0 = Math.min(x0, X); y0 = Math.min(y0, Y); x1 = Math.max(x1, X); y1 = Math.max(y1, Y);
+    }
+    const ox = Math.floor(x0) - 1, oy = Math.floor(y0) - 1, w = Math.ceil(x1) - ox + 2, h = Math.ceil(y1) - oy + 2;
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const x = c.getContext('2d'), img = x.createImageData(w, h), out = img.data;
+    for (let dy = 0; dy < h; dy++) for (let dx = 0; dx < w; dx++) {
+      const rx = dx + ox + 0.5, ry = dy + oy + 0.5;
+      const sx = Math.floor(pvx + rx * cs + ry * sn), sy = Math.floor(pvy - rx * sn + ry * cs);
+      if (sx < 0 || sy < 0 || sx >= W || sy >= H) continue;
+      const si = (sy * W + sx) * 4;
+      if (!src[si + 3]) continue;
+      const di = (dy * w + dx) * 4;
+      out[di] = src[si]; out[di + 1] = src[si + 1]; out[di + 2] = src[si + 2]; out[di + 3] = src[si + 3];
+    }
+    for (let sy = 0; sy < H; sy++) for (let sx = 0; sx < W; sx++) {
+      const si = (sy * W + sx) * 4;
+      if (!src[si + 3]) continue;
+      const rx = sx + 0.5 - pvx, ry = sy + 0.5 - pvy;
+      const dx = Math.floor(rx * cs - ry * sn) - ox, dy = Math.floor(rx * sn + ry * cs) - oy, di = (dy * w + dx) * 4;
+      if (dx < 0 || dy < 0 || dx >= w || dy >= h || out[di + 3]) continue;
+      out[di] = src[si]; out[di + 1] = src[si + 1]; out[di + 2] = src[si + 2]; out[di + 3] = src[si + 3];
+    }
+    x.putImageData(img, 0, 0);
+    r = { canvas: c, px: -ox, py: -oy };
+    part.rot.set(step, r);
+    return r;
+  }
+
   function rigFor(h) {
     if (!(h.id in rigs)) rigs[h.id] = buildRig(h);
     return rigs[h.id];
@@ -754,7 +794,8 @@ const Art = (() => {
     x.clearRect(0, 0, rig.comp.width, rig.comp.height);
     x.imageSmoothingEnabled = false;
     const R = rigPose(h, anim, p, Math.floor(t * 12) / 12); // 12 fps, like hand-made sprite animation
-    const mats = {};
+    const mats = {}, turn = {};
+    const angleOf = part => turn[part.n] ?? (turn[part.n] = (part.par ? angleOf(rig.byName[part.par]) : 0) + (R[part.role] || [0])[0]);
     const matOf = part => {
       if (mats[part.n]) return mats[part.n];
       const parent = part.par ? matOf(rig.byName[part.par]) : new DOMMatrix().translate(PAD, PAD);
@@ -765,12 +806,11 @@ const Art = (() => {
     // a weapon arm raised far back (sword wound up overhead) passes behind the body and head
     const order = R.armF[0] < -60 ? [...rig.order].sort((a, b) => (a.role === 'armF' ? 1.5 : a.z) - (b.role === 'armF' ? 1.5 : b.z)) : rig.order;
     for (const part of order) {
-      const m = matOf(part);
-      // snap translation to whole pixels so parts never sit between pixels
-      x.setTransform(m.a, m.b, m.c, m.d, Math.round(m.e), Math.round(m.f));
-      x.drawImage(part.canvas, 0, 0);
+      // place the part's rotated image so its joint lands on the joint's posed position, on whole pixels
+      const j = matOf(part).transformPoint(new DOMPoint(part.pv[0], part.pv[1]));
+      const r = rotatedPart(part, rig.W, rig.H, angleOf(part));
+      x.drawImage(r.canvas, Math.round(j.x - r.px), Math.round(j.y - r.py));
     }
-    x.setTransform(1, 0, 0, 1, 0, 0);
     const pt = (part, q) => { const r = matOf(part).transformPoint(new DOMPoint(q[0], q[1])); return [Math.round(r.x), Math.round(r.y)]; };
     const out = { comp: rig.comp };
     const weapon = rig.parts.find(q => q.tip);
