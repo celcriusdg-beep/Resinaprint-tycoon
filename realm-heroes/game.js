@@ -13,7 +13,7 @@ const PENNANT = { SSR: '#b8292f', SR: '#d9822b', R: '#2f62b8' };
 function fresh() {
   const heroes = {};
   STARTERS.forEach(id => (heroes[id] = { lvl: 1, stars: RARITY[HMAP[id].rar].stars, copies: 0 }));
-  return { v: 1, gold: 3000, xp: 2000, gems: 2000, heroes, team: ['brakka', 'garrick', 'wren', 'pip', 'mae'],
+  return { v: 1, gold: 3000, xp: 2000, gems: 2000, heroes, team: ['sszira', null, 'lupa', null, null],
     stage: 1, idleT: Date.now(), pity: 0, pulls: 0, freeDay: '', lootDay: '', sound: true, speed: 1, wins: 0 };
 }
 function load() {
@@ -35,7 +35,10 @@ function sanitize(d) {
     const stars = Math.min(MAX_STARS, Math.max(base, h.stars | 0));
     heroes[id] = { stars, lvl: Math.min(maxLevel(stars), Math.max(1, h.lvl | 0)), copies: Math.max(0, h.copies | 0) };
   }
-  if (!Object.keys(heroes).length) return f;
+  if (!Object.keys(heroes).length) { // none of the saved heroes exist any more: keep progress, hand out starters
+    Object.assign(heroes, f.heroes);
+    d.team = fresh().team;
+  }
   s.heroes = heroes;
   s.team = Array.from({ length: 5 }, (_, i) => (d.team && heroes[d.team[i]] ? d.team[i] : null));
   s.team = s.team.map((id, i) => (s.team.indexOf(id) === i ? id : null));
@@ -424,7 +427,7 @@ function openHero(id) {
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     let k = t % total, anim = 'idle', p = 0;
     for (const [a, d] of seq) { if (k < d) { anim = a; p = k / d; break; } k -= d; }
-    const s = Math.min(H * 0.8 / 125, W / 160);
+    const s = Math.min(H * 0.78 / 125, W / 170);
     Art.drawHero(ctx, h, { x: W / 2 - 10, y: H * 0.95, s, face: 1, anim, p, t });
   });
   const lvlUp = n => {
@@ -478,7 +481,8 @@ function bindSummon() {
   $('#s1').onclick = () => summon(1);
   $('#s10').onclick = () => summon(10);
   document.querySelectorAll('#view .hcard[data-id]').forEach(b => (b.onclick = () => openHero(b.dataset.id)));
-  const feat = HEROES.filter(h => h.rar === 'SSR').slice(0, 3);
+  const rank = { SSR: 3, SR: 2, R: 1 };
+  const feat = [...HEROES].sort((a, b) => rank[b.rar] - rank[a.rar]).slice(0, 3);
   mountLive($('#scv'), (ctx, W, H, t) => {
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, '#2a1650'); g.addColorStop(1, '#0d0a20');
@@ -492,6 +496,7 @@ function bindSummon() {
     const pos = [[0.5, 0.97, 1.15], [0.24, 0.92, 0.95], [0.78, 0.92, 0.95]];
     [1, 2, 0].forEach(i => {
       const h = feat[i], [px, py, k] = pos[i];
+      if (!h) return;
       Art.drawHero(ctx, h, { x: W * px, y: H * py, s: sc * k, face: px > 0.6 ? -1 : 1, anim: 'idle', t: t + i, aura: 0.35 + 0.15 * Math.sin(t * 2 + i) });
     });
   });

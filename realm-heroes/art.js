@@ -575,11 +575,79 @@ const Art = (() => {
   // Screen pixels per sprite pixel; whole numbers once large enough so pixels stay square.
   function pixelSize(s) { const ps = s / PX; return ps >= 0.75 ? Math.max(1, Math.round(ps)) : ps; }
 
+  // ---- hand-made pixel sprites (img/<id>.png) ----
+  // Drawn at whole-number scale and animated as one piece: bob, lean, lunge, recoil, flash, fall.
+  const sprites = {}, spriteWhite = {};
+  let REF = 60; // typical sprite height in pixels; a sprite this tall stands as high as the 125-unit rig
+  function loadSprites() {
+    return Promise.all(HEROES.filter(h => h.img).map(h => new Promise(res => {
+      const im = new Image();
+      im.onload = () => {
+        sprites[h.id] = im;
+        const w = document.createElement('canvas');
+        w.width = im.naturalWidth; w.height = im.naturalHeight;
+        const x = w.getContext('2d');
+        x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fff'; x.fillRect(0, 0, w.width, w.height);
+        spriteWhite[h.id] = w;
+        res();
+      };
+      im.onerror = () => res();
+      im.src = 'img/' + h.id + '.png';
+    }))).then(() => {
+      const hs = Object.values(sprites).map(im => im.naturalHeight).sort((a, b) => a - b);
+      if (hs.length) REF = hs[hs.length >> 1];
+    });
+  }
+  // Screen pixels per sprite pixel for world scale s (s screen px per rig unit).
+  function spriteScale(s) { const ps = s * 125 / REF; return ps >= 0.75 ? Math.max(1, Math.round(ps)) : ps; }
+  const spriteRef = () => REF;
+  // Half the drawn width of a hero, for spacing melee attacks.
+  function halfWidth(h, s) {
+    const im = sprites[h.id];
+    return im ? im.naturalWidth * spriteScale(s) * 0.5 : 30 * s;
+  }
+
+  function drawSprite(ctx, h, o, P, alpha) {
+    const im = sprites[h.id], ps = spriteScale(o.s || 1), k = ps * REF / 125; // k: screen px per rig unit
+    const W = im.naturalWidth * ps, H = im.naturalHeight * ps, face = o.face || 1, t = o.t || 0, anim = o.anim || 'idle';
+    const snap = v => Math.round(v / ps) * ps; // keep motion on the sprite's pixel grid
+    ctx.save();
+    ctx.translate(Math.round(o.x), Math.round(o.y));
+    if (!o.noShadow) {
+      ctx.globalAlpha = 0.55 * alpha; ctx.fillStyle = '#1a1024';
+      ctx.beginPath(); ctx.ellipse(snap(P.dx * k * face), 0, Math.max(W * 0.32, 16 * k), 6 * k, 0, 0, PI * 2); ctx.fill();
+    }
+    const aura = Math.max(P.glow, o.aura || 0);
+    if (aura > 0.02) {
+      const f = FACTIONS[h.fac], cy = -H * 0.45;
+      for (let r = 4; r >= 1; r--) {
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = hexA(f.glow, 0.08 * aura * (5 - r));
+        const w = H * 0.22 * r, hh = w * 1.3, c = w * 0.22;
+        ctx.fillRect(snap(-w / 2), snap(cy - hh / 2 + c), snap(w), snap(hh - c * 2));
+        ctx.fillRect(snap(-w / 2 + c), snap(cy - hh / 2), snap(w - c * 2), snap(hh));
+      }
+    }
+    ctx.globalAlpha = alpha;
+    ctx.imageSmoothingEnabled = false;
+    ctx.scale(face, 1);
+    let dy = P.dy + P.bob * 0.6;
+    if (anim === 'idle') dy -= Math.sin(t * 2.6) > 0.2 ? 1.2 : 0; // one-pixel breathing bob
+    ctx.translate(snap(P.dx * k * 1.4), snap(dy * k));
+    const rot = P.rot + P.lean * 0.45;
+    if (rot) ctx.rotate(rot);
+    const x0 = -Math.round((h.fx || 0.5) * im.naturalWidth) * ps;
+    ctx.drawImage(im, x0, -H, W, H);
+    if ((o.flash || 0) > 0.02) { ctx.globalAlpha = alpha * Math.min(1, o.flash); ctx.drawImage(spriteWhite[h.id], x0, -H, W, H); }
+    ctx.restore();
+  }
+
   // o: {x, y, s, face, anim, p, t, flash, alpha, aura, noShadow}
   function drawHero(ctx, h, o) {
     const anim = o.anim || 'idle', t = o.t || 0, P = pose(anim, o.p || 0, t, h.look.wpn);
     const alpha = (o.alpha == null ? 1 : o.alpha) * P.alpha;
     if (alpha <= 0.01) return;
+    if (sprites[h.id]) return drawSprite(ctx, h, o, P, alpha);
     const i = frameIndex(anim, o.p || 0, t), fr = frame(h, anim, i), ps = pixelSize(o.s || 1);
     const face = o.face || 1, sz = h.look.size || 1;
     ctx.save();
@@ -632,10 +700,17 @@ const Art = (() => {
         b.fillRect(xx, y, 1, 1);
       }
     }), size, size);
-    const ps = Math.max(1, Math.round(size / 48)), sz = h.look.size || 1, fr = frame(h, 'idle', 0);
-    const hx = OX + 4 * PX * sz, hy = OY - 92 * PX * sz; // head centre inside the frame
     x.imageSmoothingEnabled = false;
-    x.drawImage(fr, Math.round(size / 2 - hx * ps), Math.round(size * 0.4 - hy * ps), FW * ps, FH * ps);
+    const im = sprites[h.id];
+    if (im) { // head and shoulders of the sprite
+      const ps = Math.max(1, Math.round(size / 34));
+      x.drawImage(im, Math.round(size / 2 - h.hx * im.naturalWidth * ps), Math.round(size * 0.42 - h.hy * im.naturalHeight * ps),
+        im.naturalWidth * ps, im.naturalHeight * ps);
+    } else {
+      const ps = Math.max(1, Math.round(size / 48)), sz = h.look.size || 1, fr = frame(h, 'idle', 0);
+      const hx = OX + 4 * PX * sz, hy = OY - 92 * PX * sz; // head centre inside the frame
+      x.drawImage(fr, Math.round(size / 2 - hx * ps), Math.round(size * 0.4 - hy * ps), FW * ps, FH * ps);
+    }
     const url = c.toDataURL();
     portraits.set(key, url);
     return url;
@@ -664,11 +739,21 @@ const Art = (() => {
       for (let i = 0; i < 26; i++) { b.fillStyle = hexA('#fff6c0', 0.5); b.fillRect((i * 37) % W, (i * 53) % (H * 0.7), 1, 1); }
       b.fillStyle = hexA(f.col, 0.35); b.fillRect(0, H * 0.86, W, H * 0.14);
     }), w, hgt);
-    const wpn = h.look.wpn, sz = h.look.size || 1;
-    const anim = MELEE.has(wpn) ? 'melee' : wpn === 'bow' ? 'shoot' : 'cast';
-    const ps = Math.max(1, Math.floor(hgt * 0.78 / (125 * PX * sz)));
     x.imageSmoothingEnabled = false;
-    x.drawImage(frame(h, anim, anim === 'melee' ? 2 : 3), Math.round(w * 0.47 - OX * ps), Math.round(hgt * 0.9 - OY * ps), FW * ps, FH * ps);
+    const im = sprites[h.id];
+    if (im) {
+      // fill the card height; wide weapons may run off the sides like splash art
+      const ps = Math.max(1, Math.round(hgt * 0.7 / im.naturalHeight));
+      const dw = im.naturalWidth * ps, dh = im.naturalHeight * ps, cx = w * 0.5 - (h.fx || 0.5) * dw;
+      x.fillStyle = 'rgba(20,10,30,.55)';
+      x.beginPath(); x.ellipse(w / 2, hgt * 0.9, Math.min(dw * 0.36, w * 0.4), 5 * ps, 0, 0, PI * 2); x.fill();
+      x.drawImage(im, Math.round(cx), Math.round(hgt * 0.9 - dh), dw, dh);
+    } else {
+      const wpn = h.look.wpn, sz = h.look.size || 1;
+      const anim = MELEE.has(wpn) ? 'melee' : wpn === 'bow' ? 'shoot' : 'cast';
+      const ps = Math.max(1, Math.floor(hgt * 0.78 / (125 * PX * sz)));
+      x.drawImage(frame(h, anim, anim === 'melee' ? 2 : 3), Math.round(w * 0.47 - OX * ps), Math.round(hgt * 0.9 - OY * ps), FW * ps, FH * ps);
+    }
     const url = c.toDataURL();
     cards.set(key, url);
     return url;
@@ -676,12 +761,12 @@ const Art = (() => {
 
   // Waits for the pixel fonts so canvas text uses them from the first frame.
   function ready() {
-    if (!document.fonts || !document.fonts.load) return Promise.resolve();
+    if (!document.fonts || !document.fonts.load) return loadSprites();
     return Promise.race([
       Promise.all([document.fonts.load('16px "Press Start 2P"'), document.fonts.load('16px "Pixelify Sans"')]),
       new Promise(r => setTimeout(r, 2500)),
-    ]).catch(() => {});
+    ]).catch(() => {}).then(loadSprites);
   }
 
-  return { drawHero, portrait, cardArt, hexA, rgb, ready, pixelSize, pixCanvas, blit };
+  return { drawHero, portrait, cardArt, hexA, rgb, ready, pixelSize, pixCanvas, blit, spriteRef, spriteScale, halfWidth };
 })();

@@ -102,8 +102,10 @@ const Battle = (() => {
       this.fy = this.H - this.fh;
       this.hz = (this.fy + this.fh * 0.45) / this.H;
       // sprite pixels map to whole screen pixels: pick that pixel size, then derive the world scale from it
-      this.pix = Math.max(1, Math.round(Math.min(this.W / 470, this.fh / 400) / 0.7));
-      this.sc = this.pix * 0.7;
+      // one sprite pixel = pix screen pixels, and the world scale follows from it
+      const ref = Art.spriteRef();
+      this.pix = Math.max(1, Math.round(Math.min(this.W / 470, this.fh / 400) * 125 / ref));
+      this.sc = this.pix * ref / 125;
       for (const u of Object.values(this.units)) {
         const [x, y] = slotPos(u.side, u.slot, this.W, this.fy, this.fh);
         u.hx = x; u.hy = y;
@@ -236,7 +238,10 @@ const Battle = (() => {
     async meleeAct(u, e, targets, ult) {
       const sc = this.sc, distinct = [...new Set(targets)];
       let tx, ty;
-      if (distinct.length === 1) { tx = distinct[0].x - u.face * 50 * sc * (distinct[0].boss ? 1.3 : 1); ty = distinct[0].y + 1; }
+      if (distinct.length === 1) {
+        const t = distinct[0], ts = sc * (t.boss ? 1.35 : 1);
+        tx = t.x - u.face * Math.max(40 * sc, (Art.halfWidth(t.h, ts) + Art.halfWidth(u.h, sc)) * 0.75); ty = t.y + 1;
+      }
       else {
         tx = distinct.reduce((s, t) => s + t.x, 0) / distinct.length - u.face * 70 * sc;
         ty = distinct.reduce((s, t) => s + t.y, 0) / distinct.length;
@@ -258,20 +263,22 @@ const Battle = (() => {
     }
 
     async rangedAct(u, e, targets, ult) {
-      const sc = this.sc, bow = u.h.look.wpn === 'bow', fac = FACTIONS[u.h.fac];
+      const sc = this.sc, gun = u.h.look.wpn === 'gun', bow = u.h.look.wpn === 'bow' || gun, fac = FACTIONS[u.h.fac];
       const meteor = ult && !bow && ['aoe', 'burn', 'back', 'stun'].includes(e.type);
       const groups = e.type === 'random' ? e.hits.map(x => [x]) : [e.hits];
       for (const g of groups) {
         this.setAnim(u, bow ? 'shoot' : 'cast', bow ? 480 : 560);
         await this.sleep(bow ? 270 : 300);
-        const from = bow ? [u.x + u.face * 30 * sc, u.y - 70 * sc] : [u.x + u.face * 20 * sc, u.y - 112 * sc];
+        const from = gun ? [u.x + u.face * Art.halfWidth(u.h, sc), u.y - 52 * sc]
+          : bow ? [u.x + u.face * Math.max(30 * sc, Art.halfWidth(u.h, sc) * 0.8), u.y - 70 * sc] : [u.x + u.face * 20 * sc, u.y - 112 * sc];
         const dur = meteor ? 420 : 280;
         g.forEach(hit => {
           const t = this.units[hit.u], to = this.centre(t);
           if (meteor) this.proj('meteor', [to[0] + (u.side === 'a' ? -120 : 120) * sc, to[1] - 260 * sc], to, fac.col, dur);
+          else if (gun) for (let b = 0; b < 3; b++) this.proj('bullet', [from[0], from[1] + (b - 1) * 3 * sc], [to[0], to[1] + (b - 1) * 4 * sc], '#ffe066', dur - b * 25);
           else this.proj(bow ? 'arrow' : 'orb', from, to, bow ? fac.col : fac.glow, dur);
         });
-        Sfx.play(bow ? 'bow' : 'cast');
+        Sfx.play(gun ? 'gun' : bow ? 'bow' : 'cast');
         await this.sleep(dur);
         if (meteor) this.shake = 8;
         g.forEach(hit => this.impact(u, hit));
@@ -432,7 +439,13 @@ const Battle = (() => {
         const k = (this.time - p.t0) / p.d;
         const arc = p.kind === 'arrow' ? -Math.sin(Math.PI * k) * 30 * sc : 0;
         const x = p.x0 + (p.x1 - p.x0) * k, y = p.y0 + (p.y1 - p.y0) * k + arc;
-        if (p.kind === 'arrow') {
+        if (p.kind === 'bullet') {
+          const ang = Math.atan2(p.y1 - p.y0, p.x1 - p.x0);
+          ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+          ctx.fillStyle = '#fff7c0'; ctx.fillRect(-10 * sc, -1.5 * sc, 14 * sc, 3 * sc);
+          ctx.fillStyle = p.col; ctx.fillRect(-4 * sc, -2 * sc, 6 * sc, 4 * sc);
+          ctx.restore();
+        } else if (p.kind === 'arrow') {
           const dy = (p.y1 - p.y0) - Math.cos(Math.PI * k) * Math.PI * 30 * sc, ang = Math.atan2(dy, p.x1 - p.x0);
           ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
           ctx.strokeStyle = '#e8dcc0'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-18 * sc, 0); ctx.lineTo(6 * sc, 0); ctx.stroke();
@@ -560,6 +573,7 @@ const Sfx = (() => {
     crit: () => { noise(0.14, 0.35, 400); tone(320, 90, 0.16, 'square', 0.09); },
     swing: () => noise(0.12, 0.12, 2500),
     bow: () => tone(900, 300, 0.12, 'triangle', 0.08),
+    gun: () => [0, 0.05, 0.1].forEach(d => { tone(220, 60, 0.05, 'square', 0.07, d); }),
     cast: () => tone(400, 1200, 0.25, 'sine', 0.07),
     ult: () => { tone(200, 800, 0.4, 'sawtooth', 0.05); tone(300, 1200, 0.45, 'sine', 0.06, 0.05); },
     heal: () => { tone(660, 660, 0.15, 'sine', 0.07); tone(880, 880, 0.2, 'sine', 0.06, 0.08); },

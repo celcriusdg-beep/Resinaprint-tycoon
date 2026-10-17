@@ -57,12 +57,12 @@ function ultDesc(h) {
 function stageTeam(s) {
   const rng = rngFrom(s * 7919 + 13), boss = s % STAGES_PER_CHAPTER === 0;
   const lvl = Math.max(1, Math.round(1 + (s - 1) * 1.1));
-  const n = s <= 2 ? 3 : s <= 5 ? 4 : 5;
-  const pool = HEROES.filter(h => h.rar === 'R' || (h.rar === 'SR' && s >= 6) || (h.rar === 'SSR' && s >= 15));
+  const n = s <= 2 ? 2 : s <= 5 ? 3 : s <= 9 ? 4 : 5;
+  const pool = HEROES.filter(h => h.rar === 'R' || (h.rar === 'SR' && s >= 3) || (h.rar === 'SSR' && s >= 8));
   const picked = [];
-  while (picked.length < n) {
+  while (picked.length < n) { // distinct heroes while the pool allows, repeats after that
     const h = pool[Math.floor(rng() * pool.length)];
-    if (!picked.includes(h)) picked.push(h);
+    if (!picked.includes(h) || picked.length >= pool.length) picked.push(h);
   }
   picked.sort((a, b) => (ROLES[b.role].front ? 1 : 0) - (ROLES[a.role].front ? 1 : 0));
   const extra = Math.floor((s - 1) / 12);
