@@ -10,7 +10,7 @@ import { buyFuelInternal, repairInternal } from './engine';
 import { LOCATION_BY_ID, expandCost, nextSize } from './progression/locations';
 import { pendingShares } from './progression/prestige';
 import { acceptOffer as acceptOfferImpl, cancelContract as cancelContractImpl } from './economy/market';
-import { startRefuel, decommissionCost, buyVehicle, sellVehicle, buyItem, sellItem, type Item } from './supply/fuelcycle';
+import { startRefuel, decommissionCost, buyVehicle, sellVehicle, buyItem, sellItem, deliverOrder as deliverOrderImpl, fuelQuotaLeft, type Item } from './supply/fuelcycle';
 import { fuelCapacity } from './simulation/plant';
 
 // Every player action validates fully and returns an error string, or null on success.
@@ -143,7 +143,9 @@ export function restartReactor(s: GameState, id: number): Result {
 
 export function buyFuel(s: GameState, units: number): Result {
   const n = buyFuelInternal(s, units);
-  return n > 0 ? null : s.money < s.market.fuelPrice ? 'Not enough money.' : 'Fuel storage is full.';
+  if (n > 0) return null;
+  if (fuelQuotaLeft(s) <= 0) return 'Suppliers are sold out for today — make your own fuel or wait for tomorrow.';
+  return s.money < s.market.fuelPrice ? 'Not enough money.' : 'Fuel storage is full.';
 }
 
 export function startResearch(s: GameState, id: string): Result {
@@ -347,7 +349,11 @@ export function sellMineVehicle(s: GameState, buildingId: number, kind: 'excavat
 }
 
 export function tradeItem(s: GameState, item: Item, qty: number): Result {
-  if (qty > 0) return buyItem(s, item, qty, fuelCapacity(s)) > 0 ? null : 'Cannot buy: storage full or not enough money.';
+  if (qty > 0) {
+    if (buyItem(s, item, qty, fuelCapacity(s)) > 0) return null;
+    if (item === 'assemblies' && fuelQuotaLeft(s) <= 0) return 'Suppliers are sold out for today — make your own fuel or wait for tomorrow.';
+    return 'Cannot buy: storage full or not enough money.';
+  }
   return sellItem(s, item, -qty) > 0 ? null : 'Nothing to sell.';
 }
 
@@ -388,4 +394,8 @@ export function moveBuilding(s: GameState, id: number, x: number, z: number, rot
   b.rot = rot;
   pushLog(s, 'info', `Moved ${BUILDINGS[b.type].short}.`);
   return null;
+}
+
+export function deliverMaterialOrder(s: GameState, id: number): Result {
+  return deliverOrderImpl(s, id);
 }

@@ -4,7 +4,7 @@ import { getMods } from './simulation/modifiers';
 import { reactivityHeadroom, warnTemp, coreSize, advisoryLimit, powerLimit } from './simulation/reactor';
 import { physicsFor } from './simulation/physics';
 import { fuelCapacity } from './simulation/plant';
-import { refuelNeed, poolCapacity, mineOutput } from './supply/fuelcycle';
+import { refuelNeed, poolCapacity, mineOutput, fuelQuotaLeft } from './supply/fuelcycle';
 import { hasRoomFor } from './buildings/grid';
 import { LOCATION_BY_ID } from './progression/locations';
 import { HOURS_PER_SECOND } from './constants';
@@ -114,7 +114,7 @@ export function reactorStatus(s: GameState, site: Site, b: Building): ReactorSta
   } else if (r.coreFuel < 0.15 && !def.reactor!.onlineRefuel) {
     add('warn', 'fuel nearly used up', `Core fuel ${pct(r.coreFuel)}: the reactor is coasting down and can't reach full power. Plan a refuelling outage (${refuelNeed(b)} assemblies).`, { label: 'Open', action: { kind: 'select', id: b.id } }, 'fuel');
   }
-  if (def.reactor!.onlineRefuel && s.fuel < 1) add('error', 'no fuel to feed', 'Molten salt reactors draw fuel from stock continuously. Buy or make fuel assemblies.', { label: 'Buy fuel', action: { kind: 'buyFuel' } });
+  if (def.reactor!.onlineRefuel && s.supply.enriched < 1 && r.power > 0.02) add('error', 'no enriched uranium for the fuel salt', 'Molten salt reactors dissolve enriched uranium into their fuel salt continuously. Produce it (Enrichment Plant) or buy it in Supply.', { label: 'Supply', action: { kind: 'panel', panel: 'supply' } }, 'fuel');
 
   // Actual power vs target
   let headline: string;
@@ -249,6 +249,7 @@ export function diagnoseCompany(s: GameState): Issue[] {
   }
   if (s.fuel < 1 && (needingFuel > 0 || s.supply.rates.burn > 0)) add('fuel', 'error', 'No fuel assemblies in stock', 'Reactors that run out cannot be refuelled. Buy assemblies or produce your own.', { label: 'Buy fuel', action: { kind: 'buyFuel' } });
   else if (needingFuel > 0 && s.fuel < biggestReload) add('fuel', 'warn', 'Low fuel stock', `${fmt(s.fuel)} assemblies in stock; a reload needs up to ${fmt(biggestReload)}.`, { label: 'Buy fuel', action: { kind: 'buyFuel' } });
+  if (needingFuel > 0 && fuelQuotaLeft(s) <= 0 && s.fuel < biggestReload) add('fuel', 'warn', 'Fuel suppliers sold out today', 'You have bought all the assemblies the market can deliver today. Produce your own fuel (Supply → Fuel chain) or wait for the next day.', { label: 'Supply', action: { kind: 'panel', panel: 'supply' } });
   if (fuelCapacity(s) < biggestReload) add('fuel', 'warn', 'Fuel storage too small', `A third of your biggest core is ${fmt(biggestReload)} assemblies but you can only store ${fmt(fuelCapacity(s))}. Build Fuel Storage Facilities.`, { label: 'Build storage', action: { kind: 'build', type: 'fuel_depot' } });
   if (s.money < 0) add('finance', 'error', 'In debt — using emergency credit',
     `Repairs and fuel can still be bought on credit (limit $${creditLimit(s).toLocaleString('en-US')}), but debt costs interest and blocks new construction. Repair whatever stops you producing electricity first.`,

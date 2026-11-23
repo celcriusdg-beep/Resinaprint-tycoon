@@ -157,6 +157,7 @@ interface SitePass {
 
 export function tickPlants(s: GameState, dt: number, offline: boolean): void {
   const fuelCap = fuelCapacity(s);
+  s.supply.rates.salt = 0;
   let minedTotal = 0;
   let fines = 0;
   let waterCostTotal = 0;

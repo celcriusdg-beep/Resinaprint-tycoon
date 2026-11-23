@@ -345,7 +345,18 @@ export interface HistoryPoint {
   income: number; // net $/s
 }
 
+export interface MaterialOrder {
+  id: number;
+  buyer: string;
+  item: 'ore' | 'yellowcake' | 'enriched';
+  qty: number;
+  pay: number; // $ total
+  xp: number;
+}
+
 export interface SupplyState {
+  /** Part of each stock that was bought on the market (can't be resold to order buyers). */
+  bought: { ore: number; yellowcake: number; enriched: number };
   ore: number;
   yellowcake: number;
   enriched: number;
@@ -364,6 +375,7 @@ export interface SupplyRates {
   inspected: number;
   rejected: number;
   burn: number; // assemblies/s equivalent burned by reactors
+  salt?: number; // enriched uranium/s dissolved into molten-salt fuel
   defectRate: number; // current fabrication defect probability
 }
 
@@ -405,6 +417,9 @@ export interface GameState {
   level: number;
   fuel: number; // fuel assemblies in stock
   supply: SupplyState;
+  /** Buyers asking for uranium materials (ore, yellowcake, enriched uranium). */
+  orders: MaterialOrder[];
+  nextOrderIn: number;
   research: {
     points: number; // banked RP
     active: string | null;
@@ -417,6 +432,10 @@ export interface GameState {
   market: {
     priceMult: number; // random-walk market factor
     fuelPrice: number;
+    /** Fuel assemblies bought from suppliers in the current game day. */
+    fuelBought: number;
+    /** Index of the game day fuelBought refers to. */
+    fuelDay: number;
     trend: number;
   };
   contracts: Contract[];

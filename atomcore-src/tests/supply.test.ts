@@ -5,6 +5,7 @@ import * as A from '../src/game/actions';
 import { setRandom, mulberry32 } from '../src/game/rng';
 import { clearModCache } from '../src/game/simulation/modifiers';
 import { migrate, toEnvelope } from '../src/systems/save/serialize';
+import * as FC from '../src/game/supply/fuelcycle';
 import type { GameState } from '../src/game/types';
 
 const run = (s: GameState, sec: number, dt = 0.5) => { for (let t = 0; t < sec; t += dt) tick(s, dt); };
@@ -177,3 +178,54 @@ describe('save migration', () => {
     expect(back.sites.riverside.buildings[0].reactor!.pumpSpeed).toBe(1);
   });
 });
+
+describe('fuel market and material orders', () => {
+  it('limits daily market fuel and raises the price as the day sells out', () => {
+    const s = createInitialState();
+    s.money = 1e9;
+    s.nextEventIn = 1e9;
+    const { fuelQuota, marketFuelPrice, buyItem } = FC;
+    const quota = fuelQuota(s);
+    const p0 = marketFuelPrice(s);
+    s.fuel = 0;
+    const got = buyItem(s, 'assemblies', quota * 3, 1e6);
+    expect(got).toBe(quota);
+    expect(marketFuelPrice(s)).toBeGreaterThan(p0 * 2);
+    expect(A.tradeItem(s, 'assemblies', 10)).toMatch(/sold out/);
+    // next game day the suppliers deliver again
+    run(s, 240, 1);
+    expect(s.market.fuelBought).toBe(0);
+  });
+
+  it('delivers material orders for cash and xp', () => {
+    const s = createInitialState();
+    s.nextEventIn = 1e9;
+    run(s, 2);
+    expect(s.orders.length).toBe(3);
+    const o = s.orders[0];
+    expect(A.deliverMaterialOrder(s, o.id)).toMatch(/Not enough/);
+    expect(A.tradeItem(s, o.item, o.qty)).toBeNull(); // bought on the market
+    expect(A.deliverMaterialOrder(s, o.id)).toMatch(/resold/);
+    s.supply[o.item] = o.qty;
+    s.supply.bought[o.item] = 0; // as if produced in-house
+    const m0 = s.money;
+    expect(A.deliverMaterialOrder(s, o.id)).toBeNull();
+    expect(s.money - m0).toBe(o.pay);
+    expect(s.supply[o.item]).toBe(0);
+  });
+
+  it('molten salt reactors consume enriched uranium, not assemblies', () => {
+    const s = createInitialState();
+    s.nextEventIn = 1e9;
+    const b = s.sites.riverside.buildings[0];
+    const { onlineRefuel } = FC;
+    b.type = 'reactor_msr' as never;
+    s.supply.enriched = 10;
+    const fuel0 = s.fuel;
+    b.reactor!.fission = 100;
+    onlineRefuel(s, b, 10, { fuelUse: 1 } as never);
+    expect(s.supply.enriched).toBeLessThan(10);
+    expect(s.fuel).toBe(fuel0);
+  });
+});
+

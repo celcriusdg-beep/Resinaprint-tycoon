@@ -1,4 +1,4 @@
-import type { Building, GameState, Modifiers, Site, Vehicles } from '../types';
+import type { Building, GameState, MaterialOrder, Modifiers, Site, Vehicles } from '../types';
 import { BUILDINGS, levelMult } from '../buildings/defs';
 import {
   BASE_ORE_CAP, BASE_YC_CAP, BASE_ENR_CAP, ORE_PER_YELLOWCAKE, YELLOWCAKE_PER_ENRICHED, BASE_DEFECT_RATE,
@@ -132,8 +132,27 @@ export function sellVehicle(s: GameState, siteId: string, buildingId: number, ki
 
 // ── Market ───────────────────────────────────────────────────────────────
 
+/**
+ * Fuel suppliers can only deliver so many assemblies per game day, and the
+ * spot price climbs as you use up that day's capacity. Small utilities can
+ * buy everything; large fleets need their own fuel cycle.
+ */
+export function fuelQuota(s: GameState): number {
+  return Math.round(120 * Math.pow(1.15, s.level - 1));
+}
+
+export function fuelQuotaLeft(s: GameState): number {
+  return Math.max(0, fuelQuota(s) - s.market.fuelBought);
+}
+
+/** Price of the next assembly bought today. */
+export function marketFuelPrice(s: GameState, extra = 0): number {
+  const used = (s.market.fuelBought + extra) / Math.max(1, fuelQuota(s));
+  return s.market.fuelPrice * (1 + 2 * used * used);
+}
+
 export function itemPrice(s: GameState, item: Item): number {
-  if (item === 'assemblies') return s.market.fuelPrice;
+  if (item === 'assemblies') return marketFuelPrice(s);
   return ITEM_PRICE[item] * (s.market.fuelPrice / ITEM_PRICE.assemblies);
 }
 
@@ -147,17 +166,30 @@ export function capOf(s: GameState, item: Item, fuelCap: number): number {
 }
 
 export function buyItem(s: GameState, item: Item, qty: number, fuelCap: number, credit = 0): number {
-  const price = itemPrice(s, item);
   const room = Math.max(0, capOf(s, item, fuelCap) - stockOf(s, item));
-  const n = Math.floor(Math.min(qty, room, Math.max(0, s.money + credit) / price));
+  let want = Math.floor(Math.min(qty, room));
+  if (item === 'assemblies') want = Math.min(want, fuelQuotaLeft(s));
+  if (want <= 0) return 0;
+  // Assemblies get dearer as the day's supply is used: price the batch at its average.
+  let n = want;
+  let price = item === 'assemblies' ? marketFuelPrice(s, n / 2) : itemPrice(s, item);
+  const budget = Math.max(0, s.money + credit);
+  if (n * price > budget) {
+    n = Math.floor(budget / price);
+    if (item === 'assemblies') price = marketFuelPrice(s, n / 2);
+  }
   if (n <= 0) return 0;
   s.money -= n * price;
   s.ledger.fuel += n * price;
+  if (item === 'assemblies') s.market.fuelBought += n;
   if (item === 'assemblies') {
     s.supply.stockEnr = (s.supply.stockEnr * s.fuel + 4.2 * n) / (s.fuel + n);
     s.fuel += n;
     s.supply.defects += n * MARKET_DEFECT_RATE;
-  } else s.supply[item] += n;
+  } else {
+    s.supply[item] += n;
+    s.supply.bought[item] += n;
+  }
   return n;
 }
 
@@ -172,7 +204,10 @@ export function sellItem(s: GameState, item: Item, qty: number): number {
     // Sold assemblies take their share of hidden defects with them.
     s.supply.defects *= Math.max(0, (have - n) / have);
     s.fuel -= n;
-  } else s.supply[item] -= n;
+  } else {
+    s.supply[item] -= n;
+    s.supply.bought[item] = Math.min(s.supply.bought[item], s.supply[item]);
+  }
   return n;
 }
 
@@ -244,6 +279,16 @@ export function tickSupply(s: GameState, dt: number, minedOre: number, fuelCap: 
   rates.rejected = caught / dt;
   rates.defectRate = defectRate;
   sup.defects = Math.min(sup.defects, s.fuel);
+  // Purchased material is processed first; what remains bought can't fill orders.
+  const b = sup.bought;
+  b.ore = Math.max(0, Math.min(sup.ore, b.ore - millIn));
+  b.yellowcake = Math.max(0, Math.min(sup.yellowcake, b.yellowcake - enrIn));
+  b.enriched = Math.max(0, Math.min(sup.enriched, b.enriched - fabIn - (rates.salt ?? 0) * dt));
+}
+
+/** Stock you produced yourself (buyers on the order board won't take resold market material). */
+export function ownStock(s: GameState, item: MaterialOrder['item']): number {
+  return Math.max(0, s.supply[item] - s.supply.bought[item]);
 }
 
 // ── Refuelling outages ───────────────────────────────────────────────────
@@ -317,21 +362,22 @@ export function finishRefuel(b: Building): void {
   r.scramReason = null;
 }
 
-/** Liquid-fuel reactors (MSR) draw assemblies-equivalent fuel continuously from stock. */
+/**
+ * Molten salt reactors have no fuel rods: enriched uranium is dissolved into the
+ * fuel salt and topped up continuously while the reactor runs.
+ */
 export function onlineRefuel(s: GameState, b: Building, dt: number, mods: Modifiers): void {
   const r = b.reactor!;
   const spec = BUILDINGS[b.type].reactor!;
   const burned = (r.fission * HOURS_PER_SECOND * dt * spec.fuelUse * mods.fuelUse) / ASSEMBLY_MWH;
   if (burned <= 0) return;
-  if (s.fuel >= burned) {
-    const frac = s.fuel > 0 ? s.supply.defects / s.fuel : 0;
-    s.fuel -= burned;
-    s.supply.defects = Math.max(0, s.supply.defects - burned * frac);
-    r.coreFuel = 1;
-  } else {
-    r.coreFuel = Math.max(0, r.coreFuel - (burned - s.fuel) / Math.max(1, coreSize(b)));
-    s.fuel = 0;
-  }
+  const take = Math.min(burned, s.supply.enriched);
+  s.supply.enriched -= take;
+  s.supply.bought.enriched = Math.min(s.supply.bought.enriched, s.supply.enriched);
+  s.supply.rates.salt = (s.supply.rates.salt ?? 0) + take / dt;
+  const short = burned - take;
+  if (short <= 1e-9) r.coreFuel = Math.min(1, r.coreFuel + 0.002 * dt);
+  else r.coreFuel = Math.max(0, r.coreFuel - short / Math.max(1, coreSize(b)));
 }
 
 // ── Fuel integrity: cladding failures and core damage ─────────────────────
@@ -465,4 +511,64 @@ export function stepSpentFuel(s: GameState, dt: number): void {
     s.money -= cost;
     s.ledger.maintenance += cost;
   }
+}
+
+
+// ── Material orders ────────────────────────────────────────────────────
+
+const ORDER_BUYERS = {
+  ore: ['Northfield Assay Labs', 'Granite Mills Co-op', 'Ridgeback Processing'],
+  yellowcake: ['Eurasian Conversion Ltd', 'Pacific Fuel Services', 'Atlas Enrichment Group', 'Meridian Utilities'],
+  enriched: ['Brightwater Fuel Fabricators', 'Coastal Research Reactor', 'Helios Isotopes', 'Nordic Fuel Works'],
+} as const;
+
+/** New buyer requests sized to the company's scale, paying a premium over the spot price. */
+export function generateOrder(s: GameState): MaterialOrder {
+  const items: MaterialOrder['item'][] = ['ore', 'yellowcake', 'yellowcake'];
+  if (s.research.completed.includes('f_enrich')) items.push('enriched', 'enriched');
+  const item = items[Math.floor(random() * items.length)];
+  const scale = Math.pow(1.25, Math.max(0, s.level - 3));
+  const base = { ore: 300, yellowcake: 25, enriched: 10 }[item];
+  const qty = Math.max(1, Math.round(base * scale * (0.6 + random() * 0.8)));
+  const premium = 1.5 + random() * 0.6;
+  const pay = Math.round(qty * ITEM_PRICE[item] * premium);
+  const buyers = ORDER_BUYERS[item];
+  return { id: Math.floor(random() * 1e9), buyer: buyers[Math.floor(random() * buyers.length)], item, qty, pay, xp: Math.round(pay / 40) };
+}
+
+export function tickOrders(s: GameState, dt: number): void {
+  s.nextOrderIn -= dt;
+  if (s.nextOrderIn > 0 && s.orders.length >= 1) return;
+  s.nextOrderIn = 150;
+  if (s.orders.length >= 3) s.orders.shift();
+  while (s.orders.length < 3) s.orders.push(generateOrder(s));
+}
+
+export function deliverOrder(s: GameState, id: number): string | null {
+  const o = s.orders.find((x) => x.id === id);
+  if (!o) return 'That order is gone.';
+  const own = ownStock(s, o.item);
+  if (own < o.qty) return `Not enough self-produced ${o.item === 'enriched' ? 'enriched uranium' : o.item} (${Math.floor(own)}/${o.qty}). Buyers don't accept resold market material.`;
+  s.supply[o.item] -= o.qty;
+  s.money += o.pay;
+  s.ledger.sales += o.pay;
+  s.xp += o.xp;
+  s.orders = s.orders.filter((x) => x.id !== id);
+  pushLog(s, 'good', `Delivered ${o.qty} ${o.item} to ${o.buyer} for $${o.pay.toLocaleString('en-US')}.`);
+  return null;
+}
+
+/** Rough running cost of the own fuel chain per assembly made (upkeep of the chain ÷ output). */
+export function ownFuelCost(s: GameState): number | null {
+  const made = s.supply.rates.fabricated - s.supply.rates.rejected;
+  if (made <= 1e-4) return null;
+  let upkeep = 0;
+  for (const id of s.unlockedSites) for (const b of s.sites[id].buildings) {
+    if (b.status === 'constructing') continue;
+    const def = BUILDINGS[b.type];
+    if (def.category !== 'fuel' || b.type === 'dry_cask') continue;
+    upkeep += def.upkeep * levelMult(def, b.level);
+    if (b.vehicles) upkeep += mineOutput(b, id, getMods(s, id)).upkeep;
+  }
+  return upkeep / made;
 }

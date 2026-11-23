@@ -1,6 +1,7 @@
 import type { Contract, ContractTier, GameState } from '../types';
 import { random, pick } from '../rng';
-import { BASE_FUEL_PRICE, BASE_PRICE, HOURS_PER_SECOND } from '../constants';
+import { BASE_FUEL_PRICE, BASE_PRICE, HOURS_PER_SECOND, DAY_LENGTH } from '../constants';
+import { tickOrders } from '../supply/fuelcycle';
 import { companyMods } from '../simulation/modifiers';
 import { companyEventEffect, notify, pushLog } from '../events/events';
 import { contractSlots } from '../simulation/plant';
@@ -67,6 +68,13 @@ export function tickMarket(s: GameState, dt: number, offline: boolean): void {
   m.priceMult += m.trend * dt * 0.05 + (1 - m.priceMult) * 0.004 * dt;
   m.priceMult = Math.max(0.82, Math.min(1.2, m.priceMult));
   m.fuelPrice = BASE_FUEL_PRICE * (0.9 + 0.2 * (m.priceMult - 0.82) / 0.38) * companyEventEffect(s, 'fuelPrice');
+  // Supplier delivery capacity resets every game day.
+  const day = Math.floor(s.gameTime / DAY_LENGTH);
+  if (m.fuelDay !== day) {
+    m.fuelDay = day;
+    m.fuelBought = 0;
+  }
+  tickOrders(s, dt);
 
   // Active contracts
   for (const c of s.contracts) c.remaining -= dt;

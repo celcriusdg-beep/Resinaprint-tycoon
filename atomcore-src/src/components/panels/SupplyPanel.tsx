@@ -3,7 +3,8 @@ import { useGame } from '../../stores/gameStore';
 import { useUI } from '../../stores/uiStore';
 import { fuelCapacity } from '../../game/simulation/plant';
 import { getMods } from '../../game/simulation/modifiers';
-import { supplyCaps, supplyCapacity, itemPrice, mineOutput, vehicleLock, vehiclesOf, type Item } from '../../game/supply/fuelcycle';
+import { supplyCaps, supplyCapacity, itemPrice, mineOutput, vehicleLock, vehiclesOf, fuelQuota, fuelQuotaLeft, marketFuelPrice, ownFuelCost, ownStock, type Item } from '../../game/supply/fuelcycle';
+import { BUILDINGS } from '../../game/buildings/defs';
 import { EXCAVATORS, TRUCKS, slotsFor, type VehicleDef } from '../../game/supply/vehicles';
 import { LOCATION_BY_ID } from '../../game/progression/locations';
 import { ORE_PER_YELLOWCAKE, YELLOWCAKE_PER_ENRICHED, SELL_FACTOR } from '../../game/constants';
@@ -31,13 +32,49 @@ export function SupplyPanel() {
 
 type Tone = 'ok' | 'warn' | 'bad' | 'idle';
 
+const EXPLAIN: Record<Item, { what: string; from: string; to: string }> = {
+  ore: {
+    what: 'Rock containing about 0.1–0.2% uranium. Worthless until milled.',
+    from: 'Uranium Mine (needs excavators + trucks) or bought.',
+    to: 'Ore Mill turns 10 t of ore into 1 unit of yellowcake. Also wanted by some buyers on the order board.',
+  },
+  yellowcake: {
+    what: 'Uranium concentrate (U₃O₈) — the yellow powder. Natural uranium: only 0.7% U-235, too little for a power reactor.',
+    from: 'Ore Mill, or bought.',
+    to: 'Enrichment Plant raises the U-235 share to 3–5%. Fuel buyers pay a premium for it on the order board.',
+  },
+  enriched: {
+    what: 'Low-enriched uranium (3–5% U-235), the actual nuclear fuel material.',
+    from: 'Enrichment Plant, or bought.',
+    to: 'Fuel Fabrication presses it into pellets, rods and assemblies. Molten Salt Reactors burn it directly — dissolved in their fuel salt. Fabricators buy it on the order board.',
+  },
+  assemblies: {
+    what: 'Bundles of fuel rods, ready to load. Every solid-fuel reactor needs them.',
+    from: 'Fuel Fabrication, or bought — suppliers can only deliver a limited amount per day.',
+    to: 'Loaded into reactors during refuelling outages. Defective rods can leak in the core.',
+  },
+};
+
+function Explain({ item }: { item: Item }) {
+  const e = EXPLAIN[item];
+  return (
+    <details className="explain small">
+      <summary>What is this for?</summary>
+      <div>{e.what}</div>
+      <div><b>Made by:</b> {e.from}</div>
+      <div><b>Used by:</b> {e.to}</div>
+    </details>
+  );
+}
+
 function Node({ icon, title, stock, cap, unit, inRate, outRate, tone, note, children, item }: {
   icon: string; title: string; stock: number; cap: number; unit: string; inRate: number; outRate: number; tone: Tone;
   note?: ReactNode; children?: ReactNode; item: Item;
 }) {
   const g = useGame();
   const price = itemPrice(g, item);
-  const lot = item === 'ore' ? 100 : item === 'assemblies' ? Math.max(10, Math.round(fuelCapacity(g) * 0.25)) : 10;
+  const lot = item === 'ore' ? 100 : item === 'assemblies' ? Math.max(1, Math.min(fuelQuotaLeft(g), Math.max(10, Math.round(fuelCapacity(g) * 0.25)))) : 10;
+  const soldOut = item === 'assemblies' && fuelQuotaLeft(g) <= 0;
   return (
     <div className={`flow-node ${tone}`}>
       <div className="flow-head">
@@ -53,11 +90,12 @@ function Node({ icon, title, stock, cap, unit, inRate, outRate, tone, note, chil
       </div>
       <Bar value={stock} max={cap} warn={stock / cap < 0.15 || stock / cap > 0.97} />
       {note && <div className="flow-note small">{note}</div>}
+      <Explain item={item} />
       {children}
       <div className="trade-row">
         <span className="muted small">Market ${price.toFixed(price < 10 ? 2 : 0)} · sell ${(price * SELL_FACTOR).toFixed(price < 10 ? 2 : 0)}</span>
         <div className="row gap">
-          <Button small onClick={() => run((s) => A.tradeItem(s, item, lot), { sound: 'cash' })}>Buy {fmtNum(lot)}</Button>
+          <Button small disabled={soldOut} onClick={() => run((s) => A.tradeItem(s, item, lot), { sound: 'cash' })}>{soldOut ? 'Sold out today' : `Buy ${fmtNum(lot)}`}</Button>
           <Button small variant="ghost" disabled={stock < 1} onClick={() => run((s) => A.tradeItem(s, item, -Math.min(stock, lot)), { sound: 'cash' })}>Sell</Button>
         </div>
       </div>
@@ -112,6 +150,9 @@ function FuelChain() {
         </div>
       </div>
 
+      <MarketCard />
+      <OrdersBoard />
+
       <div className="flow">
         <Node icon="⛏️" title="Uranium ore" item="ore" unit="t" stock={sup.ore} cap={caps.ore} inRate={r.mined} outRate={r.milled}
           tone={proc.mines === 0 ? 'idle' : r.mined <= 0 ? 'warn' : 'ok'}
@@ -127,7 +168,8 @@ function FuelChain() {
             <div className="muted small">Higher enrichment: each assembly lasts longer and the core has more excess reactivity, but it needs more yellowcake and enrichment work. Licence limit 5% (low-enriched uranium).</div>
           </div>
         )}
-        <Node icon="🧪" title="Enriched uranium" item="enriched" unit="units" stock={sup.enriched} cap={caps.enriched} inRate={r.enriched / YELLOWCAKE_PER_ENRICHED} outRate={r.fabricated}
+        <Node icon="🧪" title="Enriched uranium" item="enriched" unit="units" stock={sup.enriched} cap={caps.enriched} inRate={r.enriched / YELLOWCAKE_PER_ENRICHED} outRate={r.fabricated + (r.salt ?? 0)}
+          note={(r.salt ?? 0) > 0 ? <>Molten Salt Reactors are dissolving <b>{fmtNum((r.salt ?? 0) * 60)}/min</b> into their fuel salt.</> : undefined}
           tone={sup.enriched >= caps.enriched * 0.97 ? 'warn' : 'ok'} />
         <Arrow label="Fuel Fabrication (1 : 1)" cap={proc.fab} used={r.fabricated} missing={proc.fab <= 0 ? 'No fabrication plant' : undefined} build="fuel_fab" />
         <Node icon="🔩" title="Fuel assemblies" item="assemblies" unit="" stock={g.fuel} cap={fuelCap} inRate={produced} outRate={r.burn}
@@ -153,6 +195,67 @@ function FuelChain() {
       </div>
       <p className="edu-note">Simplified fuel cycle: mined ore is milled into uranium concentrate, enriched in U-235 and made into fuel rods bundled as assemblies. Defective rods can fail in the reactor.</p>
     </>
+  );
+}
+
+function MarketCard() {
+  const g = useGame();
+  const quota = fuelQuota(g);
+  const left = fuelQuotaLeft(g);
+  const now = marketFuelPrice(g);
+  const own = ownFuelCost(g);
+  const dayLeft = 240 - (g.gameTime % 240);
+  return (
+    <Section title="Fuel market vs. making your own">
+      <div className="row-between small">
+        <span>Suppliers can still deliver today</span>
+        <b className={left <= 0 ? 'bad' : left < quota * 0.25 ? 'warn' : 'good'}>{fmtNum(left)} / {fmtNum(quota)} assemblies</b>
+      </div>
+      <Bar value={left} max={quota} warn={left < quota * 0.25} />
+      <div className="row-between small" style={{ marginTop: 6 }}>
+        <span>Next assembly on the market</span>
+        <b className={now > g.market.fuelPrice * 1.5 ? 'warn' : ''}>{fmtMoney(now)}</b>
+      </div>
+      <div className="row-between small">
+        <span>Your own fuel chain (running cost per assembly)</span>
+        <b className={own === null ? 'muted' : own < now ? 'good' : 'warn'}>{own === null ? 'not producing' : fmtMoney(own)}</b>
+      </div>
+      <div className="muted small" style={{ marginTop: 6 }}>
+        The price rises the more you buy in one day, and supply resets in {fmtTime(dayLeft)}.
+        Small plants can live on the market; a big fleet needs its own mine → mill → enrichment → fabrication chain.
+        Surplus yellowcake and enriched uranium can be sold to the buyers below.
+      </div>
+    </Section>
+  );
+}
+
+const ITEM_NAME = { ore: 'uranium ore', yellowcake: 'yellowcake', enriched: 'enriched uranium' } as const;
+const ITEM_UNIT = { ore: 't', yellowcake: 'units', enriched: 'units' } as const;
+
+function OrdersBoard() {
+  const g = useGame();
+  const msr = Object.values(g.sites).some((x) => x.buildings.some((b) => BUILDINGS[b.type].reactor?.onlineRefuel));
+  return (
+    <Section title="Material orders">
+      {g.orders.length === 0 && <Empty>No buyers right now.</Empty>}
+      {g.orders.map((o) => {
+        const have = ownStock(g, o.item);
+        const ok = have >= o.qty;
+        return (
+          <div key={o.id} className="order-row">
+            <div className="grow">
+              <div><b>{o.buyer}</b></div>
+              <div className="muted small">
+                Wants {fmtNum(o.qty)} {ITEM_UNIT[o.item]} of {ITEM_NAME[o.item]} · you made {fmtNum(have)} · pays {fmtMoney(o.pay)} (+{fmtNum(o.xp)} XP)
+                {' '}— about {Math.round((o.pay / (o.qty * itemPrice(g, o.item)) - 1) * 100)}% above market
+              </div>
+            </div>
+            <Button small disabled={!ok} onClick={() => run((s) => A.deliverMaterialOrder(s, o.id), { sound: 'cash' })}>{ok ? 'Deliver' : 'Not enough'}</Button>
+          </div>
+        );
+      })}
+      <div className="muted small">New buyers arrive every few minutes. They only take material you produced yourself — not resold market stock. {msr ? 'Keep enough enriched uranium for your Molten Salt Reactors!' : ''}</div>
+    </Section>
   );
 }
 
