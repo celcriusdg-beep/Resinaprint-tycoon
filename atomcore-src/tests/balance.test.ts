@@ -102,7 +102,7 @@ function upgradeCheapest(s: GameState, types: BuildingType[]): boolean {
 }
 
 it('bot progresses through the game', () => {
-  setRandom(mulberry32(7));
+  setRandom(mulberry32(Number(process.env.BALANCE_SEED ?? 7)));
   clearModCache();
   const s = createInitialState();
   const marks: Record<string, number> = {};
@@ -128,6 +128,10 @@ it('bot progresses through the game', () => {
     mark('lvl15', s.level >= 15);
     mark('lvl20', s.level >= 20);
     mark('prestige', s.runEarned >= 50_000_000);
+    if (s.stats.coreDamage > 0 && marks.coreDamage === undefined && process.env.BALANCE_DEBUG) {
+      console.log('CORE DAMAGE LOG:\n' + s.log.slice(0, 14).map((l) => `  ${Math.round(l.t)} ${l.text}`).join('\n'));
+      for (const b of s.sites.riverside.buildings.filter((x) => x.reactor)) console.log(`  ${b.type} st=${b.status} lvl=${b.level} cond=${Math.round(b.condition)} L=${b.reactor!.inventory.toFixed(2)} Tf=${Math.round(b.reactor!.fuelTemp)} pumps=${s.sites.riverside.stats.pumpsPowered} batt=${s.sites.riverside.stats.batteryLeft} cool=${s.sites.riverside.stats.coolingRatio.toFixed(2)}`);
+    }
     mark('coreDamage', s.stats.coreDamage > 0);
     if (process.env.BALANCE_DEBUG && t % 1800 === 0 && t > 0) {
       for (const id of s.unlockedSites) {
@@ -137,6 +141,13 @@ it('bot progresses through the game', () => {
       }
       const L = s.ledgerPrev;
       console.log(`  fuel=${Math.round(s.fuel)} cap=${fuelCapacity(s)} ledger/min sales=${Math.round(L.sales)} fuel=${Math.round(L.fuel)} water=${Math.round(L.water)} upkeep=${Math.round(L.upkeep)} constr=${Math.round(L.construction)} other=${Math.round(L.other)}`);
+    }
+    if (process.env.BALANCE_DEBUG && t === 1800 && s.level < 6) {
+      console.log('STUCK LOG:\n' + s.log.slice(0, 16).map((l) => `  ${Math.round(l.t)} ${l.text}`).join('\n'));
+      const site = s.sites.riverside;
+      const st = site.stats;
+      console.log(`  stats: thermal=${st.thermalMW.toFixed(1)} steamCap=${st.steamCapMW} cool=${st.coolingCapMW.toFixed(1)} wf=${st.waterFactor.toFixed(2)} tf=${st.treatedFactor.toFixed(2)} fuel=${s.fuel} money=${Math.round(s.money)}`);
+      for (const b of site.buildings) console.log(`  ${b.type} ${b.status} L${b.level} cond=${Math.round(b.condition)}${b.reactor ? ` fuel=${b.reactor.coreFuel.toFixed(2)} sp=${b.reactor.setpoint} n=${b.reactor.power.toExponential(1)} trip=${b.reactor.tripCause} rods=${b.reactor.rods.toFixed(2)}` : ''}`);
     }
     if (t % 1800 === 0) {
       console.log(`t=${t / 60}min lvl=${s.level} money=${Math.round(s.money)} MW=${Math.round(totalMW())} demand=${Math.round(Object.values(s.sites).reduce((a, x) => a + x.stats.demandMW, 0))} research=${s.research.completed.length} buildings=${Object.values(s.sites).reduce((a, x) => a + x.buildings.length, 0)} scrams=${s.stats.scrams}`);

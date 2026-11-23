@@ -7,7 +7,7 @@ import { canRestart, restart, scram } from './simulation/reactor';
 import { makeBuilding, makeSite, createInitialState } from './state';
 import { pushLog } from './events/events';
 import { buyFuelInternal, repairInternal } from './engine';
-import { LOCATION_BY_ID, expandCost } from './progression/locations';
+import { LOCATION_BY_ID, expandCost, nextSize } from './progression/locations';
 import { pendingShares } from './progression/prestige';
 import { acceptOffer as acceptOfferImpl, cancelContract as cancelContractImpl } from './economy/market';
 import { startRefuel, decommissionCost, buyVehicle, sellVehicle, buyItem, sellItem, type Item } from './supply/fuelcycle';
@@ -46,7 +46,7 @@ export function placeBuilding(s: GameState, type: BuildingType, x: number, z: nu
   const cost = buildCost(s, type);
   if (s.money < cost) return 'Not enough money.';
   const problem = checkPlacement(site, type, x, z, rot);
-  if (problem === 'bounds') return 'Outside the plot. Buy more land in Sites.';
+  if (problem === 'bounds') return 'Outside the plot. Buy more land: Build → Land → Expand.';
   if (problem === 'road') return 'Keep the access road clear.';
   if (problem === 'overlap') return 'That space is occupied.';
   s.money -= cost;
@@ -225,11 +225,13 @@ export function expandSite(s: GameState, id: string): Result {
   if (s.money < cost) return 'Not enough money.';
   s.money -= cost;
   s.ledger.construction += cost;
-  // Grow the plot by one ring of cells; existing buildings shift to stay centred.
-  site.size += 2;
+  // Grow the plot outward on every side; existing buildings shift to stay centred.
+  const grow = nextSize(loc, site.size) - site.size;
+  const shift = Math.floor(grow / 2);
+  site.size += grow;
   for (const b of site.buildings) {
-    b.x += 1;
-    b.z += 1;
+    b.x += shift;
+    b.z += shift;
   }
   pushLog(s, 'good', `${loc.name} expanded to ${site.size}×${site.size} cells.`);
   return null;

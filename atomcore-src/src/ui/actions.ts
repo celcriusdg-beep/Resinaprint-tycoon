@@ -7,6 +7,7 @@ import { persist } from '../systems/loop';
 import { BUILDINGS } from '../game/buildings/defs';
 import type { GameState } from '../game/types';
 import type { FixAction } from '../game/diagnostics';
+import { LOCATION_BY_ID, expandCost, nextSize } from '../game/progression/locations';
 
 // UI-facing wrappers: run a game action, then give feedback (sound, haptics,
 // error toast) and refresh the views.
@@ -137,6 +138,9 @@ export function runFix(action: FixAction, siteId: string): void {
     case 'scram':
       run((s) => A.manualScram(s, action.id), { sound: 'alarm' });
       break;
+    case 'expand':
+      expandLand();
+      break;
   }
 }
 
@@ -153,4 +157,21 @@ export function beginMove(id: number) {
   }
   audio.sfx('open');
   useUI.getState().startMove(id, b.type, b.x, b.z, b.rot);
+}
+
+/** Buy the next ring of land at the active site (with confirmation). */
+export function expandLand() {
+  const g = getGame();
+  const site = g.sites[g.activeSite];
+  const loc = LOCATION_BY_ID[site.id];
+  if (site.size >= loc.maxSize) {
+    useUI.getState().pushToast({ kind: 'info', title: 'This site is already at its maximum size' });
+    return;
+  }
+  const next = nextSize(loc, site.size);
+  const cost = expandCost(loc, site.size);
+  confirm(`Buy land at ${loc.name}?`, `Grow the plot from ${site.size}×${site.size} to ${next}×${next} cells for $${cost.toLocaleString('en-US')}. Existing buildings stay where they are.`,
+    'Buy land', () => {
+      if (run((s) => A.expandSite(s, s.activeSite), { structural: true, sound: 'achievement' })) void persist();
+    });
 }

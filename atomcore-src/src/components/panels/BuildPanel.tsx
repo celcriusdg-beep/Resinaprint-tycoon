@@ -5,7 +5,10 @@ import { buildCost, buildLockReason } from '../../game/actions';
 import { getMods } from '../../game/simulation/modifiers';
 import { useGame } from '../../stores/gameStore';
 import { fmtMoney, fmtPower, fmtTime, fmtNum } from '../../ui/format';
-import { beginBuild } from '../../ui/actions';
+import { beginBuild, expandLand } from '../../ui/actions';
+import { plotUsage, hasRoomFor } from '../../game/buildings/grid';
+import { LOCATION_BY_ID, expandCost, nextSize } from '../../game/progression/locations';
+import { Bar, Button } from '../ui/common';
 import { Tabs } from '../ui/common';
 import { Icon } from '../ui/Icons';
 import { PlantBalance } from './PlantBalance';
@@ -41,6 +44,7 @@ export function BuildPanel() {
   const list = BUILDING_LIST.filter((d) => d.category === cat);
   return (
     <div className="panel-stack">
+      <LandBar />
       <PlantBalance compact />
       <Tabs tabs={CATEGORY_ORDER.map((c) => ({ id: c, label: CATEGORY_LABEL[c] }))} value={cat} onChange={setCat} />
       <div className="card-grid">
@@ -74,6 +78,35 @@ export function BuildPanel() {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+/** Plot size, how full it is, and the next land purchase. */
+function LandBar() {
+  const g = useGame();
+  const site = g.sites[g.activeSite];
+  const loc = LOCATION_BY_ID[site.id];
+  const usage = plotUsage(site);
+  const maxed = site.size >= loc.maxSize;
+  const cost = expandCost(loc, site.size);
+  const next = nextSize(loc, site.size);
+  const tight = !hasRoomFor(site, 'reactor_pwr');
+  return (
+    <div className={`land-bar${tight ? ' tight' : ''}`}>
+      <div className="grow">
+        <div className="row-between small">
+          <span><b>Land</b> · {site.size}×{site.size} of max {loc.maxSize}×{loc.maxSize}</span>
+          <span className="mono">{Math.round(usage * 100)}% used</span>
+        </div>
+        <Bar value={usage} max={1} warn={usage > 0.7} height={6} />
+        {tight && <div className="small warn">No room left for a 3×3 building — expand or move things.</div>}
+      </div>
+      {maxed ? <span className="muted small">Max size</span> : (
+        <Button small variant={tight ? 'primary' : 'default'} disabled={g.money < cost} onClick={expandLand}>
+          Expand to {next}×{next} · {fmtMoney(cost)}
+        </Button>
+      )}
     </div>
   );
 }

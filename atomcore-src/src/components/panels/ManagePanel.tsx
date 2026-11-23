@@ -4,7 +4,7 @@ import { useUI } from '../../stores/uiStore';
 import { BUILDINGS } from '../../game/buildings/defs';
 import { fuelCapacity, repairCost, safetyRating, contractSlots } from '../../game/simulation/plant';
 import { getMods } from '../../game/simulation/modifiers';
-import { netIncome } from '../../game/engine';
+import { netIncome, canAffordEssential, creditLimit } from '../../game/engine';
 import { RESEARCH } from '../../game/research/tree';
 import { LEDGER_WINDOW } from '../../game/constants';
 import { fmtMoney, fmtPower, fmtPct, fmtTime, fmtNum, fmtEnergy } from '../../ui/format';
@@ -65,6 +65,7 @@ function Finance() {
         <Stat label="Operating profit" value={`${fmtMoney(op)}/s`} tone={op >= 0 ? 'good' : 'bad'} sub={`${fmtMoney(op * 60)}/min`} />
         <Stat label="Earned this run" value={fmtMoney(g.runEarned)} />
         <Stat label="Lifetime earnings" value={fmtMoney(g.lifetimeEarned)} />
+        <Stat label="Emergency credit" value={fmtMoney(creditLimit(g))} sub={g.money < 0 ? `using ${fmtMoney(-g.money)} · 1.2%/min interest` : 'for repairs & fuel when broke'} tone={g.money < 0 ? 'warn' : undefined} />
       </div>
       <Section title="Cash history">
         <Sparkline values={g.history.map((h) => h.money)} color="#5be08a" height={56} />
@@ -144,7 +145,7 @@ function Maintenance() {
           <div key={b.id} className="list-row">
             <button className="list-name link" onClick={() => useUI.getState().select(b.id)}>{BUILDINGS[b.type].short} <span className="muted">L{b.level}</span></button>
             <div className="list-bar"><Bar value={b.condition} max={100} warn={b.condition < 40} color={b.status === 'broken' ? '#ff5a5a' : undefined} /></div>
-            <Button small disabled={(b.condition >= 99.5 && b.status !== 'broken') || g.money < repairCost(b)} onClick={() => run((s) => A.repairBuilding(s, b.id), { sound: 'cash', structural: true })}>
+            <Button small disabled={(b.condition >= 99.5 && b.status !== 'broken') || !canAffordEssential(g, repairCost(b))} onClick={() => run((s) => A.repairBuilding(s, b.id), { sound: 'cash', structural: true })}>
               {b.status === 'broken' ? 'Fix' : `${Math.round(b.condition)}%`} {b.condition < 99.5 || b.status === 'broken' ? fmtMoney(repairCost(b)) : ''}
             </Button>
           </div>

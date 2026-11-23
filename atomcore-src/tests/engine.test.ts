@@ -94,6 +94,44 @@ describe('construction', () => {
     expect(A.moveBuilding(s, r.id, 1, 1, 0)).toMatch(/Shut the reactor down/);
   });
 
+  it('buying land grows the plot by 4 and keeps buildings in place', () => {
+    const s = createInitialState();
+    s.money = 1e7;
+    const site = s.sites.riverside;
+    const r0 = { x: site.buildings[0].x, z: site.buildings[0].z };
+    expect(A.expandSite(s, 'riverside')).toBeNull();
+    expect(site.size).toBe(18);
+    expect(site.buildings[0].x).toBe(r0.x + 2);
+    expect(site.buildings[0].z).toBe(r0.z + 2);
+    for (let i = 0; i < 20; i++) A.expandSite(s, 'riverside');
+    expect(site.size).toBe(38);
+    expect(A.expandSite(s, 'riverside')).toMatch(/further/);
+  });
+
+  it('a broke company can still repair its only turbine on credit (no soft-lock)', () => {
+    const s = createInitialState();
+    s.nextEventIn = 1e9;
+    const turbine = s.sites.riverside.buildings[1];
+    turbine.status = 'broken';
+    turbine.condition = 10;
+    s.money = -2000;
+    expect(A.placeBuilding(s, 'lab', 1, 1, 0)).toMatch(/money/i); // no new construction
+    expect(A.repairBuilding(s, turbine.id)).toBeNull();
+    expect(turbine.status).toBe('active');
+    run(s, 120);
+    expect(s.sites.riverside.stats.exportMW).toBeGreaterThan(2);
+  });
+
+  it('debt accrues interest', () => {
+    const s = createInitialState();
+    s.nextEventIn = 1e9;
+    s.sites.riverside.buildings[0].reactor!.setpoint = 0; // no income
+    s.money = -10_000;
+    const ledger0 = s.ledger.other;
+    run(s, 10);
+    expect(s.ledger.other).toBeLessThan(ledger0);
+  });
+
   it('locks buildings behind research', () => {
     const s = createInitialState();
     s.money = 1e6;

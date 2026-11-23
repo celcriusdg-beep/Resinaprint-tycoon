@@ -125,9 +125,21 @@ function runAutomation(s: GameState, offline: boolean): void {
 }
 
 export function buyFuelInternal(s: GameState, units: number, auto = false): number {
-  const n = buyItem(s, 'assemblies', units, fuelCapacity(s));
+  // Fuel is essential: when broke, a small emergency purchase may use the credit line.
+  const credit = s.money < s.market.fuelPrice ? creditLimit(s) : 0;
+  const n = buyItem(s, 'assemblies', units, fuelCapacity(s), credit);
   if (auto && n > 5) pushLog(s, 'info', `Auto-purchased ${n} fuel assemblies for $${Math.round(n * s.market.fuelPrice).toLocaleString('en-US')}.`);
   return n;
+}
+
+/** Emergency credit for essentials (repairs, fuel) so a broken plant can always recover. */
+export function creditLimit(s: GameState): number {
+  return Math.round(25_000 * Math.pow(1.5, s.level - 1));
+}
+
+/** Can the company pay for an essential, possibly by borrowing on the credit line? */
+export function canAffordEssential(s: GameState, cost: number): boolean {
+  return s.money - cost >= -creditLimit(s);
 }
 
 export function repairInternal(s: GameState, buildingId: number, siteId: string, auto = false): string | null {
@@ -136,7 +148,8 @@ export function repairInternal(s: GameState, buildingId: number, siteId: string,
   if (!b) return 'Building not found.';
   if (b.condition >= 99.5 && b.status !== 'broken') return 'Already in perfect condition.';
   const cost = repairCost(b);
-  if (s.money < cost) return 'Not enough money.';
+  // Automatic repairs only spend real money; manual ones may use the credit line.
+  if (auto ? s.money < cost : !canAffordEssential(s, cost)) return 'Not enough money, even on credit.';
   s.money -= cost;
   s.ledger.maintenance += cost;
   b.condition = 100;

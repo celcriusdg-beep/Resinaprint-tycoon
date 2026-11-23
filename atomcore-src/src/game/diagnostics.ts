@@ -5,8 +5,10 @@ import { reactivityHeadroom, warnTemp, coreSize, advisoryLimit, powerLimit } fro
 import { physicsFor } from './simulation/physics';
 import { fuelCapacity } from './simulation/plant';
 import { refuelNeed, poolCapacity, mineOutput } from './supply/fuelcycle';
+import { hasRoomFor } from './buildings/grid';
 import { LOCATION_BY_ID } from './progression/locations';
 import { HOURS_PER_SECOND } from './constants';
+import { creditLimit } from './engine';
 
 // Plant diagnostics: turns the simulation state into plain-language status
 // lines — what is fine, what is degraded and what is broken — each with the
@@ -23,7 +25,8 @@ export type FixAction =
   | { kind: 'buyFuel' }
   | { kind: 'build'; type: BuildingType }
   | { kind: 'setpoint'; id: number; value: number }
-  | { kind: 'scram'; id: number };
+  | { kind: 'scram'; id: number }
+  | { kind: 'expand' };
 
 export interface Issue {
   key: string;
@@ -205,6 +208,14 @@ export function diagnoseSite(s: GameState, site: Site): Issue[] {
   if (st.backupNeedMW > 0 && st.backupMW < st.backupNeedMW && s.level >= 4) add('safety', 'warn', 'Not enough backup power',
     `A grid blackout would leave only ${fmt(st.backupMW, 1)} of ${fmt(st.backupNeedMW, 1)} MW for pumps — large reactors could suffer core damage.`,
     s.research.completed.includes('s_egen') ? { label: 'Build generators', action: { kind: 'build', type: 'generator_emergency' } } : { label: 'Research', action: { kind: 'panel', panel: 'research' } });
+  const loc = LOCATION_BY_ID[site.id];
+  if (!hasRoomFor(site, 'reactor_pwr')) {
+    add('equipment', site.size < loc.maxSize ? 'warn' : 'info', 'Site almost full',
+      site.size < loc.maxSize
+        ? `There is no free 3×3 area left on the ${site.size}×${site.size} plot. Buy more land to place large buildings.`
+        : 'This site is at its maximum size. Move or demolish small buildings to make room, or open another site.',
+      site.size < loc.maxSize ? { label: 'Expand land', action: { kind: 'expand' } } : { label: 'Sites', action: { kind: 'panel', panel: 'build' } });
+  }
   const poolCap = poolCapacity(site);
   if (poolCap > 0 && site.spent.pool >= poolCap - 1) add('fuel', 'error', 'Spent fuel pool full', 'No reactor here can be refuelled until fuel moves into dry casks.', { label: 'Build dry casks', action: { kind: 'build', type: 'dry_cask' } });
   else if (poolCap > 0 && site.spent.pool > poolCap * 0.75) add('fuel', 'warn', 'Spent fuel pool filling up', `${fmt(site.spent.pool)} of ${fmt(poolCap)} slots used. Build Dry Cask Storage.`, { label: 'Build dry casks', action: { kind: 'build', type: 'dry_cask' } });
@@ -239,7 +250,9 @@ export function diagnoseCompany(s: GameState): Issue[] {
   if (s.fuel < 1 && (needingFuel > 0 || s.supply.rates.burn > 0)) add('fuel', 'error', 'No fuel assemblies in stock', 'Reactors that run out cannot be refuelled. Buy assemblies or produce your own.', { label: 'Buy fuel', action: { kind: 'buyFuel' } });
   else if (needingFuel > 0 && s.fuel < biggestReload) add('fuel', 'warn', 'Low fuel stock', `${fmt(s.fuel)} assemblies in stock; a reload needs up to ${fmt(biggestReload)}.`, { label: 'Buy fuel', action: { kind: 'buyFuel' } });
   if (fuelCapacity(s) < biggestReload) add('fuel', 'warn', 'Fuel storage too small', `A third of your biggest core is ${fmt(biggestReload)} assemblies but you can only store ${fmt(fuelCapacity(s))}. Build Fuel Storage Facilities.`, { label: 'Build storage', action: { kind: 'build', type: 'fuel_depot' } });
-  if (s.money < 0) add('finance', 'error', 'In debt', 'You can’t buy anything until money is positive again. Cut costs or sell surplus materials.', { label: 'Finances', action: { kind: 'panel', panel: 'manage' } });
+  if (s.money < 0) add('finance', 'error', 'In debt — using emergency credit',
+    `Repairs and fuel can still be bought on credit (limit $${creditLimit(s).toLocaleString('en-US')}), but debt costs interest and blocks new construction. Repair whatever stops you producing electricity first.`,
+    { label: 'Finances', action: { kind: 'panel', panel: 'manage' } });
   for (const c of s.contracts) {
     const elapsed = c.duration - c.remaining;
     const expected = c.mw * elapsed * HOURS_PER_SECOND;

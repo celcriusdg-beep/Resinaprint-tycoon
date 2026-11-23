@@ -186,7 +186,8 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
     const wetShare = cap.wetCooling + cap.dryCooling > 0 ? cap.wetCooling / (cap.wetCooling + cap.dryCooling) : 1;
     const water = stepWater(s, site, mods, wetShare, st.heatRejectMW, st.thermalMW, dt);
     waterCostTotal += water.cost * (offline ? 0.5 : 1);
-    cap.cooling = cap.wetCooling * water.waterFactor + cap.dryCooling;
+    // Without make-up water, wet cooling degrades but the basins keep some capacity.
+    cap.cooling = cap.wetCooling * (0.35 + 0.65 * water.waterFactor) + cap.dryCooling;
 
     // Mining
     let siteOre = 0, dig = 0, haul = 0, vehicleUpkeep = 0;
@@ -425,6 +426,12 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
   // Offline, the whole operating result (not just revenue) is scaled.
   const costs = (totalUpkeep + totalSalaries) * dt * offlineEff + (waterCostTotal + fines) * dt;
   s.money += income - costs;
+  // Interest on emergency credit (≈1.2% per minute) so debt is never free.
+  if (s.money < 0) {
+    const interest = -s.money * 0.0002 * dt;
+    s.money -= interest;
+    s.ledger.other -= interest;
+  }
   s.runEarned += income;
   s.lifetimeEarned += income;
   s.ledger.sales += revenue * offlineEff;

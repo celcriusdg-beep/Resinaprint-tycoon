@@ -62,3 +62,29 @@ export function findFreeSpot(site: Site, type: BuildingType, rot = 0): { x: numb
 export function rectCenter(r: Rect, siteSize: number): { cx: number; cz: number } {
   return { cx: r.x + r.w / 2 - siteSize / 2, cz: r.z + r.d / 2 - siteSize / 2 };
 }
+
+/** Share of buildable cells already used (the access road row excluded). */
+export function plotUsage(site: Site): number {
+  const usable = site.size * (site.size - ROAD_ROWS);
+  let used = 0;
+  for (const b of site.buildings) {
+    const r = buildingRect(b);
+    used += r.w * r.d;
+  }
+  return Math.min(1, used / Math.max(1, usable));
+}
+
+/** Is there still room anywhere for a w×d footprint (either orientation)? */
+export function hasRoomFor(site: Site, type: BuildingType): boolean {
+  // Cached per layout: the scan is O(cells × buildings) and the HUD asks often.
+  let sig = `${site.size}|${type}|`;
+  for (const b of site.buildings) sig += `${b.x},${b.z},${b.rot},${b.type};`;
+  const key = site.id;
+  const hit = roomCache.get(key);
+  if (hit && hit.sig === sig) return hit.ok;
+  const ok = findFreeSpot(site, type, 0) !== null || findFreeSpot(site, type, 1) !== null;
+  roomCache.set(key, { sig, ok });
+  return ok;
+}
+
+const roomCache = new Map<string, { sig: string; ok: boolean }>();

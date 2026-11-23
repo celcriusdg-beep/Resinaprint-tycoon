@@ -5,6 +5,7 @@ import { BUILDINGS, upgradeCost, upkeepAt, staffAt } from '../../game/buildings/
 import { getMods } from '../../game/simulation/modifiers';
 import { repairCost, safetyRating } from '../../game/simulation/plant';
 import { decommissionCost, mineOutput, reserveFor } from '../../game/supply/fuelcycle';
+import { canAffordEssential } from '../../game/engine';
 import { slotsFor } from '../../game/supply/vehicles';
 import { LOCATION_BY_ID } from '../../game/progression/locations';
 import { fmtMoney, fmtPower, fmtTime, fmtNum } from '../../ui/format';
@@ -97,7 +98,7 @@ export function BuildingPanel({ id }: { id: number }) {
           </Button>
         )}
         {maxed && <div className="maxed">Maximum level</div>}
-        <Button icon="wrench" disabled={busy || (b.condition >= 99.5 && b.status !== 'broken') || g.money < rCost}
+        <Button icon="wrench" disabled={busy || (b.condition >= 99.5 && b.status !== 'broken') || !canAffordEssential(g, rCost)}
           variant={b.status === 'broken' ? 'danger' : 'default'}
           onClick={() => run((s) => A.repairBuilding(s, b.id), { sound: 'cash', structural: true })}>
           Repair {b.condition < 99.5 || b.status === 'broken' ? fmtMoney(rCost) : ''}

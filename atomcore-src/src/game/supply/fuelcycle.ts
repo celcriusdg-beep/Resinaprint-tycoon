@@ -146,10 +146,10 @@ export function capOf(s: GameState, item: Item, fuelCap: number): number {
   return supplyCaps(s)[item];
 }
 
-export function buyItem(s: GameState, item: Item, qty: number, fuelCap: number): number {
+export function buyItem(s: GameState, item: Item, qty: number, fuelCap: number, credit = 0): number {
   const price = itemPrice(s, item);
   const room = Math.max(0, capOf(s, item, fuelCap) - stockOf(s, item));
-  const n = Math.floor(Math.min(qty, room, s.money / price));
+  const n = Math.floor(Math.min(qty, room, Math.max(0, s.money + credit) / price));
   if (n <= 0) return 0;
   s.money -= n * price;
   s.ledger.fuel += n * price;

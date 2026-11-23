@@ -577,3 +577,7 @@ table.pl tr.big td { font-size: 15px; }
 .tva-row .mono { text-align: right; }
 
 .placement-bar.moving { border-color: rgba(255,182,72,0.6); }
+
+.land-bar { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); background: rgba(255,255,255,0.03); }
+.land-bar.tight { border-color: rgba(255,182,72,0.6); background: rgba(255,182,72,0.07); }
+.land-bar .btn { flex: none; }

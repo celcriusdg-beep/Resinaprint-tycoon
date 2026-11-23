@@ -35,7 +35,7 @@ export const LOCATIONS: LocationDef[] = [
     unlockLevel: 1,
     cost: 0,
     startSize: 14,
-    maxSize: 26,
+    maxSize: 38,
     coolingMult: 1.1,
     demandMult: 1,
     priceMult: 1,
@@ -53,7 +53,7 @@ export const LOCATIONS: LocationDef[] = [
     unlockLevel: 8,
     cost: 1_500_000,
     startSize: 16,
-    maxSize: 28,
+    maxSize: 42,
     coolingMult: 1.3,
     demandMult: 1.6,
     priceMult: 1.05,
@@ -71,7 +71,7 @@ export const LOCATIONS: LocationDef[] = [
     unlockLevel: 13,
     cost: 30_000_000,
     startSize: 20,
-    maxSize: 32,
+    maxSize: 50,
     coolingMult: 0.8,
     demandMult: 2.6,
     priceMult: 1.2,
@@ -89,7 +89,7 @@ export const LOCATIONS: LocationDef[] = [
     unlockLevel: 19,
     cost: 600_000_000,
     startSize: 20,
-    maxSize: 34,
+    maxSize: 50,
     coolingMult: 1.5,
     demandMult: 4.5,
     priceMult: 1.15,
@@ -103,7 +103,14 @@ export const LOCATIONS: LocationDef[] = [
 
 export const LOCATION_BY_ID: Record<string, LocationDef> = Object.fromEntries(LOCATIONS.map((l) => [l.id, l]));
 
+/** Each land purchase adds this many cells per side (two rings around the plot). */
+export const EXPAND_STEP = 4;
+
+export function nextSize(loc: LocationDef, size: number): number {
+  return Math.min(loc.maxSize, size + EXPAND_STEP);
+}
+
 export function expandCost(loc: LocationDef, size: number): number {
-  const steps = (size - loc.startSize) / 2;
-  return Math.round(25_000 * Math.pow(3, steps) * Math.max(1, loc.cost / 1_000_000) ** 0.5);
+  const steps = Math.max(0, (size - loc.startSize) / EXPAND_STEP);
+  return Math.round(20_000 * Math.pow(2.6, steps) * Math.max(1, loc.cost / 1_000_000) ** 0.5);
 }

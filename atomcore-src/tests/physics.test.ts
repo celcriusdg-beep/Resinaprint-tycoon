@@ -176,6 +176,26 @@ describe('core damage requires losing cooling', () => {
   });
 });
 
+describe('loss of the main heat sink', () => {
+  for (const dt of [0.1, 1, 5]) {
+    it(`trips but does not melt when all cooling goes offline (step ${dt} s)`, () => {
+      const s = createInitialState();
+      s.nextEventIn = 1e9;
+      const site = s.sites.riverside;
+      site.buildings[0].reactor!.setpoint = 1;
+      for (let t = 0; t < 30; t += 0.1) tick(s, 0.1);
+      // e.g. the only cooling unit taken offline for an upgrade
+      site.buildings[2].status = 'upgrading';
+      site.buildings[2].buildTotal = 1e9;
+      site.buildings[2].progress = 0;
+      for (let t = 0; t < 300; t += dt) tick(s, dt);
+      expect(site.buildings[0].reactor!.scrammed).toBe(true);
+      expect(site.buildings[0].status).toBe('active');
+      expect(s.stats.coreDamage).toBe(0);
+    });
+  }
+});
+
 describe('short blackouts', () => {
   it('a normal 70 s grid loss is ridden out on batteries even without generators', () => {
     const { s, pwr } = pwrPlant();

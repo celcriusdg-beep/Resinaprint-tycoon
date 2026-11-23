@@ -16,7 +16,7 @@ export function PlantBalance({ compact }: { compact?: boolean }) {
   hints.push(...rows.map((r) => r.hint).filter(Boolean));
   const staffShort = st.staffFactor < 0.999;
   if (!st.pumpsPowered) hints.unshift('STATION BLACKOUT — no power for coolant pumps. Build Emergency Generators so decay heat can be removed.');
-  else if (st.backupMW < st.backupNeedMW) hints.push(`Backup power ${Math.round(st.backupMW)}/${Math.round(st.backupNeedMW)} MW — a grid blackout could cause core damage. Build Emergency Generators.`);
+  else if (g.level >= 4 && st.backupNeedMW > 0.05 && st.backupMW < st.backupNeedMW) hints.push(`Backup power ${Math.round(st.backupMW)}/${Math.round(st.backupNeedMW)} MW — a grid blackout could cause core damage. Build Emergency Generators.`);
   if (st.waterFactor < 0.999) hints.unshift(`Cooling towers are short of water (${Math.round(st.waterFactor * 100)}%) — build a Water Intake, Wells or a Tank (Supply → Water).`);
   if (st.treatedFactor < 0.999) hints.unshift('Not enough demineralised water — reactors are derated. Build a Water Treatment Plant.');
   if (staffShort) hints.push(`Understaffed (${Math.round(st.staffNeeded)}/${Math.round(st.staffCap)}) — build an Administration Building.`);

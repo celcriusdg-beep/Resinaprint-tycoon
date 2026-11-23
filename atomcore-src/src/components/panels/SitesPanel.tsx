@@ -1,6 +1,6 @@
 import { useGame, useGameStore } from '../../stores/gameStore';
 import { useUI } from '../../stores/uiStore';
-import { LOCATIONS, expandCost } from '../../game/progression/locations';
+import { LOCATIONS, expandCost, nextSize } from '../../game/progression/locations';
 import { pendingShares, prestigeMult } from '../../game/progression/prestige';
 import { PRESTIGE_MIN_EARNED } from '../../game/constants';
 import { fmtMoney, fmtPower } from '../../ui/format';
@@ -49,7 +49,7 @@ export function SitesPanel() {
                 {site.size < loc.maxSize ? (
                   <Button small icon="grid" disabled={g.money < expandCost(loc, site.size)}
                     onClick={() => run((s) => A.expandSite(s, loc.id), { structural: true, sound: 'place' })}>
-                    Expand land to {site.size + 2}×{site.size + 2} · {fmtMoney(expandCost(loc, site.size))}
+                    Expand land to {nextSize(loc, site.size)}×{nextSize(loc, site.size)} · {fmtMoney(expandCost(loc, site.size))}
                   </Button>
                 ) : <div className="muted small">Maximum plot size reached.</div>}
               </>

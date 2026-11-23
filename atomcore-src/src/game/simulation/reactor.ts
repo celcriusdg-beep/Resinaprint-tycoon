@@ -266,10 +266,31 @@ export interface TempResult {
 
 /** Second half: coolant temperature, inventory, protection system and core damage. */
 export function stepReactorTemp(b: Building, inp: ReactorStepInput, coolingRatio: number): TempResult {
+  // Sub-step so the protection system trips the moment a limit is crossed,
+  // even when the simulation runs in coarse steps (offline catch-up).
+  const r = b.reactor!;
+  const res: TempResult = { tripped: null, atws: false, damaged: false };
+  const n = Math.max(1, Math.ceil(inp.dt / 0.1));
+  const sub = { ...inp, dt: inp.dt / n };
+  for (let i = 0; i < n; i++) {
+    const wasScrammed = r.scrammed;
+    stepTempOnce(b, sub, coolingRatio, res);
+    if (!wasScrammed && r.scrammed) {
+      // Rods are in: fission collapses (prompt drop) for the rest of this step.
+      r.power *= 0.12;
+      r.precursors *= 0.5;
+      r.fission *= 0.12;
+      r.thermal = r.fission + r.decayHeat;
+    }
+    if (res.damaged) break;
+  }
+  return res;
+}
+
+function stepTempOnce(b: Building, inp: ReactorStepInput, coolingRatio: number, res: TempResult): void {
   const r = b.reactor!;
   const p = physicsFor(b.type);
   const rated = Math.max(1, ratedThermal(b, inp.mods));
-  const res: TempResult = { tripped: null, atws: false, damaged: false };
   const tNoLoad = noLoadTemp(b, inp.ambient);
   const tNom = nominal(b);
   const tSat = saturationTemp(b, inp.ambient);
@@ -278,8 +299,12 @@ export function stepReactorTemp(b: Building, inp: ReactorStepInput, coolingRatio
   // Natural circulation needs water over the core: it fails as the level drops.
   const levelFactor = p.drainable ? 1 : Math.max(0, Math.min(1, (r.inventory - 0.3) / 0.5));
   const passive = (p.passive + inp.mods.passiveCooling) * rated * levelFactor;
+  // Once shut down, the residual heat removal system cools the core via the
+  // service-water heat sink — independent of the main cooling towers — as long as it has power.
+  const shutDown = r.scrammed || r.power < 0.05;
+  const rhr = shutDown ? 0.08 * rated * levelFactor : 0;
   const removable = inp.pumpsPowered
-    ? r.thermal * Math.min(1, coolingRatio * (0.85 + 0.15 * r.pumpSpeed)) + passive * 0.5
+    ? r.thermal * Math.min(1, coolingRatio * (0.85 + 0.15 * r.pumpSpeed)) + passive * 0.5 + rhr
     : inp.blackoutTime < 6
       ? r.thermal // turbine bypass and relief valves dump steam while the trip takes effect
       : passive + (inp.batteryCooling ? 0.15 * rated * levelFactor : 0);
@@ -298,7 +323,7 @@ export function stepReactorTemp(b: Building, inp: ReactorStepInput, coolingRatio
     // Energy balance: heat that cannot be removed warms the coolant until it boils.
     target = Math.max(target, tSat + 15);
     // Heat capacity of the primary circuit slows the heat-up.
-    r.temp = Math.min(target, r.temp + (excess / rated) * 600 * inp.dt);
+    r.temp = Math.min(target, r.temp + Math.min(150, (excess / rated) * 600) * inp.dt);
   } else {
     r.temp += (target - r.temp) * exp1(inp.dt, TEMP_TAU);
   }
@@ -337,7 +362,6 @@ export function stepReactorTemp(b: Building, inp: ReactorStepInput, coolingRatio
       res.tripped = cause;
     }
   }
-  return res;
 }
 
 export function scram(r: ReactorState, reason: string, gameTime: number): void {
