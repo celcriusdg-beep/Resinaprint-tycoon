@@ -23,7 +23,7 @@ interface Props {
   theme: string;
 }
 
-const FOG: Record<string, string> = { river: '#b9c8d2', coast: '#bccbd6', desert: '#e2c9a6', arctic: '#d5dfe6' };
+const FOG: Record<string, string> = { river: '#b9c8d2', coast: '#bccbd6', desert: '#d8c3a4', arctic: '#b9c7d1' };
 
 export function Lighting({ shadows, shadowSize, dayNight, siteSize, theme }: Props) {
   const { gl, scene } = useThree();

@@ -445,14 +445,28 @@ table.pl tr.big td { font-size: 15px; }
 }
 
 @media (orientation: landscape) and (max-height: 500px) {
-  :root { --nav-h: 52px; }
+  :root { --nav-h: 0px; }
+  .nav { top: 0; bottom: 0; right: auto; width: calc(58px + var(--safe-left)); height: auto; flex-direction: column; justify-content: center; gap: 2px; border-top: 0; border-right: 1px solid var(--line); padding: 6px 0 6px var(--safe-left); }
+  .nav-btn { flex: none; height: 44px; }
   .nav-btn span { display: none; }
-  .sheet { max-height: calc(100% - var(--nav-h) - var(--safe-bottom) - 12px); left: auto; width: min(460px, 60vw); right: var(--safe-right); border-radius: 18px 0 0 0; }
+  .nav-btn.active::before { top: 20%; bottom: 20%; left: 0; right: auto; width: 3px; height: auto; border-radius: 0 3px 3px 0; }
+  .hud { left: calc(var(--safe-left) + 66px); }
   .hud-row2 { display: none; }
   .milestone { display: none; }
-  .toasts { top: 70px; }
+  .sheet { top: calc(var(--safe-top) + 6px); bottom: calc(var(--safe-bottom) + 6px); right: calc(var(--safe-right) + 6px); left: auto; width: min(470px, 58vw); max-height: none; border-radius: 16px; border: 1px solid var(--line-2); }
+  .sheet-grip { display: none; }
+  .camera-buttons { bottom: calc(var(--safe-bottom) + 10px); flex-direction: row; }
+  .app:has(.sheet) .camera-buttons { display: none; }
+  .toasts { top: 62px; left: calc(50% + 29px); }
+  .placement-bar { bottom: calc(var(--safe-bottom) + 8px); margin-left: 29px; }
+  .fps-stats { bottom: 8px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+@media (min-width: 600px) and (max-width: 899px) {
+  .card-grid { grid-template-columns: 1fr 1fr; }
+  .stat-grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }

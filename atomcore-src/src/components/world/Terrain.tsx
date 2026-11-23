@@ -36,8 +36,8 @@ function fbm(x: number, y: number, oct = 5): number {
 const THEMES = {
   river: { low: '#5d7a3a', mid: '#4b6a33', high: '#7c7a6a', peak: '#9a9a92', water: '#2b5c70', mountain: 38, tree: '#2f5a2e', waterLevel: -0.5 },
   coast: { low: '#76824a', mid: '#5f7440', high: '#8a8571', peak: '#a5a093', water: '#1f5f7a', mountain: 30, tree: '#355e33', waterLevel: -0.5 },
-  desert: { low: '#c8935d', mid: '#b87c4a', high: '#a2603b', peak: '#8f5636', water: '#000000', mountain: 34, tree: '#7a6a3a', waterLevel: -99 },
-  arctic: { low: '#dfe6ea', mid: '#c9d3d9', high: '#8c969c', peak: '#f4f7f9', water: '#24485c', mountain: 60, tree: '#2c4a3a', waterLevel: -0.5 },
+  desert: { low: '#bf9f75', mid: '#ad8a5f', high: '#946546', peak: '#7f5238', water: '#000000', mountain: 34, tree: '#7a6a3a', waterLevel: -99 },
+  arctic: { low: '#aebbc3', mid: '#9eabb4', high: '#6f7a82', peak: '#d3dde3', water: '#24485c', mountain: 60, tree: '#2c4a3a', waterLevel: -0.5 },
 } as const;
 
 export function waterDistance(theme: LocationDef['theme'], x: number, z: number, plotHalf: number): number {

@@ -48,7 +48,10 @@ export default function App() {
         useGameStore.getState().setGame(createShowcaseState());
         useSettings.setState({ seenWelcome: true });
         startLoop();
-        (window as unknown as Record<string, unknown>).__atom = () => useGameStore.getState().game;
+        const w = window as unknown as Record<string, unknown>;
+        w.__atom = () => useGameStore.getState().game;
+        w.__store = useGameStore;
+        w.__ui = useUI;
         setPhase('ready');
         return;
       }
@@ -71,6 +74,8 @@ export default function App() {
         const w = window as unknown as Record<string, unknown>;
         w.__atom = () => useGameStore.getState().game;
         w.__persist = persist;
+        w.__ui = useUI;
+        w.__store = useGameStore;
       }
       void requestPersistence();
       setPhase('ready');

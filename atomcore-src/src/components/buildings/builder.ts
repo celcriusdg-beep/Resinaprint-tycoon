@@ -31,6 +31,8 @@ export interface ModelData {
   anims: AnimPart[];
   emitters: SteamEmitter[];
   height: number;
+  /** Top of the main reactor structure (excluding stacks), for overlays. */
+  coreTop: number;
 }
 
 export class ModelBuilder {
@@ -39,6 +41,7 @@ export class ModelBuilder {
   readonly anims: AnimPart[] = [];
   readonly emitters: SteamEmitter[] = [];
   height = 1;
+  coreTop = 0;
   private m = new THREE.Matrix4();
   private q = new THREE.Quaternion();
   private e = new THREE.Euler();
@@ -174,7 +177,7 @@ export class ModelBuilder {
       this.root.add(mesh);
       for (const g of geos) g.dispose();
     }
-    return { group: this.root, anims: this.anims, emitters: this.emitters, height: this.height };
+    return { group: this.root, anims: this.anims, emitters: this.emitters, height: this.height, coreTop: this.coreTop || this.height };
   }
 }
 

@@ -24,7 +24,7 @@ const defs: BuildingDef[] = [
     wear: 0.022,
     unlock: {},
     maxPerSite: 2,
-    reactor: { thermalMW: 20, efficiency: 0.3, fuelUse: 1, rampRate: 0.08, nominalTemp: 120, research: 0.25 },
+    reactor: { thermalMW: 24, efficiency: 0.3, fuelUse: 1, rampRate: 0.08, nominalTemp: 120, research: 0.25 },
     stats: {},
   },
   {
@@ -35,7 +35,7 @@ const defs: BuildingDef[] = [
     description:
       'Factory-built compact pressurised reactor module. Quick to build, flexible, and a big step up from the pilot plant.',
     size: [2, 2],
-    cost: 22_000,
+    cost: 18_000,
     buildTime: 50,
     upkeep: 4,
     staff: 7,

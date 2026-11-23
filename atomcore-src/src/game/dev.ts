@@ -1,5 +1,5 @@
 import type { BuildingType, GameState } from './types';
-import { createInitialState, makeBuilding } from './state';
+import { createInitialState, makeBuilding, makeSite } from './state';
 import { RESEARCH } from './research/tree';
 import { BUILDING_LIST } from './buildings/defs';
 import { findFreeSpot } from './buildings/grid';
@@ -24,6 +24,16 @@ export function createShowcaseState(): GameState {
       b.reactor.power = 0.8;
     }
     site.buildings.push(b);
+  }
+  // Other sites, with a small plant each, so every biome can be inspected.
+  for (const id of ['coastal', 'desert', 'arctic']) {
+    const other = makeSite(id);
+    s.sites[id] = other;
+    s.unlockedSites.push(id);
+    for (const t of ['reactor_pwr', 'cooling_tower', 'turbine_large', 'substation', 'admin'] as BuildingType[]) {
+      const spot = findFreeSpot(other, t, 0);
+      if (spot) other.buildings.push(makeBuilding(s, t, spot.x, spot.z, 0, true));
+    }
   }
   s.automation = { autoFuel: true, autoRepair: true, autoRestart: true, loadFollow: false, smartStorage: true };
   s.fuel = 1e6;

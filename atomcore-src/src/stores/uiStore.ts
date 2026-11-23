@@ -73,7 +73,8 @@ export const useUI = create<UIStore>((set) => ({
   pushToast: (n) =>
     set((s) => {
       // Merge bursts of identical notices (e.g. several reactors tripping at once).
-      const dup = s.toasts.find((x) => x.title === n.title && x.kind === n.kind && Date.now() - x.at < 6000);
+      const mergeable = n.kind === 'scram' || n.kind === 'bad' || n.kind === 'warn';
+      const dup = mergeable ? s.toasts.find((x) => x.title === n.title && x.kind === n.kind && Date.now() - x.at < 6000) : undefined;
       if (dup) {
         const count = (dup.count ?? 1) + 1;
         const merged: Toast = { ...dup, count, text: `${n.text ?? ''} (×${count})`.trim(), at: Date.now() };

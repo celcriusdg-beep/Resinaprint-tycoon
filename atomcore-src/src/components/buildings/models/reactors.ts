@@ -62,6 +62,7 @@ export function pilotReactor(): ModelBuilder {
   // Pipes from drum to annex
   b.pipe([cx + 2.2, 1.2, cz + 0.4], [1.1, 1.2, cz + 0.4], 0.14, m.pipeWhite);
   b.pipe([cx + 2.2, 0.8, cz + 0.9], [1.1, 0.8, cz + 0.9], 0.1, m.pipeBlue);
+  b.coreTop = b.height;
   stack(b, 2.7, -2.7, 6.5, 0.3);
   return b;
 }
@@ -89,6 +90,7 @@ export function smrReactor(): ModelBuilder {
   b.pipe([3.1, 1.6, -1.0], [3.7, 1.6, -1.0], 0.2, m.pipeWhite);
   b.pipe([3.1, 1.0, -0.4], [3.7, 1.0, -0.4], 0.16, m.pipeBlue);
   b.box(1.6, 1.2, 1.4, m.steel, [-2.6, 0.25, -2.7]);
+  b.coreTop = b.height;
   stack(b, 2.8, -2.8, 7, 0.32);
   return b;
 }
@@ -130,6 +132,7 @@ export function pwrReactor(): ModelBuilder {
   for (let i = 0; i < 2; i++) {
     b.pipe([cx + r, 3.2 + i * 0.6, cz - 1 + i * 0.8], [2.3, 3.2 + i * 0.6, cz - 1 + i * 0.8], 0.26, m.pipeWhite);
   }
+  b.coreTop = b.height;
   stack(b, 4.9, -5.1, 10, 0.42);
   return b;
 }
@@ -161,6 +164,7 @@ export function bwrReactor(): ModelBuilder {
   b.pipe([2.4, 5.0, -2], [2.8, 5.0, -2], 0.3, m.pipeWhite);
   b.pipe([2.4, 5.0, -0.6], [2.8, 5.0, -0.6], 0.3, m.pipeWhite);
   b.box(2.2, 2.4, 2.2, m.concreteDark, [-4.0, 0.25, 4.1]);
+  b.coreTop = b.height;
   stack(b, -4.8, -5.0, 13, 0.45);
   return b;
 }
@@ -194,6 +198,7 @@ export function msrReactor(): ModelBuilder {
   b.box(3.2, 1.4, 2.6, m.concreteDark, [-3.6, 0.25, 4.2]);
   b.box(3.2, 0.1, 0.5, m.hazard, [-3.6, 1.65, 4.2]);
   // Off-gas stack
+  b.coreTop = b.height;
   stack(b, 4.8, 4.6, 9, 0.38);
   return b;
 }

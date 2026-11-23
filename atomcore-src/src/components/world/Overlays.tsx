@@ -48,7 +48,7 @@ export function SelectionMarker() {
       <mesh ref={ref} rotation={[-Math.PI / 2, 0, 0]} material={mat} renderOrder={6}>
         <planeGeometry args={[w * CELL + 0.8, d * CELL + 0.8]} />
       </mesh>
-      {b.reactor && <CoreHologram buildingId={b.id} height={getTemplate(b.type).height} />}
+      {b.reactor && <CoreHologram buildingId={b.id} height={getTemplate(b.type).coreTop} />}
     </group>
   );
 }
@@ -72,8 +72,8 @@ function CoreHologram({ buildingId, height }: { buildingId: number; height: numb
       }
     return list.slice(0, RODS);
   }, []);
-  const fuelMat = useMemo(() => new THREE.MeshBasicMaterial({ color: '#46d8ff', transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }), []);
-  const shellMat = useMemo(() => new THREE.MeshBasicMaterial({ color: '#4fc8ff', transparent: true, opacity: 0.12, wireframe: true, depthWrite: false }), []);
+  const fuelMat = useMemo(() => new THREE.MeshBasicMaterial({ color: '#46d8ff', transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }), []);
+  const shellMat = useMemo(() => new THREE.MeshBasicMaterial({ color: '#4fc8ff', transparent: true, opacity: 0.22, wireframe: true, depthWrite: false }), []);
   const ctrlMat = useMemo(() => new THREE.MeshBasicMaterial({ color: '#1b2330', transparent: true, opacity: 0.9 }), []);
   const sparkGeo = useMemo(() => {
     const g = new THREE.BufferGeometry();
@@ -89,10 +89,10 @@ function CoreHologram({ buildingId, height }: { buildingId: number; height: numb
     if (!b?.reactor) return;
     const power = b.reactor.power;
     const hot = THREE.MathUtils.clamp((b.reactor.temp - 20) / 400, 0, 1);
-    fuelMat.color.setRGB(0.25 + hot * 0.6, 0.75 - hot * 0.2, 1 - hot * 0.5).multiplyScalar(0.25 + power * 1.6);
+    fuelMat.color.setRGB(0.2 + hot * 0.5, 0.65 - hot * 0.2, 0.95 - hot * 0.45).multiplyScalar(0.18 + power * 0.62);
     if (group.current) {
       group.current.rotation.y += dt * 0.25;
-      group.current.position.y = height + 3.2 + Math.sin(s.clock.elapsedTime * 1.5) * 0.15;
+      group.current.position.y = height + 1.9 + Math.sin(s.clock.elapsedTime * 1.5) * 0.15;
     }
     if (ctrl.current) {
       const insert = b.reactor.scrammed ? 1 : 1 - b.reactor.setpoint;
@@ -122,7 +122,7 @@ function CoreHologram({ buildingId, height }: { buildingId: number; height: numb
   return (
     <group ref={group} position={[0, height + 3.2, 0]}>
       <instancedMesh ref={setFuel} args={[undefined, undefined, positions.length]} material={fuelMat}>
-        <cylinderGeometry args={[0.2, 0.2, 2.4, 6]} />
+        <cylinderGeometry args={[0.13, 0.13, 2.4, 6]} />
       </instancedMesh>
       <mesh material={shellMat}>
         <cylinderGeometry args={[2.5, 2.5, 2.8, 18, 2, true]} />
