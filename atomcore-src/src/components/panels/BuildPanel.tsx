@@ -1,0 +1,71 @@
+import { useState } from 'react';
+import type { BuildingCategory, BuildingDef } from '../../game/types';
+import { BUILDING_LIST, CATEGORY_LABEL, CATEGORY_ORDER, levelMult, staffAt } from '../../game/buildings/defs';
+import { buildCost, buildLockReason } from '../../game/actions';
+import { getMods } from '../../game/simulation/modifiers';
+import { useGame } from '../../stores/gameStore';
+import { fmtMoney, fmtPower, fmtTime, fmtNum } from '../../ui/format';
+import { beginBuild } from '../../ui/actions';
+import { Tabs } from '../ui/common';
+import { Icon } from '../ui/Icons';
+import { PlantBalance } from './PlantBalance';
+
+export function keyStat(def: BuildingDef, level = 1, mods = { reactorOutput: 1, cooling: 1, steamCap: 1, grid: 1, storage: 1, research: 1, thermalEff: 0 }): string {
+  const lm = levelMult(def, level);
+  if (def.reactor) return `${fmtPower(def.reactor.thermalMW * lm * mods.reactorOutput)} heat · ${Math.round((def.reactor.efficiency + mods.thermalEff) * 100)}% eff.`;
+  const s = def.stats;
+  if (s.coolingMW) return `${fmtPower(s.coolingMW * lm * mods.cooling)} heat rejection`;
+  if (s.steamMW) return `${fmtPower(s.steamMW * lm * mods.steamCap)} steam capacity`;
+  if (s.gridMW) return `+${fmtPower(s.gridMW * lm * mods.grid)} grid export`;
+  if (s.storageMWh) return `${fmtNum(s.storageMWh * lm * mods.storage)} MWh storage`;
+  if (s.research) return `+${(s.research * lm * mods.research).toFixed(2)} RP/s`;
+  if (s.staffCap) return `+${Math.round(s.staffCap * lm)} staff, +1 contract slot`;
+  if (s.maintenance) return `Repair crew ×${(s.maintenance * lm).toFixed(1)}`;
+  if (s.fuelCap) return `+${fmtNum(s.fuelCap * lm)} fuel storage`;
+  if (s.safety) return `+${Math.round(s.safety * lm)} safety rating`;
+  return '';
+}
+
+export function BuildPanel() {
+  const g = useGame();
+  const [cat, setCat] = useState<BuildingCategory>('reactor');
+  const mods = getMods(g, g.activeSite);
+  const list = BUILDING_LIST.filter((d) => d.category === cat);
+  return (
+    <div className="panel-stack">
+      <PlantBalance compact />
+      <Tabs tabs={CATEGORY_ORDER.map((c) => ({ id: c, label: CATEGORY_LABEL[c] }))} value={cat} onChange={setCat} />
+      <div className="card-grid">
+        {list.map((def) => {
+          const lock = buildLockReason(g, def.type);
+          const cost = buildCost(g, def.type);
+          const afford = g.money >= cost;
+          return (
+            <button key={def.type} className={`build-card${lock ? ' locked' : ''}${!afford && !lock ? ' poor' : ''}`}
+              onClick={() => beginBuild(def.type)}>
+              <div className="build-card-head">
+                <span className={`cat-dot ${def.category}`} />
+                <span className="build-name">{def.name}</span>
+              </div>
+              <div className="build-stat">{keyStat(def, 1, mods)}</div>
+              <div className="build-desc">{def.description}</div>
+              <div className="build-meta">
+                <span><Icon name="users" size={13} /> {staffAt(def, 1)}</span>
+                <span><Icon name="money" size={13} /> {fmtMoney(def.upkeep * mods.upkeep)}/s</span>
+                <span><Icon name="hammer" size={13} /> {fmtTime(def.buildTime / mods.buildSpeed)}</span>
+                <span>{def.size[0]}×{def.size[1]}</span>
+              </div>
+              <div className="build-foot">
+                {lock ? (
+                  <span className="lock"><Icon name="lock" size={13} /> {lock}</span>
+                ) : (
+                  <span className={`price${afford ? '' : ' bad'}`}>{fmtMoney(cost, 2)}</span>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

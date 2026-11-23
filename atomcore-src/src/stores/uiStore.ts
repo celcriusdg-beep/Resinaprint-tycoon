@@ -1,0 +1,82 @@
+import { create } from 'zustand';
+import type { BuildingType, Notice } from '../game/types';
+import type { OfflineReport } from '../systems/offline/offline';
+
+export type PanelId = 'build' | 'research' | 'manage' | 'market' | 'goals' | 'sites' | 'settings';
+
+export interface Toast extends Notice {
+  id: number;
+  at: number;
+}
+
+export interface Placement {
+  type: BuildingType;
+  rot: number;
+  x: number | null;
+  z: number | null;
+}
+
+export type CameraCommand =
+  | { kind: 'focus'; x: number; z: number; distance?: number; nonce: number }
+  | { kind: 'rotate'; delta: number; nonce: number }
+  | { kind: 'zoom'; factor: number; nonce: number }
+  | { kind: 'reset'; nonce: number };
+
+type DistOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
+export type CameraInput = DistOmit<CameraCommand, 'nonce'>;
+
+export type Modal =
+  | { kind: 'offline'; report: OfflineReport }
+  | { kind: 'confirm'; title: string; text: string; confirmLabel: string; danger?: boolean; onConfirm: () => void }
+  | { kind: 'welcome' }
+  | { kind: 'loadError'; text: string };
+
+interface UIStore {
+  panel: PanelId | null;
+  selectedId: number | null;
+  placement: Placement | null;
+  toasts: Toast[];
+  modal: Modal | null;
+  camera: CameraCommand | null;
+  hoverId: number | null;
+  setPanel: (p: PanelId | null) => void;
+  togglePanel: (p: PanelId) => void;
+  select: (id: number | null) => void;
+  startPlacement: (type: BuildingType) => void;
+  updatePlacement: (p: Partial<Placement>) => void;
+  cancelPlacement: () => void;
+  pushToast: (n: Notice) => void;
+  dismissToast: (id: number) => void;
+  setModal: (m: Modal | null) => void;
+  cameraCmd: (c: CameraInput) => void;
+  setHover: (id: number | null) => void;
+}
+
+let toastId = 1;
+let nonce = 1;
+
+export const useUI = create<UIStore>((set) => ({
+  panel: null,
+  selectedId: null,
+  placement: null,
+  toasts: [],
+  modal: null,
+  camera: null,
+  hoverId: null,
+  setPanel: (p) => set({ panel: p }),
+  togglePanel: (p) => set((s) => ({ panel: s.panel === p ? null : p, selectedId: s.panel === p ? s.selectedId : null })),
+  select: (id) => set((s) => ({ selectedId: id, panel: id !== null ? null : s.panel })),
+  startPlacement: (type) => set((s) => ({ placement: { type, rot: s.placement?.rot ?? 0, x: null, z: null }, selectedId: null })),
+  updatePlacement: (p) => set((s) => (s.placement ? { placement: { ...s.placement, ...p } } : {})),
+  cancelPlacement: () => set({ placement: null }),
+  pushToast: (n) =>
+    set((s) => {
+      const t: Toast = { ...n, id: toastId++, at: Date.now() };
+      const toasts = [...s.toasts, t].slice(-4);
+      return { toasts };
+    }),
+  dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
+  setModal: (m) => set({ modal: m }),
+  cameraCmd: (c) => set({ camera: { ...c, nonce: nonce++ } as CameraCommand }),
+  setHover: (id) => set({ hoverId: id }),
+}));

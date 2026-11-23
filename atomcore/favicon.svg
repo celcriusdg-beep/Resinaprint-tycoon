@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="75%">
+      <stop offset="0" stop-color="#17405a"/><stop offset="0.55" stop-color="#0d1c2a"/><stop offset="1" stop-color="#070b10"/>
+    </radialGradient>
+    <linearGradient id="tower" x1="0" x2="1">
+      <stop offset="0" stop-color="#8b98a3"/><stop offset="0.45" stop-color="#e7ecef"/><stop offset="1" stop-color="#6d7882"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#bff4ff" stop-opacity="1"/><stop offset="0.4" stop-color="#4fd1ff" stop-opacity="0.55"/><stop offset="1" stop-color="#4fd1ff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <g transform="translate(0 0) scale(1)">
+    <!-- steam -->
+    <g fill="#e9f1f6" opacity="0.55" filter="url(#blur)">
+      <circle cx="250" cy="150" r="44"/><circle cx="300" cy="120" r="52"/><circle cx="355" cy="95" r="40"/>
+    </g>
+    <!-- cooling tower -->
+    <path d="M150 440 C 175 340, 205 260, 196 182 L 316 182 C 307 260, 337 340, 362 440 Z" fill="url(#tower)"/>
+    <path d="M196 182 L316 182 L312 196 L200 196 Z" fill="#59636c"/>
+    <rect x="120" y="436" width="272" height="18" rx="4" fill="#3b4650"/>
+    <!-- reactor core: glowing hexagonal fuel lattice -->
+    <circle cx="256" cy="318" r="128" fill="url(#glow)"/>
+    <polygon points="359.9,378.0 256.0,438.0 152.1,378.0 152.1,258.0 256.0,198.0 359.9,258.0" fill="#0a2536" fill-opacity="0.85" stroke="#7fe8ff" stroke-width="10" stroke-linejoin="round"/>
+    <g fill="#9ff0ff"><circle cx="180.0" cy="318.0" r="12.5"/><circle cx="199.0" cy="351.0" r="12.5"/><circle cx="218.0" cy="384.0" r="12.5"/><circle cx="199.0" cy="285.0" r="12.5"/><circle cx="218.0" cy="318.0" r="12.5"/><circle cx="237.0" cy="351.0" r="12.5"/><circle cx="256.0" cy="384.0" r="12.5"/><circle cx="218.0" cy="252.0" r="12.5"/><circle cx="237.0" cy="285.0" r="12.5"/><circle cx="256.0" cy="318.0" r="12.5"/><circle cx="275.0" cy="351.0" r="12.5"/><circle cx="294.0" cy="384.0" r="12.5"/><circle cx="256.0" cy="252.0" r="12.5"/><circle cx="275.0" cy="285.0" r="12.5"/><circle cx="294.0" cy="318.0" r="12.5"/><circle cx="313.0" cy="351.0" r="12.5"/><circle cx="294.0" cy="252.0" r="12.5"/><circle cx="313.0" cy="285.0" r="12.5"/><circle cx="332.0" cy="318.0" r="12.5"/></g>
+    <circle cx="256" cy="318" r="14" fill="#ffffff"/>
+  </g>
+</svg>

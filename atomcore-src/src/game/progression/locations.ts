@@ -1,0 +1,95 @@
+export interface LocationDef {
+  id: string;
+  name: string;
+  region: string;
+  description: string;
+  unlockLevel: number;
+  cost: number;
+  startSize: number;
+  maxSize: number;
+  coolingMult: number;
+  demandMult: number; // regional market size relative to the home market
+  priceMult: number;
+  buildCostMult: number;
+  ambient: number; // ambient temperature °C
+  theme: 'river' | 'coast' | 'desert' | 'arctic';
+  perk: string;
+}
+
+export const LOCATIONS: LocationDef[] = [
+  {
+    id: 'riverside',
+    name: 'Riverside Valley',
+    region: 'Home region',
+    description: 'A green valley with a cold river. Your company starts here.',
+    unlockLevel: 1,
+    cost: 0,
+    startSize: 14,
+    maxSize: 26,
+    coolingMult: 1.1,
+    demandMult: 1,
+    priceMult: 1,
+    buildCostMult: 1,
+    ambient: 18,
+    theme: 'river',
+    perk: '+10% cooling from river water',
+  },
+  {
+    id: 'coastal',
+    name: 'Saltmarsh Bay',
+    region: 'Coastal region',
+    description: 'Seawater cooling and a big coastal city to supply. Storms can hit the grid.',
+    unlockLevel: 8,
+    cost: 1_500_000,
+    startSize: 16,
+    maxSize: 28,
+    coolingMult: 1.3,
+    demandMult: 1.6,
+    priceMult: 1.05,
+    buildCostMult: 1.1,
+    ambient: 16,
+    theme: 'coast',
+    perk: '+30% cooling (seawater), large city demand',
+  },
+  {
+    id: 'desert',
+    name: 'Red Mesa Plateau',
+    region: 'Desert region',
+    description: 'Hot and dry, so cooling suffers, but land is cheap and the industrial demand is enormous.',
+    unlockLevel: 13,
+    cost: 30_000_000,
+    startSize: 20,
+    maxSize: 32,
+    coolingMult: 0.8,
+    demandMult: 2.6,
+    priceMult: 1.2,
+    buildCostMult: 0.85,
+    ambient: 38,
+    theme: 'desert',
+    perk: '−15% build cost, +20% price, −20% cooling',
+  },
+  {
+    id: 'arctic',
+    name: 'Nordvik Fjord',
+    region: 'Arctic region',
+    description: 'Icy fjord water gives superb cooling. Feeds a continental HVDC interconnect.',
+    unlockLevel: 19,
+    cost: 600_000_000,
+    startSize: 20,
+    maxSize: 34,
+    coolingMult: 1.5,
+    demandMult: 4.5,
+    priceMult: 1.15,
+    buildCostMult: 1.2,
+    ambient: 2,
+    theme: 'arctic',
+    perk: '+50% cooling, continental demand',
+  },
+];
+
+export const LOCATION_BY_ID: Record<string, LocationDef> = Object.fromEntries(LOCATIONS.map((l) => [l.id, l]));
+
+export function expandCost(loc: LocationDef, size: number): number {
+  const steps = (size - loc.startSize) / 2;
+  return Math.round(25_000 * Math.pow(3, steps) * Math.max(1, loc.cost / 1_000_000) ** 0.5);
+}
