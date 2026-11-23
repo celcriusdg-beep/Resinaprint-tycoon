@@ -33,6 +33,7 @@ const BUILDERS: Record<BuildingType, () => ModelBuilder> = {
   water_treatment: S.waterTreatment,
   water_tank: S.waterTank,
   cooling_dry: S.dryCooling,
+  dry_cask: S.dryCask,
 };
 
 const templates = new Map<BuildingType, ModelData>();

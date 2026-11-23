@@ -330,7 +330,7 @@ const defs: BuildingDef[] = [
     short: 'Backup Gen',
     category: 'support',
     description:
-      'Diesel generators that keep safety systems powered if the grid fails. Improves the site safety rating.',
+      'Diesel generators that power the coolant pumps and emergency core cooling when offsite power is lost. Without enough backup power, a blackout can lead to core damage.',
     size: [2, 1],
     cost: 8_000,
     buildTime: 22,
@@ -342,7 +342,7 @@ const defs: BuildingDef[] = [
     upgradeGrowth: 1.9,
     wear: 0.006,
     unlock: { research: 's_egen' },
-    stats: { safety: 8 },
+    stats: { safety: 8, backupMW: 6 },
   },
   // ── Water ───────────────────────────────────────────────────────────
   {
@@ -382,6 +382,15 @@ const defs: BuildingDef[] = [
     wear: 0.006, unlock: { level: 2 }, stats: { waterStorage: 3000 },
   },
   // ── Fuel cycle ──────────────────────────────────────────────────────
+  {
+    type: 'dry_cask',
+    name: 'Dry Cask Storage',
+    short: 'Dry Casks',
+    category: 'fuel',
+    description: 'Spent fuel cools in pools next to the reactors for years, then moves into steel-and-concrete casks on a guarded pad. Pools full = no refuelling.',
+    size: [3, 2], cost: 15_000, buildTime: 30, upkeep: 0.5, staff: 2, maxLevel: 6, levelGrowth: 1.9, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.004, unlock: { level: 3 }, stats: { caskCap: 300 },
+  },
   {
     type: 'uranium_mine',
     name: 'Open-Pit Uranium Mine',

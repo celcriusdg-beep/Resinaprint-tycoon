@@ -76,7 +76,7 @@ adaptive monitor lowers resolution when the frame rate drops.
 | --- | --- |
 | Economy: starting capital, electricity sales, upkeep, salaries, fuel, repairs, construction, research funding, P&L | Implemented |
 | Daily demand/price cycle, market random walk, surplus sold at 20 %, transmission losses | Implemented |
-| Building system: 27 building types, grid placement, rotation, collision & road checks, construction time, demolition refunds | Implemented |
+| Building system: 28 building types, grid placement, rotation, collision & road checks, construction time, demolition refunds | Implemented |
 | Upgrades: per-building levels with downtime, condition, repairs | Implemented |
 | Reactors: Pilot, SMR, PWR, BWR, Molten Salt, Fusion with output, cost, upkeep, wear, efficiency, research gates | Implemented |
 | Reactor model: setpoint ramp, decay heat, temperature vs cooling, warning/trip limits, automatic setback, SCRAM & restart, fuel | Implemented (simplified, educational) |
@@ -84,7 +84,9 @@ adaptive monitor lowers resolution when the frame rate drops.
 | Research tree: 50 projects across 9 categories (incl. Fuel Cycle & Mining) with prerequisites and level gates | Implemented |
 | Water: evaporation from wet cooling, river/sea intakes, desert wells, treatment plants for demineralised water, storage tanks, dry cooling, droughts; shortages cut cooling or derate reactors | Implemented |
 | Fuel cycle: open-pit mines with 5 excavator tiers (compact → bucket-wheel) and 4 truck tiers (dig vs haul bottleneck), ore mill, enrichment, fabrication with a QA speed/defect trade-off, inspection lab, buy/sell market for every material | Implemented |
-| Reactor operations: core burnup and refuelling outages, coolant pump speed (cooling vs house load and wear), defective rods that fail, recommended power limits, core damage incidents with decommissioning | Implemented (simplified game mechanics) |
+| Reactor physics: point kinetics with delayed neutrons (stable period, prompt criticality), reactivity balance (fuel burnup, control rods with S-shaped worth, soluble boron, Xe-135/I-135 with real half-lives on the game clock, Doppler and boron-dependent moderator feedback, BWR flow/void control), two-group decay heat; automatic or manual rod control, automatic or manual boron | Implemented (simplified, educational) |
+| Protection & accidents: trips on high flux, short period, high temperature, low level and loss of offsite power; rare failure-to-scram (ATWS); xenon dead time; station blackouts with emergency diesel generators; boil-off, core uncovery, cladding oxidation and fuel melting leading to core damage (INES-style severity); passive-safety research and passively safe designs (pilot, SMR, molten salt) | Implemented (simplified, educational) |
+| Fuel management: batch (⅓ core) or full reloads, enrichment choice 3–5%, leaking rods from defects and overpower, spent fuel pools and dry cask storage, finite ore reserves | Implemented |
 | Automation: fuel procurement, outage planning (auto-refuel), auto-restart, predictive maintenance, load following, smart storage | Implemented |
 | Events: heatwave, cold snap, storms, market boom/slump, demand surge, fuel price shocks, equipment failures, pump faults, breakthroughs, grants, inspections, site-specific weather | Implemented |
 | Staff: capacity, salaries, understaffing penalty, training program | Implemented |

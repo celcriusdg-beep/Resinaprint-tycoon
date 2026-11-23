@@ -22,14 +22,16 @@ describe('fuel burnup and refuelling', () => {
     expect(r.reactor!.coreFuel).toBeLessThan(f0);
     expect(A.refuelReactor(s, r.id)).toMatch(/Shut/);
     A.setSetpoint(s, r.id, 0);
-    run(s, 40);
+    run(s, 90);
     const stock = s.fuel;
-    expect(A.refuelReactor(s, r.id)).toBeNull();
+    const before = r.reactor!.coreFuel;
+    expect(A.refuelReactor(s, r.id, 'full')).toBeNull();
     expect(r.status).toBe('refueling');
     expect(s.fuel).toBeLessThan(stock);
+    expect(s.sites.riverside.spent.pool).toBeGreaterThan(0);
     run(s, 40);
     expect(r.status).toBe('active');
-    expect(r.reactor!.coreFuel).toBeGreaterThan(0.99);
+    expect(r.reactor!.coreFuel).toBeGreaterThan(Math.max(before + 0.1, 0.99));
   });
 
   it('power is limited as fuel runs out', () => {
@@ -37,8 +39,9 @@ describe('fuel burnup and refuelling', () => {
     const r = s.sites.riverside.buildings[0].reactor!;
     r.coreFuel = 0.05;
     r.setpoint = 1;
-    run(s, 60);
-    expect(r.power).toBeLessThan(0.4);
+    run(s, 120);
+    // End-of-cycle coastdown: not enough excess reactivity left for full power.
+    expect(r.power).toBeLessThan(0.85);
   });
 
   it('auto refuel handles outages on its own', () => {
@@ -46,11 +49,14 @@ describe('fuel burnup and refuelling', () => {
     s.research.completed.push('f_outage');
     clearModCache();
     A.setAutomation(s, 'autoRefuel', true);
+    s.nextEventIn = 1e9;
     const b = s.sites.riverside.buildings[0];
     b.reactor!.coreFuel = 0.05;
-    run(s, 120);
-    expect(b.reactor!.coreFuel).toBeGreaterThan(0.9);
+    run(s, 300);
+    // Batch reload: a third of the core is replaced, then the reactor is restarted.
+    expect(b.reactor!.coreFuel).toBeGreaterThan(0.3);
     expect(b.reactor!.setpoint).toBeGreaterThan(0.4);
+    expect(b.reactor!.power).toBeGreaterThan(0.2);
   });
 });
 
@@ -133,25 +139,17 @@ describe('mining and fabrication', () => {
 });
 
 describe('fuel integrity', () => {
-  it('defective rods fail, limit power and can destroy the core if ignored', () => {
+  it('defective rods leak and draw fines, but do not by themselves destroy a core', () => {
     const s = createInitialState();
     const b = s.sites.riverside.buildings[0];
     const r = b.reactor!;
     r.coreDefects = 20;
-    r.coreFuel = 1;
     r.setpoint = 1;
-    let sawFailure = false;
-    for (let t = 0; t < 4000 && b.status !== 'destroyed'; t += 0.5) {
-      tick(s, 0.5);
-      if (r.failedRods > 0) sawFailure = true;
-      r.setpoint = 1; // a reckless operator keeps pushing
-      if (r.scrammed && b.status === 'active') { r.scrammed = false; }
-    }
-    expect(sawFailure).toBe(true);
-    expect(b.status).toBe('destroyed');
-    expect(s.events.some((e) => e.id === 'outcry')).toBe(true);
-    expect(A.decommission(s, b.id)).toBeNull();
-    expect(s.sites.riverside.buildings.find((x) => x.id === b.id)).toBeUndefined();
+    const m0 = s.money;
+    for (let t = 0; t < 1500; t += 0.5) tick(s, 0.5);
+    expect(r.failedRods).toBeGreaterThan(0);
+    expect(b.status).not.toBe('destroyed');
+    expect(s.ledger.other + s.ledgerPrev.other).toBeLessThan(m0); // fines were booked
   });
 
   it('refuelling replaces failed rods', () => {
@@ -159,7 +157,7 @@ describe('fuel integrity', () => {
     const b = s.sites.riverside.buildings[0];
     b.reactor!.failedRods = 3;
     b.reactor!.setpoint = 0;
-    run(s, 40);
+    run(s, 90);
     expect(A.refuelReactor(s, b.id)).toBeNull();
     run(s, 40);
     expect(b.reactor!.failedRods).toBe(0);

@@ -8,6 +8,7 @@ import { EXCAVATORS, TRUCKS, slotsFor, emptyVehicles, type VehicleDef } from './
 import { LOCATION_BY_ID } from '../progression/locations';
 import { companyMods, getMods } from '../simulation/modifiers';
 import { coreSize, canRefuel, scram, advisoryLimit } from '../simulation/reactor';
+import { physicsFor } from '../simulation/physics';
 import { notify, pushLog } from '../events/events';
 import { random } from '../rng';
 
@@ -81,7 +82,7 @@ export function mineOutput(b: Building, siteId: string, mods: Modifiers, staffFa
     haul += n * d.rate;
     upkeep += n * d.upkeep;
   });
-  if (!working(b)) return { dig: dig + selfDig, haul, ore: 0, upkeep };
+  if (!working(b) || (b.reserve ?? 1) <= 0) return { dig: dig + selfDig, haul, ore: 0, upkeep };
   const grade = LOCATION_BY_ID[siteId]?.oreGrade ?? 1;
   const levelBonus = 1 + 0.1 * (b.level - 1);
   const ore = (Math.min(dig, haul) + selfDig) * grade * levelBonus * mods.mining * cond(b) * staffFactor;
@@ -153,6 +154,7 @@ export function buyItem(s: GameState, item: Item, qty: number, fuelCap: number):
   s.money -= n * price;
   s.ledger.fuel += n * price;
   if (item === 'assemblies') {
+    s.supply.stockEnr = (s.supply.stockEnr * s.fuel + 4.2 * n) / (s.fuel + n);
     s.fuel += n;
     s.supply.defects += n * MARKET_DEFECT_RATE;
   } else s.supply[item] += n;
@@ -211,11 +213,14 @@ export function tickSupply(s: GameState, dt: number, minedOre: number, fuelCap: 
   sup.yellowcake += millIn / ORE_PER_YELLOWCAKE;
   rates.milled = millIn / dt;
 
-  // Enrichment: yellowcake → enriched
+  // Enrichment: yellowcake → enriched. Higher U-235 content needs more natural
+  // uranium feed and more separative work per unit of product.
+  const e = Math.max(3, Math.min(5, sup.enrichment || 4)) / 4;
+  const feedPer = YELLOWCAKE_PER_ENRICHED * Math.pow(e, 1.3);
   const enrRoom = Math.max(0, caps.enriched - sup.enriched);
-  const enrIn = Math.min(enrichCap * dt, sup.yellowcake, enrRoom * YELLOWCAKE_PER_ENRICHED);
+  const enrIn = Math.min((enrichCap / Math.pow(e, 0.3)) * dt, sup.yellowcake, enrRoom * feedPer);
   sup.yellowcake -= enrIn;
-  sup.enriched += enrIn / YELLOWCAKE_PER_ENRICHED;
+  sup.enriched += enrIn / feedPer;
   rates.enriched = enrIn / dt;
 
   // Fabrication: enriched → assemblies, some defective
@@ -228,7 +233,9 @@ export function tickSupply(s: GameState, dt: number, minedOre: number, fuelCap: 
   const inspected = Math.min(fabIn, inspectCap * dt);
   const caught = fabIn > 0 ? newDefects * (inspected / fabIn) * 0.95 : 0;
   newDefects -= caught;
-  s.fuel += fabIn - caught;
+  const made = fabIn - caught;
+  if (made > 0) sup.stockEnr = (sup.stockEnr * s.fuel + (sup.enrichment || 4) * made) / (s.fuel + made);
+  s.fuel += made;
   sup.defects += newDefects;
   // Rejected assemblies are recycled: half the material is recovered.
   sup.enriched = Math.min(caps.enriched, sup.enriched + caught * 0.5);
@@ -241,10 +248,13 @@ export function tickSupply(s: GameState, dt: number, minedOre: number, fuelCap: 
 
 // ── Refuelling outages ───────────────────────────────────────────────────
 
-export function refuelNeed(b: Building): number {
+/** Assemblies loaded in an outage: a third of the core (batch reload) or everything spent (full). */
+export function refuelNeed(b: Building, mode: 'batch' | 'full' = 'batch'): number {
   const r = b.reactor!;
-  const spent = r.failedRods > 0 ? Math.max(1 - r.coreFuel, 0.05) : 1 - r.coreFuel;
-  return Math.max(1, Math.ceil(spent * coreSize(b)));
+  const size = coreSize(b);
+  const spent = Math.max(r.failedRods > 0 ? 0.05 : 0, 1 - r.coreFuel);
+  const want = Math.ceil(spent * size);
+  return Math.max(1, mode === 'full' ? want : Math.min(want, Math.ceil(size / 3)));
 }
 
 export function refuelDuration(s: GameState, b: Building): number {
@@ -252,26 +262,34 @@ export function refuelDuration(s: GameState, b: Building): number {
   return (spec.refuelTime * (0.8 + 0.1 * b.level)) / getMods(s, s.activeSite).refuelSpeed;
 }
 
-/** Start an outage: assemblies are taken from stock immediately and loaded over the outage. */
-export function startRefuel(s: GameState, b: Building): string | null {
+/** Start an outage: fresh assemblies come from stock; the same number of spent ones go to the pool. */
+export function startRefuel(s: GameState, b: Building, mode: 'batch' | 'full' = 'batch'): string | null {
   const err = canRefuel(b);
   if (err) return err;
   const r = b.reactor!;
-  const need = refuelNeed(b);
+  const site = Object.values(s.sites).find((x) => x.buildings.includes(b));
+  if (!site) return 'Site not found.';
+  const need = refuelNeed(b, mode);
   const take = Math.min(need, Math.floor(s.fuel));
   if (take < 1) return 'No fuel assemblies in stock. Buy some or produce them.';
+  const room = poolCapacity(site) - site.spent.pool;
+  if (room < take) return `Spent fuel pool is full (${Math.floor(site.spent.pool)}/${Math.floor(poolCapacity(site))}). Build Dry Cask Storage to make room.`;
   const frac = s.fuel > 0 ? Math.min(1, s.supply.defects / s.fuel) : 0;
-  // Defective assemblies come along at the stock's defect rate (randomly rounded).
   const expected = take * frac;
   let loadedDefects = Math.floor(expected);
   if (random() < expected - loadedDefects) loadedDefects++;
   s.fuel -= take;
   s.supply.defects = Math.max(0, s.supply.defects - expected);
+  // Spent assemblies are discharged to the pool now; fresh ones load over the outage.
+  site.spent.pool += take;
+  const size = Math.max(1, coreSize(b));
+  const remaining = Math.max(0, r.coreFuel * size);
+  r.coreEnr = (r.coreEnr * remaining + s.supply.stockEnr * take) / Math.max(1, remaining + take);
   r.loading = take;
   r.loadingDefects = loadedDefects;
   b.status = 'refueling';
   b.progress = 0;
-  b.buildTotal = refuelDuration(s, b);
+  b.buildTotal = refuelDuration(s, b) * (0.4 + 0.6 * Math.min(1, take / (size / 3)));
   r.setpoint = 0;
   return null;
 }
@@ -284,6 +302,15 @@ export function finishRefuel(b: Building): void {
   r.coreDefects = Math.round(r.coreDefects * Math.min(1, r.coreFuel)) + r.loadingDefects;
   r.failedRods = 0;
   r.coreFuel = Math.min(1, r.coreFuel + r.loading / size);
+  // After an outage the core is cold and xenon-free; the trip is reset for a fresh startup.
+  r.xenon = 0;
+  r.iodine = 0;
+  r.inventory = 1;
+  r.tripCause = null;
+  r.atws = false;
+  r.rods = 0;
+  r.power = 1e-7;
+  r.precursors = 1e-7;
   r.loading = 0;
   r.loadingDefects = 0;
   r.scrammed = false;
@@ -310,64 +337,70 @@ export function onlineRefuel(s: GameState, b: Building, dt: number, mods: Modifi
 // ── Fuel integrity: cladding failures and core damage ─────────────────────
 
 /**
- * Defective rods may fail while the reactor runs, more likely at high power
- * and temperature. Failed rods limit power and draw regulator fines until a
- * refuelling outage replaces them. Running hard with many failed rods risks a
- * core damage incident that destroys the reactor. Abstract game mechanics.
+ * Defective rods may fail while the reactor runs. Pellet–cladding stress makes
+ * failures far more likely when fuel runs hot (overpower). Failed rods leak
+ * radioactivity into the coolant: the plant should stay below the recommended
+ * power limit (fines above it) and replace them at the next outage. Fuel that
+ * gets extremely hot in a power excursion fails in large numbers.
  */
-export function stepFuelIntegrity(s: GameState, site: Site, b: Building, tempFrac: number, dt: number, offline: boolean): number {
+export function stepFuelIntegrity(s: GameState, site: Site, b: Building, dt: number, offline: boolean): number {
   const r = b.reactor!;
   if (offline || b.status !== 'active' || r.power < 0.05) return 0;
   const mods = getMods(s, site.id);
   const loc = LOCATION_BY_ID[site.id];
-  const stress = r.power * (1 + 4 * Math.max(0, tempFrac - 0.8));
+  const p = physicsFor(b.type);
+  const hot = Math.max(0, (r.fuelTemp - (r.temp + p.fuelDT * 1.05)) / Math.max(50, p.fuelDT * 0.5));
+  const stress = r.power * (1 + 6 * hot);
   if (r.coreDefects > 0 && random() < r.coreDefects * 0.0005 * stress * mods.defectHazard * dt) {
     r.coreDefects--;
     r.failedRods++;
     pushLog(s, 'bad', `Fuel cladding failure in ${BUILDINGS[b.type].short} at ${loc.name}: coolant activity rising (${r.failedRods} failed).`);
-    notify(s, {
-      kind: 'bad',
-      title: 'Fuel rod failure',
-      text: `${BUILDINGS[b.type].short} at ${loc.name}: a defective rod has failed. Power is limited until you refuel to replace it.`,
-    });
+    notify(s, { kind: 'bad', title: 'Fuel rod failure', text: `${BUILDINGS[b.type].short} at ${loc.name}: a rod is leaking. Keep power below the recommended limit and replace it at the next refuelling.` });
   }
-  // Running above the recommended limit with several failed rods risks core damage.
-  const advisory = advisoryLimit(r.failedRods);
-  const excess = r.power - advisory;
-  if (r.failedRods >= 3 && excess > 0.02) {
-    const p = 0.01 * (r.failedRods - 2) * (excess / 0.3) * (tempFrac > 0.9 ? 2 : 1) * mods.defectHazard * dt;
-    if (random() < p) coreDamage(s, site, b);
+  // Severe overheating (power excursion) fails intact rods too.
+  if (r.fuelTemp > 1800 && random() < 0.5 * dt) {
+    r.failedRods += 1 + Math.floor((r.fuelTemp - 1800) / 300);
+    notify(s, { kind: 'bad', title: 'Fuel overheating', text: `${BUILDINGS[b.type].short}: fuel temperature ${Math.round(r.fuelTemp)} °C — rods are failing.` });
   }
-  // Regulator fines while operating with failed fuel ($/s), much higher above the limit.
   if (r.failedRods <= 0) return 0;
+  const excess = r.power - advisoryLimit(r.failedRods);
   const base = r.failedRods * 0.4 * Math.sqrt(BUILDINGS[b.type].reactor!.thermalMW) * r.power;
   return excess > 0.02 ? base * 4 : base;
 }
 
-export function coreDamage(s: GameState, site: Site, b: Building): void {
+/**
+ * Core damage incident: the fuel overheated (loss of cooling, station blackout
+ * or a power excursion). Consequences scale with reactor size; a containment
+ * building limits the release.
+ */
+export function coreDamage(s: GameState, site: Site, b: Building, cause: string): void {
   const r = b.reactor!;
   const def = BUILDINGS[b.type];
   const loc = LOCATION_BY_ID[site.id];
+  const phys = physicsFor(b.type);
   b.status = 'destroyed';
   r.power = 0;
   r.fission = 0;
   r.scrammed = true;
   r.scramReason = 'Core damage';
+  r.tripCause = 'Core damage';
   r.setpoint = 0;
-  // Every reactor at the site trips; the site is evacuated.
   for (const o of site.buildings) if (o.reactor && o !== b && !o.reactor.scrammed) scram(o.reactor, 'Site emergency', s.gameTime);
-  const fine = Math.round(def.cost * 0.5);
+  // INES-style severity from reactor size and containment.
+  const severity = Math.min(7, Math.max(4, Math.round(4 + Math.log10(Math.max(10, def.reactor!.thermalMW)) - 1 + (phys.containment ? 0 : 2))));
+  const fine = Math.round(def.cost * (0.3 + 0.1 * (severity - 4)));
+  const outcry = Math.min(1800, 400 + (severity - 4) * 300);
   s.money -= fine;
   s.ledger.other -= fine;
   s.events = s.events.filter((e) => e.id !== 'outcry');
-  s.events.push({ id: 'outcry', remaining: 600, duration: 600, siteId: null });
+  s.events.push({ id: 'outcry', remaining: outcry, duration: outcry, siteId: null });
   s.stats.scrams++;
   s.stats.coreDamage++;
-  pushLog(s, 'bad', `CORE DAMAGE: ${def.name} at ${loc.name} was destroyed after operating with failed fuel. Fine $${fine.toLocaleString('en-US')}.`);
+  pushLog(s, 'bad', `CORE DAMAGE (INES ${severity}): ${def.name} at ${loc.name} — ${cause}. Fine $${fine.toLocaleString('en-US')}.`);
   notify(s, {
     kind: 'scram',
-    title: 'CORE DAMAGE INCIDENT',
-    text: `${def.short} at ${loc.name} is destroyed. All reactors at the site tripped, prices fall while trust recovers, and the ruin must be decommissioned.`,
+    title: `CORE DAMAGE — INES level ${severity}`,
+    text: `${def.short} at ${loc.name}: ${cause}. The fuel overheated and the core is destroyed${phys.containment ? '; the containment held most of the release' : ''}. Other reactors at the site tripped.`,
   });
 }
 
@@ -388,4 +421,48 @@ export function supplyCapacity(s: GameState) {
     inspect += stat(b, 'inspectRate') * cond(b);
   }
   return { mill: mill * mods.processing, enrich: enrich * mods.processing, fab: fab * mods.processing * (1 - 0.5 * s.supply.qa), inspect, mines };
+}
+
+
+// ── Ore reserves ────────────────────────────────────────────────────────
+
+/** Ore in a pit of a given level; upgrading deepens the pit and adds reserves. */
+export function reserveFor(level: number): number {
+  return 400_000 * Math.pow(3, level - 1);
+}
+
+// ── Spent fuel ──────────────────────────────────────────────────────────
+
+/** Spent fuel pools sit next to each reactor: room for 1.5 cores each. */
+export function poolCapacity(site: Site): number {
+  let cap = 0;
+  for (const b of site.buildings) if (b.reactor && b.status !== 'constructing' && b.status !== 'destroyed' && !BUILDINGS[b.type].reactor!.onlineRefuel) cap += coreSize(b) * 1.5;
+  return Math.max(cap, site.spent.pool);
+}
+
+export function caskCapacity(site: Site): number {
+  let cap = 0;
+  for (const b of site.buildings) if (b.status !== 'constructing' && BUILDINGS[b.type].stats.caskCap) cap += (BUILDINGS[b.type].stats.caskCap ?? 0) * levelMult(BUILDINGS[b.type], b.level);
+  return cap;
+}
+
+export const CASK_COST_PER_ASSEMBLY = 60;
+
+/** Cooled spent fuel moves from the pools into dry casks when there is room. */
+export function stepSpentFuel(s: GameState, dt: number): void {
+  for (const id of s.unlockedSites) {
+    const site = s.sites[id];
+    const cap = caskCapacity(site);
+    site.stats.poolCap = poolCapacity(site);
+    site.stats.caskCap = cap;
+    if (cap <= site.spent.casks || site.spent.pool <= 0) continue;
+    const rate = 0.02 + cap * 0.0005; // assemblies per second
+    const move = Math.min(site.spent.pool, cap - site.spent.casks, rate * dt);
+    const cost = move * CASK_COST_PER_ASSEMBLY;
+    if (s.money < cost) continue;
+    site.spent.pool -= move;
+    site.spent.casks += move;
+    s.money -= cost;
+    s.ledger.maintenance += cost;
+  }
 }

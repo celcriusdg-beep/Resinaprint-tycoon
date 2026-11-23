@@ -119,13 +119,20 @@ function FuelChain() {
         <Arrow label={`Ore Mill (${ORE_PER_YELLOWCAKE} : 1)`} cap={proc.mill} used={r.milled} missing={proc.mill <= 0 ? 'No ore mill' : undefined} build="ore_mill" />
         <Node icon="🟨" title="Yellowcake (U₃O₈)" item="yellowcake" unit="units" stock={sup.yellowcake} cap={caps.yellowcake} inRate={r.milled / ORE_PER_YELLOWCAKE} outRate={r.enriched}
           tone={sup.yellowcake >= caps.yellowcake * 0.97 ? 'warn' : 'ok'} />
-        <Arrow label={`Enrichment (${YELLOWCAKE_PER_ENRICHED} : 1)`} cap={proc.enrich} used={r.enriched} missing={proc.enrich <= 0 ? 'No enrichment plant' : undefined} build="enrichment" />
+        <Arrow label={`Enrichment (${(YELLOWCAKE_PER_ENRICHED * Math.pow(sup.enrichment / 4, 1.3)).toFixed(1)} : 1 at ${sup.enrichment.toFixed(1)}%)`} cap={proc.enrich} used={r.enriched} missing={proc.enrich <= 0 ? 'No enrichment plant' : undefined} build="enrichment" />
+        {proc.enrich > 0 && (
+          <div className="qa-box">
+            <Slider label="Product enrichment (U-235)" value={sup.enrichment} min={3} max={5} step={0.1}
+              onChange={(v) => run((s) => A.setEnrichment(s, v), { sound: null })} format={(v) => `${v.toFixed(1)}%`} />
+            <div className="muted small">Higher enrichment: each assembly lasts longer and the core has more excess reactivity, but it needs more yellowcake and enrichment work. Licence limit 5% (low-enriched uranium).</div>
+          </div>
+        )}
         <Node icon="🧪" title="Enriched uranium" item="enriched" unit="units" stock={sup.enriched} cap={caps.enriched} inRate={r.enriched / YELLOWCAKE_PER_ENRICHED} outRate={r.fabricated}
           tone={sup.enriched >= caps.enriched * 0.97 ? 'warn' : 'ok'} />
         <Arrow label="Fuel Fabrication (1 : 1)" cap={proc.fab} used={r.fabricated} missing={proc.fab <= 0 ? 'No fabrication plant' : undefined} build="fuel_fab" />
         <Node icon="🔩" title="Fuel assemblies" item="assemblies" unit="" stock={g.fuel} cap={fuelCap} inRate={produced} outRate={r.burn}
           tone={g.fuel / fuelCap < 0.15 ? 'bad' : defectShare > 0.03 ? 'warn' : 'ok'}
-          note={<>Estimated defective in stock: <b className={defectShare > 0.03 ? 'bad' : defectShare > 0.01 ? 'warn' : 'good'}>{fmtPct(defectShare, 1)}</b> ({fmtNum(sup.defects)}). Bought assemblies are 0.2% defective.</>}>
+          note={<>Average enrichment in stock {sup.stockEnr.toFixed(2)}% U-235. Estimated defective: <b className={defectShare > 0.03 ? 'bad' : defectShare > 0.01 ? 'warn' : 'good'}>{fmtPct(defectShare, 1)}</b> ({fmtNum(sup.defects)}). Bought assemblies are 0.2% defective.</>}>
           {proc.fab > 0 && (
             <div className="qa-box">
               <Slider label="Fabrication quality assurance" value={sup.qa} onChange={(v) => run((s) => A.setQA(s, v), { sound: null })}

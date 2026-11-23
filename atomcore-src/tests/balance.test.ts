@@ -70,6 +70,8 @@ function botStep(s: GameState) {
       }
       continue;
     }
+    if (st.backupMW < st.backupNeedMW && !A.buildLockReason(s, 'generator_emergency')) { if (!tryBuild(s, 'generator_emergency')) upgradeCheapest(s, ['generator_emergency']); continue; }
+    if (site.spent.pool > site.stats.poolCap * 0.6 && site.stats.caskCap - site.spent.casks < site.spent.pool) { if (!tryBuild(s, 'dry_cask')) upgradeCheapest(s, ['dry_cask']); continue; }
     if (st.treatedFactor < 1) { if (!tryBuild(s, 'water_treatment')) upgradeCheapest(s, ['water_treatment']); continue; }
     if (st.coolingRatio < 1.15 && st.thermalMW > 0) { if (!tryBuild(s, s.research.completed.includes('c_tower') ? 'cooling_tower' : 'cooling_mech')) upgradeCheapest(s, ['cooling_mech', 'cooling_tower']); continue; }
     if (st.steamCapMW < heat * 1.05) { if (!tryBuild(s, s.research.completed.includes('t_large') ? 'turbine_large' : 'turbine')) upgradeCheapest(s, ['turbine', 'turbine_large']); continue; }
@@ -126,6 +128,7 @@ it('bot progresses through the game', () => {
     mark('lvl15', s.level >= 15);
     mark('lvl20', s.level >= 20);
     mark('prestige', s.runEarned >= 50_000_000);
+    mark('coreDamage', s.stats.coreDamage > 0);
     if (process.env.BALANCE_DEBUG && t % 1800 === 0 && t > 0) {
       for (const id of s.unlockedSites) {
         const st = s.sites[id].stats;

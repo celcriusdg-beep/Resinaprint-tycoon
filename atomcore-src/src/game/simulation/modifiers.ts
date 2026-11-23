@@ -15,6 +15,7 @@ export function baseMods(): Modifiers {
     transmissionLoss: TRANSMISSION_LOSS, safety: 0, offlineEff: OFFLINE_BASE_EFF, offlineHours: OFFLINE_BASE_HOURS,
     staffCap: 0, contractSlots: 0, tripMargin: 0, rampRate: 1, autoSetback: false,
     defectRate: 1, defectHazard: 1, refuelSpeed: 1, evaporation: 1, treatedUse: 1, mining: 1, processing: 1,
+    passiveCooling: 0, backupPower: 1,
   };
 }
 

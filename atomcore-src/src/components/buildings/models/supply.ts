@@ -221,6 +221,22 @@ export function dryCooling(): ModelBuilder {
   return b;
 }
 
+export function dryCask(): ModelBuilder {
+  const b = new ModelBuilder();
+  const m = materials();
+  slab(b, 12, 8, m.concrete);
+  for (let row = 0; row < 2; row++) for (let i = 0; i < 5; i++) {
+    const x = -4.2 + i * 2.1, z = -1.6 + row * 3.0;
+    b.cyl(0.8, 0.8, 2.6, m.concrete, [x, 0.2, z], 18);
+    b.cyl(0.84, 0.84, 0.15, m.steel, [x, 2.8, z], 18);
+    for (let v = 0; v < 4; v++) b.box(0.18, 0.12, 0.08, m.steelDark, [x + Math.cos(v * 1.57) * 0.82, 0.5, z + Math.sin(v * 1.57) * 0.82]);
+  }
+  b.box(11.4, 1.6, 0.05, m.steelDark, [0, 0.2, 3.7]);
+  b.box(0.05, 1.6, 7.4, m.steelDark, [5.7, 0.2, 0]);
+  b.box(1.2, 2.0, 1.2, m.cladWhite, [5.0, 0.2, -3.0]);
+  return b;
+}
+
 // ── Vehicles ────────────────────────────────────────────────────────────
 
 const tiresMat = () => materials().rubber;

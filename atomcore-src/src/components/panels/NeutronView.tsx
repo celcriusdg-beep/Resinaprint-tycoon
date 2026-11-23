@@ -37,7 +37,7 @@ export function NeutronView({ buildingId }: { buildingId: number }) {
       const b = g.sites[g.activeSite].buildings.find((x) => x.id === buildingId);
       const r = b?.reactor;
       const power = r?.power ?? 0;
-      const insert = r ? (r.scrammed ? 1 : 1 - r.setpoint) : 1;
+      const insert = r ? 1 - r.rods : 1;
       // Background: water moderator with a Cherenkov tint proportional to power
       const grd = ctx.createRadialGradient(W / 2, H / 2, 10, W / 2, H / 2, W * 0.7);
       grd.addColorStop(0, `rgba(${30 + power * 30}, ${90 + power * 80}, ${150 + power * 90}, 1)`);

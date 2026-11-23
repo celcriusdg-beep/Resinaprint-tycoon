@@ -10,6 +10,7 @@ import { safetyRating } from '../simulation/plant';
 // (capacity changes, offline equipment, market shifts) — never real procedures.
 
 export interface EventEffect {
+  offsite?: number; // 0 = loss of offsite power
   water?: number; // raw water supply
   evaporation?: number;
   cooling?: number;
@@ -52,6 +53,9 @@ export const EVENTS: EventDef[] = [
   { id: 'heatwave', name: 'Heatwave', kind: 'bad', weight: 10, duration: 150, siteScoped: true,
     description: 'Hot air and warm intake water reduce cooling capacity, while air-conditioning demand soars.',
     effect: { cooling: 0.85, demand: 1.25, price: 1.15, evaporation: 1.25, water: 0.8 } },
+  { id: 'blackout', name: 'Loss of Offsite Power', kind: 'bad', weight: 5, duration: 70, siteScoped: true, minLevel: 5,
+    description: 'The grid connection is lost. Reactors trip, and pumps and emergency cooling must run on emergency diesel generators — without enough backup power, decay heat boils off the coolant.',
+    effect: { grid: 0, offsite: 0 } },
   { id: 'drought', name: 'Drought', kind: 'bad', weight: 6, duration: 200, siteScoped: true, themes: ['river', 'desert'],
     description: 'Low river levels and a falling water table: raw water supply is cut sharply and evaporation rises.',
     effect: { water: 0.5, evaporation: 1.15 } },

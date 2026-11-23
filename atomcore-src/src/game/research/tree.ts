@@ -113,9 +113,9 @@ export const RESEARCH: ResearchNode[] = [
   N({ id: 's_setback', name: 'Automatic Power Setback', category: 'safety', tier: 1, cost: 50, money: 2_500, requires: [],
     description: 'Reactors automatically reduce power when temperature nears the trip limit, avoiding many SCRAMs.', autoSetback: true }),
   N({ id: 's_egen', name: 'Emergency Power Systems', category: 'safety', tier: 2, cost: 220, money: 12_000, requires: ['s_setback'],
-    description: 'Unlocks the Emergency Generator Facility.', unlocks: ['generator_emergency'] }),
+    description: 'Unlocks the Emergency Generator Facility: backup power for pumps and emergency core cooling during a blackout.', unlocks: ['generator_emergency'] }),
   N({ id: 's_passive', name: 'Passive Safety Systems', category: 'safety', tier: 2, cost: 700, money: 60_000, requires: ['s_setback'],
-    description: '+15 safety rating, +5% temperature margin.', effects: { safety: 15, tripMargin: 0.05 } }),
+    description: '+15 safety, +5% temperature margin, and passive decay-heat removal (natural circulation, +4% of rated heat) that works without pumps or power.', effects: { safety: 15, tripMargin: 0.05, passiveCooling: 0.04 } }),
   N({ id: 's_culture', name: 'Safety Culture Program', category: 'safety', tier: 3, cost: 2_200, money: 300_000, requires: ['s_passive'],
     description: '+15 safety rating, −10% wear.', effects: { safety: 15, wear: -0.1 } }),
 

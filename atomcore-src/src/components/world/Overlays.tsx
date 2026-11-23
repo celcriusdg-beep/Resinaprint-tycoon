@@ -95,7 +95,7 @@ function CoreHologram({ buildingId, height }: { buildingId: number; height: numb
       group.current.position.y = height + 1.9 + Math.sin(s.clock.elapsedTime * 1.5) * 0.15;
     }
     if (ctrl.current) {
-      const insert = b.reactor.scrammed ? 1 : 1 - b.reactor.setpoint;
+      const insert = 1 - b.reactor.rods;
       ctrl.current.position.y += (0.2 + (1 - insert) * 2.6 - ctrl.current.position.y) * Math.min(1, dt * 3);
     }
     const p = sparkGeo.attributes.position as THREE.BufferAttribute;

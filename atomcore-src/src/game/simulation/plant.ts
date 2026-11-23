@@ -11,7 +11,7 @@ import { demandForLevel } from '../progression/levels';
 import { eventEffect, notify, pushLog } from '../events/events';
 import { random } from '../rng';
 import { stepWater } from '../supply/water';
-import { mineOutput, tickSupply, onlineRefuel, stepFuelIntegrity } from '../supply/fuelcycle';
+import { mineOutput, tickSupply, onlineRefuel, stepFuelIntegrity, coreDamage, stepSpentFuel } from '../supply/fuelcycle';
 import { ASSEMBLY_MWH } from '../constants';
 
 export function emptyStats(): SiteStats {
@@ -22,6 +22,7 @@ export function emptyStats(): SiteStats {
     researchRate: 0, upkeep: 0, salaries: 0, revenue: 0, price: BASE_PRICE, reactorsOnline: 0, reactorsTotal: 0,
     maxTempFrac: 0, rawSupply: 0, evaporation: 0, treatedSupply: 0, treatedDemand: 0, rawToTreatment: 0, tankM3: 0,
     tankCapM3: 0, waterFactor: 1, treatedFactor: 1, waterCost: 0, houseLoadMW: 0, oreRate: 0, digRate: 0, haulRate: 0,
+    offsitePower: true, backupMW: 0, backupNeedMW: 0, pumpsPowered: true, poolCap: 0, caskCap: 0,
   };
 }
 
@@ -189,6 +190,7 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
     for (const b of site.buildings) {
       if (b.type !== 'uranium_mine' || b.status === 'constructing') continue;
       const out = mineOutput(b, siteId, mods, staffNeeded <= cap.staffCap ? 1 : Math.pow(cap.staffCap / staffNeeded, 0.8));
+      if (b.reserve !== undefined) b.reserve = Math.max(0, b.reserve - out.ore * dt);
       siteOre += out.ore;
       dig += out.dig;
       haul += out.haul;
@@ -202,8 +204,17 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
       applyLoadFollow(s, site, reactors, mods, cap, demand, contractMW * (Math.max(1, st.electricMW) / totalCapacityForShare), dt);
     }
 
+    // Offsite power and emergency diesel generators. Pumps and emergency core
+    // cooling need electricity: from the grid, or from backup generators.
+    const offsitePower = eventEffect(s, siteId, 'offsite') > 0.5;
+    let backupMW = 0;
+    for (const b of site.buildings) if (b.status === 'active' && BUILDINGS[b.type].stats.backupMW) backupMW += (BUILDINGS[b.type].stats.backupMW ?? 0) * levelMult(BUILDINGS[b.type], b.level) * mods.backupPower;
+    let backupNeed = 0;
+    for (const b of reactors) if (b.reactor && b.status !== 'destroyed') backupNeed += b.reactor.houseLoad * 0.3 + reactorMaxThermal(b, mods) * 0.002;
+    const pumpsPowered = offsitePower || backupMW >= backupNeed;
+
     // Reactor power
-    const inp = { dt, mods, gameTime: s.gameTime, ambient, treatedFactor: water.treatedFactor };
+    const inp = { dt, mods, gameTime: s.gameTime, ambient, treatedFactor: water.treatedFactor, pumpsPowered, offsitePower, offline };
     let thermal = 0;
     let effWeighted = 0;
     let researchFromReactors = 0;
@@ -229,20 +240,26 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
     let online = 0;
     for (const b of reactors) {
       if (b.status === 'destroyed') continue;
-      const tripped = stepReactorTemp(b, inp, coolingRatio);
+      const res = stepReactorTemp(b, inp, coolingRatio);
       const r = b.reactor!;
-      if (tripped) {
+      const name = `${BUILDINGS[b.type].short} at ${loc.name}`;
+      if (res.tripped && !res.atws) {
         s.stats.scrams++;
-        pushLog(s, 'bad', `SCRAM: ${BUILDINGS[b.type].short} at ${loc.name} tripped on high temperature.`);
-        if (!offline) notify(s, { kind: 'scram', title: 'Reactor SCRAM', text: `${BUILDINGS[b.type].short} at ${loc.name} shut down automatically: cooling could not keep up.` });
+        pushLog(s, 'bad', `SCRAM: ${name} — ${res.tripped}.`);
+        if (!offline) notify(s, { kind: 'scram', title: 'Reactor SCRAM', text: `${name} tripped: ${res.tripped}.` });
       }
+      if (res.atws) {
+        pushLog(s, 'bad', `ATWS: automatic trip of ${name} FAILED (${res.tripped}). Manual SCRAM required!`);
+        if (!offline) notify(s, { kind: 'scram', title: 'FAILURE TO SCRAM', text: `${name}: the rods did not insert automatically (${res.tripped}). Open the reactor and press SCRAM now.` });
+      }
+      if (res.damaged) coreDamage(s, site, b, !pumpsPowered ? 'station blackout' : 'loss of core cooling');
       if (r.scrammed && (s.automation.autoRestart || offline) && canRestart(b, mods, s.gameTime, ambient)) {
         restart(b);
         s.stats.restarts++;
         pushLog(s, 'info', `Monitoring system restarted ${BUILDINGS[b.type].short} at ${loc.name}.`);
       }
       // Badly degraded reactors may trip on their own.
-      if (!offline && !r.scrammed && b.condition < 15 && r.power > 0.1 && random() < 0.01 * dt) {
+      if (!offline && !r.scrammed && !r.tripCause && b.condition < 15 && r.power > 0.1 && random() < 0.01 * dt) {
         scram(r, 'Equipment degradation', s.gameTime);
         s.stats.scrams++;
         pushLog(s, 'bad', `SCRAM: ${BUILDINGS[b.type].short} at ${loc.name} tripped due to worn equipment.`);
@@ -250,7 +267,7 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
       }
       const frac = (r.temp - ambient) / Math.max(1, (BUILDINGS[b.type].reactor!.nominalTemp - ambient) * (1.18 + mods.tripMargin));
       if (frac > maxTempFrac) maxTempFrac = frac;
-      fines += stepFuelIntegrity(s, site, b, frac, dt, offline);
+      fines += stepFuelIntegrity(s, site, b, dt, offline);
       if (!r.scrammed && r.power > 0.02 && b.status === 'active') online++;
     }
 
@@ -287,12 +304,13 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
       rawSupply: water.rawSupply, evaporation: water.evaporation, treatedSupply: water.treatedSupply,
       treatedDemand: water.treatedDemand, rawToTreatment: water.rawToTreatment, tankM3: water.tankM3, tankCapM3: water.tankCapM3,
       waterFactor: water.waterFactor, treatedFactor: water.treatedFactor, waterCost: water.cost, houseLoadMW: houseLoad,
-      oreRate: siteOre, digRate: dig, haulRate: haul,
+      oreRate: siteOre, digRate: dig, haulRate: haul, offsitePower, backupMW, backupNeedMW: backupNeed, pumpsPowered,
     } satisfies Partial<SiteStats>);
   }
 
   // ── Fuel cycle: mining, processing, fabrication (company-wide stocks) ──
   tickSupply(s, dt, minedTotal, fuelCap);
+  stepSpentFuel(s, dt);
   let burn = 0;
   for (const id of s.unlockedSites)
     for (const b of s.sites[id].buildings)

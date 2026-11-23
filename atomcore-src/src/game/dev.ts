@@ -1,5 +1,6 @@
 import type { BuildingType, GameState } from './types';
 import { createInitialState, makeBuilding, makeSite } from './state';
+import { initEquilibrium } from './simulation/reactor';
 import { RESEARCH } from './research/tree';
 import { BUILDING_LIST } from './buildings/defs';
 import { findFreeSpot } from './buildings/grid';
@@ -21,7 +22,7 @@ export function createShowcaseState(): GameState {
     const b = makeBuilding(s, t, spot.x, spot.z, 0, true);
     if (b.reactor) {
       b.reactor.setpoint = 0.8;
-      b.reactor.power = 0.8;
+      initEquilibrium(b, 18, 0.8);
     }
     if (b.vehicles) b.vehicles = { excavators: [1, 1, 1, 1, 1], trucks: [1, 1, 1, 2] };
     site.buildings.push(b);

@@ -4,7 +4,9 @@ import { SAVE_VERSION } from '../../game/constants';
 import { emptyStats } from '../../game/simulation/plant';
 import { emptyCounters } from '../../game/progression/daily';
 import { BUILDINGS } from '../../game/buildings/defs';
-import { newReactorState } from '../../game/simulation/reactor';
+import { newReactorState, initEquilibrium } from '../../game/simulation/reactor';
+import { reserveFor } from '../../game/supply/fuelcycle';
+import { LOCATION_BY_ID } from '../../game/progression/locations';
 
 // Pure (de)serialisation and migration. No storage APIs here so it can be unit tested.
 
@@ -61,7 +63,22 @@ export function migrate(raw: unknown): GameState {
     s.fuel = Math.round((s.fuel ?? 0) / 10);
     s.supply.defects = s.fuel * 0.002;
   }
-  for (const site of Object.values(s.sites)) site.storageWater = Number.isFinite(site.storageWater) ? site.storageWater : 0;
+  for (const site of Object.values(s.sites)) {
+    site.storageWater = Number.isFinite(site.storageWater) ? site.storageWater : 0;
+    site.spent = site.spent ?? { pool: 0, casks: 0 };
+    for (const b of site.buildings) if (b.type === 'uranium_mine' && b.reserve === undefined) b.reserve = reserveFor(b.level);
+  }
+  // v2 → v3: reactors gain kinetics state; start each one in a consistent steady state.
+  if (version < 3) {
+    for (const [id, site] of Object.entries(s.sites)) {
+      for (const b of site.buildings) {
+        if (!b.reactor || b.status === 'destroyed') continue;
+        const running = b.status === 'active' && !b.reactor.scrammed;
+        initEquilibrium(b, LOCATION_BY_ID[id]?.ambient ?? 18, running ? Math.max(0.05, Math.min(1, b.reactor.power || b.reactor.setpoint)) : 0);
+        if (!running) b.reactor.scrammed = b.status === 'active' && b.reactor.scrammed;
+      }
+    }
+  }
   s.unlockedSites = s.unlockedSites.filter((id) => s.sites[id]);
   if (!s.unlockedSites.length) throw new Error('Save data has no plant sites.');
   if (!s.sites[s.activeSite]) s.activeSite = s.unlockedSites[0];

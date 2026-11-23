@@ -1,6 +1,7 @@
 import type { Building, BuildingType, GameState, Ledger, Site } from './types';
 import { BUILDINGS } from './buildings/defs';
-import { newReactorState } from './simulation/reactor';
+import { newReactorState, initEquilibrium } from './simulation/reactor';
+import { reserveFor } from './supply/fuelcycle';
 import { emptyVehicles } from './supply/vehicles';
 import { emptyStats } from './simulation/plant';
 import { LOCATION_BY_ID } from './progression/locations';
@@ -25,13 +26,16 @@ export function makeBuilding(s: GameState, type: BuildingType, x: number, z: num
     enabled: true,
   };
   if (def.reactor) b.reactor = newReactorState(built ? 0.6 : 0.5);
-  if (type === 'uranium_mine') b.vehicles = emptyVehicles();
+  if (type === 'uranium_mine') {
+    b.vehicles = emptyVehicles();
+    b.reserve = reserveFor(1);
+  }
   return b;
 }
 
 export function makeSite(id: string): Site {
   const loc = LOCATION_BY_ID[id];
-  return { id, size: loc.startSize, buildings: [], storageMWh: 0, storageWater: 0, stats: emptyStats() };
+  return { id, size: loc.startSize, buildings: [], storageMWh: 0, storageWater: 0, spent: { pool: 0, casks: 0 }, stats: emptyStats() };
 }
 
 export function createInitialState(opts: { shares?: number; prestigeCount?: number; achievements?: string[]; lifetimeEarned?: number; createdAt?: number } = {}): GameState {
@@ -48,7 +52,7 @@ export function createInitialState(opts: { shares?: number; prestigeCount?: numb
     level: 1,
     fuel: START_FUEL,
     supply: {
-      ore: 0, yellowcake: 0, enriched: 0, defects: START_FUEL * 0.002, qa: 0.5,
+      ore: 0, yellowcake: 0, enriched: 0, defects: START_FUEL * 0.002, qa: 0.5, enrichment: 4, stockEnr: 4.2,
       rates: { mined: 0, milled: 0, enriched: 0, fabricated: 0, inspected: 0, rejected: 0, burn: 0, defectRate: 0 },
     },
     research: { points: 0, active: null, progress: 0, completed: [] },
@@ -90,9 +94,8 @@ export function createInitialState(opts: { shares?: number; prestigeCount?: numb
   // Pre-warm the pilot reactor so the plant is alive at the first frame.
   const r = site.buildings[0].reactor!;
   r.setpoint = 0.6;
-  r.power = 0.6;
-  r.temp = 80;
   r.coreFuel = 0.8; // the first refuelling outage comes after ~15 minutes
+  initEquilibrium(site.buildings[0], LOCATION_BY_ID.riverside.ambient, 0.6);
   s.daily = { dateKey: dateKey(), objectives: generateDaily(s, dateKey()), counters: emptyCounters() };
   return s;
 }

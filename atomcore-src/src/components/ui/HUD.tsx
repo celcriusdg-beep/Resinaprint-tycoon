@@ -24,7 +24,7 @@ export function HUD() {
   }
   for (const c of g.contracts) contractMW += c.mw;
   const reactors = site.buildings.filter((b) => b.reactor && b.status !== 'constructing' && b.status !== 'destroyed');
-  const scrammed = reactors.filter((b) => b.reactor!.scrammed && b.status !== 'refueling').length;
+  const scrammed = reactors.filter((b) => (b.reactor!.scrammed || b.reactor!.atws) && b.status !== 'refueling').length;
   const refuelNeeded = reactors.filter((b) => b.status === 'active' && !BUILDINGS[b.type].reactor!.onlineRefuel && (b.reactor!.coreFuel < 0.15 || b.reactor!.failedRods > 0)).length;
   const refueling = reactors.filter((b) => b.status === 'refueling').length;
   const waterOk = st.waterFactor >= 0.999 && st.treatedFactor >= 0.999;
@@ -74,6 +74,11 @@ export function HUD() {
           <Icon name="fuel" size={14} />
           {fmtNum(g.fuel)}
         </button>
+        {!st.offsitePower && (
+          <button className={`hud-pill ${st.pumpsPowered ? 'warn' : 'bad'}`} onClick={() => open('manage')}>
+            <Icon name="alert" size={14} /> {st.pumpsPowered ? 'On diesel' : 'BLACKOUT'}
+          </button>
+        )}
         <button className={`hud-pill ${waterOk ? '' : 'bad'}`} onClick={() => open('supply')} aria-label="Water balance">
           <Icon name="drop" size={14} />
           {waterOk ? fmtNum(st.evaporation) + ' m³' : `${fmtPct(Math.min(st.waterFactor, st.treatedFactor))}`}

@@ -519,3 +519,19 @@ table.pl tr.big td { font-size: 15px; }
 .cat-dot.water { background: #3d9be0; }
 .cat-dot.fuel { background: #e8d25a; }
 .row.wrap { flex-wrap: wrap; }
+
+/* ── Control room ─────────────────────────────────────── */
+.rod-bar { display: grid; grid-template-columns: 82px 1fr auto; gap: 8px; align-items: center; font-size: 12px; margin-top: 4px; }
+.boron-box { display: flex; flex-direction: column; gap: 4px; background: rgba(0,0,0,0.18); border-radius: 11px; padding: 8px 10px; }
+.rho-box { background: rgba(0,0,0,0.2); border-radius: 11px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; }
+.rho-box summary { cursor: pointer; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; list-style: none; }
+.rho-row { display: grid; grid-template-columns: 128px 1fr 62px; gap: 8px; align-items: center; font-size: 12px; margin-top: 3px; }
+.rho-label { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rho-track { position: relative; height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; }
+.rho-track::after { content: ''; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: rgba(255,255,255,0.35); }
+.rho-fill { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
+.rho-fill.pos { background: #ffb648; }
+.rho-fill.neg { background: #4fd1ff; }
+.rho-val { text-align: right; }
+.charts.three { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 420px) { .rho-row { grid-template-columns: 96px 1fr 54px; } }

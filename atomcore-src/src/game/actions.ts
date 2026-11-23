@@ -124,7 +124,7 @@ export function manualScram(s: GameState, id: number): Result {
   const b = s.sites[s.activeSite].buildings.find((x) => x.id === id);
   if (!b?.reactor) return 'Not a reactor.';
   if (b.reactor.scrammed) return 'Already shut down.';
-  scram(b.reactor, 'Manual SCRAM', s.gameTime);
+  scram(b.reactor, b.reactor.atws ? `Manual SCRAM after failed automatic trip (${b.reactor.tripCause})` : 'Manual SCRAM', s.gameTime);
   pushLog(s, 'warn', `Manual SCRAM of ${BUILDINGS[b.type].short}.`);
   return null;
 }
@@ -260,10 +260,56 @@ export { acceptOfferImpl as acceptOffer, cancelContractImpl as cancelContract };
 
 // ── Reactor operations ────────────────────────────────────────────────────
 
-export function refuelReactor(s: GameState, id: number): Result {
+export function refuelReactor(s: GameState, id: number, mode: 'batch' | 'full' = 'batch'): Result {
   const b = s.sites[s.activeSite].buildings.find((x) => x.id === id);
   if (!b?.reactor) return 'Not a reactor.';
-  return startRefuel(s, b);
+  return startRefuel(s, b, mode);
+}
+
+function reactorById(s: GameState, id: number) {
+  return s.sites[s.activeSite].buildings.find((x) => x.id === id)?.reactor;
+}
+
+/** Switch between automatic power control and manual rod control. */
+export function setRodMode(s: GameState, id: number, auto: boolean): Result {
+  const r = reactorById(s, id);
+  if (!r) return 'Not a reactor.';
+  r.autoRods = auto;
+  r.rodTarget = r.rods;
+  if (auto) r.setpoint = Math.max(0, Math.min(1, r.power));
+  return null;
+}
+
+/** Manual rod position target (0 = fully in, 1 = fully out). */
+export function setRodTarget(s: GameState, id: number, v: number): Result {
+  const r = reactorById(s, id);
+  if (!r) return 'Not a reactor.';
+  if (r.autoRods) return 'Switch rod control to manual first.';
+  if (r.tripCause) return 'Reset the trip first.';
+  r.rodTarget = Math.max(0, Math.min(1, v));
+  return null;
+}
+
+/** Borate (+) or dilute (−) the coolant, in ppm. */
+export function adjustBoron(s: GameState, id: number, delta: number): Result {
+  const r = reactorById(s, id);
+  if (!r) return 'Not a reactor.';
+  r.autoBoron = false;
+  r.boron = Math.max(0, Math.min(2500, r.boron + delta));
+  return null;
+}
+
+export function setAutoBoron(s: GameState, id: number, on: boolean): Result {
+  const r = reactorById(s, id);
+  if (!r) return 'Not a reactor.';
+  r.autoBoron = on;
+  return null;
+}
+
+/** U-235 enrichment for newly fabricated fuel (licence limit 5%). */
+export function setEnrichment(s: GameState, v: number): Result {
+  s.supply.enrichment = Math.round(Math.max(3, Math.min(5, v)) * 10) / 10;
+  return null;
 }
 
 export function setPumpSpeed(s: GameState, id: number, v: number): Result {

@@ -12,7 +12,8 @@ import { getMods } from './simulation/modifiers';
 import { emptyLedger } from './state';
 import { HOURS_PER_SECOND, AUTOFUEL_THRESHOLD, HISTORY_INTERVAL, HISTORY_LENGTH, LEDGER_WINDOW, REPAIR_THRESHOLD_AUTO } from './constants';
 import { LOCATION_BY_ID } from './progression/locations';
-import { buyItem, finishRefuel, startRefuel, refuelNeed } from './supply/fuelcycle';
+import { buyItem, finishRefuel, startRefuel, refuelNeed, reserveFor } from './supply/fuelcycle';
+import { initEquilibrium } from './simulation/reactor';
 
 export interface TickOptions {
   offline?: boolean;
@@ -66,6 +67,7 @@ function stepConstruction(s: GameState, dt: number, offline: boolean): void {
         continue;
       }
       if (b.status === 'upgrading') {
+        if (b.type === 'uranium_mine') b.reserve = (b.reserve ?? 0) + reserveFor(b.level + 1) - reserveFor(b.level);
         b.level++;
         b.condition = Math.min(100, b.condition + 25);
         s.stats.upgrades++;
@@ -73,6 +75,8 @@ function stepConstruction(s: GameState, dt: number, offline: boolean): void {
         if (!offline) notify(s, { kind: 'build', title: 'Upgrade complete', text: `${def.short} is now level ${b.level}.` });
         pushLog(s, 'good', `${def.short} upgraded to level ${b.level} at ${LOCATION_BY_ID[id].name}.`);
       } else {
+        // A new reactor is commissioned cold and subcritical; the operators then start it up.
+        if (b.reactor) initEquilibrium(b, LOCATION_BY_ID[id].ambient, 0);
         s.stats.buildingsBuilt++;
         s.daily.counters.build++;
         if (!offline) notify(s, { kind: 'build', title: 'Construction complete', text: `${def.name} is operational.` });

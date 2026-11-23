@@ -29,7 +29,8 @@ export type BuildingType =
   | 'water_wells'
   | 'water_treatment'
   | 'water_tank'
-  | 'cooling_dry';
+  | 'cooling_dry'
+  | 'dry_cask';
 
 export type BuildingCategory = 'reactor' | 'power' | 'cooling' | 'water' | 'fuel' | 'grid' | 'support';
 
@@ -78,6 +79,8 @@ export interface BuildingStats {
   enrichRate?: number; // yellowcake processed per second
   fabRate?: number; // enriched uranium processed per second
   inspectRate?: number; // assemblies inspected per second
+  backupMW?: number; // emergency diesel power, MW
+  caskCap?: number; // dry cask storage, assemblies
 }
 
 export interface BuildingDef {
@@ -137,6 +140,57 @@ export interface ReactorState {
   /** Assemblies queued for loading during the current outage. */
   loading: number;
   loadingDefects: number;
+  // ── Reactor physics (simplified point kinetics) ─────────────────────
+  /** Control rod bank position: 0 = fully inserted, 1 = fully withdrawn. */
+  rods: number;
+  /** Soluble boron in the coolant, ppm (PWR/SMR). */
+  boron: number;
+  /** Automatic rod control holds power at the setpoint. */
+  autoRods: boolean;
+  /** Manual mode: where the operator has asked the rods to go. */
+  rodTarget: number;
+  /** Automatic boron (chemical shim) keeps the rods near their target band. */
+  autoBoron: boolean;
+  /** Delayed-neutron precursor level (normalised so S = n when critical). */
+  precursors: number;
+  /** I-135 and Xe-135, as fractions of their full-power equilibrium. */
+  iodine: number;
+  xenon: number;
+  /** Fuel (pellet centreline) temperature, °C. */
+  fuelTemp: number;
+  /** Reactor coolant inventory, 1 = normal level over the core. */
+  inventory: number;
+  /** Accumulated core damage 0..1; 1 = core damage incident. */
+  damage: number;
+  /** Two-group decay heat, MW. */
+  decay1: number;
+  decay2: number;
+  /** Reactor period in seconds (positive = rising), Infinity when steady. */
+  period: number;
+  /** Reactivity breakdown in pcm, for the UI. */
+  rho: Reactivity;
+  /** Trip latched by the protection system until reset. */
+  tripCause: string | null;
+  /** Automatic trip failed to insert rods (ATWS). */
+  atws: boolean;
+  /** Average enrichment of the fuel in the core, %. */
+  coreEnr: number;
+}
+
+export interface Reactivity {
+  fuel: number;
+  rods: number;
+  boron: number;
+  xenon: number;
+  doppler: number;
+  moderator: number;
+  void: number;
+  total: number;
+}
+
+export interface SpentFuelPool {
+  pool: number; // assemblies in the pools at this site
+  casks: number; // assemblies moved into dry casks
 }
 
 export interface Vehicles {
@@ -158,6 +212,8 @@ export interface Building {
   enabled: boolean;
   reactor?: ReactorState;
   vehicles?: Vehicles;
+  /** Ore remaining in a mine's pit, t. */
+  reserve?: number;
 }
 
 export interface SiteStats {
@@ -205,6 +261,12 @@ export interface SiteStats {
   oreRate: number; // ore/s
   digRate: number;
   haulRate: number;
+  offsitePower: boolean;
+  backupMW: number;
+  backupNeedMW: number;
+  pumpsPowered: boolean;
+  poolCap: number;
+  caskCap: number;
 }
 
 export interface Site {
@@ -213,6 +275,7 @@ export interface Site {
   buildings: Building[];
   storageMWh: number;
   storageWater: number; // raw water in tanks, m³
+  spent: SpentFuelPool;
   stats: SiteStats;
 }
 
@@ -285,6 +348,8 @@ export interface SupplyState {
   enriched: number;
   defects: number; // defective assemblies hidden in the fuel stock
   qa: number; // fabrication quality-assurance setting 0..1
+  enrichment: number; // U-235 % of newly fabricated fuel (3.0–5.0)
+  stockEnr: number; // average enrichment of the assemblies in stock
   rates: SupplyRates;
 }
 
@@ -412,6 +477,8 @@ export interface Modifiers {
   treatedUse: number;
   mining: number;
   processing: number;
+  passiveCooling: number; // absolute, fraction of rated heat removable without pumps
+  backupPower: number;
   autoSetback: boolean;
 }
 
