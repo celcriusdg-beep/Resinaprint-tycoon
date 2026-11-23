@@ -202,8 +202,9 @@ export function diagnoseSite(s: GameState, site: Site): Issue[] {
     st.pumpsPowered ? 'No electricity can be sold until the grid returns; diesel generators keep the cooling running.'
       : st.batteryLeft > 0 ? `Battery-backed emergency feedwater is cooling the reactors for another ${Math.ceil(st.batteryLeft)} s. If the grid isn't back by then, decay heat will boil off the coolant.`
       : 'Batteries exhausted: decay heat is boiling off the coolant. Large reactors may suffer core damage!');
-  else if (st.curtailedMW > 0.5) add('grid', 'warn', 'Electricity curtailed', `${fmt(st.curtailedMW, 1)} MW can't be exported. Add or upgrade substations.`, { label: 'Build substation', action: { kind: 'build', type: 'substation' } });
+  else if (st.curtailedMW > 0.5) add('grid', 'warn', 'Electricity curtailed', `${fmt(st.curtailedMW, 1)} MW can't be exported. Add or upgrade substations, or build a Hydrogen Plant to use it.`, { label: 'Build substation', action: { kind: 'build', type: 'substation' } });
   else if (st.exportMW >= st.gridCapMW * 0.97 && st.demandMW > st.exportMW) add('grid', 'warn', 'Grid connection full', 'You could sell more with more substation capacity.', { label: 'Build substation', action: { kind: 'build', type: 'substation' } });
+  if (st.importMW > 0.5) add('grid', 'warn', 'Data centre is importing power', `Your plant covers only part of the on-site load: ${fmt(st.importMW, 1)} MW is bought from the grid at twice the market price. Raise reactor output or add generation.`, { label: 'Plant', action: { kind: 'panel', panel: 'manage' } });
   if (st.staffFactor < 0.999) add('staff', 'warn', 'Understaffed', `${fmt(st.staffNeeded)} staff needed, room for ${fmt(st.staffCap)}. Output and research suffer.`, { label: 'Build admin', action: { kind: 'build', type: 'admin' } });
   if (st.backupNeedMW > 0 && st.backupMW < st.backupNeedMW && s.level >= 4) add('safety', 'warn', 'Not enough backup power',
     `A grid blackout would leave only ${fmt(st.backupMW, 1)} of ${fmt(st.backupNeedMW, 1)} MW for pumps — large reactors could suffer core damage.`,

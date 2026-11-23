@@ -80,6 +80,7 @@ export function BuildingPanel({ id }: { id: number }) {
 
       {b.reactor && b.status !== 'constructing' && <ReactorControl b={b} />}
       {b.type === 'uranium_mine' && b.status !== 'constructing' && <MineSummary b={b} />}
+      {def.category === 'industry' && b.status !== 'constructing' && <IndustrySummary />}
       {b.type === 'generator_emergency' && <div className="hint-box"><Icon name="info" size={15} /> Site backup power {fmtPower(site.stats.backupMW)} · needed in a blackout {fmtPower(site.stats.backupNeedMW)}. {site.stats.backupMW < site.stats.backupNeedMW ? 'Not enough — build or upgrade more generators.' : 'Enough to keep cooling running.'}</div>}
       {b.type === 'dry_cask' && <div className="hint-box"><Icon name="info" size={15} /> Spent fuel: {fmtNum(site.spent.pool)} in pools, {fmtNum(site.spent.casks)} / {fmtNum(site.stats.caskCap)} in casks. Moving fuel into casks costs $60 per assembly.</div>}
 
@@ -144,6 +145,22 @@ function MineSummary({ b }: { b: Building }) {
       {(b.reserve ?? 1) <= 0 && <div className="alert-box">The pit is exhausted. Upgrade the mine to dig deeper.</div>}
       <div className="muted small">Ore delivered: <b>{fmtNum(out.ore * 60)} t/min</b>{out.haul < out.dig * 0.95 ? ' — trucks are the bottleneck' : out.dig < out.haul * 0.95 ? ' — diggers are the bottleneck' : ''}</div>
       <Button variant="primary" icon="hammer" wide onClick={() => { useUI.getState().select(null); useUI.getState().setPanel('supply'); }}>Buy & manage vehicles</Button>
+    </div>
+  );
+}
+
+function IndustrySummary() {
+  const g = useGame();
+  const st = g.sites[g.activeSite].stats;
+  return (
+    <div className="flow-card">
+      <div className="row-between"><b>On-site industry at this site</b><span className="status-chip">{fmtMoney(st.industryIncome)}/s</span></div>
+      <div className="stat-grid">
+        <Stat label="Power used on site" value={`${fmtNum(st.industryMW)} MW`} sub="behind the meter" />
+        <Stat label="Imported" value={`${fmtNum(st.importMW)} MW`} tone={st.importMW > 0.5 ? 'warn' : undefined} sub="shortfall bought from grid" />
+        <Stat label="Electrolysers" value={`${fmtNum(st.h2MW)} MW`} sub="unsold power → hydrogen" />
+      </div>
+      <div className="muted small">Income here covers data centre sales, hydrogen, medical isotopes and visitors at this site.</div>
     </div>
   );
 }

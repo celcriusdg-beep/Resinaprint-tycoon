@@ -445,6 +445,100 @@ const defs: BuildingDef[] = [
     size: [3, 2], cost: 14_000, buildTime: 30, upkeep: 0.9, staff: 1, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
     wear: 0.02, unlock: { research: 'c_dry' }, dry: true, stats: { coolingMW: 24 },
   },
+  // ── Gigantic & industrial ───────────────────────────────────────────────
+  {
+    type: 'reactor_epr',
+    name: 'Gigawatt Reactor (Gen III+)',
+    short: 'Gigawatt PWR',
+    category: 'reactor',
+    description:
+      'A huge evolutionary pressurised water reactor: double-walled containment, four independent safety trains and a core catcher. 1.6 GW of electricity from one unit.',
+    size: [4, 4],
+    cost: 9_000_000,
+    buildTime: 240,
+    upkeep: 70,
+    staff: 120,
+    maxLevel: 5,
+    levelGrowth: 1.15,
+    upgradeBase: 0.4,
+    upgradeGrowth: 1.7,
+    wear: 0.02,
+    unlock: { research: 'r_gen3', level: 12 },
+    reactor: { thermalMW: 4500, efficiency: 0.37, fuelUse: 0.9, rampRate: 0.03, nominalTemp: 325, coreSize: 5400, refuelTime: 85 },
+    stats: { safety: 4 },
+  },
+  {
+    type: 'cooling_mega',
+    name: 'Mega Hyperboloid Tower',
+    short: 'Mega Tower',
+    category: 'cooling',
+    description: 'A 200-metre natural-draft colossus with aviation markings. Five times the heat rejection of a normal tower on a fraction more land.',
+    size: [5, 5], cost: 700_000, buildTime: 150, upkeep: 12, staff: 4, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.01, unlock: { research: 'c_mega', level: 11 }, stats: { coolingMW: 2600 },
+  },
+  {
+    type: 'hvdc',
+    name: 'HVDC Converter Station',
+    short: 'HVDC Station',
+    category: 'grid',
+    description: 'Thyristor valve halls turn AC into high-voltage direct current for long-distance lines. Massive export capacity for gigawatt plants.',
+    size: [4, 3], cost: 1_200_000, buildTime: 140, upkeep: 10, staff: 6, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.012, unlock: { research: 'd_hvdc' }, stats: { gridMW: 1200 },
+  },
+  {
+    type: 'datacenter',
+    name: 'Hyperscale Data Centre',
+    short: 'Data Centre',
+    category: 'industry',
+    description: 'A tech giant moves in next to your plant and buys firm, carbon-free power at 1.8× the market price. It runs behind the meter (no grid capacity needed); if your plant cannot cover it, any shortfall is bought from the grid at twice the market price — so keep it covered.',
+    size: [4, 3], cost: 900_000, buildTime: 120, upkeep: 6, staff: 25, maxLevel: 5, levelGrowth: 1.3, upgradeBase: 0.5, upgradeGrowth: 1.8,
+    wear: 0.012, unlock: { research: 'i_datacenter', level: 8 }, stats: { dataMW: 80 },
+  },
+  {
+    type: 'hydrogen',
+    name: 'Hydrogen Electrolysis Plant',
+    short: 'Hydrogen Plant',
+    category: 'industry',
+    description: 'Electrolysers split water into hydrogen using power you could not sell: power above your grid limit or beyond regional demand earns 75% of the market price instead of being dumped.',
+    size: [3, 3], cost: 350_000, buildTime: 90, upkeep: 3, staff: 10, maxLevel: 6, levelGrowth: 1.6, upgradeBase: 0.5, upgradeGrowth: 1.85,
+    wear: 0.016, unlock: { research: 'i_hydrogen', level: 10 }, stats: { h2MW: 150 },
+  },
+  {
+    type: 'desal',
+    name: 'Reverse-Osmosis Water Plant',
+    short: 'RO Water Plant',
+    category: 'water',
+    description: 'Pushes brackish groundwater or seawater through membranes. Lots of raw and demineralised water anywhere — even in the desert — but it uses 10 MW of your electricity.',
+    size: [3, 2], cost: 90_000, buildTime: 60, upkeep: 2, staff: 3, maxLevel: 6, levelGrowth: 1.6, upgradeBase: 0.5, upgradeGrowth: 1.85,
+    wear: 0.018, unlock: { research: 'w_ro', level: 5 }, stats: { rawWater: 400, treatedWater: 25, loadMW: 10 },
+  },
+  {
+    type: 'isotopes',
+    name: 'Medical Isotope Facility',
+    short: 'Isotope Lab',
+    category: 'industry',
+    description: 'Irradiation targets in your reactors make molybdenum-99 and other isotopes for hospitals; shielded hot cells process them. Earns money in proportion to the neutron flux (reactor power) at this site, up to 1 GW thermal.',
+    size: [2, 2], cost: 400_000, buildTime: 80, upkeep: 4, staff: 8, maxLevel: 5, levelGrowth: 1.5, upgradeBase: 0.5, upgradeGrowth: 1.8,
+    wear: 0.014, maxPerSite: 2, unlock: { research: 'r_isotopes', level: 8 }, stats: { isotopes: 120, research: 0.4 },
+  },
+  {
+    type: 'visitor',
+    name: 'Visitor Centre & Atom Monument',
+    short: 'Visitor Centre',
+    category: 'industry',
+    description: 'A glass pavilion with an observation deck and a giant spinning atom sculpture. Tourists pay to see your plant — more for every running reactor and cooling tower (big reactors are the star attraction).',
+    size: [3, 2], cost: 40_000, buildTime: 45, upkeep: 0.5, staff: 4, maxLevel: 5, levelGrowth: 1.5, upgradeBase: 0.6, upgradeGrowth: 1.9,
+    wear: 0.008, maxPerSite: 1, unlock: { level: 4 }, stats: { tourism: 6 },
+  },
+  {
+    type: 'rail_terminal',
+    name: 'Rail Fuel Terminal',
+    short: 'Rail Terminal',
+    category: 'fuel',
+    description: 'A rail spur with a gantry crane for fuel flasks. Suppliers can deliver 50% more fuel assemblies per day, and it stores 400 assemblies.',
+    size: [5, 2], cost: 150_000, buildTime: 70, upkeep: 2, staff: 6, maxLevel: 5, levelGrowth: 1.4, upgradeBase: 0.5, upgradeGrowth: 1.8,
+    wear: 0.012, unlock: { research: 'f_rail', level: 6 }, stats: { fuelCap: 400, fuelQuota: 0.5 },
+  },
 ];
 
 export const BUILDINGS: Record<BuildingType, BuildingDef> = Object.fromEntries(
@@ -460,10 +554,11 @@ export const CATEGORY_LABEL: Record<BuildingCategory, string> = {
   water: 'Water',
   fuel: 'Fuel Cycle',
   grid: 'Grid & Storage',
+  industry: 'Industry',
   support: 'Support',
 };
 
-export const CATEGORY_ORDER: BuildingCategory[] = ['reactor', 'power', 'cooling', 'water', 'fuel', 'grid', 'support'];
+export const CATEGORY_ORDER: BuildingCategory[] = ['reactor', 'power', 'cooling', 'water', 'fuel', 'grid', 'industry', 'support'];
 
 export function isReactor(type: BuildingType): boolean {
   return BUILDINGS[type].category === 'reactor';

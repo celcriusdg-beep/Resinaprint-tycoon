@@ -4,6 +4,7 @@ import type { AnimPart, ModelBuilder, ModelData, SteamEmitter } from './builder'
 import * as R from './models/reactors';
 import * as P from './models/plant';
 import * as S from './models/supply';
+import * as I from './models/industry';
 
 const BUILDERS: Record<BuildingType, () => ModelBuilder> = {
   reactor_pilot: R.pilotReactor,
@@ -34,6 +35,15 @@ const BUILDERS: Record<BuildingType, () => ModelBuilder> = {
   water_tank: S.waterTank,
   cooling_dry: S.dryCooling,
   dry_cask: S.dryCask,
+  reactor_epr: I.eprReactor,
+  cooling_mega: I.megaTower,
+  hvdc: I.hvdcStation,
+  datacenter: I.dataCenter,
+  hydrogen: I.hydrogenPlant,
+  desal: I.desalPlant,
+  isotopes: I.isotopeLab,
+  visitor: I.visitorCenter,
+  rail_terminal: I.railTerminal,
 };
 
 const templates = new Map<BuildingType, ModelData>();

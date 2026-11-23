@@ -18,7 +18,7 @@ function countType(s: GameState, types: BuildingType[], activeOnly = true): numb
 }
 
 const REACTORS: BuildingType[] = [
-  'reactor_pilot', 'reactor_smr', 'reactor_pwr', 'reactor_bwr', 'reactor_msr', 'reactor_fusion',
+  'reactor_pilot', 'reactor_smr', 'reactor_pwr', 'reactor_bwr', 'reactor_msr', 'reactor_fusion', 'reactor_epr',
 ];
 
 export const ACHIEVEMENTS: AchievementDef[] = [
@@ -35,6 +35,10 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: 'cash_1b', name: 'Billionaire Utility', description: 'Hold $1 billion.', reward: 20_000_000, check: (s) => s.money >= 1_000_000_000 },
   { id: 'smr', name: 'Think Small', description: 'Build a Small Modular Reactor.', reward: 8_000, check: (s) => countType(s, ['reactor_smr']) >= 1 },
   { id: 'pwr', name: 'Commercial Scale', description: 'Build a Pressurized Water Reactor.', reward: 60_000, check: (s) => countType(s, ['reactor_pwr']) >= 1 },
+  { id: 'epr', name: 'Gigawatt Club', description: 'Build a Gigawatt Reactor.', reward: 1_500_000, check: (s) => countType(s, ['reactor_epr']) >= 1 },
+  { id: 'mega_tower', name: 'Cloud Factory', description: 'Build a Mega Hyperboloid Tower.', reward: 300_000, check: (s) => countType(s, ['cooling_mega']) >= 1 },
+  { id: 'industry', name: 'Behind the Meter', description: 'Build a Data Centre and a Hydrogen Plant.', reward: 400_000, check: (s) => countType(s, ['datacenter']) >= 1 && countType(s, ['hydrogen']) >= 1 },
+  { id: 'tourist', name: 'Tourist Trap', description: 'Build the Visitor Centre.', reward: 10_000, check: (s) => countType(s, ['visitor']) >= 1 },
   { id: 'bwr', name: 'Boiling Point', description: 'Build a Boiling Water Reactor.', reward: 250_000, check: (s) => countType(s, ['reactor_bwr']) >= 1 },
   { id: 'msr', name: 'Liquid Fuel', description: 'Build a Molten Salt Reactor.', reward: 3_000_000, check: (s) => countType(s, ['reactor_msr']) >= 1 },
   { id: 'fusion', name: 'A Star on Earth', description: 'Build a Fusion Demonstration Plant.', reward: 60_000_000, check: (s) => countType(s, ['reactor_fusion']) >= 1 },

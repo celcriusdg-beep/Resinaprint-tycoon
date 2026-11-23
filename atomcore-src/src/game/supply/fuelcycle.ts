@@ -138,7 +138,13 @@ export function sellVehicle(s: GameState, siteId: string, buildingId: number, ki
  * buy everything; large fleets need their own fuel cycle.
  */
 export function fuelQuota(s: GameState): number {
-  return Math.round(120 * Math.pow(1.15, s.level - 1));
+  let bonus = 0;
+  for (const id of s.unlockedSites)
+    for (const b of s.sites[id].buildings) {
+      const def = BUILDINGS[b.type];
+      if (def.stats.fuelQuota && b.status !== 'constructing') bonus += def.stats.fuelQuota * levelMult(def, b.level);
+    }
+  return Math.round(120 * Math.pow(1.15, s.level - 1) * (1 + bonus));
 }
 
 export function fuelQuotaLeft(s: GameState): number {

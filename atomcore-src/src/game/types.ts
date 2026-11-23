@@ -9,6 +9,15 @@ export type BuildingType =
   | 'reactor_bwr'
   | 'reactor_msr'
   | 'reactor_fusion'
+  | 'reactor_epr'
+  | 'cooling_mega'
+  | 'hvdc'
+  | 'datacenter'
+  | 'hydrogen'
+  | 'desal'
+  | 'isotopes'
+  | 'visitor'
+  | 'rail_terminal'
   | 'cooling_mech'
   | 'cooling_tower'
   | 'turbine'
@@ -32,7 +41,7 @@ export type BuildingType =
   | 'cooling_dry'
   | 'dry_cask';
 
-export type BuildingCategory = 'reactor' | 'power' | 'cooling' | 'water' | 'fuel' | 'grid' | 'support';
+export type BuildingCategory = 'reactor' | 'power' | 'cooling' | 'water' | 'fuel' | 'grid' | 'industry' | 'support';
 
 export type BuildingStatus = 'constructing' | 'upgrading' | 'active' | 'broken' | 'refueling' | 'destroyed';
 
@@ -81,6 +90,12 @@ export interface BuildingStats {
   inspectRate?: number; // assemblies inspected per second
   backupMW?: number; // emergency diesel power, MW
   caskCap?: number; // dry cask storage, assemblies
+  loadMW?: number; // electricity consumed on site, MW(e)
+  dataMW?: number; // on-site customer load that pays a premium, MW(e)
+  h2MW?: number; // flexible electrolyser load fed by unsellable power, MW(e)
+  isotopes?: number; // $/s from medical isotopes at full reactor flux
+  tourism?: number; // $/s base visitor income
+  fuelQuota?: number; // extra share of the daily market fuel quota
 }
 
 export interface BuildingDef {
@@ -218,6 +233,11 @@ export interface Building {
 
 export interface SiteStats {
   thermalMW: number;
+  /** On-site industry: power used behind the meter, imported shortfall, electrolysers, $/s earned. */
+  industryMW: number;
+  importMW: number;
+  h2MW: number;
+  industryIncome: number;
   steamCapMW: number;
   steamUsedMW: number;
   electricMW: number; // gross electric generated

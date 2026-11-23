@@ -22,6 +22,9 @@ export const BASE_FUEL_PRICE = 160; // $ per fuel assembly bought on the market
 export const SALARY_PER_STAFF = 0.09; // $/s
 export const TRANSMISSION_LOSS = 0.06;
 export const SURPLUS_PRICE_FACTOR = 0.2; // unsold power dumped at 20% of price
+export const DATA_PRICE_FACTOR = 1.8; // data centres pay a premium for firm, carbon-free power
+export const H2_PRICE_FACTOR = 0.75; // value of power turned into hydrogen
+export const IMPORT_PRICE_FACTOR = 2; // shortfalls of on-site load are bought as expensive firming power
 export const AMBIENT_TEMP = 25;
 
 export const DECAY_HEAT_FRACTION = 0.065; // steady-state decay heat relative to fission

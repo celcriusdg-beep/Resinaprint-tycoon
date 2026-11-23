@@ -17,6 +17,12 @@ export function keyStat(def: BuildingDef, level = 1, mods = { reactorOutput: 1, 
   const lm = levelMult(def, level);
   if (def.reactor) return `${fmtPower(def.reactor.thermalMW * lm * mods.reactorOutput)} heat · ${Math.round((def.reactor.efficiency + mods.thermalEff) * 100)}% eff. · core ${fmtNum(Math.round(def.reactor.coreSize * lm))} assemblies`;
   const s = def.stats;
+  if (s.dataMW) return `Buys ${fmtPower(s.dataMW * lm)} at 1.8× price · behind the meter`;
+  if (s.h2MW) return `Turns up to ${fmtPower(s.h2MW * lm)} of unsellable power into hydrogen`;
+  if (s.isotopes) return `Up to ${fmtMoney(s.isotopes * lm)}/s with 1 GW of reactor heat on site`;
+  if (s.tourism) return `${fmtMoney(s.tourism * lm)}/s base, more per reactor & tower`;
+  if (s.loadMW) return `+${fmtNum(s.rawWater! * lm)} m³/h raw + ${fmtNum(s.treatedWater! * lm)} demin. water · uses ${fmtNum(s.loadMW * lm)} MW`;
+  if (s.fuelQuota) return `+${Math.round(s.fuelQuota * lm * 100)}% daily market fuel · +${fmtNum(s.fuelCap! * lm)} storage`;
   if (s.coolingMW) return `${fmtPower(s.coolingMW * lm * mods.cooling)} heat rejection${def.dry ? ' · no water' : ` · ~${fmtNum(s.coolingMW * lm * 1.6)} m³/h water at full load`}`;
   if (s.steamMW) return `${fmtPower(s.steamMW * lm * mods.steamCap)} steam capacity`;
   if (s.gridMW) return `+${fmtPower(s.gridMW * lm * mods.grid)} grid export`;

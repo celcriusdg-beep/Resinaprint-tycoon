@@ -2,7 +2,7 @@ import type { GameState, Site, SiteStats, Modifiers, Building } from '../types';
 import { BUILDINGS, levelMult, upkeepAt, staffAt, isReactor } from '../buildings/defs';
 import {
   BASE_GRID_TIE_MW, BASE_STAFF_CAP, BASE_FUEL_CAP, HOURS_PER_SECOND, SALARY_PER_STAFF, SURPLUS_PRICE_FACTOR,
-  BASE_PRICE, DAY_LENGTH, BASE_CONTRACT_SLOTS,
+  BASE_PRICE, DAY_LENGTH, BASE_CONTRACT_SLOTS, DATA_PRICE_FACTOR, H2_PRICE_FACTOR, IMPORT_PRICE_FACTOR,
 } from '../constants';
 import { getMods, companyMods } from './modifiers';
 import { stepReactorPower, stepReactorTemp, exp1, reactorMaxThermal, canRestart, restart, scram, advisoryLimit } from './reactor';
@@ -19,7 +19,7 @@ export const BATTERY_SECONDS = 60;
 
 export function emptyStats(): SiteStats {
   return {
-    thermalMW: 0, steamCapMW: 0, steamUsedMW: 0, electricMW: 0, exportMW: 0, gridCapMW: 0, coolingCapMW: 0,
+    thermalMW: 0, industryMW: 0, importMW: 0, h2MW: 0, industryIncome: 0, steamCapMW: 0, steamUsedMW: 0, electricMW: 0, exportMW: 0, gridCapMW: 0, coolingCapMW: 0,
     heatRejectMW: 0, coolingRatio: 1, demandMW: 0, soldMW: 0, surplusMW: 0, curtailedMW: 0, storageMWh: 0,
     storageCapMWh: 0, storageFlowMW: 0, staffNeeded: 0, staffCap: 0, staffFactor: 1, efficiency: 0,
     researchRate: 0, upkeep: 0, salaries: 0, revenue: 0, price: BASE_PRICE, reactorsOnline: 0, reactorsTotal: 0,
@@ -103,7 +103,7 @@ export function siteCapacities(s: GameState, site: Site, mods: Modifiers) {
 export function fuelCapacity(s: GameState): number {
   let cap = BASE_FUEL_CAP;
   for (const site of Object.values(s.sites))
-    for (const b of site.buildings) if (b.type === 'fuel_depot' && b.status !== 'constructing') cap += stat(b, 'fuelCap');
+    for (const b of site.buildings) if (BUILDINGS[b.type].stats.fuelCap && b.status !== 'constructing') cap += stat(b, 'fuelCap');
   return cap;
 }
 
@@ -143,6 +143,10 @@ export function repairCost(b: Building): number {
 
 interface SitePass {
   site: Site;
+  /** Electrolyser capacity still free to absorb unsold power. */
+  h2Left: number;
+  /** $/s from on-site industry (data centre, hydrogen, isotopes, visitors). */
+  extra: number;
   mods: Modifiers;
   exportAvail: number;
   demand: number;
@@ -280,9 +284,38 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
     }
 
     const net = electric * (1 - mods.transmissionLoss);
-    const exportAvail = Math.min(net, cap.grid);
-    const curtailed = net - exportAvail;
+    // On-site industry runs behind the meter: it takes power before the grid
+    // connection, so it needs no export capacity. Shortfalls are imported.
+    let dataLoad = 0, fixedLoad = 0, h2Cap = 0, isoBase = 0, tourBase = 0, towers = 0;
+    for (const b of site.buildings) {
+      if (!isOperating(b)) continue;
+      dataLoad += stat(b, 'dataMW');
+      fixedLoad += stat(b, 'loadMW');
+      h2Cap += stat(b, 'h2MW');
+      isoBase += stat(b, 'isotopes');
+      tourBase += stat(b, 'tourism');
+      if (b.type === 'cooling_tower' || b.type === 'cooling_mega') towers += b.type === 'cooling_mega' ? 2 : 1;
+    }
+    const onsite = dataLoad + fixedLoad;
+    const fromPlant = Math.min(net, onsite);
+    const imported = onsite - fromPlant;
+    const afterLoads = net - fromPlant;
+    const exportAvail = Math.min(afterLoads, cap.grid);
+    const overGrid = afterLoads - exportAvail;
+    const h2Now = Math.min(h2Cap, overGrid);
+    const curtailed = overGrid - h2Now;
+    let fission = 0;
+    let bigReactors = 0;
+    for (const b of reactors) {
+      if (!b.reactor) continue;
+      fission += b.reactor.fission;
+      if (b.status === 'active' && !b.reactor.scrammed && b.reactor.power > 0.05 && BUILDINGS[b.type].reactor!.thermalMW >= 600) bigReactors++;
+    }
+    const iso = isoBase * Math.min(1, fission / 1000) * staffFactor;
+    const tourism = tourBase * (1 + 0.3 * online + 0.25 * towers + 0.5 * bigReactors) * staffFactor;
+    const industryIncome = (dataLoad * price * DATA_PRICE_FACTOR - imported * price * IMPORT_PRICE_FACTOR + h2Now * price * H2_PRICE_FACTOR) * HOURS_PER_SECOND + iso + tourism;
     passes.push({
+      h2Left: h2Cap - h2Now, extra: industryIncome,
       site, mods, exportAvail, demand, price, sold: 0, surplus: 0, storageCap: cap.storage, storageRate: cap.rate,
       peak: priceCycle > 1.02, offPeak: priceCycle < 0.86,
     });
@@ -306,6 +339,7 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
     Object.assign(st, {
       thermalMW: thermal, steamCapMW: cap.steam, steamUsedMW: steamUsed, electricMW: electric, exportMW: exportAvail,
       gridCapMW: cap.grid, coolingCapMW: cap.cooling, heatRejectMW: heatReject, coolingRatio, demandMW: demand,
+      industryMW: fromPlant, importMW: imported, h2MW: h2Now, industryIncome,
       curtailedMW: curtailed, storageCapMWh: cap.storage, staffNeeded, staffCap: cap.staffCap, staffFactor, efficiency,
       researchRate, upkeep, salaries, price, reactorsOnline: online, reactorsTotal: reactors.length, maxTempFrac,
       storageFlowMW: 0,
@@ -408,7 +442,13 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
     } else {
       p.site.storageMWh = 0;
     }
-    const siteRevenue = sold * dtH * p.price + Math.max(0, surplus) * dtH * p.price * SURPLUS_PRICE_FACTOR;
+    // Electrolysers soak up unsold power at the hydrogen price.
+    const toH2 = Math.min(Math.max(0, surplus), p.h2Left);
+    surplus -= toH2;
+    st.h2MW += toH2;
+    st.industryIncome += toH2 * dtH * p.price * H2_PRICE_FACTOR / dt;
+    const siteRevenue = sold * dtH * p.price + Math.max(0, surplus) * dtH * p.price * SURPLUS_PRICE_FACTOR
+      + toH2 * dtH * p.price * H2_PRICE_FACTOR + p.extra * dt;
     revenue += siteRevenue;
     energySold += sold * dtH;
     totalExport += p.exportAvail;
