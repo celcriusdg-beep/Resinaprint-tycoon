@@ -138,9 +138,9 @@ describe('reactor safety model', () => {
     expect(site.buildings[0].reactor!.scrammed).toBe(false);
   });
 
-  it('no fuel means no fission power', () => {
+  it('an empty core means no fission power', () => {
     const s = createInitialState();
-    s.fuel = 0;
+    s.sites.riverside.buildings[0].reactor!.coreFuel = 0;
     run(s, 30);
     expect(s.sites.riverside.buildings[0].reactor!.fission).toBe(0);
   });

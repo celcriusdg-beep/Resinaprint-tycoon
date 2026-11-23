@@ -14,6 +14,16 @@ export interface LocationDef {
   ambient: number; // ambient temperature °C
   theme: 'river' | 'coast' | 'desert' | 'arctic';
   perk: string;
+  /** Municipal raw / treated water connection, m³/h. */
+  waterBase: number;
+  treatedBase: number;
+  /** River, sea or fjord available for intake pumps. */
+  waterBody: boolean;
+  /** Multiplier on intake capacity (seawater is plentiful). */
+  intakeMult: number;
+  /** Uranium ore grade multiplier on mining output. */
+  oreGrade: number;
+  oreLabel: string;
 }
 
 export const LOCATIONS: LocationDef[] = [
@@ -32,6 +42,7 @@ export const LOCATIONS: LocationDef[] = [
     buildCostMult: 1,
     ambient: 18,
     theme: 'river',
+    waterBase: 60, treatedBase: 4, waterBody: true, intakeMult: 1, oreGrade: 1, oreLabel: 'Average grade',
     perk: '+10% cooling from river water',
   },
   {
@@ -49,6 +60,7 @@ export const LOCATIONS: LocationDef[] = [
     buildCostMult: 1.1,
     ambient: 16,
     theme: 'coast',
+    waterBase: 40, treatedBase: 3, waterBody: true, intakeMult: 2, oreGrade: 0.7, oreLabel: 'Low grade',
     perk: '+30% cooling (seawater), large city demand',
   },
   {
@@ -66,6 +78,7 @@ export const LOCATIONS: LocationDef[] = [
     buildCostMult: 0.85,
     ambient: 38,
     theme: 'desert',
+    waterBase: 12, treatedBase: 2, waterBody: false, intakeMult: 0, oreGrade: 1.6, oreLabel: 'High grade',
     perk: '−15% build cost, +20% price, −20% cooling',
   },
   {
@@ -83,6 +96,7 @@ export const LOCATIONS: LocationDef[] = [
     buildCostMult: 1.2,
     ambient: 2,
     theme: 'arctic',
+    waterBase: 50, treatedBase: 3, waterBody: true, intakeMult: 2, oreGrade: 2.5, oreLabel: 'Very high grade',
     perk: '+50% cooling, continental demand',
   },
 ];

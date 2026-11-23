@@ -3,6 +3,7 @@ import type { BuildingType } from '../../game/types';
 import type { AnimPart, ModelBuilder, ModelData, SteamEmitter } from './builder';
 import * as R from './models/reactors';
 import * as P from './models/plant';
+import * as S from './models/supply';
 
 const BUILDERS: Record<BuildingType, () => ModelBuilder> = {
   reactor_pilot: R.pilotReactor,
@@ -22,6 +23,16 @@ const BUILDERS: Record<BuildingType, () => ModelBuilder> = {
   maintenance: P.maintenance,
   fuel_depot: P.fuelDepot,
   generator_emergency: P.emergencyGenerator,
+  uranium_mine: S.uraniumMine,
+  ore_mill: S.oreMill,
+  enrichment: S.enrichmentPlant,
+  fuel_fab: S.fuelFab,
+  fuel_qa: S.fuelQa,
+  water_intake: S.waterIntake,
+  water_wells: S.waterWells,
+  water_treatment: S.waterTreatment,
+  water_tank: S.waterTank,
+  cooling_dry: S.dryCooling,
 };
 
 const templates = new Map<BuildingType, ModelData>();

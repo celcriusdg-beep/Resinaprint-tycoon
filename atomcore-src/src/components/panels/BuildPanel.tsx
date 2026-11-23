@@ -12,17 +12,25 @@ import { PlantBalance } from './PlantBalance';
 
 export function keyStat(def: BuildingDef, level = 1, mods = { reactorOutput: 1, cooling: 1, steamCap: 1, grid: 1, storage: 1, research: 1, thermalEff: 0 }): string {
   const lm = levelMult(def, level);
-  if (def.reactor) return `${fmtPower(def.reactor.thermalMW * lm * mods.reactorOutput)} heat · ${Math.round((def.reactor.efficiency + mods.thermalEff) * 100)}% eff.`;
+  if (def.reactor) return `${fmtPower(def.reactor.thermalMW * lm * mods.reactorOutput)} heat · ${Math.round((def.reactor.efficiency + mods.thermalEff) * 100)}% eff. · core ${fmtNum(Math.round(def.reactor.coreSize * lm))} assemblies`;
   const s = def.stats;
-  if (s.coolingMW) return `${fmtPower(s.coolingMW * lm * mods.cooling)} heat rejection`;
+  if (s.coolingMW) return `${fmtPower(s.coolingMW * lm * mods.cooling)} heat rejection${def.dry ? ' · no water' : ` · ~${fmtNum(s.coolingMW * lm * 1.6)} m³/h water at full load`}`;
   if (s.steamMW) return `${fmtPower(s.steamMW * lm * mods.steamCap)} steam capacity`;
   if (s.gridMW) return `+${fmtPower(s.gridMW * lm * mods.grid)} grid export`;
   if (s.storageMWh) return `${fmtNum(s.storageMWh * lm * mods.storage)} MWh storage`;
   if (s.research) return `+${(s.research * lm * mods.research).toFixed(2)} RP/s`;
   if (s.staffCap) return `+${Math.round(s.staffCap * lm)} staff, +1 contract slot`;
   if (s.maintenance) return `Repair crew ×${(s.maintenance * lm).toFixed(1)}`;
-  if (s.fuelCap) return `+${fmtNum(s.fuelCap * lm)} fuel storage`;
+  if (s.fuelCap) return `+${fmtNum(s.fuelCap * lm)} fuel assemblies storage`;
   if (s.safety) return `+${Math.round(s.safety * lm)} safety rating`;
+  if (s.rawWater) return `+${fmtNum(s.rawWater * lm)} m³/h raw water`;
+  if (s.treatedWater) return `${fmtNum(s.treatedWater * lm)} m³/h demineralised water`;
+  if (s.waterStorage) return `${fmtNum(s.waterStorage * lm)} m³ water storage`;
+  if (s.millRate) return `Mills ${fmtNum(s.millRate * lm * 60)} t ore/min`;
+  if (s.enrichRate) return `Enriches ${fmtNum(s.enrichRate * lm * 60)} yellowcake/min`;
+  if (s.fabRate) return `Makes ${fmtNum(s.fabRate * lm * 60)} assemblies/min`;
+  if (s.inspectRate) return `Inspects ${fmtNum(s.inspectRate * lm * 60)} assemblies/min`;
+  if (s.oreStock) return `Open pit · ${fmtNum(s.oreStock * lm)} t stockpile · vehicle slots`;
   return '';
 }
 

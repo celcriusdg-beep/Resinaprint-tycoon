@@ -10,6 +10,9 @@ import { useGameStore } from '../../stores/gameStore';
 import { useUI } from '../../stores/uiStore';
 import { activity, buildingCenter, emitters } from './sceneRegistry';
 import { audio } from '../../systems/audio/audio';
+import { MineVehicles } from './MineVehicles';
+
+const charred = new THREE.MeshStandardMaterial({ color: '#2a2622', roughness: 1, metalness: 0 });
 
 interface Props {
   building: Building;
@@ -29,9 +32,24 @@ export function BuildingObject({ building, siteSize }: Props) {
 
   useEffect(() => () => inst.dispose(), [inst]);
 
+  // A destroyed reactor becomes a charred, partly collapsed ruin.
+  const destroyed = building.status === 'destroyed';
+  useEffect(() => {
+    if (!destroyed) return;
+    inst.group.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      if (mesh.isMesh) mesh.material = charred;
+    });
+    inst.group.scale.set(1, 0.55, 1);
+    inst.group.rotation.z = 0.04;
+  }, [destroyed, inst]);
+
   // Register steam emitters in world space.
   useEffect(() => {
     const m = new THREE.Matrix4().makeRotationY(rotY).setPosition(cx, 0, cz);
+    const ruinSmoke = building.status === 'destroyed'
+      ? [{ pos: new THREE.Vector3(cx, inst.height * 0.5, cz), radius: 2, rate: 2.2, size: 4, kind: 'smoke' as const, activity: () => 1 }]
+      : [];
     const list = inst.emitters.map((e) => ({
       pos: new THREE.Vector3(...e.pos).applyMatrix4(m),
       radius: e.radius,
@@ -43,11 +61,11 @@ export function BuildingObject({ building, siteSize }: Props) {
         return activity(building, g.sites[g.activeSite]);
       },
     }));
-    emitters.set(building.id, list);
+    emitters.set(building.id, building.status === 'destroyed' ? ruinSmoke : list);
     return () => {
       emitters.delete(building.id);
     };
-  }, [inst, cx, cz, rotY, building]);
+  }, [inst, cx, cz, rotY, building, building.status]);
 
   const scaffold = useMemo(() => makeScaffold(w * CELL, d * CELL, Math.max(3, inst.height * 0.9)), [w, d, inst.height]);
 
@@ -86,6 +104,9 @@ export function BuildingObject({ building, siteSize }: Props) {
         case 'bob':
           a.object.position.x = Math.sin(t * (a.speed ?? 0.5) + building.id) * 2.5;
           break;
+        case 'rock':
+          a.object.rotation[a.axis ?? 'z'] = act > 0 ? Math.sin(t * (a.speed ?? 1) * 2 + (a.phase ?? 0)) * 0.35 : 0;
+          break;
       }
     }
   });
@@ -109,11 +130,14 @@ export function BuildingObject({ building, siteSize }: Props) {
       </group>
       <primitive object={scaffold} ref={scaffoldRef} visible={building.status === 'constructing' || building.status === 'upgrading'} />
       {building.status === 'broken' && <BrokenMarker height={inst.height} />}
+      {building.status === 'refueling' && <BrokenMarker height={inst.height} color="#ffb020" />}
+      {destroyed && <BrokenMarker height={inst.height * 0.6} color="#ff2a10" />}
+      {building.vehicles && building.status !== 'constructing' && <MineVehicles building={building} />}
     </group>
   );
 }
 
-function BrokenMarker({ height }: { height: number }) {
+function BrokenMarker({ height, color = '#ff4a1a' }: { height: number; color?: string }) {
   const ref = useRef<THREE.Mesh>(null);
   useFrame((s) => {
     if (!ref.current) return;
@@ -123,7 +147,7 @@ function BrokenMarker({ height }: { height: number }) {
   return (
     <mesh ref={ref} position={[0, height + 2, 0]}>
       <octahedronGeometry args={[0.7, 0]} />
-      <meshStandardMaterial color="#401000" emissive="#ff4a1a" emissiveIntensity={3} toneMapped={false} />
+      <meshStandardMaterial color="#401000" emissive={color} emissiveIntensity={3} toneMapped={false} />
     </mesh>
   );
 }

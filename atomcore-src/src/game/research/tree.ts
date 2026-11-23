@@ -8,7 +8,8 @@ export type ResearchCategory =
   | 'materials'
   | 'safety'
   | 'distribution'
-  | 'advanced';
+  | 'advanced'
+  | 'fuel';
 
 export interface ResearchNode {
   id: string;
@@ -35,6 +36,7 @@ export const RESEARCH_CATEGORIES: { id: ResearchCategory; name: string; color: s
   { id: 'safety', name: 'Safety Systems', color: '#ff6b81' },
   { id: 'distribution', name: 'Power Distribution', color: '#8fd16a' },
   { id: 'advanced', name: 'Advanced Reactor Concepts', color: '#ff7ce5' },
+  { id: 'fuel', name: 'Fuel Cycle & Mining', color: '#e8d25a' },
 ];
 
 const N = (n: ResearchNode) => n;
@@ -59,6 +61,10 @@ export const RESEARCH: ResearchNode[] = [
   // ── Cooling ──────────────────────────────────────────────────────────
   N({ id: 'c_fans', name: 'High-Efficiency Fans', category: 'cooling', tier: 1, cost: 35, money: 1_500, requires: [],
     description: '+15% cooling capacity.', effects: { cooling: 0.15 } }),
+  N({ id: 'c_dry', name: 'Dry Cooling', category: 'cooling', tier: 2, cost: 380, money: 25_000, requires: ['c_fans'],
+    description: 'Unlocks the Air-Cooled Condenser, which needs no water.', unlocks: ['cooling_dry'] }),
+  N({ id: 'w_recycle', name: 'Blowdown Recycling', category: 'cooling', tier: 3, cost: 1_200, money: 110_000, requires: ['c_tower'],
+    description: 'Reuse cooling-tower blowdown. −25% evaporation losses, −25% demineralised water use.', effects: { evaporation: -0.25, treatedUse: -0.25 } }),
   N({ id: 'c_tower', name: 'Natural Draft Towers', category: 'cooling', tier: 2, cost: 300, money: 20_000, requires: ['c_fans'], level: 4,
     description: 'Unlocks the Natural Draft Cooling Tower.', unlocks: ['cooling_tower'] }),
   N({ id: 'c_fill', name: 'Advanced Fill Media', category: 'cooling', tier: 3, cost: 1_400, money: 150_000, requires: ['c_tower'],
@@ -99,7 +105,7 @@ export const RESEARCH: ResearchNode[] = [
   N({ id: 'm_concrete', name: 'High-Performance Concrete', category: 'materials', tier: 2, cost: 450, money: 35_000, requires: ['m_alloys'],
     description: '−10% construction cost, +25% construction speed.', effects: { buildCost: -0.1, buildSpeed: 0.25 } }),
   N({ id: 'm_cladding', name: 'Accident-Tolerant Cladding', category: 'materials', tier: 3, cost: 1_900, money: 220_000, requires: ['m_concrete', 's_passive'],
-    description: '+10 safety, +5% temperature margin before a trip.', effects: { safety: 10, tripMargin: 0.05 } }),
+    description: '+10 safety, +5% temperature margin, defective rods are 50% less likely to fail.', effects: { safety: 10, tripMargin: 0.05, defectHazard: -0.5 } }),
   N({ id: 'm_composite', name: 'Ceramic Composites', category: 'materials', tier: 4, cost: 9_000, money: 1_500_000, requires: ['m_cladding'],
     description: '−25% wear, −10% construction cost.', effects: { wear: -0.25, buildCost: -0.1 } }),
 
@@ -126,6 +132,24 @@ export const RESEARCH: ResearchNode[] = [
     description: '+40% grid capacity, −2 points transmission loss, +15% demand.', effects: { grid: 0.4, transmissionLoss: -0.02, demand: 0.15 } }),
   N({ id: 'd_global', name: 'Global Energy Contracts', category: 'distribution', tier: 5, cost: 30_000, money: 20_000_000, requires: ['d_hvdc'], level: 18,
     description: '+1 contract slot and access to huge, premium global contracts.', effects: { contractSlots: 1 } }),
+
+  // ── Fuel cycle & mining ──────────────────────────────────────────────
+  N({ id: 'f_mining', name: 'Uranium Mining', category: 'fuel', tier: 1, cost: 120, money: 8_000, requires: [], level: 3,
+    description: 'Unlocks the Open-Pit Uranium Mine and the Ore Mill.', unlocks: ['uranium_mine', 'ore_mill'] }),
+  N({ id: 'f_outage', name: 'Outage Planning', category: 'fuel', tier: 1, cost: 160, money: 10_000, requires: [],
+    description: 'Unlocks automatic refuelling outages. Refuelling is 40% faster.', automation: 'autoRefuel', effects: { refuelSpeed: 0.4 } }),
+  N({ id: 'f_enrich', name: 'Enrichment & Fabrication', category: 'fuel', tier: 2, cost: 500, money: 40_000, requires: ['f_mining'], level: 5,
+    description: 'Unlocks the Conversion & Enrichment Plant and the Fuel Fabrication Plant: make your own fuel assemblies.', unlocks: ['enrichment', 'fuel_fab'] }),
+  N({ id: 'f_heavy', name: 'Heavy Mining Equipment', category: 'fuel', tier: 2, cost: 700, money: 60_000, requires: ['f_mining'], level: 7,
+    description: 'Unlocks mining shovels, rope shovels, rigid and ultra-class haul trucks. +10% mining output.', effects: { mining: 0.1 } }),
+  N({ id: 'f_qa', name: 'Fuel Quality Assurance', category: 'fuel', tier: 3, cost: 900, money: 90_000, requires: ['f_enrich'],
+    description: 'Unlocks the Fuel Inspection Lab. −30% fabrication defects.', unlocks: ['fuel_qa'], effects: { defectRate: -0.3 } }),
+  N({ id: 'f_auto', name: 'Automated Fuel Lines', category: 'fuel', tier: 3, cost: 1_800, money: 200_000, requires: ['f_enrich'],
+    description: '+30% throughput for mills, enrichment and fabrication.', effects: { processing: 0.3 } }),
+  N({ id: 'f_laser', name: 'Laser Enrichment', category: 'fuel', tier: 4, cost: 8_000, money: 1_500_000, requires: ['f_auto'],
+    description: '+50% processing throughput, −20% fabrication defects.', effects: { processing: 0.5, defectRate: -0.2 } }),
+  N({ id: 'f_bucket', name: 'Bucket-Wheel Excavators', category: 'fuel', tier: 4, cost: 9_000, money: 2_000_000, requires: ['f_heavy'], level: 14,
+    description: 'Unlocks the colossal bucket-wheel excavator. +15% mining output.', effects: { mining: 0.15 } }),
 
   // ── Advanced concepts ────────────────────────────────────────────────
   N({ id: 'x_gen4', name: 'Generation IV Studies', category: 'advanced', tier: 4, cost: 10_000, money: 2_500_000, requires: ['r_bwr', 'm_cladding'], level: 13,

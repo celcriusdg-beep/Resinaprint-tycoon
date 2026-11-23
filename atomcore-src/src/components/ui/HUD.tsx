@@ -1,6 +1,7 @@
 import { useGame } from '../../stores/gameStore';
 import { useUI, type PanelId } from '../../stores/uiStore';
-import { fmtMoney, fmtPower, fmtPct } from '../../ui/format';
+import { fmtMoney, fmtPower, fmtPct, fmtNum } from '../../ui/format';
+import { BUILDINGS } from '../../game/buildings/defs';
 import { netIncome } from '../../game/engine';
 import { xpForNext } from '../../game/progression/levels';
 import { RESEARCH_BY_ID } from '../../game/research/tree';
@@ -22,10 +23,13 @@ export function HUD() {
     demand += g.sites[id].stats.demandMW;
   }
   for (const c of g.contracts) contractMW += c.mw;
-  const reactors = site.buildings.filter((b) => b.reactor && b.status !== 'constructing');
-  const scrammed = reactors.filter((b) => b.reactor!.scrammed).length;
+  const reactors = site.buildings.filter((b) => b.reactor && b.status !== 'constructing' && b.status !== 'destroyed');
+  const scrammed = reactors.filter((b) => b.reactor!.scrammed && b.status !== 'refueling').length;
+  const refuelNeeded = reactors.filter((b) => b.status === 'active' && !BUILDINGS[b.type].reactor!.onlineRefuel && (b.reactor!.coreFuel < 0.15 || b.reactor!.failedRods > 0)).length;
+  const refueling = reactors.filter((b) => b.status === 'refueling').length;
+  const waterOk = st.waterFactor >= 0.999 && st.treatedFactor >= 0.999;
   const hot = st.maxTempFrac > 0.9;
-  const reactorTone = scrammed ? 'bad' : hot ? 'warn' : st.reactorsOnline > 0 ? 'good' : 'dim';
+  const reactorTone = scrammed ? 'bad' : hot || refuelNeeded ? 'warn' : st.reactorsOnline > 0 ? 'good' : 'dim';
   const active = g.research.active ? RESEARCH_BY_ID[g.research.active] : null;
   const rpRate = g.unlockedSites.reduce((a, id) => a + g.sites[id].stats.researchRate, 0);
   const fuelCap = fuelCapacity(g);
@@ -60,15 +64,19 @@ export function HUD() {
       <div className="hud-row hud-row2">
         <button className={`hud-pill ${reactorTone}`} onClick={() => open('manage')}>
           <Icon name="atom" size={14} />
-          {scrammed ? `${scrammed} SCRAM` : `${st.reactorsOnline}/${st.reactorsTotal} online`}
+          {scrammed ? `${scrammed} SCRAM` : refuelNeeded ? `${refuelNeeded} need fuel` : refueling ? `${refueling} refuelling` : `${st.reactorsOnline}/${st.reactorsTotal} online`}
         </button>
         <button className={`hud-pill ${st.coolingRatio < 1 ? 'bad' : st.coolingRatio < 1.1 ? 'warn' : ''}`} onClick={() => open('manage')}>
           <Icon name="thermo" size={14} />
           {fmtPct(Math.min(9.99, st.maxTempFrac))}
         </button>
-        <button className={`hud-pill ${fuelFrac < 0.15 ? 'bad' : fuelFrac < 0.3 ? 'warn' : ''}`} onClick={() => open('manage')}>
+        <button className={`hud-pill ${fuelFrac < 0.1 ? 'bad' : fuelFrac < 0.25 ? 'warn' : ''}`} onClick={() => open('supply')} aria-label="Fuel assemblies in stock">
           <Icon name="fuel" size={14} />
-          {fmtPct(fuelFrac)}
+          {fmtNum(g.fuel)}
+        </button>
+        <button className={`hud-pill ${waterOk ? '' : 'bad'}`} onClick={() => open('supply')} aria-label="Water balance">
+          <Icon name="drop" size={14} />
+          {waterOk ? fmtNum(st.evaporation) + ' m³' : `${fmtPct(Math.min(st.waterFactor, st.treatedFactor))}`}
         </button>
         <button className="hud-pill research" onClick={() => open('research')}>
           <Icon name="flask" size={14} />

@@ -13,6 +13,7 @@ import { BuildPanel } from './components/panels/BuildPanel';
 import { BuildingPanel } from './components/panels/BuildingPanel';
 import { ResearchPanel } from './components/panels/ResearchPanel';
 import { ManagePanel } from './components/panels/ManagePanel';
+import { SupplyPanel } from './components/panels/SupplyPanel';
 import { MarketPanel } from './components/panels/MarketPanel';
 import { GoalsPanel } from './components/panels/GoalsPanel';
 import { SitesPanel } from './components/panels/SitesPanel';
@@ -27,6 +28,7 @@ const PANELS: Record<PanelId, { title: string; icon: IconName; render: () => JSX
   build: { title: 'Construction', icon: 'hammer', render: () => <BuildPanel /> },
   research: { title: 'Research', icon: 'flask', render: () => <ResearchPanel />, wide: true },
   manage: { title: 'Plant Management', icon: 'factory', render: () => <ManagePanel /> },
+  supply: { title: 'Supply Chain', icon: 'truck', render: () => <SupplyPanel /> },
   market: { title: 'Energy Market', icon: 'chart', render: () => <MarketPanel /> },
   goals: { title: 'Goals & Progress', icon: 'trophy', render: () => <GoalsPanel /> },
   sites: { title: 'Sites & Corporation', icon: 'globe', render: () => <SitesPanel /> },
@@ -113,7 +115,7 @@ export default function App() {
         else ui.select(null);
       }
       if ((e.key === 'r' || e.key === 'R') && ui.placement) rotatePlacement();
-      const map: Record<string, PanelId> = { b: 'build', t: 'research', p: 'manage', m: 'market', g: 'goals' };
+      const map: Record<string, PanelId> = { b: 'build', t: 'research', p: 'manage', u: 'supply', m: 'market', g: 'goals' };
       if (!ui.placement && map[e.key]) ui.togglePanel(map[e.key]);
     };
     window.addEventListener('keydown', onKey);

@@ -12,6 +12,7 @@ const NAV: { id: PanelId; label: string; icon: IconName }[] = [
   { id: 'build', label: 'Build', icon: 'hammer' },
   { id: 'research', label: 'Research', icon: 'flask' },
   { id: 'manage', label: 'Plant', icon: 'factory' },
+  { id: 'supply', label: 'Supply', icon: 'truck' },
   { id: 'market', label: 'Market', icon: 'chart' },
   { id: 'goals', label: 'Goals', icon: 'trophy' },
   { id: 'sites', label: 'Sites', icon: 'globe' },
@@ -23,6 +24,8 @@ export function NavBar() {
   const g = useGame();
   const claimable = g.daily.objectives.filter((o) => !o.claimed && o.progress >= o.target).length;
   const idleResearch = !g.research.active && g.research.points > 30;
+  const st = g.sites[g.activeSite].stats;
+  const supplyAlert = st.waterFactor < 0.999 || st.treatedFactor < 0.999 || g.fuel < 5;
   return (
     <nav className="nav" aria-label="Main">
       {NAV.map((n) => (
@@ -32,6 +35,7 @@ export function NavBar() {
           <span>{n.label}</span>
           {n.id === 'goals' && claimable > 0 && <i className="badge">{claimable}</i>}
           {n.id === 'research' && idleResearch && <i className="badge dot" />}
+          {n.id === 'supply' && supplyAlert && <i className="badge dot alert" />}
         </button>
       ))}
     </nav>

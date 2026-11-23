@@ -10,7 +10,7 @@ export type Vec3 = [number, number, number];
 
 export interface AnimPart {
   object: THREE.Object3D;
-  kind: 'spin' | 'glow' | 'pulse' | 'blink' | 'bob' | 'beacon';
+  kind: 'spin' | 'glow' | 'pulse' | 'blink' | 'bob' | 'beacon' | 'rock';
   axis?: 'x' | 'y' | 'z';
   speed?: number;
   phase?: number;

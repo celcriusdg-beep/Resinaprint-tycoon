@@ -10,6 +10,8 @@ import { safetyRating } from '../simulation/plant';
 // (capacity changes, offline equipment, market shifts) — never real procedures.
 
 export interface EventEffect {
+  water?: number; // raw water supply
+  evaporation?: number;
   cooling?: number;
   demand?: number;
   price?: number;
@@ -49,7 +51,14 @@ function randomBuilding(s: GameState, siteId: string, filter: (b: Building) => b
 export const EVENTS: EventDef[] = [
   { id: 'heatwave', name: 'Heatwave', kind: 'bad', weight: 10, duration: 150, siteScoped: true,
     description: 'Hot air and warm intake water reduce cooling capacity, while air-conditioning demand soars.',
-    effect: { cooling: 0.78, demand: 1.25, price: 1.15 } },
+    effect: { cooling: 0.85, demand: 1.25, price: 1.15, evaporation: 1.25, water: 0.8 } },
+  { id: 'drought', name: 'Drought', kind: 'bad', weight: 6, duration: 200, siteScoped: true, themes: ['river', 'desert'],
+    description: 'Low river levels and a falling water table: raw water supply is cut sharply and evaporation rises.',
+    effect: { water: 0.5, evaporation: 1.15 } },
+  { id: 'intake', name: 'Intake Screens Clogged', kind: 'bad', weight: 4, duration: 90, siteScoped: true, themes: ['river', 'coast', 'arctic'],
+    description: 'Debris (or jellyfish!) blocks the intake screens. Raw water supply is reduced.', effect: { water: 0.6 } },
+  { id: 'outcry', name: 'Public Outcry', kind: 'bad', weight: 0, duration: 600, siteScoped: false,
+    description: 'After a core damage incident customers and regulators lose trust: electricity prices are depressed.', effect: { price: 0.8 } },
   { id: 'coldsnap', name: 'Cold Snap', kind: 'good', weight: 8, duration: 130, siteScoped: true,
     description: 'Freezing weather boosts heating demand and improves cooling.',
     effect: { cooling: 1.12, demand: 1.35, price: 1.1 } },
@@ -183,6 +192,7 @@ export function triggerRandomEvent(s: GameState, forceId?: string): void {
   if (forceId) def = EVENT_BY_ID[forceId];
   else {
     let r = random() * candidates.reduce((a, e) => a + e.weight, 0);
+    // (weight-0 events such as Public Outcry are only triggered by the simulation)
     for (const e of candidates) {
       r -= e.weight;
       if (r <= 0) {

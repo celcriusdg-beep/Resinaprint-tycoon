@@ -19,11 +19,21 @@ export type BuildingType =
   | 'admin'
   | 'maintenance'
   | 'fuel_depot'
-  | 'generator_emergency';
+  | 'generator_emergency'
+  | 'uranium_mine'
+  | 'ore_mill'
+  | 'enrichment'
+  | 'fuel_fab'
+  | 'fuel_qa'
+  | 'water_intake'
+  | 'water_wells'
+  | 'water_treatment'
+  | 'water_tank'
+  | 'cooling_dry';
 
-export type BuildingCategory = 'reactor' | 'power' | 'cooling' | 'grid' | 'support';
+export type BuildingCategory = 'reactor' | 'power' | 'cooling' | 'water' | 'fuel' | 'grid' | 'support';
 
-export type BuildingStatus = 'constructing' | 'upgrading' | 'active' | 'broken';
+export type BuildingStatus = 'constructing' | 'upgrading' | 'active' | 'broken' | 'refueling' | 'destroyed';
 
 export interface ReactorSpec {
   /** Thermal output at level 1, MW(th). */
@@ -38,6 +48,12 @@ export interface ReactorSpec {
   nominalTemp: number;
   /** Research points per second produced at full power (pilot reactor). */
   research?: number;
+  /** Fuel assemblies in a full core at level 1. */
+  coreSize: number;
+  /** Seconds a refuelling outage takes at level 1. */
+  refuelTime: number;
+  /** Liquid-fuel designs top up continuously without an outage. */
+  onlineRefuel?: boolean;
 }
 
 export interface BuildingStats {
@@ -52,6 +68,16 @@ export interface BuildingStats {
   fuelCap?: number; // fuel units of storage
   maintenance?: number; // repair crews
   safety?: number; // safety rating points
+  rawWater?: number; // raw water supply, m³/h
+  treatedWater?: number; // demineralised water output, m³/h
+  waterStorage?: number; // tank capacity, m³
+  oreStock?: number; // ore stockpile capacity, t
+  ycStock?: number; // yellowcake storage
+  enrStock?: number; // enriched uranium storage
+  millRate?: number; // ore processed per second
+  enrichRate?: number; // yellowcake processed per second
+  fabRate?: number; // enriched uranium processed per second
+  inspectRate?: number; // assemblies inspected per second
 }
 
 export interface BuildingDef {
@@ -75,8 +101,12 @@ export interface BuildingDef {
   unlock: { research?: string; level?: number };
   reactor?: ReactorSpec;
   stats: BuildingStats;
-  /** Limit per site (e.g. only one admin per site makes sense? no – used for pilot). */
+  /** Limit per site. */
   maxPerSite?: number;
+  /** Dry cooling: rejects heat without evaporating water. */
+  dry?: boolean;
+  /** Needs a river, sea or fjord at the site. */
+  needsWaterBody?: boolean;
 }
 
 export interface ReactorState {
@@ -92,6 +122,26 @@ export interface ReactorState {
   fission: number;
   noFuel: boolean;
   setback: boolean;
+  /** Fraction of a full core of fuel remaining (burnup). */
+  coreFuel: number;
+  /** Defective assemblies loaded in the core (not yet failed). */
+  coreDefects: number;
+  /** Fuel rods whose cladding has failed. */
+  failedRods: number;
+  /** Primary coolant pump speed, 0.6..1.25 of nominal. */
+  pumpSpeed: number;
+  /** Electricity used by the coolant pumps, MW. */
+  houseLoad: number;
+  /** Setpoint to restore after an automatic refuelling outage. */
+  resumeSetpoint: number | null;
+  /** Assemblies queued for loading during the current outage. */
+  loading: number;
+  loadingDefects: number;
+}
+
+export interface Vehicles {
+  excavators: number[]; // count per tier
+  trucks: number[];
 }
 
 export interface Building {
@@ -107,6 +157,7 @@ export interface Building {
   condition: number; // 0..100
   enabled: boolean;
   reactor?: ReactorState;
+  vehicles?: Vehicles;
 }
 
 export interface SiteStats {
@@ -138,6 +189,22 @@ export interface SiteStats {
   reactorsOnline: number;
   reactorsTotal: number;
   maxTempFrac: number; // highest reactor temp as fraction of trip limit
+  // Water (m³/h)
+  rawSupply: number;
+  evaporation: number;
+  treatedSupply: number;
+  treatedDemand: number;
+  rawToTreatment: number;
+  tankM3: number;
+  tankCapM3: number;
+  waterFactor: number; // share of evaporative cooling that has make-up water
+  treatedFactor: number; // share of reactor water chemistry demand met
+  waterCost: number; // $/s
+  houseLoadMW: number;
+  // Mining
+  oreRate: number; // ore/s
+  digRate: number;
+  haulRate: number;
 }
 
 export interface Site {
@@ -145,6 +212,7 @@ export interface Site {
   size: number; // grid cells per side (square plot)
   buildings: Building[];
   storageMWh: number;
+  storageWater: number; // raw water in tanks, m³
   stats: SiteStats;
 }
 
@@ -196,6 +264,7 @@ export interface Ledger {
   upkeep: number;
   salaries: number;
   fuel: number;
+  water: number;
   maintenance: number;
   construction: number;
   research: number;
@@ -210,8 +279,29 @@ export interface HistoryPoint {
   income: number; // net $/s
 }
 
+export interface SupplyState {
+  ore: number;
+  yellowcake: number;
+  enriched: number;
+  defects: number; // defective assemblies hidden in the fuel stock
+  qa: number; // fabrication quality-assurance setting 0..1
+  rates: SupplyRates;
+}
+
+export interface SupplyRates {
+  mined: number;
+  milled: number;
+  enriched: number;
+  fabricated: number;
+  inspected: number;
+  rejected: number;
+  burn: number; // assemblies/s equivalent burned by reactors
+  defectRate: number; // current fabrication defect probability
+}
+
 export interface Automation {
   autoFuel: boolean;
+  autoRefuel: boolean;
   autoRepair: boolean;
   autoRestart: boolean;
   loadFollow: boolean;
@@ -231,6 +321,8 @@ export interface GameStats {
   repairs: number;
   dailiesDone: number;
   playTime: number;
+  refuels: number;
+  coreDamage: number;
 }
 
 export interface GameState {
@@ -243,7 +335,8 @@ export interface GameState {
   lifetimeEarned: number; // across all runs
   xp: number; // MWh based experience
   level: number;
-  fuel: number;
+  fuel: number; // fuel assemblies in stock
+  supply: SupplyState;
   research: {
     points: number; // banked RP
     active: string | null;
@@ -312,6 +405,13 @@ export interface Modifiers {
   contractSlots: number; // additive
   tripMargin: number; // additive fraction of temperature rise
   rampRate: number;
+  defectRate: number;
+  defectHazard: number;
+  refuelSpeed: number;
+  evaporation: number;
+  treatedUse: number;
+  mining: number;
+  processing: number;
   autoSetback: boolean;
 }
 

@@ -56,6 +56,12 @@ export function migrate(raw: unknown): GameState {
       b.enabled = b.enabled !== false;
     }
   }
+  // v1 → v2: fuel was counted in 10 MWh units, now in 100 MWh assemblies.
+  if (version < 2) {
+    s.fuel = Math.round((s.fuel ?? 0) / 10);
+    s.supply.defects = s.fuel * 0.002;
+  }
+  for (const site of Object.values(s.sites)) site.storageWater = Number.isFinite(site.storageWater) ? site.storageWater : 0;
   s.unlockedSites = s.unlockedSites.filter((id) => s.sites[id]);
   if (!s.unlockedSites.length) throw new Error('Save data has no plant sites.');
   if (!s.sites[s.activeSite]) s.activeSite = s.unlockedSites[0];

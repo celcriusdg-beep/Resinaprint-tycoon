@@ -6,14 +6,17 @@ import { Bar } from '../ui/common';
 export function PlantBalance({ compact }: { compact?: boolean }) {
   const g = useGame();
   const st = g.sites[g.activeSite].stats;
+  const hints: string[] = [];
   const rows = [
     { label: 'Reactor heat', value: st.thermalMW, cap: st.thermalMW, hint: '' },
     { label: 'Turbine capacity', value: st.steamUsedMW, cap: st.steamCapMW, hint: st.thermalMW > st.steamCapMW * 1.01 ? 'Turbines are limiting output — build or upgrade Turbine Halls.' : '' },
     { label: 'Cooling capacity', value: st.heatRejectMW, cap: st.coolingCapMW, hint: st.coolingRatio < 1 ? 'Cooling is overloaded — reactors are heating up!' : st.coolingRatio < 1.1 ? 'Cooling margin is thin.' : '' },
-    { label: 'Grid export', value: st.exportMW, cap: st.gridCapMW, hint: st.curtailedMW > 0.5 ? `${fmtPower(st.curtailedMW)} is being curtailed — add Substations.` : '' },
+    { label: 'Grid export', value: st.exportMW, cap: st.gridCapMW, hint: st.curtailedMW > 0.5 ? `${fmtPower(st.curtailedMW)} is being curtailed — add Substations.` : st.exportMW >= st.gridCapMW * 0.97 && st.demandMW > st.exportMW ? 'Grid connection is full — add or upgrade Substations to sell more.' : '' },
   ];
+  hints.push(...rows.map((r) => r.hint).filter(Boolean));
   const staffShort = st.staffFactor < 0.999;
-  const hints = rows.map((r) => r.hint).filter(Boolean);
+  if (st.waterFactor < 0.999) hints.unshift(`Cooling towers are short of water (${Math.round(st.waterFactor * 100)}%) — build a Water Intake, Wells or a Tank (Supply → Water).`);
+  if (st.treatedFactor < 0.999) hints.unshift('Not enough demineralised water — reactors are derated. Build a Water Treatment Plant.');
   if (staffShort) hints.push(`Understaffed (${Math.round(st.staffNeeded)}/${Math.round(st.staffCap)}) — build an Administration Building.`);
   return (
     <div className={`balance${compact ? ' compact' : ''}`}>
@@ -29,6 +32,13 @@ export function PlantBalance({ compact }: { compact?: boolean }) {
           </div>
         );
       })}
+      <div className="balance-row">
+        <div className="balance-label">
+          <span>Water make-up</span>
+          <span className="mono">{Math.round(st.evaporation)} / {Math.round(Math.max(0, st.rawSupply - st.rawToTreatment))} m³/h</span>
+        </div>
+        <Bar value={Math.min(1, st.evaporation / Math.max(1, st.rawSupply - st.rawToTreatment))} warn={st.waterFactor < 1} color={st.waterFactor < 0.999 ? '#ff5a5a' : '#3d9be0'} />
+      </div>
       <div className="balance-foot">
         <span>Heat {fmtPower(st.thermalMW)}</span>
         <span>Efficiency {fmtPct(st.efficiency * st.staffFactor, 1)}</span>

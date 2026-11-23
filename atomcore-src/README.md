@@ -44,7 +44,8 @@ src/
     buildings/          building definitions, grid placement & collision
     simulation/         reactor model, plant energy/heat balance, modifiers
     economy/            market, prices, contracts
-    research/           technology tree (40 projects, 8 categories)
+    research/           technology tree (50 projects, 9 categories)
+    supply/             fuel cycle (mining, processing, refuelling, fuel integrity), vehicles, water balance
     events/             random management events
     progression/        levels, achievements, milestones, daily objectives, prestige, locations
   stores/               Zustand stores: game (revision counters), UI, settings
@@ -75,17 +76,20 @@ adaptive monitor lowers resolution when the frame rate drops.
 | --- | --- |
 | Economy: starting capital, electricity sales, upkeep, salaries, fuel, repairs, construction, research funding, P&L | Implemented |
 | Daily demand/price cycle, market random walk, surplus sold at 20 %, transmission losses | Implemented |
-| Building system: 17 building types, grid placement, rotation, collision & road checks, construction time, demolition refunds | Implemented |
+| Building system: 27 building types, grid placement, rotation, collision & road checks, construction time, demolition refunds | Implemented |
 | Upgrades: per-building levels with downtime, condition, repairs | Implemented |
 | Reactors: Pilot, SMR, PWR, BWR, Molten Salt, Fusion with output, cost, upkeep, wear, efficiency, research gates | Implemented |
 | Reactor model: setpoint ramp, decay heat, temperature vs cooling, warning/trip limits, automatic setback, SCRAM & restart, fuel | Implemented (simplified, educational) |
 | Neutron/fission visualisation and 3D core hologram | Implemented |
-| Research tree: 40 projects across the 8 requested categories with prerequisites and level gates | Implemented |
-| Automation: fuel procurement, auto-restart, predictive maintenance, load following, smart storage | Implemented |
+| Research tree: 50 projects across 9 categories (incl. Fuel Cycle & Mining) with prerequisites and level gates | Implemented |
+| Water: evaporation from wet cooling, river/sea intakes, desert wells, treatment plants for demineralised water, storage tanks, dry cooling, droughts; shortages cut cooling or derate reactors | Implemented |
+| Fuel cycle: open-pit mines with 5 excavator tiers (compact → bucket-wheel) and 4 truck tiers (dig vs haul bottleneck), ore mill, enrichment, fabrication with a QA speed/defect trade-off, inspection lab, buy/sell market for every material | Implemented |
+| Reactor operations: core burnup and refuelling outages, coolant pump speed (cooling vs house load and wear), defective rods that fail, recommended power limits, core damage incidents with decommissioning | Implemented (simplified game mechanics) |
+| Automation: fuel procurement, outage planning (auto-refuel), auto-restart, predictive maintenance, load following, smart storage | Implemented |
 | Events: heatwave, cold snap, storms, market boom/slump, demand surge, fuel price shocks, equipment failures, pump faults, breakthroughs, grants, inspections, site-specific weather | Implemented |
 | Staff: capacity, salaries, understaffing penalty, training program | Implemented |
 | Energy contracts with premiums, penalties, bonuses and a global tier | Implemented |
-| Progression: levels, 30 achievements, 20 guided milestones, 3 daily objectives, prestige (shares), 4 unlockable sites, land expansion | Implemented |
+| Progression: levels, 37 achievements, 24 guided milestones, 3 daily objectives, prestige (shares), 4 unlockable sites, land expansion | Implemented |
 | Saves: IndexedDB autosave + rolling backup, migration, export/import codes and files, offline earnings (4 h base, up to 12 h, 50–80 % efficiency) | Implemented |
 | PWA: manifest, icons, iOS launch screens, standalone display, offline app shell | Implemented |
 | Audio: reactor hum, turbine, cooling, construction, UI, alarms, achievements, music, volume settings | Implemented (synthesised) |

@@ -23,6 +23,7 @@ export function createShowcaseState(): GameState {
       b.reactor.setpoint = 0.8;
       b.reactor.power = 0.8;
     }
+    if (b.vehicles) b.vehicles = { excavators: [1, 1, 1, 1, 1], trucks: [1, 1, 1, 2] };
     site.buildings.push(b);
   }
   // Other sites, with a small plant each, so every biome can be inspected.
@@ -35,7 +36,7 @@ export function createShowcaseState(): GameState {
       if (spot) other.buildings.push(makeBuilding(s, t, spot.x, spot.z, 0, true));
     }
   }
-  s.automation = { autoFuel: true, autoRepair: true, autoRestart: true, loadFollow: false, smartStorage: true };
+  s.automation = { autoFuel: true, autoRefuel: true, autoRepair: true, autoRestart: true, loadFollow: false, smartStorage: true };
   s.fuel = 1e6;
   return s;
 }

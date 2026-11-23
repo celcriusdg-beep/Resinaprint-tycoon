@@ -22,7 +22,9 @@ export function fmtNum(n: number, digits = 1): string {
 export function fmtMoney(n: number, digits = 1): string {
   const neg = n < 0;
   const a = Math.abs(n);
-  const body = a < 1000 ? Math.round(a).toLocaleString('en-US') : fmtNum(a, digits >= 2 ? 2 : digits);
+  const body = a < 10 && a > 0 && Math.abs(a - Math.round(a)) > 0.005
+    ? a.toFixed(a < 1 ? 2 : 1)
+    : a < 1000 ? Math.round(a).toLocaleString('en-US') : fmtNum(a, digits >= 2 ? 2 : digits);
   return `${neg ? '−' : ''}$${body}`;
 }
 

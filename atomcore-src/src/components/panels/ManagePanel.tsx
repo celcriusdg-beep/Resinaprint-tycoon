@@ -3,10 +3,10 @@ import { useGame } from '../../stores/gameStore';
 import { useUI } from '../../stores/uiStore';
 import { BUILDINGS } from '../../game/buildings/defs';
 import { fuelCapacity, repairCost, safetyRating, contractSlots } from '../../game/simulation/plant';
-import { getMods, companyMods } from '../../game/simulation/modifiers';
+import { getMods } from '../../game/simulation/modifiers';
 import { netIncome } from '../../game/engine';
 import { RESEARCH } from '../../game/research/tree';
-import { HOURS_PER_SECOND, LEDGER_WINDOW } from '../../game/constants';
+import { LEDGER_WINDOW } from '../../game/constants';
 import { fmtMoney, fmtPower, fmtPct, fmtTime, fmtNum, fmtEnergy } from '../../ui/format';
 import { run, A } from '../../ui/actions';
 import { Bar, Button, Stat, Tabs, Section, Toggle, Sparkline, Empty } from '../ui/common';
@@ -48,7 +48,8 @@ function Finance() {
   const expenses = [
     { label: 'Building upkeep', v: L.upkeep },
     { label: 'Salaries', v: L.salaries },
-    { label: 'Fuel purchases', v: L.fuel },
+    { label: 'Fuel & materials', v: L.fuel },
+    { label: 'Water', v: L.water ?? 0 },
     { label: 'Repairs', v: L.maintenance },
     { label: 'Construction', v: L.construction },
     { label: 'Research funding', v: L.research },
@@ -183,7 +184,8 @@ function Staff() {
 }
 
 const AUTO_INFO: { key: keyof Automation; label: string; desc: string }[] = [
-  { key: 'autoFuel', label: 'Fuel procurement', desc: 'Buys fuel automatically when stock falls below 30%.' },
+  { key: 'autoFuel', label: 'Fuel procurement', desc: 'Buys fuel assemblies on the market when stock falls below 30%.' },
+  { key: 'autoRefuel', label: 'Outage planning', desc: 'Shuts reactors down for refuelling when their core runs low or rods fail, then returns them to power.' },
   { key: 'autoRestart', label: 'Plant monitoring', desc: 'Restarts reactors after a SCRAM once it is safe.' },
   { key: 'autoRepair', label: 'Predictive maintenance', desc: 'Repairs equipment below 45% condition (needs a Maintenance Workshop at the site).' },
   { key: 'loadFollow', label: 'Load following', desc: 'Adjusts reactor power to match demand, contracts and storage, within turbine and cooling limits.' },
@@ -210,18 +212,14 @@ function AutomationTab() {
 function Fuel() {
   const g = useGame();
   const cap = fuelCapacity(g);
-  const mods = companyMods(g);
-  let use = 0; // units per second
-  for (const id of g.unlockedSites)
-    for (const b of g.sites[id].buildings)
-      if (b.reactor) use += (b.reactor.fission * HOURS_PER_SECOND / 10) * BUILDINGS[b.type].reactor!.fuelUse * mods.fuelUse;
+  const use = g.supply.rates.burn; // assemblies per second
   const buy = (frac: number) => run((s) => A.buyFuel(s, Math.ceil(cap * frac)), { sound: 'cash' });
   return (
     <>
       <div className="stat-grid">
-        <Stat label="Fuel stock" value={`${fmtNum(g.fuel)} / ${fmtNum(cap)}`} tone={g.fuel / cap < 0.15 ? 'bad' : undefined} sub={<Bar value={g.fuel} max={cap} warn={g.fuel / cap < 0.2} />} />
-        <Stat label="Consumption" value={`${use.toFixed(2)}/s`} sub={use > 0 ? `${fmtTime(g.fuel / use)} remaining` : 'reactors idle'} />
-        <Stat label="Fuel price" value={`$${g.market.fuelPrice.toFixed(2)}`} sub="per assembly unit" />
+        <Stat label="Assemblies in stock" value={`${fmtNum(g.fuel)} / ${fmtNum(cap)}`} tone={g.fuel / cap < 0.15 ? 'bad' : undefined} sub={<Bar value={g.fuel} max={cap} warn={g.fuel / cap < 0.2} />} />
+        <Stat label="Burn rate" value={`${fmtNum(use * 60)}/min`} sub={use > 0 ? `stock covers ${fmtTime(g.fuel / use)} of burnup` : 'reactors idle'} />
+        <Stat label="Market price" value={`$${Math.round(g.market.fuelPrice)}`} sub="per fuel assembly" />
         <Stat label="Fuel cost" value={`${fmtMoney(use * g.market.fuelPrice)}/s`} />
       </div>
       <div className="action-grid">
@@ -229,7 +227,7 @@ function Fuel() {
         <Button onClick={() => buy(0.5)}>+50%</Button>
         <Button variant="primary" onClick={() => buy(1)}>Fill · {fmtMoney(Math.max(0, cap - g.fuel) * g.market.fuelPrice)}</Button>
       </div>
-      <p className="muted small">Fuel is shared by all sites. Build Fuel Storage Facilities to hold more; research Fuel Logistics to buy automatically. {g.automation.autoFuel ? 'Auto-buy is ON.' : ''}</p>
+      <p className="muted small">Reactors burn the fuel loaded in their core; fresh assemblies from this stock are loaded during refuelling outages. The stock is shared by all sites — build Fuel Storage Facilities to hold enough for a full reload of your biggest reactor. Make your own in Supply → Fuel chain. {g.automation.autoFuel ? 'Auto-buy is ON.' : ''}</p>
       <p className="muted small">Energy sold this run: {fmtEnergy(g.stats.energyMWh)}</p>
     </>
   );

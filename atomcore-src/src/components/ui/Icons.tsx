@@ -44,6 +44,8 @@ const PATHS: Record<string, string> = {
   play: 'M6 4l14 8-14 8V4z',
   menu: 'M3 6h18M3 12h18M3 18h18',
   info: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 16v-4M12 8h.01',
+  truck: 'M1 4h13v12H1zM14 8h4l4 4v4h-8zM5.5 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM18.5 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
+  drop: 'M12 2.7l5.7 5.7a8 8 0 1 1-11.3 0z',
 };
 
 export type IconName = keyof typeof PATHS;

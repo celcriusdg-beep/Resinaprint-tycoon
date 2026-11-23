@@ -10,6 +10,8 @@ import { buyFuelInternal, repairInternal } from './engine';
 import { LOCATION_BY_ID, expandCost } from './progression/locations';
 import { pendingShares } from './progression/prestige';
 import { acceptOffer as acceptOfferImpl, cancelContract as cancelContractImpl } from './economy/market';
+import { startRefuel, decommissionCost, buyVehicle, sellVehicle, buyItem, sellItem, type Item } from './supply/fuelcycle';
+import { fuelCapacity } from './simulation/plant';
 
 // Every player action validates fully and returns an error string, or null on success.
 export type Result = string | null;
@@ -29,6 +31,7 @@ export function buildLockReason(s: GameState, type: BuildingType, siteId = s.act
     const node = RESEARCH.find((r) => r.unlocks?.includes(type));
     return `Requires research: ${node?.name}`;
   }
+  if (def.needsWaterBody && !LOCATION_BY_ID[siteId].waterBody) return 'No river or sea here — use wells or dry cooling';
   if (def.maxPerSite) {
     const n = s.sites[siteId].buildings.filter((b) => b.type === type).length;
     if (n >= def.maxPerSite) return `Limit of ${def.maxPerSite} per site`;
@@ -59,7 +62,7 @@ export function upgradeBuilding(s: GameState, id: number): Result {
   const b = site.buildings.find((x) => x.id === id);
   if (!b) return 'Building not found.';
   const def = BUILDINGS[b.type];
-  if (b.status !== 'active') return 'Building must be operational to upgrade.';
+  if (b.status !== 'active') return b.status === 'destroyed' ? 'The reactor is destroyed.' : 'Building must be operational to upgrade.';
   if (b.level >= def.maxLevel) return 'Already at maximum level.';
   const cost = upgradeCost(def, b.level, getMods(s, s.activeSite).buildCost);
   if (s.money < cost) return 'Not enough money.';
@@ -254,3 +257,53 @@ export function prestige(s: GameState): { state: GameState | null; error: Result
 }
 
 export { acceptOfferImpl as acceptOffer, cancelContractImpl as cancelContract };
+
+// ── Reactor operations ────────────────────────────────────────────────────
+
+export function refuelReactor(s: GameState, id: number): Result {
+  const b = s.sites[s.activeSite].buildings.find((x) => x.id === id);
+  if (!b?.reactor) return 'Not a reactor.';
+  return startRefuel(s, b);
+}
+
+export function setPumpSpeed(s: GameState, id: number, v: number): Result {
+  const b = s.sites[s.activeSite].buildings.find((x) => x.id === id);
+  if (!b?.reactor) return 'Not a reactor.';
+  b.reactor.pumpSpeed = Math.max(0.6, Math.min(1.25, v));
+  return null;
+}
+
+/** Clear the ruins of a destroyed reactor. */
+export function decommission(s: GameState, id: number): Result {
+  const site = s.sites[s.activeSite];
+  const b = site.buildings.find((x) => x.id === id);
+  if (!b) return 'Building not found.';
+  if (b.status !== 'destroyed') return 'Only destroyed reactors need decommissioning.';
+  const cost = decommissionCost(b);
+  if (s.money < cost) return 'Not enough money for the cleanup.';
+  s.money -= cost;
+  s.ledger.construction += cost;
+  site.buildings = site.buildings.filter((x) => x.id !== id);
+  pushLog(s, 'info', `Ruins of the ${BUILDINGS[b.type].short} decommissioned and the land cleaned up.`);
+  return null;
+}
+
+// ── Supply chain ─────────────────────────────────────────────────────────
+
+export function buyMineVehicle(s: GameState, buildingId: number, kind: 'excavator' | 'truck', tier: number): Result {
+  return buyVehicle(s, s.activeSite, buildingId, kind, tier);
+}
+
+export function sellMineVehicle(s: GameState, buildingId: number, kind: 'excavator' | 'truck', tier: number): Result {
+  return sellVehicle(s, s.activeSite, buildingId, kind, tier);
+}
+
+export function tradeItem(s: GameState, item: Item, qty: number): Result {
+  if (qty > 0) return buyItem(s, item, qty, fuelCapacity(s)) > 0 ? null : 'Cannot buy: storage full or not enough money.';
+  return sellItem(s, item, -qty) > 0 ? null : 'Nothing to sell.';
+}
+
+export function setQA(s: GameState, v: number): Result {
+  s.supply.qa = Math.max(0, Math.min(1, v));
+  return null;
+}

@@ -10,6 +10,7 @@ import { findFreeSpot } from '../src/game/buildings/grid';
 import { RESEARCH } from '../src/game/research/tree';
 import { BUILDINGS, upgradeCost } from '../src/game/buildings/defs';
 import { fuelCapacity } from '../src/game/simulation/plant';
+import { coreSize } from '../src/game/simulation/reactor';
 import { LOCATIONS, expandCost, LOCATION_BY_ID } from '../src/game/progression/locations';
 import { clearModCache, getMods } from '../src/game/simulation/modifiers';
 import type { BuildingType, GameState } from '../src/game/types';
@@ -38,7 +39,7 @@ function botStep(s: GameState) {
       .sort((a, b) => a.cost - b.cost);
     if (avail[0] && s.money > avail[0].money * 1.5) A.startResearch(s, avail[0].id);
   }
-  for (const k of ['autoFuel', 'autoRestart', 'autoRepair', 'loadFollow', 'smartStorage'] as const) A.setAutomation(s, k, true);
+  for (const k of ['autoFuel', 'autoRefuel', 'autoRestart', 'autoRepair', 'loadFollow', 'smartStorage'] as const) A.setAutomation(s, k, true);
   if (s.fuel < fuelCapacity(s) * 0.4) A.buyFuel(s, 1e9);
   for (const o of s.daily.objectives) A.claimDaily(s, o.id);
   // Sites
@@ -49,15 +50,32 @@ function botStep(s: GameState) {
     const st = site.stats;
     for (const b of site.buildings) if (b.status === 'broken' || b.condition < 40) A.repairBuilding(s, b.id);
     for (const b of site.buildings) if (b.reactor?.scrammed) A.restartReactor(s, b.id);
+    // Manual outage management before Outage Planning is researched
+    for (const b of site.buildings) {
+      const r = b.reactor;
+      if (!r || b.status !== 'active' || s.automation.autoRefuel) continue;
+      if (r.coreFuel < 0.12 || r.failedRods >= 2) { r.setpoint = 0; if (r.power < 0.05) A.refuelReactor(s, b.id); }
+      else if (r.setpoint === 0) r.setpoint = 1;
+    }
     for (const b of site.buildings) if (b.reactor && !s.automation.loadFollow) b.reactor.setpoint = st.coolingRatio > 1.05 ? 1 : 0.85;
     if (site.buildings.some((b) => b.status === 'constructing' || b.status === 'upgrading')) continue;
     // Accept contracts if we have surplus.
     if (st.surplusMW > 5 && s.offers[0]) A.acceptOffer(s, s.offers[0].id);
     const heat = st.thermalMW || 1;
     if (!site.buildings.some((b) => b.type === 'lab')) { tryBuild(s, 'lab'); continue; }
+    const desert = !LOCATION_BY_ID[id].waterBody;
+    if (st.evaporation > (st.rawSupply - st.rawToTreatment) * 0.85 && st.evaporation > 1) {
+      if (!tryBuild(s, desert ? 'water_wells' : 'water_intake')) {
+        if (!upgradeCheapest(s, [desert ? 'water_wells' : 'water_intake'])) tryBuild(s, 'cooling_dry');
+      }
+      continue;
+    }
+    if (st.treatedFactor < 1) { if (!tryBuild(s, 'water_treatment')) upgradeCheapest(s, ['water_treatment']); continue; }
     if (st.coolingRatio < 1.15 && st.thermalMW > 0) { if (!tryBuild(s, s.research.completed.includes('c_tower') ? 'cooling_tower' : 'cooling_mech')) upgradeCheapest(s, ['cooling_mech', 'cooling_tower']); continue; }
     if (st.steamCapMW < heat * 1.05) { if (!tryBuild(s, s.research.completed.includes('t_large') ? 'turbine_large' : 'turbine')) upgradeCheapest(s, ['turbine', 'turbine_large']); continue; }
-    if (st.curtailedMW > 0.5) { if (!tryBuild(s, 'substation')) upgradeCheapest(s, ['substation']); continue; }
+    if (st.curtailedMW > 0.5 || (st.exportMW >= st.gridCapMW * 0.97 && st.demandMW > st.exportMW)) { if (!tryBuild(s, 'substation')) upgradeCheapest(s, ['substation']); continue; }
+    const biggestCore = Math.max(0, ...Object.values(s.sites).flatMap((x) => x.buildings.filter((b) => b.reactor).map((b) => coreSize(b))));
+    if (fuelCapacity(s) < biggestCore * 1.1) { if (!tryBuild(s, 'fuel_depot')) upgradeCheapest(s, ['fuel_depot']); continue; }
     if (st.staffNeeded > st.staffCap * 0.9) { tryBuild(s, 'admin') || upgradeCheapest(s, ['admin']); continue; }
     if (!site.buildings.some((b) => b.type === 'maintenance') && s.level >= 3) { tryBuild(s, 'maintenance'); continue; }
     const r = bestReactor(s);
@@ -108,6 +126,15 @@ it('bot progresses through the game', () => {
     mark('lvl15', s.level >= 15);
     mark('lvl20', s.level >= 20);
     mark('prestige', s.runEarned >= 50_000_000);
+    if (process.env.BALANCE_DEBUG && t % 1800 === 0 && t > 0) {
+      for (const id of s.unlockedSites) {
+        const st = s.sites[id].stats;
+        const rs = s.sites[id].buildings.filter((b) => b.reactor);
+        console.log(`  ${id}: cool=${st.coolingRatio.toFixed(2)} wf=${st.waterFactor.toFixed(2)} tf=${st.treatedFactor.toFixed(2)} evap=${Math.round(st.evaporation)} raw=${Math.round(st.rawSupply)} reactors=${rs.map((b) => `${b.type.slice(8)}:${b.status[0]}:${Math.round(b.reactor!.coreFuel * 100)}%/f${b.reactor!.failedRods}/p${Math.round(b.reactor!.power * 100)}`).join(' ')}`);
+      }
+      const L = s.ledgerPrev;
+      console.log(`  fuel=${Math.round(s.fuel)} cap=${fuelCapacity(s)} ledger/min sales=${Math.round(L.sales)} fuel=${Math.round(L.fuel)} water=${Math.round(L.water)} upkeep=${Math.round(L.upkeep)} constr=${Math.round(L.construction)} other=${Math.round(L.other)}`);
+    }
     if (t % 1800 === 0) {
       console.log(`t=${t / 60}min lvl=${s.level} money=${Math.round(s.money)} MW=${Math.round(totalMW())} demand=${Math.round(Object.values(s.sites).reduce((a, x) => a + x.stats.demandMW, 0))} research=${s.research.completed.length} buildings=${Object.values(s.sites).reduce((a, x) => a + x.buildings.length, 0)} scrams=${s.stats.scrams}`);
     }

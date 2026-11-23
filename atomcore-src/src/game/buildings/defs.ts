@@ -24,7 +24,7 @@ const defs: BuildingDef[] = [
     wear: 0.022,
     unlock: {},
     maxPerSite: 2,
-    reactor: { thermalMW: 24, efficiency: 0.3, fuelUse: 1, rampRate: 0.08, nominalTemp: 120, research: 0.25 },
+    reactor: { thermalMW: 24, efficiency: 0.3, fuelUse: 1, rampRate: 0.08, nominalTemp: 120, research: 0.25, coreSize: 29, refuelTime: 15 },
     stats: {},
   },
   {
@@ -45,7 +45,7 @@ const defs: BuildingDef[] = [
     upgradeGrowth: 1.7,
     wear: 0.024,
     unlock: { research: 'r_smr' },
-    reactor: { thermalMW: 80, efficiency: 0.32, fuelUse: 1, rampRate: 0.06, nominalTemp: 300 },
+    reactor: { thermalMW: 80, efficiency: 0.32, fuelUse: 1, rampRate: 0.06, nominalTemp: 300, coreSize: 96, refuelTime: 22 },
     stats: {},
   },
   {
@@ -66,7 +66,7 @@ const defs: BuildingDef[] = [
     upgradeGrowth: 1.7,
     wear: 0.026,
     unlock: { research: 'r_pwr', level: 6 },
-    reactor: { thermalMW: 650, efficiency: 0.33, fuelUse: 1, rampRate: 0.035, nominalTemp: 320 },
+    reactor: { thermalMW: 650, efficiency: 0.33, fuelUse: 1, rampRate: 0.035, nominalTemp: 320, coreSize: 780, refuelTime: 55 },
     stats: {},
   },
   {
@@ -87,7 +87,7 @@ const defs: BuildingDef[] = [
     upgradeGrowth: 1.7,
     wear: 0.028,
     unlock: { research: 'r_bwr', level: 10 },
-    reactor: { thermalMW: 1800, efficiency: 0.34, fuelUse: 0.95, rampRate: 0.04, nominalTemp: 286 },
+    reactor: { thermalMW: 1800, efficiency: 0.34, fuelUse: 0.95, rampRate: 0.04, nominalTemp: 286, coreSize: 2160, refuelTime: 70 },
     stats: {},
   },
   {
@@ -108,7 +108,7 @@ const defs: BuildingDef[] = [
     upgradeGrowth: 1.7,
     wear: 0.022,
     unlock: { research: 'x_msr', level: 16 },
-    reactor: { thermalMW: 5200, efficiency: 0.44, fuelUse: 0.55, rampRate: 0.05, nominalTemp: 650 },
+    reactor: { thermalMW: 5200, efficiency: 0.44, fuelUse: 0.55, rampRate: 0.05, nominalTemp: 650, coreSize: 6240, refuelTime: 0, onlineRefuel: true },
     stats: {},
   },
   {
@@ -129,7 +129,7 @@ const defs: BuildingDef[] = [
     upgradeGrowth: 1.7,
     wear: 0.03,
     unlock: { research: 'x_fusion', level: 22 },
-    reactor: { thermalMW: 40_000, efficiency: 0.42, fuelUse: 0.02, rampRate: 0.02, nominalTemp: 550 },
+    reactor: { thermalMW: 40_000, efficiency: 0.42, fuelUse: 0.02, rampRate: 0.02, nominalTemp: 550, coreSize: 48000, refuelTime: 60 },
     stats: {},
   },
   {
@@ -310,7 +310,7 @@ const defs: BuildingDef[] = [
     name: 'Fuel Storage Facility',
     short: 'Fuel Depot',
     category: 'support',
-    description: 'Secure storage for fresh fuel assemblies. Raises how much fuel your company can keep in stock.',
+    description: 'Secure storage for fresh fuel assemblies. Raises how many assemblies your company can keep in stock.',
     size: [2, 2],
     cost: 4_000,
     buildTime: 20,
@@ -322,7 +322,7 @@ const defs: BuildingDef[] = [
     upgradeGrowth: 1.95,
     wear: 0.006,
     unlock: {},
-    stats: { fuelCap: 800 },
+    stats: { fuelCap: 600 },
   },
   {
     type: 'generator_emergency',
@@ -344,6 +344,98 @@ const defs: BuildingDef[] = [
     unlock: { research: 's_egen' },
     stats: { safety: 8 },
   },
+  // ── Water ───────────────────────────────────────────────────────────
+  {
+    type: 'water_intake',
+    name: 'Water Intake Pump Station',
+    short: 'Water Intake',
+    category: 'water',
+    description: 'Screens and pumps that draw raw water from the river, sea or fjord to replace what the cooling towers evaporate.',
+    size: [2, 2], cost: 8_000, buildTime: 22, upkeep: 0.5, staff: 1, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.016, unlock: { level: 2 }, needsWaterBody: true, stats: { rawWater: 250 },
+  },
+  {
+    type: 'water_wells',
+    name: 'Groundwater Well Field',
+    short: 'Wells',
+    category: 'water',
+    description: 'Boreholes with submersible pumps. Works anywhere, including the desert, but each well field yields little and the aquifer limits how many you can drill.',
+    size: [2, 2], cost: 10_000, buildTime: 20, upkeep: 0.6, staff: 1, maxLevel: 6, levelGrowth: 1.6, upgradeBase: 0.6, upgradeGrowth: 1.95,
+    wear: 0.018, unlock: { level: 2 }, maxPerSite: 6, stats: { rawWater: 70 },
+  },
+  {
+    type: 'water_treatment',
+    name: 'Water Treatment Plant',
+    short: 'Water Treatment',
+    category: 'water',
+    description: 'Clarifiers, filters and ion-exchange beds that turn raw water into ultra-pure demineralised water for the reactor and steam cycle.',
+    size: [3, 3], cost: 15_000, buildTime: 35, upkeep: 1.2, staff: 2, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.014, unlock: { level: 2 }, stats: { treatedWater: 25 },
+  },
+  {
+    type: 'water_tank',
+    name: 'Raw Water Storage Tank',
+    short: 'Water Tank',
+    category: 'water',
+    description: 'A buffer that keeps the cooling towers supplied through short shortages, droughts and intake outages.',
+    size: [2, 2], cost: 6_000, buildTime: 18, upkeep: 0.2, staff: 0, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.006, unlock: { level: 2 }, stats: { waterStorage: 3000 },
+  },
+  // ── Fuel cycle ──────────────────────────────────────────────────────
+  {
+    type: 'uranium_mine',
+    name: 'Open-Pit Uranium Mine',
+    short: 'Uranium Mine',
+    category: 'fuel',
+    description: 'An open pit worked by excavators and haul trucks. Buy vehicles in the mine panel; higher levels add vehicle slots and stockpile space.',
+    size: [4, 4], cost: 25_000, buildTime: 45, upkeep: 1.2, staff: 6, maxLevel: 5, levelGrowth: 1.6, upgradeBase: 0.6, upgradeGrowth: 1.9,
+    wear: 0.02, unlock: { research: 'f_mining' }, stats: { oreStock: 400 },
+  },
+  {
+    type: 'ore_mill',
+    name: 'Uranium Ore Mill',
+    short: 'Ore Mill',
+    category: 'fuel',
+    description: 'Crushes and leaches ore to extract uranium concentrate ("yellowcake"). 10 t of ore → 1 unit of yellowcake.',
+    size: [3, 3], cost: 22_000, buildTime: 40, upkeep: 1, staff: 5, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.02, unlock: { research: 'f_mining' }, stats: { millRate: 1.5, ycStock: 100 },
+  },
+  {
+    type: 'enrichment',
+    name: 'Conversion & Enrichment Plant',
+    short: 'Enrichment',
+    category: 'fuel',
+    description: 'Converts yellowcake to a gas and raises the share of fissile U-235 to reactor grade (3–5%). 2 yellowcake → 1 enriched uranium.',
+    size: [4, 3], cost: 90_000, buildTime: 70, upkeep: 3, staff: 10, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.015, unlock: { research: 'f_enrich' }, stats: { enrichRate: 0.3, enrStock: 60 },
+  },
+  {
+    type: 'fuel_fab',
+    name: 'Fuel Fabrication Plant',
+    short: 'Fuel Fab',
+    category: 'fuel',
+    description: 'Presses uranium oxide pellets, seals them in zirconium cladding tubes and bundles the rods into fuel assemblies. 1 enriched → 1 assembly.',
+    size: [3, 3], cost: 60_000, buildTime: 55, upkeep: 2, staff: 8, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.018, unlock: { research: 'f_enrich' }, stats: { fabRate: 0.12 },
+  },
+  {
+    type: 'fuel_qa',
+    name: 'Fuel Inspection Lab',
+    short: 'Fuel QA Lab',
+    category: 'fuel',
+    description: 'Ultrasonic and X-ray inspection of new assemblies. Defective ones are caught and recycled before they ever reach a reactor.',
+    size: [2, 2], cost: 20_000, buildTime: 30, upkeep: 1, staff: 4, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.01, unlock: { research: 'f_qa' }, stats: { inspectRate: 0.15 },
+  },
+  {
+    type: 'cooling_dry',
+    name: 'Air-Cooled Condenser',
+    short: 'Dry Cooling',
+    category: 'cooling',
+    description: 'Banks of finned tubes with big fans. Uses no water at all — ideal for the desert — but costs more per megawatt than wet cooling.',
+    size: [3, 2], cost: 14_000, buildTime: 30, upkeep: 0.9, staff: 1, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.02, unlock: { research: 'c_dry' }, dry: true, stats: { coolingMW: 24 },
+  },
 ];
 
 export const BUILDINGS: Record<BuildingType, BuildingDef> = Object.fromEntries(
@@ -356,11 +448,13 @@ export const CATEGORY_LABEL: Record<BuildingCategory, string> = {
   reactor: 'Reactors',
   power: 'Turbines',
   cooling: 'Cooling',
+  water: 'Water',
+  fuel: 'Fuel Cycle',
   grid: 'Grid & Storage',
   support: 'Support',
 };
 
-export const CATEGORY_ORDER: BuildingCategory[] = ['reactor', 'power', 'cooling', 'grid', 'support'];
+export const CATEGORY_ORDER: BuildingCategory[] = ['reactor', 'power', 'cooling', 'water', 'fuel', 'grid', 'support'];
 
 export function isReactor(type: BuildingType): boolean {
   return BUILDINGS[type].category === 'reactor';

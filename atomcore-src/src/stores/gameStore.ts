@@ -45,6 +45,10 @@ export function getGame(): GameState {
 export function structureSignature(g: GameState): string {
   const site = g.sites[g.activeSite];
   let sig = `${g.activeSite}:${site.size}:`;
-  for (const b of site.buildings) sig += `${b.id},${b.type},${b.x},${b.z},${b.rot},${b.level},${b.status === 'constructing' ? 'c' : b.status === 'broken' ? 'b' : 'a'};`;
+  for (const b of site.buildings) {
+    sig += `${b.id},${b.type},${b.x},${b.z},${b.rot},${b.level},${b.status[0]}${b.status === 'destroyed' ? 'x' : ''}`;
+    if (b.vehicles) sig += `|${b.vehicles.excavators.join('.')}|${b.vehicles.trucks.join('.')}`;
+    sig += ';';
+  }
   return sig;
 }

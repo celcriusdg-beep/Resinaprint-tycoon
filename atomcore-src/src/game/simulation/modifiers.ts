@@ -14,6 +14,7 @@ export function baseMods(): Modifiers {
     fuelUse: 1, upkeep: 1, salary: 1, buildCost: 1, buildSpeed: 1, price: 1, demand: 1,
     transmissionLoss: TRANSMISSION_LOSS, safety: 0, offlineEff: OFFLINE_BASE_EFF, offlineHours: OFFLINE_BASE_HOURS,
     staffCap: 0, contractSlots: 0, tripMargin: 0, rampRate: 1, autoSetback: false,
+    defectRate: 1, defectHazard: 1, refuelSpeed: 1, evaporation: 1, treatedUse: 1, mining: 1, processing: 1,
   };
 }
 
@@ -39,6 +40,10 @@ export function companyMods(s: GameState): Modifiers {
   }
   // Clamp multiplicative reductions so they never go below a sane floor.
   m.wear = Math.max(0.2, m.wear);
+  m.defectRate = Math.max(0.1, m.defectRate);
+  m.defectHazard = Math.max(0.1, m.defectHazard);
+  m.evaporation = Math.max(0.3, m.evaporation);
+  m.treatedUse = Math.max(0.3, m.treatedUse);
   m.fuelUse = Math.max(0.2, m.fuelUse);
   m.buildCost = Math.max(0.4, m.buildCost);
   m.upkeep = Math.max(0.4, m.upkeep);

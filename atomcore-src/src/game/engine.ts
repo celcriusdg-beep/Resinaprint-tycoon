@@ -12,6 +12,7 @@ import { getMods } from './simulation/modifiers';
 import { emptyLedger } from './state';
 import { HOURS_PER_SECOND, AUTOFUEL_THRESHOLD, HISTORY_INTERVAL, HISTORY_LENGTH, LEDGER_WINDOW, REPAIR_THRESHOLD_AUTO } from './constants';
 import { LOCATION_BY_ID } from './progression/locations';
+import { buyItem, finishRefuel, startRefuel, refuelNeed } from './supply/fuelcycle';
 
 export interface TickOptions {
   offline?: boolean;
@@ -45,11 +46,25 @@ function stepConstruction(s: GameState, dt: number, offline: boolean): void {
     const site = s.sites[id];
     const mods = getMods(s, id);
     for (const b of site.buildings) {
-      if (b.status !== 'constructing' && b.status !== 'upgrading') continue;
-      b.progress += (dt * mods.buildSpeed) / Math.max(1, b.buildTotal);
+      if (b.status !== 'constructing' && b.status !== 'upgrading' && b.status !== 'refueling') continue;
+      const speed = b.status === 'refueling' ? 1 : mods.buildSpeed;
+      b.progress += (dt * speed) / Math.max(1, b.buildTotal);
       if (b.progress < 1) continue;
       b.progress = 1;
       const def = BUILDINGS[b.type];
+      if (b.status === 'refueling') {
+        finishRefuel(b);
+        b.status = 'active';
+        s.stats.refuels++;
+        const r = b.reactor!;
+        if (r.resumeSetpoint !== null) {
+          r.setpoint = r.resumeSetpoint;
+          r.resumeSetpoint = null;
+        }
+        pushLog(s, 'good', `${def.short} at ${LOCATION_BY_ID[id].name} refuelled (core ${Math.round(r.coreFuel * 100)}%).`);
+        if (!offline) notify(s, { kind: 'build', title: 'Refuelling complete', text: `${def.short} is ready. ${r.setpoint > 0 ? 'Returning to power.' : 'Raise the power setpoint to restart.'}` });
+        continue;
+      }
       if (b.status === 'upgrading') {
         b.level++;
         b.condition = Math.min(100, b.condition + 25);
@@ -75,6 +90,21 @@ function runAutomation(s: GameState, offline: boolean): void {
     const cap = fuelCapacity(s);
     if (s.fuel < cap * AUTOFUEL_THRESHOLD) buyFuelInternal(s, cap - s.fuel, true);
   }
+  // Outage planning: shut down, refuel and return to power automatically.
+  if (a.autoRefuel || offline) {
+    for (const id of s.unlockedSites) {
+      for (const b of s.sites[id].buildings) {
+        const r = b.reactor;
+        if (!r || b.status !== 'active' || BUILDINGS[b.type].reactor!.onlineRefuel) continue;
+        if (r.coreFuel >= 0.12 && r.failedRods < 2) continue;
+        if (r.resumeSetpoint === null) r.resumeSetpoint = Math.max(r.setpoint, 0.5);
+        r.setpoint = 0;
+        // Wait until there is enough fuel in stock for a proper reload.
+        const enough = Math.min(refuelNeed(b), fuelCapacity(s) * 0.9);
+        if (r.power <= 0.05 && s.fuel >= Math.max(1, enough)) startRefuel(s, b);
+      }
+    }
+  }
   if (a.autoRepair) {
     for (const id of s.unlockedSites) {
       const site = s.sites[id];
@@ -91,16 +121,8 @@ function runAutomation(s: GameState, offline: boolean): void {
 }
 
 export function buyFuelInternal(s: GameState, units: number, auto = false): number {
-  const cap = fuelCapacity(s);
-  const space = Math.max(0, cap - s.fuel);
-  const affordable = s.money / Math.max(0.01, s.market.fuelPrice);
-  const n = Math.floor(Math.min(units, space, affordable));
-  if (n <= 0) return 0;
-  const cost = n * s.market.fuelPrice;
-  s.money -= cost;
-  s.fuel += n;
-  s.ledger.fuel += cost;
-  if (auto && n > 50) pushLog(s, 'info', `Auto-purchased ${n} fuel units for $${Math.round(cost).toLocaleString('en-US')}.`);
+  const n = buyItem(s, 'assemblies', units, fuelCapacity(s));
+  if (auto && n > 5) pushLog(s, 'info', `Auto-purchased ${n} fuel assemblies for $${Math.round(n * s.market.fuelPrice).toLocaleString('en-US')}.`);
   return n;
 }
 
