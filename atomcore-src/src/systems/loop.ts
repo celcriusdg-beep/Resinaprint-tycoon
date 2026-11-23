@@ -18,6 +18,12 @@ let acc = 0;
 let lastSave = 0;
 let lastSig = '';
 let hiddenAt = 0;
+let saveEnabled = true;
+
+/** Debug sandboxes disable saving so they never overwrite a real save. */
+export function setSaveEnabled(on: boolean): void {
+  saveEnabled = on;
+}
 
 function drainNotices() {
   const g = useGameStore.getState().game;
@@ -55,11 +61,13 @@ function playNoticeSound(n: Notice) {
 }
 
 function frame() {
-  const now = performance.now();
-  let dt = (now - last) / 1000;
+  // Wall-clock time is used so suspended apps (iOS) are measured correctly.
+  const now = Date.now();
+  const dt = (now - last) / 1000;
   last = now;
   // Timer throttling or a suspended tab: hand long gaps to the offline simulator.
   if (dt > 30) {
+    hiddenAt = 0; // the visibility handler must not count this gap again
     runCatchUp(dt);
     return;
   }
@@ -92,6 +100,7 @@ function runCatchUp(seconds: number) {
 
 export async function persist(): Promise<void> {
   lastSave = Date.now();
+  if (!saveEnabled) return;
   try {
     const t = await saveGame(useGameStore.getState().game);
     useGameStore.getState().setSavedAt(t);
@@ -110,7 +119,7 @@ function onVisibility() {
     if (hiddenAt) {
       const away = (Date.now() - hiddenAt) / 1000;
       hiddenAt = 0;
-      last = performance.now();
+      last = Date.now();
       if (away > 30) runCatchUp(away);
     }
   }
@@ -118,7 +127,7 @@ function onVisibility() {
 
 export function startLoop(): void {
   if (timer !== null) return;
-  last = performance.now();
+  last = Date.now();
   lastSave = Date.now();
   timer = window.setInterval(frame, 100);
   document.addEventListener('visibilitychange', onVisibility);

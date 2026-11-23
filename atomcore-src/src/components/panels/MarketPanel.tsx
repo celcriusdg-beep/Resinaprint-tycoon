@@ -38,10 +38,10 @@ export function MarketPanel() {
       <Section title={`Daily cycle · ${String(hour).padStart(2, '0')}:00`}>
         <svg viewBox={`0 0 ${w} ${h}`} className="day-chart" preserveAspectRatio="none">
           <path d={path('d', 0.6, 1.15)} className="demand" />
-          <path d={path('p', 0.6, 1.3)} className="price" />
+          <path d={path('p', 0.35, 1.45)} className="price" />
           <line x1={phase * w} x2={phase * w} y1={0} y2={h} className="now" />
         </svg>
-        <div className="legend small"><span className="lg demand">Demand</span><span className="lg price">Price</span><span className="muted">One in-game day = {DAY_LENGTH / 60} minutes. Demand and price peak in the evening.</span></div>
+        <div className="legend small"><span className="lg lg-demand">Demand</span><span className="lg lg-price">Price</span><span className="muted">One in-game day = {DAY_LENGTH / 60} minutes. Demand and price peak in the evening.</span></div>
       </Section>
       {g.events.length > 0 && (
         <Section title="Active events">

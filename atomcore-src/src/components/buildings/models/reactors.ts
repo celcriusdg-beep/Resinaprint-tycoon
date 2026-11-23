@@ -106,7 +106,7 @@ export function pwrReactor(): ModelBuilder {
   // Buttresses / tendon galleries
   for (let i = 0; i < 3; i++) {
     const a = (i / 3) * Math.PI * 2 + 0.4;
-    b.box(0.55, 6.2, 0.4, m.concreteDark, [cx + Math.cos(a) * (r + 0.1), 0.25, cz + Math.sin(a) * (r + 0.1)], -a);
+    b.box(0.7, 6.2, 0.7, m.concreteDark, [cx + Math.cos(a) * (r - 0.12), 0.25, cz + Math.sin(a) * (r - 0.12)], -a);
   }
   // Equipment hatch
   b.pipe([cx + r * 0.62, 2.3, cz + r * 0.62], [cx + r * 0.78, 2.3, cz + r * 0.78], 0.9, m.steelDark, 20);

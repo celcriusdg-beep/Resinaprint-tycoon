@@ -74,3 +74,8 @@ Studio scene (js/workshop.js), story chapters, regulars, events and figure shelf
 
 ## 3.7 Shop and machines
 Shop hub (js/shop.js), machine illustrations (js/machart.js) and the machine catalogue, fleet and tuning UI (js/machui.js).
+
+## ATOMCORE
+A 3D nuclear power plant tycoon in `atomcore/` (built game, open `atomcore/index.html` via a web server) with its
+TypeScript/React/Three.js source in `atomcore-src/` (see `atomcore-src/README.md`). Installable as a PWA on iPhone
+(Safari → Share → Add to Home Screen); saves are stored on the device and can be moved between devices with export codes.

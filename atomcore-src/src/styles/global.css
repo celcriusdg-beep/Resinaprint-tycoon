@@ -310,8 +310,8 @@ table.pl tr.big td { font-size: 15px; }
 .day-chart .now { stroke: #fff; stroke-width: 1.5; vector-effect: non-scaling-stroke; opacity: 0.8; }
 .legend { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .lg::before { content: ''; display: inline-block; width: 14px; height: 3px; margin-right: 5px; vertical-align: middle; }
-.lg.demand::before { background: var(--accent); }
-.lg.price::before { background: var(--amber); }
+.lg-demand::before { background: var(--accent); }
+.lg-price::before { background: var(--amber); }
 .contract { background: rgba(255,255,255,0.035); border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
 .contract.global { border-color: rgba(255,124,229,0.45); }
 .contract.national { border-color: rgba(255,182,72,0.4); }

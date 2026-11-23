@@ -7,6 +7,7 @@ export type PanelId = 'build' | 'research' | 'manage' | 'market' | 'goals' | 'si
 export interface Toast extends Notice {
   id: number;
   at: number;
+  count?: number;
 }
 
 export interface Placement {
@@ -71,6 +72,13 @@ export const useUI = create<UIStore>((set) => ({
   cancelPlacement: () => set({ placement: null }),
   pushToast: (n) =>
     set((s) => {
+      // Merge bursts of identical notices (e.g. several reactors tripping at once).
+      const dup = s.toasts.find((x) => x.title === n.title && x.kind === n.kind && Date.now() - x.at < 6000);
+      if (dup) {
+        const count = (dup.count ?? 1) + 1;
+        const merged: Toast = { ...dup, count, text: `${n.text ?? ''} (×${count})`.trim(), at: Date.now() };
+        return { toasts: s.toasts.map((x) => (x.id === dup.id ? merged : x)) };
+      }
       const t: Toast = { ...n, id: toastId++, at: Date.now() };
       const toasts = [...s.toasts, t].slice(-4);
       return { toasts };

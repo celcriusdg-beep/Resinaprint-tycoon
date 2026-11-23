@@ -4,7 +4,7 @@ import { useUI, type PanelId } from './stores/uiStore';
 import { useSettings } from './stores/settingsStore';
 import { loadGame, requestPersistence } from './systems/save/storage';
 import { simulateOffline } from './systems/offline/offline';
-import { startLoop, persist } from './systems/loop';
+import { startLoop, persist, setSaveEnabled } from './systems/loop';
 import { audio } from './systems/audio/audio';
 import { HUD } from './components/ui/HUD';
 import { NavBar, Sheet, PlacementBar, CameraButtons, Toasts } from './components/ui/Chrome';
@@ -41,6 +41,17 @@ export default function App() {
     let cancelled = false;
     (async () => {
       await useSettings.getState().load();
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('showcase')) {
+        const { createShowcaseState } = await import('./game/dev');
+        setSaveEnabled(false);
+        useGameStore.getState().setGame(createShowcaseState());
+        useSettings.setState({ seenWelcome: true });
+        startLoop();
+        (window as unknown as Record<string, unknown>).__atom = () => useGameStore.getState().game;
+        setPhase('ready');
+        return;
+      }
       const res = await loadGame();
       if (cancelled) return;
       if (res.state) {
