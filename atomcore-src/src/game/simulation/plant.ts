@@ -378,13 +378,16 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
 }
 
 function stepWear(s: GameState, site: Site, mods: Modifiers, crews: number, dt: number, offline: boolean): void {
-  const wearFactor = mods.wear / (1 + 0.45 * crews);
+  // While the player is away a skeleton crew does basic upkeep: slower wear,
+  // and equipment never drops below 50% so nobody returns to a wrecked plant.
+  const wearFactor = (mods.wear / (1 + 0.45 * crews)) * (offline ? 0.3 : 1);
+  const floor = offline ? 50 : 0;
   let worst: Building | null = null;
   for (const b of site.buildings) {
     if (b.status !== 'active') continue;
     const def = BUILDINGS[b.type];
     const load = b.reactor ? 0.25 + 0.75 * b.reactor.power : b.enabled ? 1 : 0.2;
-    b.condition = Math.max(0, b.condition - def.wear * load * wearFactor * dt);
+    if (b.condition > floor) b.condition = Math.max(floor, b.condition - def.wear * load * wearFactor * dt);
     if (b.condition < 100 && (!worst || b.condition < worst.condition)) worst = b;
     // Very worn non-reactor equipment can fail.
     if (!offline && !isReactor(b.type) && b.condition < 20 && random() < 0.004 * dt) {

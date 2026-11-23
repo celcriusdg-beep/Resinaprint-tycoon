@@ -183,6 +183,16 @@ describe('offline progress', () => {
     expect(s.money).toBeGreaterThan(m0);
   });
 
+  it('does not wreck the plant while away', () => {
+    const s = createInitialState();
+    simulateOffline(s, 12 * 3600);
+    for (const b of s.sites.riverside.buildings) {
+      expect(b.condition).toBeGreaterThanOrEqual(50);
+      expect(b.status).toBe('active');
+    }
+    expect(s.sites.riverside.buildings[0].reactor!.scrammed).toBe(false);
+  });
+
   it('ignores very short absences', () => {
     const s = createInitialState();
     expect(simulateOffline(s, 5)).toBeNull();

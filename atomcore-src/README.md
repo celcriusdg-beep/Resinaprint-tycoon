@@ -26,6 +26,7 @@ Browser smoke test (needs a running `npx vite preview --port 4173` and Playwrigh
 
 ```bash
 PLAYWRIGHT_PATH=$(npm root -g)/playwright node tools/smoke.mjs http://localhost:4173/ tests/output
+PLAYWRIGHT_PATH=$(npm root -g)/playwright node tools/smoke2.mjs http://localhost:4173/ tests/output  # offline, PWA, research, mouse placement
 ```
 
 Useful URL parameters: `?quality=low|medium|high` overrides graphics quality, `?debug=1`
