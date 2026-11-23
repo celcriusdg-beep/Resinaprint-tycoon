@@ -575,3 +575,5 @@ table.pl tr.big td { font-size: 15px; }
 .target-vs-actual { display: flex; flex-direction: column; gap: 3px; }
 .tva-row { display: grid; grid-template-columns: 48px 1fr 52px; gap: 8px; align-items: center; font-size: 12px; }
 .tva-row .mono { text-align: right; }
+
+.placement-bar.moving { border-color: rgba(255,182,72,0.6); }

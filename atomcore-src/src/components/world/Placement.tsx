@@ -77,9 +77,9 @@ function Ghost({ siteSize }: { siteSize: number }) {
   const group = useRef<THREE.Group>(null);
   const site = getGame().sites[getGame().activeSite];
   const valid = useMemo(
-    () => checkPlacement(site, placement.type, placement.x!, placement.z!, placement.rot) === null,
+    () => checkPlacement(site, placement.type, placement.x!, placement.z!, placement.rot, placement.moveId) === null,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [placement.x, placement.z, placement.rot, placement.type, structure, site],
+    [placement.x, placement.z, placement.rot, placement.type, placement.moveId, structure, site],
   );
   useEffect(() => {
     inst.group.traverse((o) => {

@@ -88,14 +88,15 @@ export function PlacementBar() {
   const g = useGame();
   if (!pl) return null;
   const def = BUILDINGS[pl.type];
-  const cost = buildCost(g, pl.type);
+  const moving = pl.moveId !== undefined;
+  const cost = moving ? 0 : buildCost(g, pl.type);
   return (
-    <div className="placement-bar">
+    <div className={`placement-bar${moving ? ' moving' : ''}`}>
       <div className="placement-info">
-        <div className="placement-name">{def.name}</div>
+        <div className="placement-name">{moving ? `Move ${def.short}` : def.name}</div>
         <div className="placement-sub">
-          {fmtMoney(cost)} · <span className="hide-touch">Click to place · R rotate · Shift-click to keep building · Esc cancel</span>
-          <span className="show-touch">Tap the ground, then confirm</span>
+          {moving ? 'Free' : fmtMoney(cost)} · <span className="hide-touch">Click to place · R rotate{moving ? '' : ' · Shift-click to keep building'} · Esc cancel</span>
+          <span className="show-touch">Tap the new spot, then confirm</span>
         </div>
       </div>
       <div className="placement-actions">

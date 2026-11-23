@@ -353,3 +353,37 @@ export function setQA(s: GameState, v: number): Result {
   s.supply.qa = Math.max(0, Math.min(1, v));
   return null;
 }
+
+/** Relocating a building is free. */
+export function moveCost(_s: GameState, _id: number): number {
+  return 0;
+}
+
+export function moveLockReason(s: GameState, id: number): string | null {
+  const b = s.sites[s.activeSite].buildings.find((x) => x.id === id);
+  if (!b) return 'Building not found.';
+  if (b.status === 'destroyed') return 'A destroyed reactor must be decommissioned, not moved.';
+  if (b.status === 'refueling') return 'Wait until the refuelling outage is finished.';
+  if (b.status === 'upgrading') return 'Wait until the upgrade is finished.';
+  if (b.reactor && b.reactor.power > 0.05) return 'Shut the reactor down first (power target 0%).';
+  return null;
+}
+
+/** Move (and optionally rotate) a building to a new spot on the same site. */
+export function moveBuilding(s: GameState, id: number, x: number, z: number, rot: number): Result {
+  const site = s.sites[s.activeSite];
+  const b = site.buildings.find((y) => y.id === id);
+  if (!b) return 'Building not found.';
+  const lock = moveLockReason(s, id);
+  if (lock) return lock;
+  if (b.x === x && b.z === z && b.rot === rot) return 'Pick a different spot.';
+  const problem = checkPlacement(site, b.type, x, z, rot, b.id);
+  if (problem === 'bounds') return 'Outside the plot. Buy more land in Sites.';
+  if (problem === 'road') return 'Keep the access road clear.';
+  if (problem === 'overlap') return 'That space is occupied.';
+  b.x = x;
+  b.z = z;
+  b.rot = rot;
+  pushLog(s, 'info', `Moved ${BUILDINGS[b.type].short}.`);
+  return null;
+}

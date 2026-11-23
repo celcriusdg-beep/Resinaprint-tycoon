@@ -74,6 +74,26 @@ describe('construction', () => {
     expect(t.status).toBe('active');
   });
 
+  it('moves a building to a free spot for free', () => {
+    const s = createInitialState();
+    s.money = 1e6;
+    const cooling = s.sites.riverside.buildings[2];
+    expect(A.moveBuilding(s, cooling.id, 5, 5, 0)).toMatch(/occupied/); // onto the reactor
+    const m0 = s.money;
+    expect(A.moveBuilding(s, cooling.id, 1, 1, 1)).toBeNull();
+    expect([cooling.x, cooling.z, cooling.rot]).toEqual([1, 1, 1]);
+    expect(s.money).toBe(m0);
+    // It may also shift by one cell, overlapping only its own old footprint
+    expect(A.moveBuilding(s, cooling.id, 2, 1, 1)).toBeNull();
+  });
+
+  it('a running reactor must be shut down before moving', () => {
+    const s = createInitialState();
+    s.money = 1e6;
+    const r = s.sites.riverside.buildings[0];
+    expect(A.moveBuilding(s, r.id, 1, 1, 0)).toMatch(/Shut the reactor down/);
+  });
+
   it('locks buildings behind research', () => {
     const s = createInitialState();
     s.money = 1e6;

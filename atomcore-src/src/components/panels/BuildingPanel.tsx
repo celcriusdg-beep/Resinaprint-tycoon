@@ -8,7 +8,7 @@ import { decommissionCost, mineOutput, reserveFor } from '../../game/supply/fuel
 import { slotsFor } from '../../game/supply/vehicles';
 import { LOCATION_BY_ID } from '../../game/progression/locations';
 import { fmtMoney, fmtPower, fmtTime, fmtNum } from '../../ui/format';
-import { run, confirm, A } from '../../ui/actions';
+import { run, confirm, A, beginMove } from '../../ui/actions';
 import { Bar, Button, Stat } from '../ui/common';
 import { Icon } from '../ui/Icons';
 import { ReactorControl } from './ReactorControl';
@@ -105,6 +105,10 @@ export function BuildingPanel({ id }: { id: number }) {
         {!b.reactor && (
           <Button icon="power" disabled={busy} onClick={() => run((s) => A.toggleBuilding(s, b.id))}>{b.enabled ? 'Switch off' : 'Switch on'}</Button>
         )}
+        <Button icon="grid" variant="ghost" disabled={!!A.moveLockReason(g, b.id) && b.status !== 'constructing'} onClick={() => beginMove(b.id)}
+          title={A.moveLockReason(g, b.id) ?? 'Move this building (free)'}>
+          Move
+        </Button>
         <Button icon="trash" variant="ghost" onClick={() =>
           confirm(`Demolish ${def.short}?`, `You will receive ${fmtMoney(A.demolishRefund(g, b.id))} back. This cannot be undone.`, 'Demolish', () => {
             if (run((s) => A.demolishBuilding(s, b.id), { structural: true, sound: 'place' })) useUI.getState().select(null);

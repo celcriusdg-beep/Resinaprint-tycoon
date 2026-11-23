@@ -37,6 +37,16 @@ export function run(fn: (g: GameState) => string | null, opts: { structural?: bo
 export function placeAt(x: number, z: number, keepPlacing = false): boolean {
   const pl = useUI.getState().placement;
   if (!pl) return false;
+  if (pl.moveId !== undefined) {
+    const id = pl.moveId;
+    const moved = run((g) => A.moveBuilding(g, id, x, z, pl.rot), { structural: true, sound: 'place' });
+    if (moved) {
+      haptic(25);
+      useUI.getState().cancelPlacement(); // re-selects the moved building
+      void persist();
+    }
+    return moved;
+  }
   const ok = run((g) => A.placeBuilding(g, pl.type, x, z, pl.rot), { structural: true, sound: 'place' });
   if (ok) {
     haptic(25);
@@ -128,4 +138,19 @@ export function runFix(action: FixAction, siteId: string): void {
       run((s) => A.manualScram(s, action.id), { sound: 'alarm' });
       break;
   }
+}
+
+/** Pick up an existing building to move it. */
+export function beginMove(id: number) {
+  const g = getGame();
+  const b = g.sites[g.activeSite].buildings.find((x) => x.id === id);
+  if (!b) return;
+  const lock = A.moveLockReason(g, id);
+  if (lock) {
+    audio.sfx('error');
+    useUI.getState().pushToast({ kind: 'warn', title: lock });
+    return;
+  }
+  audio.sfx('open');
+  useUI.getState().startMove(id, b.type, b.x, b.z, b.rot);
 }

@@ -15,6 +15,8 @@ export interface Placement {
   rot: number;
   x: number | null;
   z: number | null;
+  /** When set, this placement relocates an existing building. */
+  moveId?: number;
 }
 
 export type CameraCommand =
@@ -44,6 +46,7 @@ interface UIStore {
   togglePanel: (p: PanelId) => void;
   select: (id: number | null) => void;
   startPlacement: (type: BuildingType) => void;
+  startMove: (id: number, type: BuildingType, x: number, z: number, rot: number) => void;
   updatePlacement: (p: Partial<Placement>) => void;
   cancelPlacement: () => void;
   pushToast: (n: Notice) => void;
@@ -67,9 +70,10 @@ export const useUI = create<UIStore>((set) => ({
   setPanel: (p) => set({ panel: p }),
   togglePanel: (p) => set((s) => ({ panel: s.panel === p ? null : p, selectedId: s.panel === p ? s.selectedId : null })),
   select: (id) => set((s) => ({ selectedId: id, panel: id !== null ? null : s.panel })),
-  startPlacement: (type) => set((s) => ({ placement: { type, rot: s.placement?.rot ?? 0, x: null, z: null }, selectedId: null })),
+  startPlacement: (type) => set((s) => ({ placement: { type, rot: s.placement?.moveId === undefined ? s.placement?.rot ?? 0 : 0, x: null, z: null }, selectedId: null })),
   updatePlacement: (p) => set((s) => (s.placement ? { placement: { ...s.placement, ...p } } : {})),
-  cancelPlacement: () => set({ placement: null }),
+  startMove: (id, type, x, z, rot) => set({ placement: { type, rot, x, z, moveId: id }, selectedId: null, panel: null }),
+  cancelPlacement: () => set((s) => (s.placement?.moveId !== undefined ? { placement: null, selectedId: s.placement.moveId } : { placement: null })),
   pushToast: (n) =>
     set((s) => {
       // Merge bursts of identical notices (e.g. several reactors tripping at once).
