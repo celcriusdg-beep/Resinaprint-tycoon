@@ -163,8 +163,9 @@ export function autoRodStep(p: PhysicsParams, h: number, n: number, target: numb
   // Aim for a gentle reactivity: positive when power is below target (~60 s period), negative above.
   const ratio = Math.log(Math.max(1e-6, target) / Math.max(1e-7, n));
   // Up: at most ~0.3β (period ≳ 25 s). Down: up to −0.6β. Tapering near the target avoids overshoot.
-  // Startups from the source range are allowed a faster (but still > 10 s) period.
-  const up = n < 0.01 ? 0.5 : 0.36;
+  // Startups from the source range are allowed a somewhat faster period (~20 s),
+  // keeping a wide margin to the 10 s short-period trip.
+  const up = n < 0.01 ? 0.4 : 0.36;
   const desired = ratio >= 0 ? up * p.beta * Math.tanh(3 * ratio) : 0.6 * p.beta * Math.tanh(3 * ratio);
   const diff = p.rodWorth * Math.max(0.15, rodDifferential(h));
   const dh = (desired - rho) / diff;

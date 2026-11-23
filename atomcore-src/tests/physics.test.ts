@@ -215,3 +215,30 @@ describe('spent fuel', () => {
     expect(A.refuelReactor(s, b.id)).toMatch(/pool is full/i);
   });
 });
+
+describe('new PWR cold startup', () => {
+  it('reaches its setpoint without a short-period trip, also after a SCRAM', async () => {
+    const { createInitialState, makeBuilding } = await import('../src/game/state');
+    const { tick } = await import('../src/game/engine');
+    const A = await import('../src/game/actions');
+    const s = createInitialState();
+    s.nextEventIn = 1e9; s.money = 1e9; s.level = 12;
+    const site = s.sites.riverside; site.size = 40; site.buildings = [];
+    const r = makeBuilding(s, 'reactor_pwr', 5, 5, 0, false);
+    r.progress = 0.999;
+    site.buildings.push(r);
+    for (const [t, x, z] of [['turbine_large', 15, 5], ['cooling_tower', 5, 15], ['cooling_tower', 12, 15], ['cooling_tower', 19, 15], ['substation', 25, 5], ['water_intake', 25, 15]] as const)
+      site.buildings.push(makeBuilding(s, t, x, z, 0, true));
+    let minPeriod = Infinity;
+    for (let t = 0; t < 1800; t += 0.1) {
+      tick(s, 0.1);
+      const x = r.reactor!;
+      if (x.period > 0) minPeriod = Math.min(minPeriod, x.period);
+      expect(x.tripCause === 'Short reactor period').toBe(false);
+      if (Math.abs(t - 600) < 0.05) { expect(x.power).toBeGreaterThan(0.45); A.manualScram(s, r.id); }
+      if (Math.abs(t - 800) < 0.05) expect(A.restartReactor(s, r.id)).toBeNull();
+    }
+    expect(r.reactor!.power).toBeGreaterThan(0.45);
+    expect(minPeriod).toBeGreaterThan(15);
+  });
+});

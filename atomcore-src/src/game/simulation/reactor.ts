@@ -186,8 +186,14 @@ function stepPhysics(b: Building, p: PhysicsParams, inp: ReactorStepInput, dt: n
   // Chemical shim: automatic boron keeps the rods in their upper band.
   if (p.boron && r.autoBoron && !r.scrammed && running && !r.tripCause && target >= 0.01) {
     const rate = 6 * dt; // ppm per second
-    if (r.rods > 0.93 && r.power < target * 0.98) r.boron = Math.max(0, r.boron - rate);
+    const rhoNow = r.rho.total;
+    // Dilute only while the core is clearly subcritical or barely supercritical: once the
+    // power is rising on its own, further dilution just shortens the period.
+    const periodOk = !(r.period > 0 && r.period < 25);
+    if (r.rods > 0.93 && r.power < target * 0.98 && rhoNow < 0.3 * p.beta && periodOk) r.boron = Math.max(0, r.boron - rate);
     else if (r.rods < 0.72 && r.power >= target * 0.9) r.boron = Math.min(2500, r.boron + rate);
+    // Rods fully out yet the period is getting short: borate back to protect against a trip.
+    else if (r.rods > 0.97 && r.period > 0 && r.period < 18) r.boron = Math.min(2500, r.boron + rate * 2);
   }
 
   // Xenon & iodine
