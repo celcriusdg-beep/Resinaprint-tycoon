@@ -14,6 +14,8 @@ import { run, A } from '../../ui/actions';
 import { Bar, Button, Stat, Sparkline, Slider, Toggle } from '../ui/common';
 import { Icon } from '../ui/Icons';
 import { NeutronView } from './NeutronView';
+import { reactorStatus } from '../../game/diagnostics';
+import { IssueCard } from './StatusPanel';
 import type { Building } from '../../game/types';
 
 const fmtPcm = (v: number) => `${v >= 0 ? '+' : '−'}${Math.abs(v) >= 1000 ? fmtNum(Math.abs(v)) : Math.round(Math.abs(v))}`;
@@ -52,6 +54,7 @@ export function ReactorControl({ b }: { b: Building }) {
     if (h.p.length > 90) { h.p.shift(); h.t.shift(); h.x.shift(); }
   }
   const refueling = b.status === 'refueling';
+  const status = reactorStatus(g, site, b);
   const headroom = p.fission ? reactivityHeadroom(b) : 1;
   const xenonBlocked = p.fission && headroom < 0 && r.coreFuel > 0.05;
   const advisory = advisoryLimit(r.failedRods);
@@ -81,6 +84,19 @@ export function ReactorControl({ b }: { b: Building }) {
         <span className={`status-chip ${tone}`}>{stateLabel}</span>
       </div>
 
+      {/* What is this reactor doing, and why? */}
+      <div className={`reactor-headline ${status.severity}`}>
+        <div className="row-between">
+          <b>{status.headline}</b>
+          <span className="mono small">{fmtPower(status.electricMW)} electric</span>
+        </div>
+        <div className="target-vs-actual">
+          <div className="tva-row"><span>Target</span><Bar value={Math.min(1, r.setpoint)} max={1} height={6} color="#8ea2b3" /><span className="mono">{Math.round(r.setpoint * 100)}%</span></div>
+          <div className="tva-row"><span>Actual</span><Bar value={Math.min(1, r.power)} max={1} height={6} color={r.power < r.setpoint * 0.9 ? '#ffb648' : '#4fd1ff'} /><span className="mono">{r.power < 0.01 ? (r.power * 100).toFixed(2) : Math.round(r.power * 100)}%</span></div>
+        </div>
+        {status.issues.filter((i) => i.severity !== 'ok').map((i) => <IssueCard key={i.key} issue={i} />)}
+      </div>
+
       {/* Alarms */}
       {r.atws && (
         <div className="alert-box big-alert">
@@ -88,7 +104,7 @@ export function ReactorControl({ b }: { b: Building }) {
         </div>
       )}
       {r.scrammed && !refueling && <div className="alert-box">Tripped: <b>{r.tripCause ?? r.scramReason}</b>. Decay heat ({fmtPower(r.decayHeat)}) must still be removed.</div>}
-      {!st.pumpsPowered && <div className="alert-box"><b>STATION BLACKOUT:</b> no power for coolant pumps or emergency cooling. Only natural circulation ({fmtPct(p.passive + mods.passiveCooling, 1)} of rated heat) is removing decay heat. Build Emergency Generators!</div>}
+      {!st.pumpsPowered && <div className="alert-box"><b>STATION BLACKOUT:</b> no power for coolant pumps. {st.batteryLeft > 0 ? <>Battery-controlled emergency feedwater is removing decay heat — <b>{Math.ceil(st.batteryLeft)} s</b> of battery left.</> : <>Batteries are exhausted: only natural circulation ({fmtPct(p.passive + mods.passiveCooling, 1)} of rated heat) is cooling the core.</>} Build Emergency Generators!</div>}
       {!st.offsitePower && st.pumpsPowered && <div className="hint-box warn-hint"><Icon name="alert" size={15} /> Offsite power lost — emergency diesel generators are running the pumps ({fmtPower(st.backupMW)} available, {fmtPower(st.backupNeedMW)} needed).</div>}
       {r.inventory < 0.97 && p.fission && !p.drainable && (
         <div className={r.inventory < 0.6 ? 'alert-box big-alert' : 'alert-box'}>

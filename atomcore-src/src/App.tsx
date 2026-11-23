@@ -18,20 +18,33 @@ import { MarketPanel } from './components/panels/MarketPanel';
 import { GoalsPanel } from './components/panels/GoalsPanel';
 import { SitesPanel } from './components/panels/SitesPanel';
 import { SettingsPanel } from './components/panels/SettingsPanel';
+import { StatusPanel } from './components/panels/StatusPanel';
+import { Tabs } from './components/ui/common';
 import { BUILDINGS } from './game/buildings/defs';
 import { rotatePlacement } from './ui/actions';
 import type { IconName } from './components/ui/Icons';
 
 const GameCanvas = lazy(() => import('./components/world/GameCanvas'));
 
+function MorePanel() {
+  const [tab, setTab] = useState<'sites' | 'settings'>('sites');
+  return (
+    <div className="panel-stack">
+      <Tabs<'sites' | 'settings'> value={tab} onChange={setTab} tabs={[{ id: 'sites', label: 'Sites & Corporation', icon: 'globe' }, { id: 'settings', label: 'Settings', icon: 'gear' }]} />
+      {tab === 'sites' ? <SitesPanel /> : <SettingsPanel />}
+    </div>
+  );
+}
+
 const PANELS: Record<PanelId, { title: string; icon: IconName; render: () => JSX.Element; wide?: boolean }> = {
+  status: { title: 'Plant Status', icon: 'alert', render: () => <StatusPanel /> },
   build: { title: 'Construction', icon: 'hammer', render: () => <BuildPanel /> },
   research: { title: 'Research', icon: 'flask', render: () => <ResearchPanel />, wide: true },
   manage: { title: 'Plant Management', icon: 'factory', render: () => <ManagePanel /> },
   supply: { title: 'Supply Chain', icon: 'truck', render: () => <SupplyPanel /> },
   market: { title: 'Energy Market', icon: 'chart', render: () => <MarketPanel /> },
   goals: { title: 'Goals & Progress', icon: 'trophy', render: () => <GoalsPanel /> },
-  sites: { title: 'Sites & Corporation', icon: 'globe', render: () => <SitesPanel /> },
+  sites: { title: 'More', icon: 'menu', render: () => <MorePanel /> },
   settings: { title: 'Settings', icon: 'gear', render: () => <SettingsPanel /> },
 };
 
@@ -115,7 +128,7 @@ export default function App() {
         else ui.select(null);
       }
       if ((e.key === 'r' || e.key === 'R') && ui.placement) rotatePlacement();
-      const map: Record<string, PanelId> = { b: 'build', t: 'research', p: 'manage', u: 'supply', m: 'market', g: 'goals' };
+      const map: Record<string, PanelId> = { i: 'status', b: 'build', t: 'research', p: 'manage', u: 'supply', m: 'market', g: 'goals' };
       if (!ui.placement && map[e.key]) ui.togglePanel(map[e.key]);
     };
     window.addEventListener('keydown', onKey);

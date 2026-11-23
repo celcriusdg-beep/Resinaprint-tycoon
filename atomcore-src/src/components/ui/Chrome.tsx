@@ -7,16 +7,17 @@ import { BUILDINGS } from '../../game/buildings/defs';
 import { buildCost } from '../../game/actions';
 import { fmtMoney } from '../../ui/format';
 import { confirmPlacement, rotatePlacement } from '../../ui/actions';
+import { diagnose } from '../../game/diagnostics';
 
 const NAV: { id: PanelId; label: string; icon: IconName }[] = [
+  { id: 'status', label: 'Status', icon: 'alert' },
   { id: 'build', label: 'Build', icon: 'hammer' },
   { id: 'research', label: 'Research', icon: 'flask' },
   { id: 'manage', label: 'Plant', icon: 'factory' },
   { id: 'supply', label: 'Supply', icon: 'truck' },
   { id: 'market', label: 'Market', icon: 'chart' },
   { id: 'goals', label: 'Goals', icon: 'trophy' },
-  { id: 'sites', label: 'Sites', icon: 'globe' },
-  { id: 'settings', label: 'Settings', icon: 'gear' },
+  { id: 'sites', label: 'More', icon: 'menu' },
 ];
 
 export function NavBar() {
@@ -26,6 +27,9 @@ export function NavBar() {
   const idleResearch = !g.research.active && g.research.points > 30;
   const st = g.sites[g.activeSite].stats;
   const supplyAlert = st.waterFactor < 0.999 || st.treatedFactor < 0.999 || g.fuel < 5;
+  const issues = diagnose(g);
+  const errorCount = issues.filter((i) => i.severity === 'error').length;
+  const warnCount = issues.filter((i) => i.severity === 'warn').length;
   return (
     <nav className="nav" aria-label="Main">
       {NAV.map((n) => (
@@ -36,6 +40,8 @@ export function NavBar() {
           {n.id === 'goals' && claimable > 0 && <i className="badge">{claimable}</i>}
           {n.id === 'research' && idleResearch && <i className="badge dot" />}
           {n.id === 'supply' && supplyAlert && <i className="badge dot alert" />}
+          {n.id === 'status' && errorCount > 0 && <i className="badge">{errorCount}</i>}
+          {n.id === 'status' && errorCount === 0 && warnCount > 0 && <i className="badge warnb">{warnCount}</i>}
         </button>
       ))}
     </nav>

@@ -42,7 +42,7 @@ export interface PhysicsParams {
 
 const P = (p: Partial<PhysicsParams>): PhysicsParams => ({
   fission: true, beta: 650, lambda: 0.08, rodWorth: 8000, rodSpeed: 0.015, boron: false, boronWorth: 0,
-  rhoBOL: 9000, doppler: 1500, fuelDT: 600, alphaM: -30, xenonWorth: 2800, voidCoeff: 0, passive: 0.012,
+  rhoBOL: 9000, doppler: 1500, fuelDT: 600, alphaM: -30, xenonWorth: 2800, voidCoeff: 0, passive: 0.003,
   containment: true, drainable: false, ...p,
 });
 
@@ -51,9 +51,9 @@ export const PHYSICS: Record<string, PhysicsParams> = {
   reactor_pilot: P({ rodWorth: 5200, rodSpeed: 0.03, rhoBOL: 3800, doppler: 500, fuelDT: 250, alphaM: -18, xenonWorth: 1400, passive: 0.08 }),
   // Integral PWR module: boron, natural-circulation decay heat removal.
   reactor_smr: P({ rodWorth: 6500, rodSpeed: 0.02, boron: true, boronWorth: 9, rhoBOL: 9500, doppler: 1300, fuelDT: 550, alphaM: -32, xenonWorth: 2600, passive: 0.07 }),
-  reactor_pwr: P({ rodWorth: 8000, rodSpeed: 0.012, boron: true, boronWorth: 10, rhoBOL: 11500, doppler: 1500, fuelDT: 650, alphaM: -38, xenonWorth: 2800, passive: 0.012 }),
+  reactor_pwr: P({ rodWorth: 8000, rodSpeed: 0.012, boron: true, boronWorth: 10, rhoBOL: 11500, doppler: 1500, fuelDT: 650, alphaM: -38, xenonWorth: 2800, passive: 0.003 }),
   // BWR: no soluble boron in normal operation; power is also trimmed with recirculation flow (voids).
-  reactor_bwr: P({ rodWorth: 13000, rodSpeed: 0.012, rhoBOL: 8500, doppler: 1400, fuelDT: 650, alphaM: -25, xenonWorth: 2600, voidCoeff: 1400, passive: 0.02 }),
+  reactor_bwr: P({ rodWorth: 13000, rodSpeed: 0.012, rhoBOL: 8500, doppler: 1400, fuelDT: 650, alphaM: -25, xenonWorth: 2600, voidCoeff: 1400, passive: 0.004 }),
   // Molten salt: circulating fuel loses some delayed neutrons (lower β), off-gas removes most xenon,
   // strong negative temperature feedback, fuel drains to passively cooled tanks.
   reactor_msr: P({ beta: 330, rodWorth: 3500, rodSpeed: 0.02, rhoBOL: 3200, doppler: 900, fuelDT: 120, alphaM: -75, xenonWorth: 350, passive: 0.2, drainable: true }),
@@ -144,7 +144,7 @@ export function reactivity(
  */
 export function stepKinetics(p: PhysicsParams, n: number, S: number, rho: number, dt: number): { n: number; S: number } {
   const beta = p.beta;
-  const floor = 1e-5; // neutron sources keep a shut-down core countable (source range)
+  const floor = 1e-3; // start-up neutron sources keep the core in the source range
   if (rho < 0.95 * beta) {
     const nNew = (beta * S) / (beta - rho);
     // dS/dt = λ (n − S) with n = βS/(β−ρ)  ⇒  S grows with rate λρ/(β−ρ)
@@ -164,7 +164,7 @@ export function autoRodStep(p: PhysicsParams, h: number, n: number, target: numb
   const ratio = Math.log(Math.max(1e-6, target) / Math.max(1e-7, n));
   // Up: at most ~0.3β (period ≳ 25 s). Down: up to −0.6β. Tapering near the target avoids overshoot.
   // Startups from the source range are allowed a faster (but still > 10 s) period.
-  const up = n < 0.01 ? 0.42 : 0.3;
+  const up = n < 0.01 ? 0.5 : 0.36;
   const desired = ratio >= 0 ? up * p.beta * Math.tanh(3 * ratio) : 0.6 * p.beta * Math.tanh(3 * ratio);
   const diff = p.rodWorth * Math.max(0.15, rodDifferential(h));
   const dh = (desired - rho) / diff;

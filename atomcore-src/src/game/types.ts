@@ -265,6 +265,7 @@ export interface SiteStats {
   backupMW: number;
   backupNeedMW: number;
   pumpsPowered: boolean;
+  batteryLeft: number; // seconds of battery-backed emergency feedwater left
   poolCap: number;
   caskCap: number;
 }
@@ -276,6 +277,8 @@ export interface Site {
   storageMWh: number;
   storageWater: number; // raw water in tanks, m³
   spent: SpentFuelPool;
+  /** Seconds since offsite power was lost (0 when connected). */
+  blackoutTime: number;
   stats: SiteStats;
 }
 

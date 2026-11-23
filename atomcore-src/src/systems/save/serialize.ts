@@ -66,6 +66,7 @@ export function migrate(raw: unknown): GameState {
   for (const site of Object.values(s.sites)) {
     site.storageWater = Number.isFinite(site.storageWater) ? site.storageWater : 0;
     site.spent = site.spent ?? { pool: 0, casks: 0 };
+    site.blackoutTime = Number.isFinite(site.blackoutTime) ? site.blackoutTime : 0;
     for (const b of site.buildings) if (b.type === 'uranium_mine' && b.reserve === undefined) b.reserve = reserveFor(b.level);
   }
   // v2 → v3: reactors gain kinetics state; start each one in a consistent steady state.

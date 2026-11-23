@@ -154,6 +154,10 @@ export interface ReactorStepInput {
   pumpsPowered: boolean;
   offsitePower: boolean;
   offline: boolean;
+  /** Steam-driven emergency feedwater on battery control (first hours of a blackout). */
+  batteryCooling: boolean;
+  /** Seconds since offsite power was lost. */
+  blackoutTime: number;
 }
 
 /** Physics substep: rods, boron, xenon, feedback and kinetics. */
@@ -235,7 +239,7 @@ export function stepReactorPower(b: Building, inp: ReactorStepInput): void {
   }
 
   const rated = reactorMaxThermal(b, inp.mods);
-  r.fission = r.power < 1e-4 ? 0 : r.power * rated;
+  r.fission = r.power < 2e-3 ? 0 : r.power * rated;
   // Two-group decay heat (≈6.5% at equilibrium): short- and long-lived fission products.
   r.decay1 += (0.045 * r.fission - r.decay1) * exp1(inp.dt, 10);
   r.decay2 += (0.02 * r.fission - r.decay2) * exp1(inp.dt, 150);
@@ -276,7 +280,9 @@ export function stepReactorTemp(b: Building, inp: ReactorStepInput, coolingRatio
   const passive = (p.passive + inp.mods.passiveCooling) * rated * levelFactor;
   const removable = inp.pumpsPowered
     ? r.thermal * Math.min(1, coolingRatio * (0.85 + 0.15 * r.pumpSpeed)) + passive * 0.5
-    : passive;
+    : inp.blackoutTime < 6
+      ? r.thermal // turbine bypass and relief valves dump steam while the trip takes effect
+      : passive + (inp.batteryCooling ? 0.15 * rated * levelFactor : 0);
   const excess = Math.max(0, r.thermal - removable);
   const ratio = r.thermal > 0.001 ? removable / r.thermal : 10;
   const load = r.thermal / (rated * 1.065);
@@ -286,10 +292,13 @@ export function stepReactorTemp(b: Building, inp: ReactorStepInput, coolingRatio
   const rise = (base + (tNom - tNoLoad) * load * Math.pow(1 / r.pumpSpeed, 0.35)) * Math.pow(shortfall, 1.25)
     + (inp.pumpsPowered ? 0 : (tNom - inp.ambient) * Math.min(3, load * 8));
   let target = inp.ambient + rise;
+  // Without pumps the primary circuit stays hot (emergency feedwater only just keeps up).
+  if (!inp.pumpsPowered && r.decayHeat > passive * 0.3) target = Math.max(target, tNoLoad);
   if (excess > 0.001 && (!inp.pumpsPowered || ratio < 0.5)) {
     // Energy balance: heat that cannot be removed warms the coolant until it boils.
     target = Math.max(target, tSat + 15);
-    r.temp = Math.min(target, r.temp + (excess / rated) * 400 * inp.dt);
+    // Heat capacity of the primary circuit slows the heat-up.
+    r.temp = Math.min(target, r.temp + (excess / rated) * 600 * inp.dt);
   } else {
     r.temp += (target - r.temp) * exp1(inp.dt, TEMP_TAU);
   }
@@ -297,7 +306,7 @@ export function stepReactorTemp(b: Building, inp: ReactorStepInput, coolingRatio
 
   // Boil-off and emergency core cooling (light-water designs)
   if (!p.drainable && p.fission) {
-    if (r.temp >= tSat - 2 && excess > 0) r.inventory -= (excess / rated) * 0.35 * inp.dt;
+    if (r.temp >= tSat - 2 && excess > 0) r.inventory -= (excess / rated) * 0.8 * inp.dt;
     if (inp.pumpsPowered && r.inventory < 1) r.inventory = Math.min(1, r.inventory + 0.05 * inp.dt);
     r.inventory = Math.max(0, r.inventory);
     // Fuel damage: zirconium cladding oxidises above ~1200 °C; UO₂ melts near 2800 °C.

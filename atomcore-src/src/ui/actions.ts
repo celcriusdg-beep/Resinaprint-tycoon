@@ -6,6 +6,7 @@ import { audio } from '../systems/audio/audio';
 import { persist } from '../systems/loop';
 import { BUILDINGS } from '../game/buildings/defs';
 import type { GameState } from '../game/types';
+import type { FixAction } from '../game/diagnostics';
 
 // UI-facing wrappers: run a game action, then give feedback (sound, haptics,
 // error toast) and refresh the views.
@@ -88,3 +89,43 @@ export function confirm(title: string, text: string, confirmLabel: string, onCon
 }
 
 export { A };
+
+/** Carry out the suggested fix from a Status issue. */
+export function runFix(action: FixAction, siteId: string): void {
+  const g = getGame();
+  if (g.activeSite !== siteId && g.unlockedSites.includes(siteId)) {
+    A.switchSite(g, siteId);
+    useGameStore.getState().bump(true);
+  }
+  const ui = useUI.getState();
+  switch (action.kind) {
+    case 'select':
+      ui.setPanel(null);
+      ui.select(action.id);
+      break;
+    case 'panel':
+      ui.setPanel(action.panel);
+      break;
+    case 'reset':
+      run((s) => A.restartReactor(s, action.id), { sound: 'complete' });
+      break;
+    case 'refuel':
+      run((s) => A.refuelReactor(s, action.id), { sound: 'place', structural: true });
+      break;
+    case 'repair':
+      run((s) => A.repairBuilding(s, action.id), { sound: 'cash', structural: true });
+      break;
+    case 'buyFuel':
+      run((s) => A.buyFuel(s, 1e9), { sound: 'cash' });
+      break;
+    case 'build':
+      beginBuild(action.type);
+      break;
+    case 'setpoint':
+      run((s) => A.setSetpoint(s, action.id, action.value));
+      break;
+    case 'scram':
+      run((s) => A.manualScram(s, action.id), { sound: 'alarm' });
+      break;
+  }
+}

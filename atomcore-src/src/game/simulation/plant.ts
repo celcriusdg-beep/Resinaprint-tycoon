@@ -14,6 +14,9 @@ import { stepWater } from '../supply/water';
 import { mineOutput, tickSupply, onlineRefuel, stepFuelIntegrity, coreDamage, stepSpentFuel } from '../supply/fuelcycle';
 import { ASSEMBLY_MWH } from '../constants';
 
+/** Battery-backed emergency feedwater lasts ≈ 6 game hours. */
+export const BATTERY_SECONDS = 60;
+
 export function emptyStats(): SiteStats {
   return {
     thermalMW: 0, steamCapMW: 0, steamUsedMW: 0, electricMW: 0, exportMW: 0, gridCapMW: 0, coolingCapMW: 0,
@@ -22,7 +25,7 @@ export function emptyStats(): SiteStats {
     researchRate: 0, upkeep: 0, salaries: 0, revenue: 0, price: BASE_PRICE, reactorsOnline: 0, reactorsTotal: 0,
     maxTempFrac: 0, rawSupply: 0, evaporation: 0, treatedSupply: 0, treatedDemand: 0, rawToTreatment: 0, tankM3: 0,
     tankCapM3: 0, waterFactor: 1, treatedFactor: 1, waterCost: 0, houseLoadMW: 0, oreRate: 0, digRate: 0, haulRate: 0,
-    offsitePower: true, backupMW: 0, backupNeedMW: 0, pumpsPowered: true, poolCap: 0, caskCap: 0,
+    offsitePower: true, backupMW: 0, backupNeedMW: 0, pumpsPowered: true, batteryLeft: 60, poolCap: 0, caskCap: 0,
   };
 }
 
@@ -212,9 +215,12 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
     let backupNeed = 0;
     for (const b of reactors) if (b.reactor && b.status !== 'destroyed') backupNeed += b.reactor.houseLoad * 0.3 + reactorMaxThermal(b, mods) * 0.002;
     const pumpsPowered = offsitePower || backupMW >= backupNeed;
+    // Station batteries run steam-driven emergency feedwater for a limited time.
+    site.blackoutTime = offsitePower ? 0 : (site.blackoutTime ?? 0) + dt;
+    const batteryLeft = Math.max(0, BATTERY_SECONDS - site.blackoutTime);
 
     // Reactor power
-    const inp = { dt, mods, gameTime: s.gameTime, ambient, treatedFactor: water.treatedFactor, pumpsPowered, offsitePower, offline };
+    const inp = { dt, mods, gameTime: s.gameTime, ambient, treatedFactor: water.treatedFactor, pumpsPowered, offsitePower, offline, batteryCooling: batteryLeft > 0, blackoutTime: site.blackoutTime };
     let thermal = 0;
     let effWeighted = 0;
     let researchFromReactors = 0;
@@ -304,7 +310,7 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
       rawSupply: water.rawSupply, evaporation: water.evaporation, treatedSupply: water.treatedSupply,
       treatedDemand: water.treatedDemand, rawToTreatment: water.rawToTreatment, tankM3: water.tankM3, tankCapM3: water.tankCapM3,
       waterFactor: water.waterFactor, treatedFactor: water.treatedFactor, waterCost: water.cost, houseLoadMW: houseLoad,
-      oreRate: siteOre, digRate: dig, haulRate: haul, offsitePower, backupMW, backupNeedMW: backupNeed, pumpsPowered,
+      oreRate: siteOre, digRate: dig, haulRate: haul, offsitePower, backupMW, backupNeedMW: backupNeed, pumpsPowered, batteryLeft,
     } satisfies Partial<SiteStats>);
   }
 

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { BuildingType, Notice } from '../game/types';
 import type { OfflineReport } from '../systems/offline/offline';
 
-export type PanelId = 'build' | 'research' | 'manage' | 'supply' | 'market' | 'goals' | 'sites' | 'settings';
+export type PanelId = 'status' | 'build' | 'research' | 'manage' | 'supply' | 'market' | 'goals' | 'sites' | 'settings';
 
 export interface Toast extends Notice {
   id: number;

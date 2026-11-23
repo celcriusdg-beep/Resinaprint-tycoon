@@ -2,6 +2,7 @@ import { useGame } from '../../stores/gameStore';
 import { useUI, type PanelId } from '../../stores/uiStore';
 import { fmtMoney, fmtPower, fmtPct, fmtNum } from '../../ui/format';
 import { BUILDINGS } from '../../game/buildings/defs';
+import { diagnose } from '../../game/diagnostics';
 import { netIncome } from '../../game/engine';
 import { xpForNext } from '../../game/progression/levels';
 import { RESEARCH_BY_ID } from '../../game/research/tree';
@@ -28,6 +29,9 @@ export function HUD() {
   const refuelNeeded = reactors.filter((b) => b.status === 'active' && !BUILDINGS[b.type].reactor!.onlineRefuel && (b.reactor!.coreFuel < 0.15 || b.reactor!.failedRods > 0)).length;
   const refueling = reactors.filter((b) => b.status === 'refueling').length;
   const waterOk = st.waterFactor >= 0.999 && st.treatedFactor >= 0.999;
+  const allIssues = diagnose(g);
+  const issueErrors = allIssues.filter((i) => i.severity === 'error').length;
+  const issueWarns = allIssues.filter((i) => i.severity === 'warn').length;
   const hot = st.maxTempFrac > 0.9;
   const reactorTone = scrammed ? 'bad' : hot || refuelNeeded ? 'warn' : st.reactorsOnline > 0 ? 'good' : 'dim';
   const active = g.research.active ? RESEARCH_BY_ID[g.research.active] : null;
@@ -62,7 +66,12 @@ export function HUD() {
         </button>
       </div>
       <div className="hud-row hud-row2">
-        <button className={`hud-pill ${reactorTone}`} onClick={() => open('manage')}>
+        {(issueErrors > 0 || issueWarns > 0) && (
+          <button className={`hud-pill ${issueErrors ? 'bad' : 'warn'}`} onClick={() => open('status')} aria-label="Plant status">
+            <Icon name="alert" size={14} /> {issueErrors ? `${issueErrors} problem${issueErrors > 1 ? 's' : ''}` : `${issueWarns} warning${issueWarns > 1 ? 's' : ''}`}
+          </button>
+        )}
+        <button className={`hud-pill ${reactorTone}`} onClick={() => open('status')}>
           <Icon name="atom" size={14} />
           {scrammed ? `${scrammed} SCRAM` : refuelNeeded ? `${refuelNeeded} need fuel` : refueling ? `${refueling} refuelling` : `${st.reactorsOnline}/${st.reactorsTotal} online`}
         </button>

@@ -139,8 +139,10 @@ describe('feedback and control', () => {
 describe('core damage requires losing cooling', () => {
   it('station blackout without backup power leads to core damage in a PWR', () => {
     const { s, pwr } = pwrPlant();
-    s.events.push({ id: 'blackout', remaining: 600, duration: 600, siteId: 'riverside' });
-    run(s, 300, 0.25);
+    s.events.push({ id: 'blackout', remaining: 900, duration: 900, siteId: 'riverside' });
+    run(s, 60, 0.25);
+    expect(pwr.status).toBe('active'); // batteries still running emergency feedwater
+    run(s, 540, 0.25);
     expect(pwr.status).toBe('destroyed');
     expect(s.stats.coreDamage).toBe(1);
     expect(s.events.some((e) => e.id === 'outcry')).toBe(true);
@@ -149,8 +151,8 @@ describe('core damage requires losing cooling', () => {
 
   it('emergency diesel generators keep the core cooled through the same blackout', () => {
     const { s, pwr } = pwrPlant({ edg: true });
-    s.events.push({ id: 'blackout', remaining: 600, duration: 600, siteId: 'riverside' });
-    run(s, 300, 0.25);
+    s.events.push({ id: 'blackout', remaining: 900, duration: 900, siteId: 'riverside' });
+    run(s, 600, 0.25);
     expect(pwr.status).toBe('active');
     expect(pwr.reactor!.scrammed).toBe(true);
     expect(pwr.reactor!.inventory).toBeGreaterThan(0.9);
@@ -160,17 +162,26 @@ describe('core damage requires losing cooling', () => {
     const { s, pwr } = pwrPlant();
     s.research.completed.push('s_setback', 's_passive');
     clearModCache();
-    s.events.push({ id: 'blackout', remaining: 600, duration: 600, siteId: 'riverside' });
-    run(s, 300, 0.25);
+    s.events.push({ id: 'blackout', remaining: 900, duration: 900, siteId: 'riverside' });
+    run(s, 600, 0.25);
     expect(pwr.status).toBe('active');
   });
 
-  it('the small pilot reactor survives a blackout on natural circulation', () => {
+  it('the small pilot reactor survives a long blackout on natural circulation', () => {
     const s = createInitialState();
     s.nextEventIn = 1e9;
-    s.events.push({ id: 'blackout', remaining: 600, duration: 600, siteId: 'riverside' });
-    run(s, 300, 0.25);
+    s.events.push({ id: 'blackout', remaining: 900, duration: 900, siteId: 'riverside' });
+    run(s, 600, 0.25);
     expect(s.sites.riverside.buildings[0].status).toBe('active');
+  });
+});
+
+describe('short blackouts', () => {
+  it('a normal 70 s grid loss is ridden out on batteries even without generators', () => {
+    const { s, pwr } = pwrPlant();
+    s.events.push({ id: 'blackout', remaining: 70, duration: 70, siteId: 'riverside' });
+    run(s, 300, 0.25);
+    expect(pwr.status).toBe('active');
   });
 });
 

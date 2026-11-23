@@ -120,7 +120,7 @@ describe('reactor safety model', () => {
     // Decay heat persists briefly after shutdown, then falls.
     expect(r.decayHeat).toBeGreaterThan(0);
     run(s, 400);
-    expect(r.power).toBeLessThan(1e-3);
+    expect(r.power).toBeLessThan(2e-3); // source range only
     expect(r.decayHeat).toBeLessThan(0.15);
   });
 

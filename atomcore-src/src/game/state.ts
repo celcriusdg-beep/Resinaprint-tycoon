@@ -35,7 +35,7 @@ export function makeBuilding(s: GameState, type: BuildingType, x: number, z: num
 
 export function makeSite(id: string): Site {
   const loc = LOCATION_BY_ID[id];
-  return { id, size: loc.startSize, buildings: [], storageMWh: 0, storageWater: 0, spent: { pool: 0, casks: 0 }, stats: emptyStats() };
+  return { id, size: loc.startSize, buildings: [], storageMWh: 0, storageWater: 0, spent: { pool: 0, casks: 0 }, blackoutTime: 0, stats: emptyStats() };
 }
 
 export function createInitialState(opts: { shares?: number; prestigeCount?: number; achievements?: string[]; lifetimeEarned?: number; createdAt?: number } = {}): GameState {
