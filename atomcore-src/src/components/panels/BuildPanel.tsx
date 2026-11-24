@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { BuildingCategory, BuildingDef } from '../../game/types';
-import { BUILDING_LIST, CATEGORY_LABEL, CATEGORY_ORDER, SECTIONS, levelMult, staffAt } from '../../game/buildings/defs';
+import { BUILDING_LIST, CATEGORY_LABEL, CATEGORY_ORDER, SECTIONS, TIER_NAMES, buildingScore, levelMult, staffAt } from '../../game/buildings/defs';
 import { buildCost, buildLockReason } from '../../game/actions';
 import { getMods } from '../../game/simulation/modifiers';
 import { useGame } from '../../stores/gameStore';
@@ -52,35 +52,9 @@ export function keyStat(def: BuildingDef, level = 1, mods = { reactorOutput: 1, 
   return '';
 }
 
-/** Main capacity number used to compare tiers: [amount, unit]. */
-function capacityOf(def: BuildingDef): [number, string] | null {
-  const s = def.stats;
-  if (def.reactor) return [def.reactor.thermalMW * def.reactor.efficiency, 'MWe'];
-  if (s.steamMW) return [s.steamMW * (1 + (s.effBonus ?? 0) * 3), 'MW steam'];
-  if (s.coolingMW || s.dryMW) return [(s.coolingMW ?? 0) + (s.dryMW ?? 0), 'MW cooling'];
-  if (s.gridMW) return [s.gridMW, 'MW export'];
-  if (s.storageMWh) return [s.storageMWh, 'MWh'];
-  if (s.oreRate) return [s.oreRate * 60, 't ore/min'];
-  if (s.ycRate) return [s.ycRate * 600, 't ore-eq./min'];
-  if (s.millRate) return [s.millRate * 60, 't ore/min'];
-  if (s.enrichRate) return [s.enrichRate * 60, 'yellowcake/min'];
-  if (s.fabRate) return [s.fabRate * 60, 'assemblies/min'];
-  if (s.inspectRate) return [s.inspectRate * 60, 'checks/min'];
-  if (s.caskCap) return [s.caskCap, 'spent slots'];
-  if (s.fuelCap) return [s.fuelCap, 'assemblies'];
-  if (s.rawWater) return [s.rawWater, 'm³/h'];
-  if (s.treatedWater) return [s.treatedWater, 'm³/h'];
-  if (s.waterStorage) return [s.waterStorage, 'm³'];
-  if (s.research) return [s.research, 'RP/s'];
-  if (s.staffCap) return [s.staffCap, 'staff'];
-  if (s.maintenance) return [s.maintenance, 'crews'];
-  if (s.backupMW) return [s.backupMW, 'MW backup'];
-  return null;
-}
-
 function valueLine(def: BuildingDef): string | null {
-  const c = capacityOf(def);
-  if (!c) return null;
+  const c = buildingScore(def);
+  if (!c || c[0] <= 0) return null;
   const tiles = def.size[0] * def.size[1];
   const perTile = c[0] / tiles;
   const fmt = (v: number) => (v >= 100 ? fmtNum(v) : v >= 10 ? v.toFixed(0) : v >= 1 ? v.toFixed(1) : v.toFixed(2));
@@ -90,31 +64,46 @@ function valueLine(def: BuildingDef): string | null {
 export function BuildPanel() {
   const g = useGame();
   const [cat, setCat] = useState<BuildingCategory>('reactor');
-  const [sectionOf, setSectionOf] = useState<Partial<Record<BuildingCategory, string>>>({});
+  const [tierOf, setTierOf] = useState<Partial<Record<BuildingCategory, number>>>({});
   const mods = getMods(g, g.activeSite);
-  const sections = SECTIONS[cat];
-  const sec = sectionOf[cat] ?? sections[0].id;
-  const secIdx = Math.max(0, sections.findIndex((x) => x.id === sec));
-  const next = sections[secIdx + 1];
-  const list = BUILDING_LIST.filter((d) => d.category === cat && d.section === sec).sort((a, b) => (a.tier ?? 1) - (b.tier ?? 1) || a.cost - b.cost);
-  const goSection = (id: string) => setSectionOf((m) => ({ ...m, [cat]: id }));
-  const countIn = (id: string) => BUILDING_LIST.filter((d) => d.category === cat && d.section === id).length;
+  const inCat = BUILDING_LIST.filter((d) => d.category === cat);
+  const tiers = [...new Set(inCat.map((d) => d.tier ?? 1))].sort((a, b) => a - b);
+  const tier = tiers.includes(tierOf[cat] ?? -1) ? tierOf[cat]! : tiers[0];
+  const next = tiers[tiers.indexOf(tier) + 1];
+  const score = (d: BuildingDef) => buildingScore(d)?.[0] ?? 0;
+  // Group by line (what the building does), weakest first inside each group.
+  const groups = SECTIONS[cat]
+    .map((line) => ({ line, items: inCat.filter((d) => d.tier === tier && d.section === line.id).sort((a, b) => score(a) - score(b)) }))
+    .filter((x) => x.items.length > 0);
+  const goTier = (t: number) => setTierOf((m) => ({ ...m, [cat]: t }));
+  const countIn = (t: number) => inCat.filter((d) => d.tier === t).length;
+  const unlockedIn = (t: number) => inCat.filter((d) => d.tier === t && !buildLockReason(g, d.type)).length;
   return (
     <div className="panel-stack">
       <LandBar />
       <PlantBalance compact />
       <Tabs tabs={CATEGORY_ORDER.map((c) => ({ id: c, label: CATEGORY_LABEL[c] }))} value={cat} onChange={setCat} />
-      {sections.length > 1 && (
-        <div className="subtabs" role="tablist">
-          {sections.map((x, i) => (
-            <button key={x.id} role="tab" aria-selected={x.id === sec} className={`subtab${x.id === sec ? ' active' : ''}`} onClick={() => goSection(x.id)}>
-              <span className="subtab-step">{i + 1}</span>{x.label} <span className="muted">{countIn(x.id)}</span>
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="subtabs" role="tablist">
+        {tiers.map((t) => (
+          <button key={t} role="tab" aria-selected={t === tier} className={`subtab tier-tab t${t}${t === tier ? ' active' : ''}`} onClick={() => goTier(t)}>
+            <span className={`tier-badge t${t}`}>T{t}</span>{TIER_NAMES[t]} <span className="muted">{unlockedIn(t)}/{countIn(t)}</span>
+          </button>
+        ))}
+      </div>
+      {groups.map(({ line, items }) => {
+        const lo = buildingScore(items[0]);
+        const hi = buildingScore(items[items.length - 1]);
+        const fmtS = (v: number) => (v >= 100 ? fmtNum(v) : v >= 10 ? v.toFixed(0) : v.toFixed(1));
+        return (
+        <div key={line.id} className="tier-group">
+          {groups.length > 1 || (lo && lo[0] > 0) ? (
+            <div className="tier-group-head">
+              <b>{line.label}</b>
+              {lo && lo[0] > 0 && <span className="muted small">{items.length > 1 ? `${fmtS(lo[0])} → ${fmtS(hi![0])}` : fmtS(lo[0])} {lo[1]}</span>}
+            </div>
+          ) : null}
       <div className="card-grid">
-        {list.map((def) => {
+        {items.map((def) => {
           const lock = buildLockReason(g, def.type);
           const cost = buildCost(g, def.type);
           const afford = g.money >= cost;
@@ -146,16 +135,17 @@ export function BuildPanel() {
           );
         })}
       </div>
-      {sections.length > 1 && (
-        <div className="section-end">
-          <span className="muted small">✓ End of <b>{sections[secIdx].label}</b>{next ? '' : ` — that's everything in ${CATEGORY_LABEL[cat]}`}</span>
-          {next ? (
-            <Button small variant="primary" onClick={() => goSection(next.id)}>Next: {next.label} →</Button>
-          ) : (
-            <Button small variant="ghost" onClick={() => goSection(sections[0].id)}>Back to {sections[0].label}</Button>
-          )}
         </div>
-      )}
+        );
+      })}
+      <div className="section-end">
+        <span className="muted small">✓ End of <b>T{tier} {TIER_NAMES[tier]}</b>{next ? ' — everything in the next tier is better' : ` — the best ${CATEGORY_LABEL[cat]} there is`}</span>
+        {next ? (
+          <Button small variant="primary" onClick={() => goTier(next)}>Next: T{next} {TIER_NAMES[next]} →</Button>
+        ) : (
+          <Button small variant="ghost" onClick={() => goTier(tiers[0])}>Back to T{tiers[0]}</Button>
+        )}
+      </div>
     </div>
   );
 }

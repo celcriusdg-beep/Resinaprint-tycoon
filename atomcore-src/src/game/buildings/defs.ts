@@ -535,9 +535,9 @@ const defs: BuildingDef[] = [
     name: 'Rail Fuel Terminal',
     short: 'Rail Terminal',
     category: 'fuel',
-    description: 'A rail spur with a gantry crane for fuel flasks. Suppliers can deliver 50% more fuel assemblies per day, and it stores 400 assemblies.',
+    description: 'A rail spur with a gantry crane for fuel flasks. Suppliers can deliver 50% more fuel assemblies per day, and it stores 1,500 assemblies.',
     size: [5, 2], cost: 150_000, buildTime: 70, upkeep: 2, staff: 6, maxLevel: 5, levelGrowth: 1.4, upgradeBase: 0.5, upgradeGrowth: 1.8,
-    wear: 0.012, unlock: { research: 'f_rail', level: 6 }, stats: { fuelCap: 400, fuelQuota: 0.5 },
+    wear: 0.012, unlock: { research: 'f_rail', level: 6 }, stats: { fuelCap: 1500, fuelQuota: 0.5 },
   },
 
   // ── Tier expansion ─────────────────────────────────────────────────────
@@ -573,7 +573,7 @@ const defs: BuildingDef[] = [
     type: 'turbine_sco2', name: 'sCO₂ Brayton Turbine', short: 'sCO₂ Turbine', category: 'power',
     description: 'Supercritical carbon dioxide instead of steam: a turbine the size of a desk per 100 MW, compact recuperators, +7 points efficiency. Tiny footprint for its power.',
     size: [3, 3], cost: 3_000_000, buildTime: 150, upkeep: 35, staff: 15, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
-    wear: 0.022, unlock: { research: 't_sco2', level: 16 }, stats: { steamMW: 2000, effBonus: 0.07 },
+    wear: 0.022, unlock: { research: 't_sco2', level: 16 }, stats: { steamMW: 3000, effBonus: 0.07 },
   },
   {
     type: 'turbine_mhd', name: 'MHD Topping Generator', short: 'MHD Generator', category: 'power',
@@ -604,7 +604,7 @@ const defs: BuildingDef[] = [
     type: 'cooling_sky', name: 'Radiative Sky-Cooling Array', short: 'Sky-Cooling', category: 'cooling',
     description: 'Metamaterial panels radiate heat straight into space through the atmosphere’s infrared window, day and night. No water, no fans, works anywhere.',
     size: [4, 4], cost: 4_000_000, buildTime: 140, upkeep: 8, staff: 2, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
-    wear: 0.008, unlock: { research: 'c_sky', level: 18 }, stats: { dryMW: 3000 },
+    wear: 0.008, unlock: { research: 'c_sky', level: 18 }, stats: { dryMW: 3200 },
   },
   // Fuel: mining, processing, fabrication, storage
   {
@@ -732,44 +732,84 @@ const defs: BuildingDef[] = [
   },
 ];
 
-/** Build-menu sub-sections per category, in the order the player progresses through them. */
+/** Tier names shown on the build-menu sub-tabs. */
+export const TIER_NAMES = ['', 'Basic', 'Improved', 'Advanced', 'Industrial', 'Cutting-edge'];
+
+/**
+ * Within a category, buildings that do the same job form a "line" (e.g. fuel
+ * storage). Inside a line every higher tier beats every lower tier on its main
+ * capacity (see buildingScore), which a unit test enforces.
+ */
 export const SECTIONS: Record<BuildingCategory, { id: string; label: string }[]> = {
-  reactor: [{ id: 'starter', label: 'Starter' }, { id: 'commercial', label: 'Commercial' }, { id: 'advanced', label: 'Advanced' }],
-  power: [{ id: 'steam', label: 'Steam turbines' }, { id: 'advanced', label: 'Advanced cycles' }],
-  cooling: [{ id: 'wet', label: 'Evaporative' }, { id: 'giant', label: 'Giant towers' }, { id: 'waterless', label: 'Water-free' }],
-  water: [{ id: 'supply', label: 'Raw water' }, { id: 'treatment', label: 'Treatment' }, { id: 'storage', label: 'Storage' }],
-  fuel: [{ id: 'mining', label: 'Mining' }, { id: 'processing', label: 'Milling & enrichment' }, { id: 'fabrication', label: 'Fabrication & QA' },
-    { id: 'storage', label: 'Fresh fuel storage' }, { id: 'spent', label: 'Spent fuel' }],
-  grid: [{ id: 'connections', label: 'Grid connections' }, { id: 'storage', label: 'Energy storage' }],
-  industry: [{ id: 'customers', label: 'Power customers' }, { id: 'science', label: 'Science & tourism' }],
+  reactor: [{ id: 'reactors', label: 'Reactors' }],
+  power: [{ id: 'turbines', label: 'Turbines' }],
+  cooling: [{ id: 'cooling', label: 'Cooling' }],
+  water: [{ id: 'raw', label: 'Raw water supply' }, { id: 'treated', label: 'Demineralised water' }, { id: 'storage', label: 'Water storage' }],
+  fuel: [{ id: 'mining', label: 'Mining' }, { id: 'milling', label: 'Milling' }, { id: 'enrichment', label: 'Enrichment' },
+    { id: 'fabrication', label: 'Fabrication' }, { id: 'inspection', label: 'Inspection' }, { id: 'storage', label: 'Fresh fuel storage' }, { id: 'spent', label: 'Spent fuel storage' }],
+  grid: [{ id: 'export', label: 'Grid export' }, { id: 'storage', label: 'Energy storage' }],
+  industry: [{ id: 'tourism', label: 'Tourism' }, { id: 'isotopes', label: 'Medical isotopes' }, { id: 'data', label: 'Data centres' }, { id: 'hydrogen', label: 'Hydrogen' }],
   support: [{ id: 'staff', label: 'Staff & offices' }, { id: 'research', label: 'Research' }, { id: 'maintenance', label: 'Maintenance' }, { id: 'safety', label: 'Backup power' }],
 };
 
 const META: Record<BuildingType, [string, number]> = {
-  reactor_pilot: ['starter', 1], reactor_smr: ['starter', 2], reactor_pwr: ['commercial', 3], reactor_smr_park: ['commercial', 3],
-  reactor_bwr: ['commercial', 3], reactor_epr: ['commercial', 4], reactor_msr: ['advanced', 4], reactor_sfr: ['advanced', 4], reactor_fusion: ['advanced', 5],
-  turbine: ['steam', 1], turbine_medium: ['steam', 2], turbine_large: ['steam', 3], turbine_super: ['steam', 4],
-  turbine_sco2: ['advanced', 4], turbine_mhd: ['advanced', 5],
-  cooling_mech: ['wet', 1], cooling_hybrid: ['wet', 2], cooling_tower: ['wet', 3], cooling_fanassist: ['giant', 3], cooling_mega: ['giant', 4],
-  cooling_dry: ['waterless', 1], cooling_seawater: ['waterless', 4], cooling_sky: ['waterless', 5],
-  water_wells: ['supply', 1], water_intake: ['supply', 1], desal: ['supply', 2], intake_large: ['supply', 3],
-  water_treatment: ['treatment', 1], treatment_edi: ['treatment', 3], water_tank: ['storage', 1], reservoir: ['storage', 2],
+  reactor_pilot: ['reactors', 1], reactor_smr: ['reactors', 1], reactor_pwr: ['reactors', 2], reactor_smr_park: ['reactors', 2],
+  reactor_bwr: ['reactors', 3], reactor_sfr: ['reactors', 3], reactor_epr: ['reactors', 4], reactor_msr: ['reactors', 4], reactor_fusion: ['reactors', 5],
+  turbine: ['turbines', 1], turbine_medium: ['turbines', 2], turbine_large: ['turbines', 3], turbine_super: ['turbines', 4],
+  turbine_sco2: ['turbines', 5], turbine_mhd: ['turbines', 5],
+  cooling_dry: ['cooling', 1], cooling_mech: ['cooling', 1], cooling_hybrid: ['cooling', 2], cooling_tower: ['cooling', 2],
+  cooling_fanassist: ['cooling', 3], cooling_mega: ['cooling', 4], cooling_sky: ['cooling', 4], cooling_seawater: ['cooling', 5],
+  water_wells: ['raw', 1], water_intake: ['raw', 1], desal: ['raw', 2], intake_large: ['raw', 3],
+  water_treatment: ['treated', 1], treatment_edi: ['treated', 2], water_tank: ['storage', 1], reservoir: ['storage', 2],
   uranium_mine: ['mining', 1], mine_underground: ['mining', 2], mine_isr: ['mining', 3],
-  ore_mill: ['processing', 1], enrichment: ['processing', 1], mill_large: ['processing', 2], enrich_centrifuge: ['processing', 2], enrich_laser: ['processing', 3],
-  fuel_fab: ['fabrication', 1], fuel_qa: ['fabrication', 1], fab_auto: ['fabrication', 2], qa_auto: ['fabrication', 2],
-  fuel_depot: ['storage', 1], rail_terminal: ['storage', 2], fuel_vault: ['storage', 3], dry_cask: ['spent', 1], spent_vault: ['spent', 3],
-  substation: ['connections', 1], substation_400: ['connections', 2], hvdc: ['connections', 3], grid_sc: ['connections', 5],
+  ore_mill: ['milling', 1], mill_large: ['milling', 2],
+  enrichment: ['enrichment', 1], enrich_centrifuge: ['enrichment', 2], enrich_laser: ['enrichment', 3],
+  fuel_fab: ['fabrication', 1], fab_auto: ['fabrication', 2], fuel_qa: ['inspection', 1], qa_auto: ['inspection', 2],
+  fuel_depot: ['storage', 1], rail_terminal: ['storage', 2], fuel_vault: ['storage', 3], dry_cask: ['spent', 1], spent_vault: ['spent', 2],
+  substation: ['export', 1], substation_400: ['export', 2], hvdc: ['export', 3], grid_sc: ['export', 4],
   battery: ['storage', 1], storage_thermal: ['storage', 2], storage_pumped: ['storage', 3],
-  datacenter: ['customers', 3], hydrogen: ['customers', 3], isotopes: ['science', 3], visitor: ['science', 1],
-  admin: ['staff', 1], hq: ['staff', 3], lab: ['research', 1], research_campus: ['research', 3],
-  maintenance: ['maintenance', 1], robotics_depot: ['maintenance', 3], generator_emergency: ['safety', 1], backup_gt: ['safety', 2],
+  visitor: ['tourism', 1], isotopes: ['isotopes', 2], datacenter: ['data', 2], hydrogen: ['hydrogen', 3],
+  admin: ['staff', 1], hq: ['staff', 2], lab: ['research', 1], research_campus: ['research', 2],
+  maintenance: ['maintenance', 1], robotics_depot: ['maintenance', 2], generator_emergency: ['safety', 1], backup_gt: ['safety', 2],
 };
 for (const d of defs) {
   const [section, tier] = META[d.type];
   d.section = section;
   d.tier = tier;
 }
-defs.sort((a, b) => (a.tier ?? 1) - (b.tier ?? 1));
+
+/** Main capacity of a building at level 1, used to rank it inside its tier: [amount, unit]. */
+export function buildingScore(def: BuildingDef): [number, string] | null {
+  const s = def.stats;
+  if (def.reactor) return [def.reactor.thermalMW * def.reactor.efficiency, 'MWe'];
+  if (s.steamMW) return [s.steamMW, 'MW steam'];
+  if (s.coolingMW || s.dryMW) return [(s.coolingMW ?? 0) + (s.dryMW ?? 0), 'MW cooling'];
+  if (s.gridMW) return [s.gridMW, 'MW export'];
+  if (s.storageMWh) return [s.storageMWh, 'MWh'];
+  if (s.oreRate) return [s.oreRate * 60, 't ore/min'];
+  if (s.ycRate) return [s.ycRate * 10 * 60, 't ore-eq./min'];
+  if (s.oreStock) return [0, 't ore/min'];
+  if (s.millRate) return [s.millRate * 60, 't ore/min'];
+  if (s.enrichRate) return [s.enrichRate * 60, 'yellowcake/min'];
+  if (s.fabRate) return [s.fabRate * 60, 'assemblies/min'];
+  if (s.inspectRate) return [s.inspectRate * 60, 'checks/min'];
+  if (s.caskCap) return [s.caskCap, 'spent assemblies'];
+  if (s.fuelCap) return [s.fuelCap, 'assemblies'];
+  if (s.rawWater) return [s.rawWater, 'm³/h'];
+  if (s.treatedWater) return [s.treatedWater, 'm³/h'];
+  if (s.waterStorage) return [s.waterStorage, 'm³'];
+  if (s.dataMW) return [s.dataMW, 'MW load'];
+  if (s.h2MW) return [s.h2MW, 'MW electrolysis'];
+  if (s.isotopes) return [s.isotopes, '$/s'];
+  if (s.tourism) return [s.tourism, '$/s'];
+  if (s.research) return [s.research, 'RP/s'];
+  if (s.staffCap) return [s.staffCap, 'staff'];
+  if (s.maintenance) return [s.maintenance, 'crews'];
+  if (s.backupMW) return [s.backupMW, 'MW backup'];
+  return null;
+}
+
+defs.sort((a, b) => (a.tier ?? 1) - (b.tier ?? 1) || (buildingScore(a)?.[0] ?? 0) - (buildingScore(b)?.[0] ?? 0));
 
 export const BUILDINGS: Record<BuildingType, BuildingDef> = Object.fromEntries(
   defs.map((d) => [d.type, d]),

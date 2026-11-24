@@ -606,3 +606,7 @@ table.pl tr.big td { font-size: 15px; }
 .tier-badge.t5 { color: #ffb648; box-shadow: 0 0 10px rgba(255,182,72,0.35); }
 .build-value { color: var(--muted); font-variant-numeric: tabular-nums; }
 .section-end { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border: 1px dashed var(--line); border-radius: 12px; }
+
+.tier-tab .tier-badge { margin-left: 0; }
+.tier-group { display: flex; flex-direction: column; gap: 6px; }
+.tier-group-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 2px 4px 0; font-size: 13px; }

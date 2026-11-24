@@ -5,7 +5,7 @@ import { setRandom, mulberry32 } from '../src/game/rng';
 import { clearModCache } from '../src/game/simulation/modifiers';
 import { initEquilibrium } from '../src/game/simulation/reactor';
 import { LOCATION_BY_ID } from '../src/game/progression/locations';
-import { BUILDING_LIST, SECTIONS } from '../src/game/buildings/defs';
+import { BUILDING_LIST, SECTIONS, buildingScore } from '../src/game/buildings/defs';
 import { RESEARCH } from '../src/game/research/tree';
 import { caskLoadRate } from '../src/game/supply/fuelcycle';
 import type { BuildingType, GameState } from '../src/game/types';
@@ -28,6 +28,17 @@ function site(types: [BuildingType, number, number][], reactor?: BuildingType) {
 }
 
 describe('build menu tiers', () => {
+  it('a higher tier always beats every lower tier of the same kind', () => {
+    for (const [cat, lines] of Object.entries(SECTIONS)) for (const line of lines) {
+      const items = BUILDING_LIST.filter((d) => d.category === cat && d.section === line.id);
+      for (const a of items) for (const b of items) {
+        if ((b.tier ?? 1) <= (a.tier ?? 1)) continue;
+        const sa = buildingScore(a)?.[0] ?? 0, sb = buildingScore(b)?.[0] ?? 0;
+        expect(sb, `${b.type} (T${b.tier}) must beat ${a.type} (T${a.tier}) in ${cat}/${line.id}`).toBeGreaterThan(sa);
+      }
+    }
+  });
+
   it('every building has a section that exists in its category and a tier 1–5', () => {
     for (const d of BUILDING_LIST) {
       expect(SECTIONS[d.category].some((x) => x.id === d.section), d.type).toBe(true);
