@@ -30,6 +30,7 @@ export function keyStat(def: BuildingDef, level = 1, mods = { reactorOutput: 1, 
   if (s.research) return `+${(s.research * lm * mods.research).toFixed(2)} RP/s`;
   if (s.staffCap) return `+${Math.round(s.staffCap * lm)} staff, +1 contract slot`;
   if (s.maintenance) return `Repair crew ×${(s.maintenance * lm).toFixed(1)}`;
+  if (s.caskCap) return `Holds ${fmtNum(s.caskCap * lm)} spent assemblies · loads ${(60 * (1 + 0.6 * (level - 1))).toFixed(0)}/min`;
   if (s.fuelCap) return `+${fmtNum(s.fuelCap * lm)} fuel assemblies storage`;
   if (s.safety) return `+${Math.round(s.safety * lm)} safety rating`;
   if (s.rawWater) return `+${fmtNum(s.rawWater * lm)} m³/h raw water`;

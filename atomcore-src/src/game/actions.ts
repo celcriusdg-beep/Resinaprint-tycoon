@@ -10,7 +10,7 @@ import { buyFuelInternal, repairInternal } from './engine';
 import { LOCATION_BY_ID, expandCost, nextSize } from './progression/locations';
 import { pendingShares } from './progression/prestige';
 import { acceptOffer as acceptOfferImpl, cancelContract as cancelContractImpl } from './economy/market';
-import { startRefuel, decommissionCost, buyVehicle, sellVehicle, buyItem, sellItem, deliverOrder as deliverOrderImpl, fuelQuotaLeft, type Item } from './supply/fuelcycle';
+import { startRefuel, decommissionCost, buyVehicle, sellVehicle, buyItem, sellItem, deliverOrder as deliverOrderImpl, fuelQuotaLeft, shipSpentFuel as shipSpentFuelImpl, type Item } from './supply/fuelcycle';
 import { fuelCapacity } from './simulation/plant';
 
 // Every player action validates fully and returns an error string, or null on success.
@@ -398,4 +398,8 @@ export function moveBuilding(s: GameState, id: number, x: number, z: number, rot
 
 export function deliverMaterialOrder(s: GameState, id: number): Result {
   return deliverOrderImpl(s, id);
+}
+
+export function shipSpentFuel(s: GameState, siteId: string, qty: number): Result {
+  return shipSpentFuelImpl(s, siteId, qty);
 }

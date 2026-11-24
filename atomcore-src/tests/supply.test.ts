@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createInitialState } from '../src/game/state';
+import { createInitialState, makeBuilding } from '../src/game/state';
 import { tick } from '../src/game/engine';
 import * as A from '../src/game/actions';
 import { setRandom, mulberry32 } from '../src/game/rng';
@@ -229,3 +229,33 @@ describe('fuel market and material orders', () => {
   });
 });
 
+
+describe('spent fuel: pools, dry casks and shipping', () => {
+  it('drains a full pool into casks, upgrades help, and shipping frees space', () => {
+    const s = createInitialState();
+    s.nextEventIn = 1e9; s.money = 1e8;
+    const site = s.sites.riverside;
+    const pool = FC.poolCapacity(site);
+    site.spent.pool = pool; // full
+    const pad = makeBuilding(s, 'dry_cask', 12, 2, 0, true);
+    site.buildings.push(pad);
+    run(s, 10);
+    expect(site.stats.caskMove).toBeGreaterThan(0);
+    expect(site.spent.pool).toBeLessThan(pool - 5);
+    // Fill the casks completely, then upgrade: capacity doubles and loading resumes.
+    site.spent.casks = site.stats.caskCap;
+    site.spent.pool = pool;
+    run(s, 2);
+    expect(site.stats.caskMove).toBe(0);
+    const cap1 = site.stats.caskCap;
+    pad.level = 2;
+    run(s, 2);
+    expect(site.stats.caskCap).toBeCloseTo(cap1 * 2);
+    expect(site.stats.caskMove).toBeGreaterThan(1.5);
+    // Shipping takes fuel off-site and returns recovered uranium.
+    const casks = site.spent.casks;
+    expect(A.shipSpentFuel(s, 'riverside', 100)).toBeNull();
+    expect(site.spent.casks).toBeCloseTo(casks - 100);
+    expect(s.supply.yellowcake).toBeGreaterThanOrEqual(40);
+  });
+});

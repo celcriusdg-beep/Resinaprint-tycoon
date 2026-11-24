@@ -499,6 +499,18 @@ export function caskCapacity(site: Site): number {
 }
 
 export const CASK_COST_PER_ASSEMBLY = 60;
+/** Shipping spent fuel off-site to a reprocessing plant, per assembly. */
+export const SHIP_COST_PER_ASSEMBLY = 180;
+/** Reprocessed uranium recovered per shipped assembly (yellowcake units). */
+export const SHIP_YELLOWCAKE_BACK = 0.4;
+
+/** How fast the cask loading crews work at a site (assemblies per second). */
+export function caskLoadRate(site: Site): number {
+  let rate = 0;
+  for (const b of site.buildings)
+    if (b.type === 'dry_cask' && b.status === 'active') rate += 1 + 0.6 * (b.level - 1);
+  return rate;
+}
 
 /** Cooled spent fuel moves from the pools into dry casks when there is room. */
 export function stepSpentFuel(s: GameState, dt: number): void {
@@ -507,16 +519,36 @@ export function stepSpentFuel(s: GameState, dt: number): void {
     const cap = caskCapacity(site);
     site.stats.poolCap = poolCapacity(site);
     site.stats.caskCap = cap;
+    site.stats.caskMove = 0;
     if (cap <= site.spent.casks || site.spent.pool <= 0) continue;
-    const rate = 0.02 + cap * 0.0005; // assemblies per second
-    const move = Math.min(site.spent.pool, cap - site.spent.casks, rate * dt);
+    const move = Math.min(site.spent.pool, cap - site.spent.casks, caskLoadRate(site) * dt);
     const cost = move * CASK_COST_PER_ASSEMBLY;
-    if (s.money < cost) continue;
+    if (move <= 0 || s.money < cost) continue;
     site.spent.pool -= move;
     site.spent.casks += move;
+    site.stats.caskMove = move / dt;
     s.money -= cost;
     s.ledger.maintenance += cost;
   }
+}
+
+/** Ship spent fuel from the casks (then the pools) off-site for reprocessing. */
+export function shipSpentFuel(s: GameState, siteId: string, qty: number): string | null {
+  const site = s.sites[siteId];
+  const avail = site.spent.casks + site.spent.pool;
+  const n = Math.floor(Math.min(qty, avail));
+  if (n <= 0) return 'No spent fuel to ship.';
+  const cost = n * SHIP_COST_PER_ASSEMBLY;
+  if (s.money < cost) return `Shipping ${n} assemblies costs ${Math.round(cost).toLocaleString('en-US')} $.`;
+  const fromCasks = Math.min(site.spent.casks, n);
+  site.spent.casks -= fromCasks;
+  site.spent.pool -= n - fromCasks;
+  s.money -= cost;
+  s.ledger.maintenance += cost;
+  const back = n * SHIP_YELLOWCAKE_BACK;
+  s.supply.yellowcake += back;
+  pushLog(s, 'info', `Shipped ${n} spent assemblies for reprocessing. ${back.toFixed(0)} units of recovered uranium returned as yellowcake.`);
+  return null;
 }
 
 

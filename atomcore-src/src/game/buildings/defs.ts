@@ -387,9 +387,9 @@ const defs: BuildingDef[] = [
     name: 'Dry Cask Storage',
     short: 'Dry Casks',
     category: 'fuel',
-    description: 'Spent fuel cools in pools next to the reactors for years, then moves into steel-and-concrete casks on a guarded pad. Pools full = no refuelling.',
-    size: [3, 2], cost: 15_000, buildTime: 30, upkeep: 0.5, staff: 2, maxLevel: 6, levelGrowth: 1.9, upgradeBase: 0.55, upgradeGrowth: 1.95,
-    wear: 0.004, unlock: { level: 3 }, stats: { caskCap: 300 },
+    description: 'Spent fuel cools in the reactor pools, then cranes load it into steel-and-concrete casks on a guarded pad. Each level holds more casks and loads them faster. Pools full = no refuelling.',
+    size: [3, 2], cost: 15_000, buildTime: 30, upkeep: 0.5, staff: 2, maxLevel: 6, levelGrowth: 2, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.004, unlock: { level: 3 }, stats: { caskCap: 600 },
   },
   {
     type: 'uranium_mine',

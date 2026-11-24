@@ -288,6 +288,8 @@ export interface SiteStats {
   batteryLeft: number; // seconds of battery-backed emergency feedwater left
   poolCap: number;
   caskCap: number;
+  /** Assemblies per second moving from the pools into dry casks right now. */
+  caskMove: number;
 }
 
 export interface Site {

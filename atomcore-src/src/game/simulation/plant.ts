@@ -25,7 +25,7 @@ export function emptyStats(): SiteStats {
     researchRate: 0, upkeep: 0, salaries: 0, revenue: 0, price: BASE_PRICE, reactorsOnline: 0, reactorsTotal: 0,
     maxTempFrac: 0, rawSupply: 0, evaporation: 0, treatedSupply: 0, treatedDemand: 0, rawToTreatment: 0, tankM3: 0,
     tankCapM3: 0, waterFactor: 1, treatedFactor: 1, waterCost: 0, houseLoadMW: 0, oreRate: 0, digRate: 0, haulRate: 0,
-    offsitePower: true, backupMW: 0, backupNeedMW: 0, pumpsPowered: true, batteryLeft: 60, poolCap: 0, caskCap: 0,
+    offsitePower: true, backupMW: 0, backupNeedMW: 0, pumpsPowered: true, batteryLeft: 60, poolCap: 0, caskCap: 0, caskMove: 0,
   };
 }
 

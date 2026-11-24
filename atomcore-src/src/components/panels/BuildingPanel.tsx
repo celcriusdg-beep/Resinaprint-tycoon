@@ -4,7 +4,7 @@ import { useUI } from '../../stores/uiStore';
 import { BUILDINGS, upgradeCost, upkeepAt, staffAt } from '../../game/buildings/defs';
 import { getMods } from '../../game/simulation/modifiers';
 import { repairCost, safetyRating } from '../../game/simulation/plant';
-import { decommissionCost, mineOutput, reserveFor } from '../../game/supply/fuelcycle';
+import { decommissionCost, mineOutput, reserveFor, poolCapacity, caskLoadRate, CASK_COST_PER_ASSEMBLY, SHIP_COST_PER_ASSEMBLY, SHIP_YELLOWCAKE_BACK } from '../../game/supply/fuelcycle';
 import { canAffordEssential } from '../../game/engine';
 import { slotsFor } from '../../game/supply/vehicles';
 import { LOCATION_BY_ID } from '../../game/progression/locations';
@@ -82,7 +82,7 @@ export function BuildingPanel({ id }: { id: number }) {
       {b.type === 'uranium_mine' && b.status !== 'constructing' && <MineSummary b={b} />}
       {def.category === 'industry' && b.status !== 'constructing' && <IndustrySummary />}
       {b.type === 'generator_emergency' && <div className="hint-box"><Icon name="info" size={15} /> Site backup power {fmtPower(site.stats.backupMW)} · needed in a blackout {fmtPower(site.stats.backupNeedMW)}. {site.stats.backupMW < site.stats.backupNeedMW ? 'Not enough — build or upgrade more generators.' : 'Enough to keep cooling running.'}</div>}
-      {b.type === 'dry_cask' && <div className="hint-box"><Icon name="info" size={15} /> Spent fuel: {fmtNum(site.spent.pool)} in pools, {fmtNum(site.spent.casks)} / {fmtNum(site.stats.caskCap)} in casks. Moving fuel into casks costs $60 per assembly.</div>}
+      {b.type === 'dry_cask' && <SpentFuelCard />}
 
       <div className="stat-grid">
         <Stat label="Output" value={keyStat(def, b.level, mods)} />
@@ -161,6 +161,31 @@ function IndustrySummary() {
         <Stat label="Electrolysers" value={`${fmtNum(st.h2MW)} MW`} sub="unsold power → hydrogen" />
       </div>
       <div className="muted small">Income here covers data centre sales, hydrogen, medical isotopes and visitors at this site.</div>
+    </div>
+  );
+}
+
+function SpentFuelCard() {
+  const g = useGame();
+  const site = g.sites[g.activeSite];
+  const st = site.stats;
+  const poolCap = poolCapacity(site);
+  const casksFull = st.caskCap > 0 && site.spent.casks >= st.caskCap - 1;
+  const lot = Math.max(1, Math.min(Math.floor(site.spent.casks + site.spent.pool), Math.max(100, Math.round(st.caskCap * 0.25))));
+  return (
+    <div className="flow-card">
+      <div className="row-between"><b>Spent fuel at this site</b><span className="status-chip">{st.caskMove > 0 ? `loading ${fmtNum(st.caskMove * 60)}/min` : casksFull ? 'casks full' : site.spent.pool < 1 ? 'pools empty' : 'idle'}</span></div>
+      <div className="rod-bar"><span>Reactor pools</span><Bar value={site.spent.pool} max={Math.max(1, poolCap)} height={6} warn={site.spent.pool > poolCap * 0.75} /><span className="mono">{fmtNum(site.spent.pool)} / {fmtNum(poolCap)}</span></div>
+      <div className="rod-bar"><span>Dry casks</span><Bar value={site.spent.casks} max={Math.max(1, st.caskCap)} height={6} warn={casksFull} /><span className="mono">{fmtNum(site.spent.casks)} / {fmtNum(st.caskCap)}</span></div>
+      <div className="muted small">
+        Fuel moves automatically from the pools into casks ({fmtNum(caskLoadRate(site) * 60)}/min, ${CASK_COST_PER_ASSEMBLY} each). Pool size comes from your reactors; upgrading this pad doubles cask space and speeds up loading.
+        {casksFull ? ' The casks are full — upgrade, build another pad, or ship fuel off-site.' : ''}
+      </div>
+      <Button wide icon="truck" disabled={site.spent.casks + site.spent.pool < 1}
+        onClick={() => run((s) => A.shipSpentFuel(s, s.activeSite, lot), { sound: 'cash' })}>
+        Ship {fmtNum(lot)} to reprocessing · {fmtMoney(lot * SHIP_COST_PER_ASSEMBLY)}
+      </Button>
+      <div className="muted small">Reprocessing returns {SHIP_YELLOWCAKE_BACK} yellowcake of recovered uranium per assembly.</div>
     </div>
   );
 }

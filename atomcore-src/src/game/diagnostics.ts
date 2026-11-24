@@ -218,8 +218,18 @@ export function diagnoseSite(s: GameState, site: Site): Issue[] {
       site.size < loc.maxSize ? { label: 'Expand land', action: { kind: 'expand' } } : { label: 'Sites', action: { kind: 'panel', panel: 'build' } });
   }
   const poolCap = poolCapacity(site);
-  if (poolCap > 0 && site.spent.pool >= poolCap - 1) add('fuel', 'error', 'Spent fuel pool full', 'No reactor here can be refuelled until fuel moves into dry casks.', { label: 'Build dry casks', action: { kind: 'build', type: 'dry_cask' } });
-  else if (poolCap > 0 && site.spent.pool > poolCap * 0.75) add('fuel', 'warn', 'Spent fuel pool filling up', `${fmt(site.spent.pool)} of ${fmt(poolCap)} slots used. Build Dry Cask Storage.`, { label: 'Build dry casks', action: { kind: 'build', type: 'dry_cask' } });
+  const casks = site.buildings.find((b) => b.type === 'dry_cask' && b.status !== 'constructing');
+  const casksFull = st.caskCap > 0 && site.spent.casks >= st.caskCap - 1;
+  const caskFix = !casks
+    ? { label: 'Build dry casks', action: { kind: 'build' as const, type: 'dry_cask' as const } }
+    : { label: 'Open dry casks', action: { kind: 'select' as const, id: casks.id } };
+  const why = !casks ? 'Build Dry Cask Storage to move cooled fuel out of the pools.'
+    : casksFull ? 'Your dry casks are full too: upgrade them, build another cask pad, or ship spent fuel off-site for reprocessing.'
+    : st.caskMove > 0 ? `Cask crews are moving ${fmt(st.caskMove * 60)} assemblies/min into casks.`
+    : s.money < 60 ? 'Cask loading is paused: it costs $60 per assembly and you are out of money.'
+    : 'Cask loading is paused while the cask pad is being built or upgraded.';
+  if (poolCap > 0 && site.spent.pool >= poolCap - 1) add('fuel', 'error', 'Spent fuel pool full', `No reactor here can be refuelled. ${why}`, caskFix);
+  else if (poolCap > 0 && site.spent.pool > poolCap * 0.75 && st.caskMove <= 0) add('fuel', 'warn', 'Spent fuel pool filling up', `${fmt(site.spent.pool)} of ${fmt(poolCap)} slots used. ${why}`, caskFix);
 
   for (const b of site.buildings) {
     const def = BUILDINGS[b.type];
