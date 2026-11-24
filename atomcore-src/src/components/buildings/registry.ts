@@ -5,6 +5,7 @@ import * as R from './models/reactors';
 import * as P from './models/plant';
 import * as S from './models/supply';
 import * as I from './models/industry';
+import * as T from './models/tiers';
 
 const BUILDERS: Record<BuildingType, () => ModelBuilder> = {
   reactor_pilot: R.pilotReactor,
@@ -44,6 +45,36 @@ const BUILDERS: Record<BuildingType, () => ModelBuilder> = {
   isotopes: I.isotopeLab,
   visitor: I.visitorCenter,
   rail_terminal: I.railTerminal,
+  reactor_smr_park: T.smrPark,
+  reactor_sfr: T.sfrReactor,
+  turbine_medium: T.turbineMedium,
+  turbine_super: T.turbineSuper,
+  turbine_sco2: T.turbineSco2,
+  turbine_mhd: T.turbineMhd,
+  cooling_hybrid: T.coolingHybrid,
+  cooling_fanassist: T.coolingFanAssist,
+  cooling_seawater: T.coolingSeawater,
+  cooling_sky: T.coolingSky,
+  mine_underground: T.mineUnderground,
+  mine_isr: T.mineIsr,
+  mill_large: T.millLarge,
+  enrich_centrifuge: T.enrichCentrifuge,
+  enrich_laser: T.enrichLaser,
+  fab_auto: T.fabAuto,
+  qa_auto: T.qaAuto,
+  fuel_vault: T.fuelVault,
+  spent_vault: T.spentVault,
+  substation_400: T.substation400,
+  grid_sc: T.gridSc,
+  storage_thermal: T.storageThermal,
+  storage_pumped: T.storagePumped,
+  intake_large: T.intakeLarge,
+  treatment_edi: T.treatmentEdi,
+  reservoir: T.reservoir,
+  hq: T.hqTower,
+  research_campus: T.researchCampus,
+  robotics_depot: T.roboticsDepot,
+  backup_gt: T.backupGasTurbine,
 };
 
 const templates = new Map<BuildingType, ModelData>();

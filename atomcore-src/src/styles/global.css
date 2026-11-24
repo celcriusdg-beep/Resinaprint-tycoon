@@ -590,3 +590,19 @@ table.pl tr.big td { font-size: 15px; }
 .explain > div { margin-top: 3px; line-height: 1.35; }
 .order-row { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line-2); }
 .order-row:last-of-type { border-bottom: none; }
+
+/* Build menu sub-sections and tiers */
+.subtabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 2px 0; flex: none; }
+.subtabs::-webkit-scrollbar { display: none; }
+.subtab { flex: none; display: inline-flex; gap: 6px; align-items: center; border: 1px dashed var(--line); background: transparent; color: var(--muted); border-radius: 10px; padding: 6px 10px; font-size: 12px; font-weight: 600; }
+.subtab.active { border-style: solid; background: rgba(255,255,255,0.06); color: var(--text, #e8eef4); border-color: rgba(255,255,255,0.35); }
+.subtab-step { display: inline-grid; place-items: center; width: 17px; height: 17px; border-radius: 50%; background: rgba(255,255,255,0.1); font-size: 10.5px; }
+.subtab.active .subtab-step { background: var(--accent); color: #06121c; }
+.tier-badge { margin-left: auto; flex: none; font-size: 10.5px; font-weight: 800; letter-spacing: 0.04em; padding: 2px 7px; border-radius: 999px; border: 1px solid currentColor; }
+.tier-badge.t1 { color: #9aa7b4; }
+.tier-badge.t2 { color: #5be08a; }
+.tier-badge.t3 { color: #4fd1ff; }
+.tier-badge.t4 { color: #b18cff; }
+.tier-badge.t5 { color: #ffb648; box-shadow: 0 0 10px rgba(255,182,72,0.35); }
+.build-value { color: var(--muted); font-variant-numeric: tabular-nums; }
+.section-end { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border: 1px dashed var(--line); border-radius: 12px; }

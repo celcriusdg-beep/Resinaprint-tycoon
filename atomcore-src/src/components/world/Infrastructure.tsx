@@ -98,7 +98,7 @@ export function Infrastructure({ site, structure }: { site: Site; structure: num
     const reactors = built.filter((x) => x.reactor);
     const turbines = built.filter((x) => BUILDINGS[x.type].category === 'power');
     const cooling = built.filter((x) => BUILDINGS[x.type].category === 'cooling');
-    const subs = built.filter((x) => x.type === 'substation');
+    const subs = built.filter((x) => BUILDINGS[x.type].stats.gridMW);
     for (const r of reactors) {
       const t = nearest(r, turbines, size);
       if (!t) continue;

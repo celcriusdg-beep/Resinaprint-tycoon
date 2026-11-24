@@ -18,7 +18,7 @@ function countType(s: GameState, types: BuildingType[], activeOnly = true): numb
 }
 
 const REACTORS: BuildingType[] = [
-  'reactor_pilot', 'reactor_smr', 'reactor_pwr', 'reactor_bwr', 'reactor_msr', 'reactor_fusion', 'reactor_epr',
+  'reactor_pilot', 'reactor_smr', 'reactor_pwr', 'reactor_bwr', 'reactor_msr', 'reactor_fusion', 'reactor_epr', 'reactor_smr_park', 'reactor_sfr',
 ];
 
 export const ACHIEVEMENTS: AchievementDef[] = [

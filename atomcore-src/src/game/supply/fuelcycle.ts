@@ -225,7 +225,7 @@ export function fabDefectRate(s: GameState): number {
 }
 
 /** Mining output (computed per site in the plant step) plus the processing chain. */
-export function tickSupply(s: GameState, dt: number, minedOre: number, fuelCap: number): void {
+export function tickSupply(s: GameState, dt: number, minedOre: number, fuelCap: number, ycDirect = 0): void {
   const sup = s.supply;
   const caps = supplyCaps(s);
   const mods = companyMods(s);
@@ -234,6 +234,9 @@ export function tickSupply(s: GameState, dt: number, minedOre: number, fuelCap: 
   const oreIn = Math.min(minedOre * dt, Math.max(0, caps.ore - sup.ore));
   sup.ore += oreIn;
   rates.mined = minedOre;
+  const ycIn = Math.min(ycDirect * dt, Math.max(0, caps.yellowcake - sup.yellowcake));
+  sup.yellowcake += ycIn;
+  rates.leached = ycIn / dt;
 
   let millCap = 0, enrichCap = 0, fabCap = 0, inspectCap = 0;
   for (const b of allBuildings(s)) {
@@ -465,7 +468,8 @@ export function supplyCapacity(s: GameState) {
   const mods = companyMods(s);
   let mill = 0, enrich = 0, fab = 0, inspect = 0, mines = 0;
   for (const b of allBuildings(s)) {
-    if (b.type === 'uranium_mine' && b.status !== 'constructing') mines++;
+    const md = BUILDINGS[b.type].stats;
+    if ((b.type === 'uranium_mine' || md.oreRate || md.ycRate) && b.status !== 'constructing') mines++;
     if (!working(b)) continue;
     mill += stat(b, 'millRate') * cond(b);
     enrich += stat(b, 'enrichRate') * cond(b);
@@ -508,7 +512,7 @@ export const SHIP_YELLOWCAKE_BACK = 0.4;
 export function caskLoadRate(site: Site): number {
   let rate = 0;
   for (const b of site.buildings)
-    if (b.type === 'dry_cask' && b.status === 'active') rate += 1 + 0.6 * (b.level - 1);
+    if (b.status === 'active' && BUILDINGS[b.type].stats.caskRate) rate += BUILDINGS[b.type].stats.caskRate! * (1 + 0.6 * (b.level - 1));
   return rate;
 }
 
@@ -604,7 +608,7 @@ export function ownFuelCost(s: GameState): number | null {
   for (const id of s.unlockedSites) for (const b of s.sites[id].buildings) {
     if (b.status === 'constructing') continue;
     const def = BUILDINGS[b.type];
-    if (def.category !== 'fuel' || b.type === 'dry_cask' || b.type === 'fuel_depot' || b.type === 'rail_terminal') continue;
+    if (def.category !== 'fuel' || def.stats.caskCap || def.stats.fuelCap) continue;
     upkeep += def.upkeep * levelMult(def, b.level);
     if (b.vehicles) upkeep += mineOutput(b, id, getMods(s, id)).upkeep;
   }

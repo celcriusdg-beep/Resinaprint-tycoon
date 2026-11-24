@@ -12,7 +12,7 @@ export function createShowcaseState(): GameState {
   s.level = 25;
   s.research.completed = RESEARCH.map((r) => r.id);
   const site = s.sites.riverside;
-  site.size = 42;
+  site.size = 50;
   site.buildings = [];
   const order: BuildingType[] = ['reactor_epr', 'cooling_mega', 'hvdc', 'datacenter', 'hydrogen', 'rail_terminal', 'visitor', 'isotopes', 'desal', 'reactor_fusion', 'reactor_pwr', 'reactor_bwr', 'reactor_msr', 'cooling_tower', 'turbine_large',
     ...BUILDING_LIST.map((d) => d.type).filter((t) => !['reactor_epr', 'cooling_mega', 'hvdc', 'datacenter', 'hydrogen', 'rail_terminal', 'visitor', 'isotopes', 'desal', 'reactor_fusion', 'reactor_pwr', 'reactor_bwr', 'reactor_msr', 'cooling_tower', 'turbine_large'].includes(t))];

@@ -71,7 +71,7 @@ function stat(b: Building, key: keyof (typeof BUILDINGS)['turbine']['stats']): n
 
 export function siteCapacities(s: GameState, site: Site, mods: Modifiers) {
   let steam = 0, cooling = 0, dryCooling = 0, grid = BASE_GRID_TIE_MW, storage = 0, rate = 0, staffCap = BASE_STAFF_CAP + mods.staffCap;
-  let crews = 0, safety = 0, contractSlots = 0;
+  let crews = 0, safety = 0, contractSlots = 0, effSum = 0, steamRaw = 0;
   for (const b of site.buildings) {
     if (b.status === 'constructing' || b.status === 'destroyed') continue;
     const def = BUILDINGS[b.type];
@@ -81,9 +81,13 @@ export function siteCapacities(s: GameState, site: Site, mods: Modifiers) {
     if (def.stats.contractSlots && b.status !== 'broken') contractSlots += def.stats.contractSlots;
     if (!working) continue;
     const cf = b.condition >= 60 ? 1 : 0.55 + 0.45 * (b.condition / 60);
-    steam += stat(b, 'steamMW') * cf;
+    const st = stat(b, 'steamMW') * cf;
+    steam += st;
+    steamRaw += st;
+    effSum += st * (def.stats.effBonus ?? 0);
     if (def.dry) dryCooling += stat(b, 'coolingMW') * cf;
     else cooling += stat(b, 'coolingMW') * cf;
+    dryCooling += stat(b, 'dryMW') * cf;
     grid += stat(b, 'gridMW');
     storage += stat(b, 'storageMWh');
     rate += stat(b, 'storageRateMW');
@@ -97,7 +101,8 @@ export function siteCapacities(s: GameState, site: Site, mods: Modifiers) {
   grid *= mods.grid * eventEffect(s, site.id, 'grid');
   storage *= mods.storage;
   rate *= mods.storage;
-  return { steam, cooling, wetCooling: cooling, dryCooling, grid, storage, rate, staffCap, crews, safety, contractSlots };
+  const turbineEff = steamRaw > 0 ? effSum / steamRaw : 0;
+  return { steam, cooling, wetCooling: cooling, dryCooling, grid, storage, rate, staffCap, crews, safety, contractSlots, turbineEff };
 }
 
 export function fuelCapacity(s: GameState): number {
@@ -111,7 +116,7 @@ export function contractSlots(s: GameState): number {
   const m = companyMods(s);
   let n = BASE_CONTRACT_SLOTS + m.contractSlots;
   for (const site of Object.values(s.sites))
-    for (const b of site.buildings) if (b.type === 'admin' && b.status !== 'constructing' && b.status !== 'broken') n += 1;
+    for (const b of site.buildings) if (b.status !== 'constructing' && b.status !== 'broken') n += BUILDINGS[b.type].stats.contractSlots ?? 0;
   return Math.min(n, 8);
 }
 
@@ -124,12 +129,12 @@ export function safetyRating(s: GameState, siteId: string, mods: Modifiers): num
   let n = 0;
   for (const b of site.buildings) {
     if (b.status === 'constructing') continue;
-    if (b.type === 'generator_emergency' && b.status === 'active') gens += stat(b, 'safety');
+    if (BUILDINGS[b.type].stats.backupMW && b.status === 'active') gens += stat(b, 'safety');
     condSum += b.condition;
     n++;
   }
   const avgCond = n ? condSum / n : 100;
-  const crews = site.buildings.some((b) => b.type === 'maintenance' && b.status === 'active') ? 8 : 0;
+  const crews = site.buildings.some((b) => BUILDINGS[b.type].stats.maintenance && b.status === 'active') ? 8 : 0;
   return Math.max(0, Math.min(100, 30 + mods.safety + Math.min(30, gens) + crews + (avgCond - 50) * 0.4));
 }
 
@@ -163,6 +168,7 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
   const fuelCap = fuelCapacity(s);
   s.supply.rates.salt = 0;
   let minedTotal = 0;
+  let ycDirect = 0;
   let fines = 0;
   let waterCostTotal = 0;
   const passes: SitePass[] = [];
@@ -205,6 +211,15 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
       haul += out.haul;
       vehicleUpkeep += out.upkeep;
     }
+    // Mines with their own crews (underground) and in-situ leaching need no vehicles.
+    const staffF = staffNeeded <= cap.staffCap ? 1 : Math.pow(cap.staffCap / staffNeeded, 0.8);
+    const grade = loc.oreGrade ?? 1;
+    for (const b of site.buildings) {
+      if (!isOperating(b)) continue;
+      const cf = b.condition >= 60 ? 1 : 0.55 + 0.45 * (b.condition / 60);
+      siteOre += stat(b, 'oreRate') * grade * mods.mining * cf * staffF;
+      ycDirect += stat(b, 'ycRate') * grade * mods.mining * cf * staffF;
+    }
     minedTotal += siteOre;
 
     // Load following (production optimisation automation)
@@ -243,7 +258,8 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
     }
     const efficiency = thermal > 0 ? effWeighted / thermal : 0;
     const steamUsed = Math.min(thermal, cap.steam);
-    const gross = steamUsed * efficiency * staffFactor;
+    const cycleEff = thermal > 0 ? Math.min(0.6, efficiency + cap.turbineEff) : 0;
+    const gross = steamUsed * cycleEff * staffFactor;
     const heatReject = Math.max(0, thermal - gross);
     const electric = Math.max(0, gross - houseLoad);
     const coolingRatio = heatReject > 0.01 ? cap.cooling / heatReject : 10;
@@ -340,8 +356,8 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
       thermalMW: thermal, steamCapMW: cap.steam, steamUsedMW: steamUsed, electricMW: electric, exportMW: exportAvail,
       gridCapMW: cap.grid, coolingCapMW: cap.cooling, heatRejectMW: heatReject, coolingRatio, demandMW: demand,
       industryMW: fromPlant, importMW: imported, h2MW: h2Now, industryIncome,
-      curtailedMW: curtailed, storageCapMWh: cap.storage, staffNeeded, staffCap: cap.staffCap, staffFactor, efficiency,
-      researchRate, upkeep, salaries, price, reactorsOnline: online, reactorsTotal: reactors.length, maxTempFrac,
+      curtailedMW: curtailed, storageCapMWh: cap.storage, staffNeeded, staffCap: cap.staffCap, staffFactor,
+      researchRate, upkeep, salaries, price, reactorsOnline: online, efficiency: cycleEff, reactorsTotal: reactors.length, maxTempFrac,
       storageFlowMW: 0,
       rawSupply: water.rawSupply, evaporation: water.evaporation, treatedSupply: water.treatedSupply,
       treatedDemand: water.treatedDemand, rawToTreatment: water.rawToTreatment, tankM3: water.tankM3, tankCapM3: water.tankCapM3,
@@ -351,7 +367,7 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
   }
 
   // ── Fuel cycle: mining, processing, fabrication (company-wide stocks) ──
-  tickSupply(s, dt, minedTotal, fuelCap);
+  tickSupply(s, dt, minedTotal, fuelCap, ycDirect);
   stepSpentFuel(s, dt);
   let burn = 0;
   for (const id of s.unlockedSites)

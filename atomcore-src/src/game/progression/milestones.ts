@@ -42,7 +42,7 @@ export const MILESTONES: MilestoneDef[] = [
   { title: 'Sign an energy contract', hint: 'Open Market and accept a contract offer.', reward: 6_000, check: (s) => s.contracts.length > 0 || s.stats.contractsDone > 0 },
   { title: 'Build a Maintenance Workshop', hint: 'Crews slow wear and repair equipment over time.', reward: 8_000, check: (s) => has(s, 'maintenance') },
   { title: 'Operate three reactors', hint: 'Grow your reactor fleet.', reward: 25_000,
-    check: (s) => ['reactor_pilot', 'reactor_smr', 'reactor_pwr', 'reactor_bwr', 'reactor_msr', 'reactor_fusion', 'reactor_epr'].reduce((a, t) => a + count(s, t as BuildingType), 0) >= 3 },
+    check: (s) => ['reactor_pilot', 'reactor_smr', 'reactor_pwr', 'reactor_bwr', 'reactor_msr', 'reactor_fusion', 'reactor_epr', 'reactor_smr_park', 'reactor_sfr'].reduce((a, t) => a + count(s, t as BuildingType), 0) >= 3 },
   { title: 'Reach company level 6', hint: 'Sell energy to gain experience.', reward: 40_000, check: (s) => s.level >= 6 },
   { title: 'Build a Pressurized Water Reactor', hint: 'Research Pressurized Water Reactors first.', reward: 120_000, check: (s) => has(s, 'reactor_pwr') },
   { title: 'Build a Natural Draft Cooling Tower', hint: 'Big reactors need big cooling.', reward: 60_000, check: (s) => has(s, 'cooling_tower') },

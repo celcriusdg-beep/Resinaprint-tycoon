@@ -18,6 +18,36 @@ export type BuildingType =
   | 'isotopes'
   | 'visitor'
   | 'rail_terminal'
+  | 'reactor_smr_park'
+  | 'reactor_sfr'
+  | 'turbine_medium'
+  | 'turbine_super'
+  | 'turbine_sco2'
+  | 'turbine_mhd'
+  | 'cooling_hybrid'
+  | 'cooling_fanassist'
+  | 'cooling_seawater'
+  | 'cooling_sky'
+  | 'mine_underground'
+  | 'mine_isr'
+  | 'mill_large'
+  | 'enrich_centrifuge'
+  | 'enrich_laser'
+  | 'fab_auto'
+  | 'qa_auto'
+  | 'fuel_vault'
+  | 'spent_vault'
+  | 'substation_400'
+  | 'grid_sc'
+  | 'storage_thermal'
+  | 'storage_pumped'
+  | 'intake_large'
+  | 'treatment_edi'
+  | 'reservoir'
+  | 'hq'
+  | 'research_campus'
+  | 'robotics_depot'
+  | 'backup_gt'
   | 'cooling_mech'
   | 'cooling_tower'
   | 'turbine'
@@ -96,6 +126,11 @@ export interface BuildingStats {
   isotopes?: number; // $/s from medical isotopes at full reactor flux
   tourism?: number; // $/s base visitor income
   fuelQuota?: number; // extra share of the daily market fuel quota
+  effBonus?: number; // turbines: extra steam-cycle efficiency (points, weighted by steam handled)
+  dryMW?: number; // heat rejection that evaporates no water (dry, once-through or radiative)
+  oreRate?: number; // ore t/s from a mine that needs no vehicles
+  ycRate?: number; // yellowcake/s produced directly (in-situ leaching)
+  caskRate?: number; // spent assemblies/s loaded into storage
 }
 
 export interface BuildingDef {
@@ -125,6 +160,10 @@ export interface BuildingDef {
   dry?: boolean;
   /** Needs a river, sea or fjord at the site. */
   needsWaterBody?: boolean;
+  /** Sub-section of the build menu, e.g. 'mining' inside the Fuel tab. */
+  section?: string;
+  /** 1 (basic) … 5 (cutting edge). */
+  tier?: number;
 }
 
 export interface ReactorState {
@@ -397,6 +436,7 @@ export interface SupplyRates {
   inspected: number;
   rejected: number;
   burn: number; // assemblies/s equivalent burned by reactors
+  leached?: number; // yellowcake/s from in-situ recovery
   salt?: number; // enriched uranium/s dissolved into molten-salt fuel
   defectRate: number; // current fabrication defect probability
 }

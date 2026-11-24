@@ -196,7 +196,7 @@ const defs: BuildingDef[] = [
     name: 'Turbine Hall Mk II',
     short: 'Large Turbine',
     category: 'power',
-    description: 'High-pressure turbine train for gigawatt-class reactors, with a large hydrogen-cooled generator.',
+    description: 'High-pressure turbine train for gigawatt-class reactors, with a large hydrogen-cooled generator. +2 points efficiency.',
     size: [4, 3],
     cost: 240_000,
     buildTime: 110,
@@ -208,7 +208,7 @@ const defs: BuildingDef[] = [
     upgradeGrowth: 1.95,
     wear: 0.022,
     unlock: { research: 't_large', level: 6 },
-    stats: { steamMW: 800 },
+    stats: { steamMW: 800, effBonus: 0.02 },
   },
   {
     type: 'substation',
@@ -389,7 +389,7 @@ const defs: BuildingDef[] = [
     category: 'fuel',
     description: 'Spent fuel cools in the reactor pools, then cranes load it into steel-and-concrete casks on a guarded pad. Each level holds more casks and loads them faster. Pools full = no refuelling.',
     size: [3, 2], cost: 15_000, buildTime: 30, upkeep: 0.5, staff: 2, maxLevel: 6, levelGrowth: 2, upgradeBase: 0.55, upgradeGrowth: 1.95,
-    wear: 0.004, unlock: { level: 3 }, stats: { caskCap: 600 },
+    wear: 0.004, unlock: { level: 3 }, stats: { caskCap: 600, caskRate: 1 },
   },
   {
     type: 'uranium_mine',
@@ -481,9 +481,9 @@ const defs: BuildingDef[] = [
     name: 'HVDC Converter Station',
     short: 'HVDC Station',
     category: 'grid',
-    description: 'Thyristor valve halls turn AC into high-voltage direct current for long-distance lines. Massive export capacity for gigawatt plants.',
+    description: 'Thyristor valve halls turn AC into high-voltage direct current for long-distance lines. 3 GW of export capacity for gigawatt plants.',
     size: [4, 3], cost: 1_200_000, buildTime: 140, upkeep: 10, staff: 6, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
-    wear: 0.012, unlock: { research: 'd_hvdc' }, stats: { gridMW: 1200 },
+    wear: 0.012, unlock: { research: 'd_hvdc' }, stats: { gridMW: 3000 },
   },
   {
     type: 'datacenter',
@@ -539,7 +539,237 @@ const defs: BuildingDef[] = [
     size: [5, 2], cost: 150_000, buildTime: 70, upkeep: 2, staff: 6, maxLevel: 5, levelGrowth: 1.4, upgradeBase: 0.5, upgradeGrowth: 1.8,
     wear: 0.012, unlock: { research: 'f_rail', level: 6 }, stats: { fuelCap: 400, fuelQuota: 0.5 },
   },
+
+  // ── Tier expansion ─────────────────────────────────────────────────────
+  // Reactors
+  {
+    type: 'reactor_smr_park', name: 'SMR Power Park (6 modules)', short: 'SMR Park', category: 'reactor',
+    description: 'Six factory-built SMR modules sharing one control room and pool. Big output, fast load changes and the strong passive safety of small modules.',
+    size: [3, 3], cost: 750_000, buildTime: 120, upkeep: 14, staff: 30, maxLevel: 5, levelGrowth: 1.2, upgradeBase: 0.45, upgradeGrowth: 1.7,
+    wear: 0.022, unlock: { research: 'r_smr_park', level: 9 },
+    reactor: { thermalMW: 900, efficiency: 0.32, fuelUse: 1, rampRate: 0.06, nominalTemp: 300, coreSize: 1080, refuelTime: 40 }, stats: {},
+  },
+  {
+    type: 'reactor_sfr', name: 'Sodium-Cooled Fast Reactor', short: 'Fast Reactor', category: 'reactor',
+    description: 'Liquid-sodium cooled, unmoderated core at 550 °C. Breeds new fuel as it runs, so it burns only a third of the assemblies, and its hot sodium gives 40% efficiency.',
+    size: [3, 3], cost: 6_000_000, buildTime: 200, upkeep: 50, staff: 80, maxLevel: 5, levelGrowth: 1.15, upgradeBase: 0.4, upgradeGrowth: 1.7,
+    wear: 0.024, unlock: { research: 'x_sfr', level: 14 },
+    reactor: { thermalMW: 3000, efficiency: 0.4, fuelUse: 0.33, rampRate: 0.04, nominalTemp: 550, coreSize: 3600, refuelTime: 70 }, stats: {},
+  },
+  // Turbines
+  {
+    type: 'turbine_medium', name: 'Medium Turbine Hall', short: 'Medium Turbine', category: 'power',
+    description: 'A two-casing turbine with reheat. Five times the steam of the small hall on 1.5× the land, and slightly more efficient.',
+    size: [3, 3], cost: 40_000, buildTime: 60, upkeep: 2.5, staff: 5, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.024, unlock: { research: 't_reheat', level: 4 }, stats: { steamMW: 200, effBonus: 0.01 },
+  },
+  {
+    type: 'turbine_super', name: 'Supercritical Turbine Island', short: 'Supercritical', category: 'power',
+    description: 'Steam above its critical point (> 221 bar) through a tandem-compound turbine: gigawatt-class capacity and +4 points efficiency on the steam it handles.',
+    size: [5, 3], cost: 1_600_000, buildTime: 160, upkeep: 30, staff: 25, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.02, unlock: { research: 't_super', level: 12 }, stats: { steamMW: 2500, effBonus: 0.04 },
+  },
+  {
+    type: 'turbine_sco2', name: 'sCO₂ Brayton Turbine', short: 'sCO₂ Turbine', category: 'power',
+    description: 'Supercritical carbon dioxide instead of steam: a turbine the size of a desk per 100 MW, compact recuperators, +7 points efficiency. Tiny footprint for its power.',
+    size: [3, 3], cost: 3_000_000, buildTime: 150, upkeep: 35, staff: 15, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.022, unlock: { research: 't_sco2', level: 16 }, stats: { steamMW: 2000, effBonus: 0.07 },
+  },
+  {
+    type: 'turbine_mhd', name: 'MHD Topping Generator', short: 'MHD Generator', category: 'power',
+    description: 'Magnetohydrodynamics: seeded hot gas races through a superconducting magnet and makes current directly, before a steam bottoming cycle. +10 points efficiency.',
+    size: [4, 3], cost: 12_000_000, buildTime: 220, upkeep: 90, staff: 30, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.026, unlock: { research: 't_mhd', level: 20 }, stats: { steamMW: 4000, effBonus: 0.1 },
+  },
+  // Cooling
+  {
+    type: 'cooling_hybrid', name: 'Hybrid Wet/Dry Cooling Cells', short: 'Hybrid Cells', category: 'cooling',
+    description: 'Fan cells with a dry coil above the wet fill: 160 MW of cooling, 60 MW of it without evaporating water, and no visible plume.',
+    size: [3, 2], cost: 30_000, buildTime: 35, upkeep: 1.2, staff: 1, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.018, unlock: { research: 'c_dry', level: 3 }, stats: { coolingMW: 100, dryMW: 60 },
+  },
+  {
+    type: 'cooling_fanassist', name: 'Fan-Assisted Draft Tower', short: 'Fan-Assisted Tower', category: 'cooling',
+    description: 'A squat concrete tower with a ring of giant fans at its base: natural-draft capacity at half the height, 1.4 GW per tower.',
+    size: [4, 4], cost: 300_000, buildTime: 110, upkeep: 6, staff: 3, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.014, unlock: { research: 'c_fill', level: 8 }, stats: { coolingMW: 1400 },
+  },
+  {
+    type: 'cooling_seawater', name: 'Once-Through Cooling Station', short: 'Once-Through', category: 'cooling',
+    description: 'Giant pumps send river or sea water straight through the condensers and back. Enormous capacity, evaporates no water — but needs a river or sea.',
+    size: [4, 3], cost: 2_500_000, buildTime: 150, upkeep: 20, staff: 6, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.016, needsWaterBody: true, unlock: { research: 'c_seawater', level: 14 }, stats: { dryMW: 6000 },
+  },
+  {
+    type: 'cooling_sky', name: 'Radiative Sky-Cooling Array', short: 'Sky-Cooling', category: 'cooling',
+    description: 'Metamaterial panels radiate heat straight into space through the atmosphere’s infrared window, day and night. No water, no fans, works anywhere.',
+    size: [4, 4], cost: 4_000_000, buildTime: 140, upkeep: 8, staff: 2, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.008, unlock: { research: 'c_sky', level: 18 }, stats: { dryMW: 3000 },
+  },
+  // Fuel: mining, processing, fabrication, storage
+  {
+    type: 'mine_underground', name: 'Underground Uranium Mine', short: 'Underground Mine', category: 'fuel',
+    description: 'A headframe, hoist and ramps to a high-grade orebody. Produces ore on its own with its own underground fleet — no vehicles to buy, never runs out.',
+    size: [3, 3], cost: 1_200_000, buildTime: 140, upkeep: 10, staff: 40, maxLevel: 5, levelGrowth: 1.5, upgradeBase: 0.5, upgradeGrowth: 1.8,
+    wear: 0.02, unlock: { research: 'f_heavy', level: 8 }, stats: { oreRate: 15, oreStock: 2000 },
+  },
+  {
+    type: 'mine_isr', name: 'In-Situ Recovery Wellfield', short: 'ISR Wellfield', category: 'fuel',
+    description: 'Wells pump a mild leach solution through the ore underground and an on-site plant pulls out uranium. Makes yellowcake directly — no digging, no mill. Uses 15 MW.',
+    size: [4, 4], cost: 6_000_000, buildTime: 180, upkeep: 30, staff: 30, maxLevel: 5, levelGrowth: 1.5, upgradeBase: 0.5, upgradeGrowth: 1.8,
+    wear: 0.016, unlock: { research: 'f_isr', level: 12 }, stats: { ycRate: 8, ycStock: 1500, loadMW: 15 },
+  },
+  {
+    type: 'mill_large', name: 'Heap-Leach & SX Plant', short: 'Large Mill', category: 'fuel',
+    description: 'Crushed ore on lined heaps, solvent extraction and a calciner: eight times the throughput of the basic mill.',
+    size: [4, 4], cost: 400_000, buildTime: 100, upkeep: 6, staff: 20, maxLevel: 6, levelGrowth: 1.6, upgradeBase: 0.5, upgradeGrowth: 1.85,
+    wear: 0.02, unlock: { research: 'f_auto', level: 8 }, stats: { millRate: 20, ycStock: 600 },
+  },
+  {
+    type: 'enrich_centrifuge', name: 'Gas Centrifuge Cascade Hall', short: 'Centrifuge Hall', category: 'fuel',
+    description: 'Thousands of thin rotors spinning at 1,500 rev/s separate U-235. Ten times the enrichment work of the first plant for 50× less energy than diffusion.',
+    size: [5, 3], cost: 900_000, buildTime: 130, upkeep: 12, staff: 25, maxLevel: 6, levelGrowth: 1.6, upgradeBase: 0.5, upgradeGrowth: 1.85,
+    wear: 0.016, unlock: { research: 'f_auto', level: 9 }, stats: { enrichRate: 3.5, enrStock: 400 },
+  },
+  {
+    type: 'enrich_laser', name: 'Laser Enrichment Facility', short: 'Laser Enrichment', category: 'fuel',
+    description: 'Tuned lasers excite only U-235 atoms. A compact building with enormous throughput.',
+    size: [4, 3], cost: 5_000_000, buildTime: 160, upkeep: 30, staff: 30, maxLevel: 6, levelGrowth: 1.6, upgradeBase: 0.5, upgradeGrowth: 1.85,
+    wear: 0.018, unlock: { research: 'f_laser', level: 13 }, stats: { enrichRate: 25, enrStock: 1500 },
+  },
+  {
+    type: 'fab_auto', name: 'Robotic Fuel Fabrication Line', short: 'Robotic Fab', category: 'fuel',
+    description: 'Automated pellet presses, sintering furnaces and laser-welded rods: 25× the output of the first plant.',
+    size: [4, 3], cost: 1_200_000, buildTime: 120, upkeep: 14, staff: 20, maxLevel: 6, levelGrowth: 1.6, upgradeBase: 0.5, upgradeGrowth: 1.85,
+    wear: 0.02, unlock: { research: 'f_auto', level: 10 }, stats: { fabRate: 3 },
+  },
+  {
+    type: 'qa_auto', name: 'Automated Inspection Lab', short: 'Auto Inspection', category: 'fuel',
+    description: 'X-ray, ultrasonic and eddy-current scanners check every rod in seconds.',
+    size: [3, 2], cost: 600_000, buildTime: 90, upkeep: 6, staff: 8, maxLevel: 6, levelGrowth: 1.6, upgradeBase: 0.5, upgradeGrowth: 1.85,
+    wear: 0.014, unlock: { research: 'f_auto', level: 10 }, stats: { inspectRate: 4 },
+  },
+  {
+    type: 'fuel_vault', name: 'Automated High-Bay Fuel Vault', short: 'Fuel Vault', category: 'fuel',
+    description: 'A windowless robotic high-bay with stacker cranes and criticality-safe racks. 12,000 fresh assemblies on a 3×3 plot.',
+    size: [3, 3], cost: 600_000, buildTime: 90, upkeep: 3, staff: 4, maxLevel: 6, levelGrowth: 1.9, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.006, unlock: { research: 'f_auto', level: 10 }, stats: { fuelCap: 12000 },
+  },
+  {
+    type: 'spent_vault', name: 'Underground Spent-Fuel Vault', short: 'Spent-Fuel Vault', category: 'fuel',
+    description: 'Tunnels deep in solid rock with remote handling. Holds 20,000 spent assemblies and loads them six times faster than a cask pad.',
+    size: [4, 3], cost: 3_000_000, buildTime: 160, upkeep: 8, staff: 10, maxLevel: 6, levelGrowth: 2, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.004, unlock: { research: 'f_vault', level: 12 }, stats: { caskCap: 20000, caskRate: 6 },
+  },
+  // Grid
+  {
+    type: 'substation_400', name: '400 kV Switchyard', short: '400 kV Yard', category: 'grid',
+    description: 'Extra-high-voltage transformers and gas-insulated switchgear. Eight times a basic substation.',
+    size: [3, 3], cost: 45_000, buildTime: 50, upkeep: 2, staff: 2, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.012, unlock: { level: 5 }, stats: { gridMW: 250 },
+  },
+  {
+    type: 'grid_sc', name: 'Superconducting Grid Link', short: 'Superconducting Link', category: 'grid',
+    description: 'Liquid-nitrogen-cooled superconducting cables with almost no resistance. 8 GW of export from a tiny cryo station.',
+    size: [3, 2], cost: 15_000_000, buildTime: 200, upkeep: 25, staff: 8, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.01, unlock: { research: 'd_sc', level: 19 }, stats: { gridMW: 8000 },
+  },
+  {
+    type: 'storage_thermal', name: 'Molten-Salt Thermal Storage', short: 'Thermal Storage', category: 'grid',
+    description: 'Two huge insulated tanks of hot and cold salt store energy as heat and turn it back into power at peak prices.',
+    size: [3, 3], cost: 300_000, buildTime: 90, upkeep: 2, staff: 3, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.012, unlock: { research: 'd_smart', level: 8 }, stats: { storageMWh: 600, storageRateMW: 150 },
+  },
+  {
+    type: 'storage_pumped', name: 'Pumped-Storage Hydro', short: 'Pumped Hydro', category: 'grid',
+    description: 'Pumps water up to a hilltop reservoir when power is cheap and runs it back through turbines at peak. Gigawatt-hours of storage. Needs a river or sea.',
+    size: [5, 4], cost: 5_000_000, buildTime: 220, upkeep: 15, staff: 10, maxLevel: 6, levelGrowth: 1.8, upgradeBase: 0.55, upgradeGrowth: 1.95,
+    wear: 0.008, needsWaterBody: true, unlock: { research: 'd_pumped', level: 13 }, stats: { storageMWh: 8000, storageRateMW: 1200 },
+  },
+  // Water
+  {
+    type: 'intake_large', name: 'River Pumping Station', short: 'Pumping Station', category: 'water',
+    description: 'Travelling screens and four vertical pumps the size of houses. Ten times a basic intake. Needs a river or sea.',
+    size: [4, 3], cost: 250_000, buildTime: 90, upkeep: 4, staff: 4, maxLevel: 6, levelGrowth: 1.7, upgradeBase: 0.5, upgradeGrowth: 1.85,
+    wear: 0.016, needsWaterBody: true, unlock: { level: 9 }, stats: { rawWater: 2500 },
+  },
+  {
+    type: 'treatment_edi', name: 'Electrodeionisation Plant', short: 'EDI Plant', category: 'water',
+    description: 'Reverse osmosis followed by electrically regenerated resin: ultra-pure water for gigawatt reactors without chemical regeneration.',
+    size: [3, 3], cost: 200_000, buildTime: 80, upkeep: 3, staff: 4, maxLevel: 6, levelGrowth: 1.7, upgradeBase: 0.5, upgradeGrowth: 1.85,
+    wear: 0.016, unlock: { level: 9 }, stats: { treatedWater: 250 },
+  },
+  {
+    type: 'reservoir', name: 'Raw-Water Reservoir', short: 'Reservoir', category: 'water',
+    description: 'A lined, dammed basin holding 60,000 m³ — days of make-up water to ride out droughts and intake outages.',
+    size: [5, 4], cost: 150_000, buildTime: 80, upkeep: 0.8, staff: 1, maxLevel: 6, levelGrowth: 1.7, upgradeBase: 0.5, upgradeGrowth: 1.85,
+    wear: 0.004, unlock: { level: 8 }, stats: { waterStorage: 60000 },
+  },
+  // Support
+  {
+    type: 'hq', name: 'Corporate Headquarters Tower', short: 'HQ Tower', category: 'support',
+    description: 'A glass tower for engineers, traders and planners: room for 250 staff and two extra contract slots.',
+    size: [3, 3], cost: 600_000, buildTime: 120, upkeep: 6, staff: 20, maxLevel: 5, levelGrowth: 1.5, upgradeBase: 0.55, upgradeGrowth: 1.9,
+    wear: 0.006, maxPerSite: 1, unlock: { level: 10 }, stats: { staffCap: 250, contractSlots: 2 },
+  },
+  {
+    type: 'research_campus', name: 'Research Campus', short: 'Research Campus', category: 'support',
+    description: 'Laboratories, a test loop and a supercomputer. Fifty labs worth of research points on one 4×3 plot.',
+    size: [4, 3], cost: 800_000, buildTime: 130, upkeep: 12, staff: 60, maxLevel: 5, levelGrowth: 1.4, upgradeBase: 0.55, upgradeGrowth: 1.9,
+    wear: 0.01, unlock: { level: 10 }, stats: { research: 30 },
+  },
+  {
+    type: 'robotics_depot', name: 'Robotic Maintenance Hub', short: 'Robotics Hub', category: 'support',
+    description: 'Drones, crawlers and a parts warehouse: worth four maintenance workshops, so equipment wears much more slowly.',
+    size: [3, 2], cost: 250_000, buildTime: 80, upkeep: 3, staff: 8, maxLevel: 5, levelGrowth: 1.5, upgradeBase: 0.55, upgradeGrowth: 1.9,
+    wear: 0.01, unlock: { research: 'a_maint', level: 11 }, stats: { maintenance: 4 },
+  },
+  {
+    type: 'backup_gt', name: 'Gas-Turbine Backup Plant', short: 'Backup Gas Turbine', category: 'support',
+    description: 'Two aero-derivative gas turbines that start in ten minutes: ten times the backup power of a diesel facility.',
+    size: [3, 2], cost: 200_000, buildTime: 70, upkeep: 2, staff: 3, maxLevel: 5, levelGrowth: 1.6, upgradeBase: 0.55, upgradeGrowth: 1.9,
+    wear: 0.014, unlock: { research: 's_egen', level: 9 }, stats: { safety: 15, backupMW: 60 },
+  },
 ];
+
+/** Build-menu sub-sections per category, in the order the player progresses through them. */
+export const SECTIONS: Record<BuildingCategory, { id: string; label: string }[]> = {
+  reactor: [{ id: 'starter', label: 'Starter' }, { id: 'commercial', label: 'Commercial' }, { id: 'advanced', label: 'Advanced' }],
+  power: [{ id: 'steam', label: 'Steam turbines' }, { id: 'advanced', label: 'Advanced cycles' }],
+  cooling: [{ id: 'wet', label: 'Evaporative' }, { id: 'giant', label: 'Giant towers' }, { id: 'waterless', label: 'Water-free' }],
+  water: [{ id: 'supply', label: 'Raw water' }, { id: 'treatment', label: 'Treatment' }, { id: 'storage', label: 'Storage' }],
+  fuel: [{ id: 'mining', label: 'Mining' }, { id: 'processing', label: 'Milling & enrichment' }, { id: 'fabrication', label: 'Fabrication & QA' },
+    { id: 'storage', label: 'Fresh fuel storage' }, { id: 'spent', label: 'Spent fuel' }],
+  grid: [{ id: 'connections', label: 'Grid connections' }, { id: 'storage', label: 'Energy storage' }],
+  industry: [{ id: 'customers', label: 'Power customers' }, { id: 'science', label: 'Science & tourism' }],
+  support: [{ id: 'staff', label: 'Staff & offices' }, { id: 'research', label: 'Research' }, { id: 'maintenance', label: 'Maintenance' }, { id: 'safety', label: 'Backup power' }],
+};
+
+const META: Record<BuildingType, [string, number]> = {
+  reactor_pilot: ['starter', 1], reactor_smr: ['starter', 2], reactor_pwr: ['commercial', 3], reactor_smr_park: ['commercial', 3],
+  reactor_bwr: ['commercial', 3], reactor_epr: ['commercial', 4], reactor_msr: ['advanced', 4], reactor_sfr: ['advanced', 4], reactor_fusion: ['advanced', 5],
+  turbine: ['steam', 1], turbine_medium: ['steam', 2], turbine_large: ['steam', 3], turbine_super: ['steam', 4],
+  turbine_sco2: ['advanced', 4], turbine_mhd: ['advanced', 5],
+  cooling_mech: ['wet', 1], cooling_hybrid: ['wet', 2], cooling_tower: ['wet', 3], cooling_fanassist: ['giant', 3], cooling_mega: ['giant', 4],
+  cooling_dry: ['waterless', 1], cooling_seawater: ['waterless', 4], cooling_sky: ['waterless', 5],
+  water_wells: ['supply', 1], water_intake: ['supply', 1], desal: ['supply', 2], intake_large: ['supply', 3],
+  water_treatment: ['treatment', 1], treatment_edi: ['treatment', 3], water_tank: ['storage', 1], reservoir: ['storage', 2],
+  uranium_mine: ['mining', 1], mine_underground: ['mining', 2], mine_isr: ['mining', 3],
+  ore_mill: ['processing', 1], enrichment: ['processing', 1], mill_large: ['processing', 2], enrich_centrifuge: ['processing', 2], enrich_laser: ['processing', 3],
+  fuel_fab: ['fabrication', 1], fuel_qa: ['fabrication', 1], fab_auto: ['fabrication', 2], qa_auto: ['fabrication', 2],
+  fuel_depot: ['storage', 1], rail_terminal: ['storage', 2], fuel_vault: ['storage', 3], dry_cask: ['spent', 1], spent_vault: ['spent', 3],
+  substation: ['connections', 1], substation_400: ['connections', 2], hvdc: ['connections', 3], grid_sc: ['connections', 5],
+  battery: ['storage', 1], storage_thermal: ['storage', 2], storage_pumped: ['storage', 3],
+  datacenter: ['customers', 3], hydrogen: ['customers', 3], isotopes: ['science', 3], visitor: ['science', 1],
+  admin: ['staff', 1], hq: ['staff', 3], lab: ['research', 1], research_campus: ['research', 3],
+  maintenance: ['maintenance', 1], robotics_depot: ['maintenance', 3], generator_emergency: ['safety', 1], backup_gt: ['safety', 2],
+};
+for (const d of defs) {
+  const [section, tier] = META[d.type];
+  d.section = section;
+  d.tier = tier;
+}
+defs.sort((a, b) => (a.tier ?? 1) - (b.tier ?? 1));
 
 export const BUILDINGS: Record<BuildingType, BuildingDef> = Object.fromEntries(
   defs.map((d) => [d.type, d]),

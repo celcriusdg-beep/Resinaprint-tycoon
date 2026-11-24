@@ -37,12 +37,12 @@ export function stepWater(
   let intake = 0, treatCap = 0, tankCap = 0;
   for (const b of site.buildings) {
     if (b.status !== 'active' || !b.enabled) {
-      if (b.status !== 'constructing' && b.type === 'water_tank') tankCap += (BUILDINGS[b.type].stats.waterStorage ?? 0) * levelMult(BUILDINGS[b.type], b.level);
+      if (b.status !== 'constructing' && BUILDINGS[b.type].stats.waterStorage) tankCap += (BUILDINGS[b.type].stats.waterStorage ?? 0) * levelMult(BUILDINGS[b.type], b.level);
       continue;
     }
     const def = BUILDINGS[b.type];
     const lm = levelMult(def, b.level);
-    if (def.stats.rawWater) intake += def.stats.rawWater * lm * cond(b) * (b.type === 'water_intake' ? loc.intakeMult : 1);
+    if (def.stats.rawWater) intake += def.stats.rawWater * lm * cond(b) * (b.type === 'water_intake' || b.type === 'intake_large' ? loc.intakeMult : 1);
     if (def.stats.treatedWater) treatCap += def.stats.treatedWater * lm * cond(b);
     if (def.stats.waterStorage) tankCap += def.stats.waterStorage * lm;
   }

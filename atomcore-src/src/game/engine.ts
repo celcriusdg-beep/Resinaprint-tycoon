@@ -112,7 +112,7 @@ function runAutomation(s: GameState, offline: boolean): void {
   if (a.autoRepair) {
     for (const id of s.unlockedSites) {
       const site = s.sites[id];
-      if (!site.buildings.some((b) => b.type === 'maintenance' && b.status === 'active')) continue;
+      if (!site.buildings.some((b) => BUILDINGS[b.type].stats.maintenance && b.status === 'active')) continue;
       for (const b of site.buildings) {
         if (b.status === 'constructing' || b.status === 'upgrading') continue;
         if (b.status !== 'broken' && b.condition >= REPAIR_THRESHOLD_AUTO) continue;
