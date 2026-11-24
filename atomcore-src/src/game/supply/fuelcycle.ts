@@ -604,7 +604,7 @@ export function ownFuelCost(s: GameState): number | null {
   for (const id of s.unlockedSites) for (const b of s.sites[id].buildings) {
     if (b.status === 'constructing') continue;
     const def = BUILDINGS[b.type];
-    if (def.category !== 'fuel' || b.type === 'dry_cask') continue;
+    if (def.category !== 'fuel' || b.type === 'dry_cask' || b.type === 'fuel_depot' || b.type === 'rail_terminal') continue;
     upkeep += def.upkeep * levelMult(def, b.level);
     if (b.vehicles) upkeep += mineOutput(b, id, getMods(s, id)).upkeep;
   }

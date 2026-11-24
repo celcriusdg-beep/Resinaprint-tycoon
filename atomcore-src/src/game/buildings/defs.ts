@@ -309,7 +309,7 @@ const defs: BuildingDef[] = [
     type: 'fuel_depot',
     name: 'Fuel Storage Facility',
     short: 'Fuel Depot',
-    category: 'support',
+    category: 'fuel',
     description: 'Secure storage for fresh fuel assemblies. Raises how many assemblies your company can keep in stock.',
     size: [2, 2],
     cost: 4_000,

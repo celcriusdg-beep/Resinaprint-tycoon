@@ -174,7 +174,8 @@ function FuelChain() {
         <Arrow label="Fuel Fabrication (1 : 1)" cap={proc.fab} used={r.fabricated} missing={proc.fab <= 0 ? 'No fabrication plant' : undefined} build="fuel_fab" />
         <Node icon="🔩" title="Fuel assemblies" item="assemblies" unit="" stock={g.fuel} cap={fuelCap} inRate={produced} outRate={r.burn}
           tone={g.fuel / fuelCap < 0.15 ? 'bad' : defectShare > 0.03 ? 'warn' : 'ok'}
-          note={<>Average enrichment in stock {sup.stockEnr.toFixed(2)}% U-235. Estimated defective: <b className={defectShare > 0.03 ? 'bad' : defectShare > 0.01 ? 'warn' : 'good'}>{fmtPct(defectShare, 1)}</b> ({fmtNum(sup.defects)}). Bought assemblies are 0.2% defective.</>}>
+          note={<>Average enrichment in stock {sup.stockEnr.toFixed(2)}% U-235. Estimated defective: <b className={defectShare > 0.03 ? 'bad' : defectShare > 0.01 ? 'warn' : 'good'}>{fmtPct(defectShare, 1)}</b> ({fmtNum(sup.defects)}). Bought assemblies are 0.2% defective.{' '}
+            <button className="link-btn" onClick={() => beginBuild('fuel_depot')}>More storage: build a Fuel Storage Facility</button></>}>
           {proc.fab > 0 && (
             <div className="qa-box">
               <Slider label="Fabrication quality assurance" value={sup.qa} onChange={(v) => run((s) => A.setQA(s, v), { sound: null })}
