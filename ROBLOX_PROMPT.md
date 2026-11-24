@@ -7,28 +7,31 @@ Before you write any code, read this whole brief, then ask me any questions you 
 =====================================================================
 
 TOOLS
-- Roblox Studio + Luau (use --!strict typing in every script).
-- Use Rojo so the code lives in normal files on my PC (a git repo), synced into Studio. Set up the project structure (default.project.json) in Phase 0 and explain how to run it.
+- Everything is built DIRECTLY IN ROBLOX STUDIO on my PC. No Rojo, no GitHub, no external code sync.
+- Luau with --!strict typing in every script.
+- If you have a Roblox Studio connection/tool (e.g. a Studio MCP plugin), use it to create and edit scripts and instances in Studio yourself. If not, give me each script complete (never partial snippets), and tell me exactly where it goes in the Explorer (e.g. ServerScriptService > Sim > ReactorPhysics, a ModuleScript), what type it is (Script / LocalScript / ModuleScript), and what to name it.
+- Keep a clean Explorer structure: ServerScriptService (server logic), ServerStorage (server-only modules/data), ReplicatedStorage (shared modules, RemoteEvents, assets), StarterPlayerScripts / StarterGui (client UI and visuals). Set it up in Phase 0 and document it.
+- Backups instead of git: after every working step, tell me to save/publish (File > Publish to Roblox, which keeps version history) and to save a local .rbxl copy with the phase number in the name (e.g. ATOMCORE_phase2_cables.rbxl).
 - BLENDER FOR ALL ASSETS. Every 3D model (reactors, turbines, cooling towers, pylons, cables, pipes, trucks, excavators, terrain props) is made in Blender — no free-model toolbox assets, no plain Part-boxes as final art.
-  - If you can run Blender from the command line, write Blender Python scripts (bpy) that generate the models, keep those scripts in the repo (/blender/scripts), and export FBX into /blender/exports.
+  - If you can run Blender from the command line, write Blender Python scripts (bpy) that generate the models, keep those scripts in a project folder on my PC (ATOMCORE/blender/scripts), and export FBX into ATOMCORE/blender/exports.
   - If you can't run Blender yourself, write the bpy script anyway and tell me exactly how to run it and how to import the FBX into Studio (3D Importer / Asset Manager).
   - Keep models low-poly and stylised-realistic, real-world scale (1 stud ≈ 0.28 m; say which scale you use), sensible triangle budgets for mobile, pivot at the footprint centre on the ground, separate meshes for moving parts (fans, turbine shafts, wheels, cranes) so they can be animated.
   - Name things consistently: ReactorPWR_T2, TurbineHall_T1, CoolingTower_T2, etc.
-- OBSIDIAN DOCUMENTATION. Keep an Obsidian vault in the repo (/docs). Document EVERYTHING you build, as you build it:
+- OBSIDIAN DOCUMENTATION. Keep an Obsidian vault in a folder on my PC (ATOMCORE/docs). Document EVERYTHING you build, as you build it:
   - One note per system (e.g. "Reactor Physics.md", "Power Grid & Cables.md", "Fuel Cycle.md", "Water System.md", "Economy.md", "Save System.md").
-  - Each note says: what it does in game terms, how it works (formulas, numbers, units, sources for the realism), how it's made (which scripts/modules, which Blender files, data flow), how to test it, known limitations.
+  - Each note says: what it does in game terms, how it works (formulas, numbers, units, sources for the realism), how it's made (which scripts/modules and their exact Explorer path, which Blender files, data flow), how to test it, known limitations.
+  - Also keep the full current source of every script in the notes (or in ATOMCORE/docs/Scripts/), so the vault is a complete backup of the code.
   - One note per asset with the Blender script name, poly count, materials, and how it was imported.
   - A "Devlog.md" with a dated entry for every work session: what was done, what was tested, what's next.
   - An "Index.md" (map of content) linking everything with [[wikilinks]], plus tags like #system #asset #todo.
   - A "Roadmap.md" mirroring the phases below with checkboxes.
-- Commit to git after every working step with a clear message.
 
 ARCHITECTURE
 - Server-authoritative. All simulation (physics, money, power flow) runs on the server in ModuleScripts; the client only renders, animates and sends requests through RemoteFunctions/RemoteEvents. Validate every client request on the server (anti-exploit: cost, ownership, placement, rate limits).
 - Keep the simulation pure and separate from visuals: a Sim module that takes state + dt and returns new state, testable without any 3D. Use a fixed tick (e.g. 10 Hz) with sub-stepping for the fast physics.
 - Each player gets their own plot (a fenced site on the map). Plots must work for multiple players on one server.
 - Saving with DataStoreService (versioned save format with migration, autosave, save on leave, retry with backoff, session locking).
-- Write unit tests for the simulation (TestEZ or a simple test runner) and run them every phase.
+- Write unit tests for the simulation (a simple test runner ModuleScript plus a Script that runs all tests when I press Play, or that I can run from the command bar) and run them every phase.
 - Mobile + PC controls from day one (touch, mouse/keyboard; also design UI for phones).
 
 REALISM — THIS IS THE CORE OF THE GAME
@@ -103,9 +106,9 @@ A tab listing everything that's OK and everything that's wrong, per system (reac
 =====================================================================
 3. ROADMAP — START SMALL, BUILD UP
 =====================================================================
-Do these in order. Each phase ends with: playtest in Studio, unit tests passing, Obsidian notes + devlog updated, git commit. Stop after each phase and show me what to test.
+Do these in order. Each phase ends with: playtest in Studio, unit tests passing, Obsidian notes + devlog updated, place saved/published and a local .rbxl backup. Stop after each phase and show me what to test.
 
-Phase 0 — Setup: Rojo project, folder structure, --!strict, test runner, Obsidian vault skeleton (Index, Roadmap, Devlog, Conventions), Blender pipeline test (one simple bpy-generated asset imported in Studio), empty baseplate with one player plot.
+Phase 0 — Setup: Explorer folder structure in Studio, --!strict, test runner, Obsidian vault skeleton (Index, Roadmap, Devlog, Conventions), Blender pipeline test (one simple bpy-generated asset imported in Studio), empty baseplate with one player plot.
 Phase 1 — Plot & building placement: grid snapping, rotation, collision check, ghost preview (green/red), free instant move, demolish, mobile + PC controls, one placeholder building from Blender.
 Phase 2 — The physical connection system: placeable power cables with pylons (span limit, sag, voltage levels, ratings, I²R losses, transformers), steam pipes and water pipes, a connection graph on the server, and a debug overlay showing flows. No reactor yet — test with a dummy generator and a dummy load.
 Phase 3 — First power: pilot reactor (simple heat output at first), small turbine, fan cooling, transformer + substation + grid connection at the plot edge, money from selling power, basic HUD.
