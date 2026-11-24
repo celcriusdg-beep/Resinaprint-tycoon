@@ -87,11 +87,28 @@ describe('construction', () => {
     expect(A.moveBuilding(s, cooling.id, 2, 1, 1)).toBeNull();
   });
 
-  it('a running reactor must be shut down before moving', () => {
+  it('moving running reactors, turbines and upgrading buildings never interrupts them', () => {
     const s = createInitialState();
-    s.money = 1e6;
-    const r = s.sites.riverside.buildings[0];
-    expect(A.moveBuilding(s, r.id, 1, 1, 0)).toMatch(/Shut the reactor down/);
+    s.money = 1e6; s.nextEventIn = 1e9;
+    const site = s.sites.riverside;
+    const [r, t] = site.buildings;
+    run(s, 30, 0.1);
+    const p0 = r.reactor!.power, e0 = site.stats.electricMW;
+    expect(p0).toBeGreaterThan(0.5);
+    expect(A.moveBuilding(s, r.id, 1, 1, 0)).toBeNull();
+    expect(A.moveBuilding(s, t.id, 1, 9, 1)).toBeNull();
+    expect(r.reactor!.power).toBe(p0);
+    expect(r.reactor!.scrammed).toBe(false);
+    run(s, 5, 0.1);
+    expect(r.reactor!.scrammed).toBe(false);
+    expect(site.stats.electricMW).toBeGreaterThan(e0 * 0.95);
+    // An upgrade keeps its progress while being moved
+    expect(A.upgradeBuilding(s, t.id)).toBeNull();
+    run(s, 5, 0.5);
+    const prog = t.progress;
+    expect(A.moveBuilding(s, t.id, 9, 9, 0)).toBeNull();
+    expect(t.status).toBe('upgrading');
+    expect(t.progress).toBe(prog);
   });
 
   it('buying land grows the plot by 4 and keeps buildings in place', () => {

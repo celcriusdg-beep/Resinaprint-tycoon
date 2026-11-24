@@ -108,7 +108,7 @@ export function BuildingPanel({ id }: { id: number }) {
           <Button icon="power" disabled={busy} onClick={() => run((s) => A.toggleBuilding(s, b.id))}>{b.enabled ? 'Switch off' : 'Switch on'}</Button>
         )}
         <Button icon="grid" variant="ghost" disabled={!!A.moveLockReason(g, b.id) && b.status !== 'constructing'} onClick={() => beginMove(b.id)}
-          title={A.moveLockReason(g, b.id) ?? 'Move this building (free)'}>
+          title={A.moveLockReason(g, b.id) ?? 'Move this building (free, keeps running)'}>
           Move
         </Button>
         <Button icon="trash" variant="ghost" onClick={() =>

@@ -371,9 +371,8 @@ export function moveLockReason(s: GameState, id: number): string | null {
   const b = s.sites[s.activeSite].buildings.find((x) => x.id === id);
   if (!b) return 'Building not found.';
   if (b.status === 'destroyed') return 'A destroyed reactor must be decommissioned, not moved.';
-  if (b.status === 'refueling') return 'Wait until the refuelling outage is finished.';
-  if (b.status === 'upgrading') return 'Wait until the upgrade is finished.';
-  if (b.reactor && b.reactor.power > 0.05) return 'Shut the reactor down first (power target 0%).';
+  // Anything else moves live: reactors keep running, turbines keep turning, and
+  // construction, upgrades and refuelling carry on from where they were.
   return null;
 }
 
