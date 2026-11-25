@@ -2,6 +2,8 @@ import type { GameState } from './types';
 import { BUILDINGS } from './buildings/defs';
 import { tickPlants, fuelCapacity, repairCost } from './simulation/plant';
 import { tickEvents, notify, pushLog } from './events/events';
+import { stepWeather } from './weather/weather';
+import { linkRepairCost } from './network/network';
 import { tickMarket } from './economy/market';
 import { RESEARCH_BY_ID } from './research/tree';
 import { ACHIEVEMENTS } from './progression/achievements';
@@ -21,6 +23,21 @@ export interface TickOptions {
   now?: Date;
 }
 
+function tickWeather(s: GameState, dt: number, offline: boolean): void {
+  for (const id of s.unlockedSites) {
+    const site = s.sites[id];
+    for (const n of stepWeather(s, site, dt, offline)) {
+      if (n.kind === 'gridloss') {
+        s.events.push({ id: 'blackout', remaining: 50, duration: 50, siteId: id });
+        s.stats.eventsSeen++;
+      }
+      const kind = n.kind === 'front' ? 'warn' : n.kind === 'lightning' ? 'warn' : 'bad';
+      pushLog(s, kind, `${n.title}: ${n.text}`);
+      if (n.kind !== 'lightning') notify(s, { kind, title: n.title, text: n.text });
+    }
+  }
+}
+
 /** Advance the whole company by dt seconds. Mutates the state in place. */
 export function tick(s: GameState, dt: number, opts: TickOptions = {}): void {
   const offline = !!opts.offline;
@@ -29,6 +46,7 @@ export function tick(s: GameState, dt: number, opts: TickOptions = {}): void {
 
   stepConstruction(s, dt, offline);
   tickEvents(s, dt, !offline);
+  tickWeather(s, dt, offline);
   tickMarket(s, dt, offline);
   tickPlants(s, dt, offline);
   runAutomation(s, offline);
@@ -119,6 +137,16 @@ function runAutomation(s: GameState, offline: boolean): void {
         const cost = repairCost(b);
         if (s.money < cost * 2) continue; // keep a safety buffer
         repairInternal(s, b.id, id, true);
+      }
+      for (const l of site.links) {
+        if (!l.broken) continue;
+        const cost = linkRepairCost(l);
+        if (s.money < cost * 2) continue;
+        s.money -= cost;
+        s.ledger.maintenance += cost;
+        l.broken = false;
+        l.trip = 0;
+        s.stats.repairs++;
       }
     }
   }

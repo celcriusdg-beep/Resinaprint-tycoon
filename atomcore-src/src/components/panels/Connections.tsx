@@ -5,7 +5,7 @@ import { getMods } from '../../game/simulation/modifiers';
 import type { Building, GameState, Link, LinkKind, Site } from '../../game/types';
 import {
   LINK_CLASSES, KIND_LABEL, MAX_CIRCUITS, GRID_TIE, OVERLOAD_LIMIT, roleOf, kindsForRole, linksOf, otherEnd, endpointName, linkRating,
-  linkLength, routeLength, endpointWorld, classLockReason, suggestClass, designNeed, validTargets, targetHint, lossPct, linkCost,
+  linkLength, routeLength, endpointWorld, linkRepairCost, classLockReason, suggestClass, designNeed, validTargets, targetHint, lossPct, linkCost,
 } from '../../game/network/network';
 import { fmtMoney, fmtNum } from '../../ui/format';
 import { run, A, haptic } from '../../ui/actions';
@@ -189,18 +189,25 @@ function LinkRow({ l, from, open, toggle }: { l: Link; from: number; open: boole
   const load = l.flow / Math.max(1e-6, rating);
   const c = LINK_CLASSES[l.kind][l.cls];
   return (
-    <div className={`link-row${open ? ' open' : ''}${l.trip > 0 ? ' tripped' : ''}`}>
+    <div className={`link-row${open ? ' open' : ''}${l.trip > 0 || l.broken ? ' tripped' : ''}`}>
       <button type="button" className="link-main" onClick={toggle} aria-expanded={open}>
         <Icon name={KIND_ICON[l.kind]} size={16} />
         <div className="link-text">
           <div><b>{endpointName(site, other)}</b> <span className="muted">· {c.short}{c.kv ? ` ${c.kv}` : ''}{l.circuits > 1 ? ` ×${l.circuits}` : ''}</span></div>
           <div className="link-load">
             <Bar value={Math.min(load, OVERLOAD_LIMIT)} max={1} height={5} warn={load > 0.97 || l.trip > 0} />
-            <span className="mono">{l.trip > 0 ? `TRIPPED ${Math.ceil(l.trip)} s` : `${mw(l.flow)} / ${mw(rating)}`}</span>
+            <span className="mono">{l.broken ? 'STORM DAMAGE' : l.trip > 0 ? `TRIPPED ${Math.ceil(l.trip)} s` : `${mw(l.flow)} / ${mw(rating)}`}</span>
           </div>
         </div>
         <Icon name={open ? 'minus' : 'gear'} size={15} />
       </button>
+      {l.broken && (
+        <div className="link-editor">
+          <Button small variant="danger" icon="wrench" disabled={g.money < linkRepairCost(l)} onClick={() => run((s) => A.repairLink(s, l.id), { structural: true, sound: 'cash' })}>
+            Repair storm damage · {fmtMoney(linkRepairCost(l))}
+          </Button>
+        </div>
+      )}
       {open && <LinkEditor l={l} from={from} />}
     </div>
   );

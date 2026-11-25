@@ -138,6 +138,15 @@ export function runFix(action: FixAction, siteId: string): void {
     case 'connect':
       ui.startConnect(action.id, action.link);
       break;
+    case 'repairLink':
+      run((s) => A.repairLink(s, action.id), { sound: 'cash', structural: true });
+      break;
+    case 'deice':
+      run((s) => A.setDeice(s, action.siteId, true));
+      break;
+    case 'weather':
+      ui.setPanel('weather');
+      break;
     case 'panel':
       ui.setPanel(action.panel);
       break;

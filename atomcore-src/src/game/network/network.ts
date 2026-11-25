@@ -745,7 +745,7 @@ export function solvePlant(site: Site, inp: PlantNetInput): PlantNetResult {
     genTotal += e;
     fp.edge(PS, nodeFor(id), e);
   }
-  const live = (l: Link) => l.trip <= 0 && [l.a, l.b].every((id) => id === GRID_TIE || turbIds.has(id) || inp.powerUp.has(id));
+  const live = (l: Link) => l.trip <= 0 && !l.broken && [l.a, l.b].every((id) => id === GRID_TIE || turbIds.has(id) || inp.powerUp.has(id));
   const cableEdge = new Map<Link, number>();
   for (const l of powerLinks) {
     l.flow = 0;
@@ -794,7 +794,7 @@ export interface GridSide {
 
 /** Everything reachable from the grid connection through live cables and running switchyards. */
 export function gridSide(site: Site, up: (id: number) => boolean): GridSide {
-  const powerLinks = site.links.filter((l) => l.kind === 'power' && l.trip <= 0 && up(l.a) && up(l.b));
+  const powerLinks = site.links.filter((l) => l.kind === 'power' && l.trip <= 0 && !l.broken && up(l.a) && up(l.b));
   const busSubs = new Set<number>();
   const busStores = new Map<number, number>();
   const busLoads = new Map<number, number>();
@@ -822,11 +822,16 @@ export function gridSide(site: Site, up: (id: number) => boolean): GridSide {
   return { busSubs, busStores, busLoads, tieConnected: powerLinks.some((l) => l.a === GRID_TIE || l.b === GRID_TIE) };
 }
 
+/** Repairing a storm-damaged line: crews, a crane and new conductors. */
+export function linkRepairCost(l: Link): number {
+  return Math.round(Math.max(300, l.paid * 0.25));
+}
+
 /** Cable heating from overload; breakers trip and reclose. Returns links that tripped. */
 export function stepCables(site: Site, dt: number): Link[] {
   const tripped: Link[] = [];
   for (const l of site.links) {
-    if (l.kind !== 'power') continue;
+    if (l.kind !== 'power' || l.broken) continue;
     if (l.trip > 0) {
       l.trip = Math.max(0, l.trip - dt);
       l.heat = Math.max(0, l.heat - 0.05 * dt);

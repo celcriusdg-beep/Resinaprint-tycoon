@@ -15,11 +15,12 @@ import { Infrastructure } from './Infrastructure';
 import { SteamParticles } from './SteamParticles';
 import { PlacementLayer } from './Placement';
 import { SelectionMarker, ConnectMarkers } from './Overlays';
+import { WeatherFX } from './WeatherFX';
 
 const QUALITY = {
-  low: { dpr: [0.75, 1] as [number, number], shadows: false, shadowSize: 1024, bloom: false, particles: 500, trees: 120, aa: false },
-  medium: { dpr: [1, 1.5] as [number, number], shadows: true, shadowSize: 1024, bloom: true, particles: 900, trees: 260, aa: false },
-  high: { dpr: [1, 2] as [number, number], shadows: true, shadowSize: 2048, bloom: true, particles: 1500, trees: 420, aa: true },
+  low: { dpr: [0.75, 1] as [number, number], shadows: false, shadowSize: 1024, bloom: false, particles: 500, trees: 120, aa: false, weatherFx: 0 },
+  medium: { dpr: [1, 1.5] as [number, number], shadows: true, shadowSize: 1024, bloom: true, particles: 900, trees: 260, aa: false, weatherFx: 900 },
+  high: { dpr: [1, 2] as [number, number], shadows: true, shadowSize: 2048, bloom: true, particles: 1500, trees: 420, aa: true, weatherFx: 1500 },
 };
 
 function World() {
@@ -40,6 +41,7 @@ function World() {
       ))}
       <Infrastructure site={site} structure={structure} />
       <SteamParticles key={site.id} max={q.particles} />
+      {q.weatherFx > 0 && <WeatherFX key={`wx-${site.id}`} max={q.weatherFx} />}
       <PlacementLayer siteSize={site.size} />
       <ConnectMarkers />
       <SelectionMarker />

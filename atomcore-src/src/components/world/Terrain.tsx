@@ -1,5 +1,9 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
+import { useFrame } from '@react-three/fiber';
+import { useGameStore } from '../../stores/gameStore';
+import { DAY_LENGTH } from '../../game/constants';
+import { YEAR_DAYS } from '../../game/weather/weather';
 import { CELL } from '../../game/constants';
 import type { LocationDef } from '../../game/progression/locations';
 import { materials } from '../buildings/materials';
@@ -169,6 +173,21 @@ export function Terrain({ loc, siteSize, trees }: Props) {
   const theme = loc.theme;
   const ground = useMemo(() => makeGround(theme, plotHalf), [theme, plotHalf]);
   const groundMat = useMemo(() => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.97 }), []);
+  const snowMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#dfe6ea', roughness: 0.95, transparent: true, opacity: 0, depthWrite: false }), []);
+  const tint = useMemo(() => new THREE.Color(), []);
+  useFrame(() => {
+    const g = useGameStore.getState().game;
+    const w = g.sites[g.activeSite]?.weather;
+    // Seasonal grass colour: fresh in spring, dry in summer, golden in autumn, grey-green in winter.
+    const yp = ((g.gameTime / DAY_LENGTH / YEAR_DAYS) % 1) * 4;
+    const i = Math.floor(yp) % 4;
+    const f = yp - Math.floor(yp);
+    const blend = f < 0.85 ? 0 : (f - 0.85) / 0.15;
+    tint.set(SEASON_TINT[theme][i]).lerp(new THREE.Color(SEASON_TINT[theme][(i + 1) % 4]), blend);
+    groundMat.color.copy(tint);
+    snowMat.opacity = Math.min(0.8, (w?.snow ?? 0) * 0.9);
+    snowMat.visible = snowMat.opacity > 0.02;
+  });
   const padTex = useMemo(() => gridPadTexture(siteSize), [siteSize]);
   const roadLen = 450 - plotHalf;
   const roadTex = useMemo(() => {
@@ -206,6 +225,7 @@ export function Terrain({ loc, siteSize, trees }: Props) {
   return (
     <group>
       <mesh geometry={ground} material={groundMat} receiveShadow />
+      <mesh geometry={ground} material={snowMat} position={[0, 0.03, 0]} />
       {t.waterLevel > -50 && (
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, t.waterLevel, 0]} material={materials().water}>
           <planeGeometry args={[900, 900]} />
@@ -234,6 +254,13 @@ export function Terrain({ loc, siteSize, trees }: Props) {
     </group>
   );
 }
+
+const SEASON_TINT: Record<LocationDef['theme'], [string, string, string, string]> = {
+  river: ['#ffffff', '#f1ebc4', '#e9cf9a', '#d5dad8'],
+  coast: ['#ffffff', '#f3eecf', '#e6d3a5', '#d8dcdc'],
+  desert: ['#ffffff', '#fff3df', '#f6eadb', '#eee8e2'],
+  arctic: ['#ffffff', '#f0f4e4', '#e8dcc0', '#e6ecef'],
+};
 
 export function roadX(siteSize: number): number {
   return (siteSize * CELL) / 2 - CELL * 2;

@@ -51,11 +51,11 @@ export function dailyPrice(gameTime: number): number {
 
 export function regionalDemand(s: GameState, siteId: string, mods: Modifiers): number {
   const loc = LOCATION_BY_ID[siteId];
-  return demandForLevel(s.level) * loc.demandMult * dailyDemand(s.gameTime) * eventEffect(s, siteId, 'demand') * mods.demand;
+  return demandForLevel(s.level) * loc.demandMult * dailyDemand(s.gameTime) * eventEffect(s, siteId, 'demand') * mods.demand * (s.sites[siteId]?.weather?.f.demand ?? 1);
 }
 
 export function sitePrice(s: GameState, siteId: string, mods: Modifiers): number {
-  return BASE_PRICE * mods.price * s.market.priceMult * dailyPrice(s.gameTime) * eventEffect(s, siteId, 'price');
+  return BASE_PRICE * mods.price * s.market.priceMult * dailyPrice(s.gameTime) * eventEffect(s, siteId, 'price') * (s.sites[siteId]?.weather?.f.price ?? 1);
 }
 
 // ── Capacity helpers ──────────────────────────────────────────────────────
@@ -77,6 +77,8 @@ export function siteCapacities(s: GameState, site: Site, mods: Modifiers) {
   const by = {
     steam: new Map<number, number>(), eff: new Map<number, number>(), wet: new Map<number, number>(), dry: new Map<number, number>(),
     grid: new Map<number, number>(), storage: new Map<number, number>(), rate: new Map<number, number>(),
+    /** Once-through (river/sea) cooling units: limited by the water temperature, not the air. */
+    once: new Set<number>(),
   };
   for (const b of site.buildings) {
     if (b.status === 'constructing' || b.status === 'destroyed') continue;
@@ -102,6 +104,7 @@ export function siteCapacities(s: GameState, site: Site, mods: Modifiers) {
     if (def.category === 'cooling') {
       by.wet.set(b.id, wet);
       by.dry.set(b.id, dry);
+      if (b.type === 'cooling_seawater') by.once.add(b.id);
     }
     grid += stat(b, 'gridMW');
     storage += stat(b, 'storageMWh');
@@ -219,10 +222,11 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
     waterCostTotal += water.cost * (offline ? 0.5 : 1);
     // Without make-up water, wet cooling degrades but the basins keep some capacity.
     cap.cooling = cap.wetCooling * (0.35 + 0.65 * water.waterFactor) + cap.dryCooling;
-    const wetF = mods.cooling * eventEffect(s, site.id, 'cooling') * (0.35 + 0.65 * water.waterFactor);
+    const wx = site.weather.f;
+    const wetF = mods.cooling * eventEffect(s, site.id, 'cooling') * (0.35 + 0.65 * water.waterFactor) * wx.wet;
     const dryF = mods.cooling * Math.min(1, eventEffect(s, site.id, 'cooling'));
     const coolCap = new Map<number, number>();
-    for (const [id, wet] of cap.by.wet) coolCap.set(id, wet * wetF + (cap.by.dry.get(id) ?? 0) * dryF);
+    for (const [id, wet] of cap.by.wet) coolCap.set(id, wet * wetF + (cap.by.dry.get(id) ?? 0) * dryF * (cap.by.once.has(id) ? wx.once : wx.dry));
 
     // Plant networks: only what is connected by pipes and cables counts.
     const condensers = new Set<number>();
@@ -233,7 +237,7 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
       if ((def.stats.gridMW || def.stats.storageRateMW || def.stats.dataMW || def.stats.h2MW) && isOperating(b)) powerUp.add(b.id);
     }
     const side = gridSide(site, (id) => id === GRID_TIE || condensers.has(id) || powerUp.has(id));
-    const gridF = mods.grid * eventEffect(s, site.id, 'grid');
+    const gridF = mods.grid * eventEffect(s, site.id, 'grid') * wx.grid;
     cap.grid = BASE_GRID_TIE_MW * gridF;
     for (const id of side.busSubs) cap.grid += (cap.by.grid.get(id) ?? 0) * gridF;
     cap.storage = 0;
@@ -385,6 +389,8 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
       const feed = nw.busLoads.get(b.id) ?? 0;
       dataLoad += Math.min(stat(b, 'dataMW'), feed);
       fixedLoad += stat(b, 'loadMW');
+      // Intake de-icing heaters run in frost.
+      if (site.weather.deice && site.weather.air < -3 && (b.type === 'water_intake' || b.type === 'intake_large')) fixedLoad += 1.5 * b.level;
       h2Cap += Math.min(stat(b, 'h2MW'), feed);
       isoBase += stat(b, 'isotopes');
       tourBase += stat(b, 'tourism');

@@ -357,6 +357,8 @@ export interface Link {
   heat: number;
   /** Seconds until a tripped breaker recloses (0 = in service). */
   trip: number;
+  /** Brought down by a storm: out of service until repaired. */
+  broken?: boolean;
 }
 
 export interface Site {
@@ -365,6 +367,8 @@ export interface Site {
   buildings: Building[];
   /** Steam lines, cooling-water pipes and power cables. */
   links: Link[];
+  /** Climate, weather fronts and the river/sea state. */
+  weather: import('./weather/weather').WeatherState;
   storageMWh: number;
   storageWater: number; // raw water in tanks, m³
   spent: SpentFuelPool;

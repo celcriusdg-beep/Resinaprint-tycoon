@@ -47,8 +47,9 @@ export function stepWater(
     if (def.stats.waterStorage) tankCap += def.stats.waterStorage * lm;
   }
   const supplyMult = eventEffect(s, site.id, 'water');
-  const ownRaw = intake * supplyMult;
-  const municipalRaw = loc.waterBase * supplyMult;
+  const wx = site.weather?.f;
+  const ownRaw = intake * supplyMult * (wx?.intake ?? 1);
+  const municipalRaw = loc.waterBase * supplyMult * (wx?.municipal ?? 1);
   const rawSupply = ownRaw + municipalRaw;
 
   // Demineralised water: municipal connection first, then treatment plants.
@@ -60,7 +61,7 @@ export function stepWater(
   const treatedFactor = treatedDemand > 0.001 ? Math.min(1, treatedSupply / treatedDemand) : 1;
 
   // Evaporation, fed from what is left, then from the tank.
-  const evaporation = heatReject * wetShare * EVAP_PER_MW * mods.evaporation * eventEffect(s, site.id, 'evaporation');
+  const evaporation = heatReject * wetShare * EVAP_PER_MW * mods.evaporation * eventEffect(s, site.id, 'evaporation') * (site.weather?.f.evaporation ?? 1);
   const rawLeft = Math.max(0, rawSupply - rawToTreatment);
   const dtH = HOURS_PER_SECOND * dt;
   let tank = Math.min(site.storageWater ?? 0, tankCap);

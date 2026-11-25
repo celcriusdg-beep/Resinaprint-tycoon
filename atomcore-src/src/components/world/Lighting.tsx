@@ -37,6 +37,8 @@ export function Lighting({ shadows, shadowSize, dayNight, siteSize, theme }: Pro
   const sunNoon = useMemo(() => new THREE.Color('#fff4e2'), []);
   const moon = useMemo(() => new THREE.Color('#8fa8d8'), []);
   const sunPos = useMemo(() => new THREE.Vector3(), []);
+  const stormGrey = useMemo(() => new THREE.Color('#7e8a94'), []);
+  const snowWhite = useMemo(() => new THREE.Color('#b9c4cb'), []);
 
   useEffect(() => {
     const pmrem = new THREE.PMREMGenerator(gl);
@@ -78,18 +80,26 @@ export function Lighting({ shadows, shadowSize, dayNight, siteSize, theme }: Pro
     const elev = Math.sin(ang);
     const day = THREE.MathUtils.smoothstep(elev, -0.12, 0.25);
     const night = 1 - day;
+    // Clouds from the site's weather dim the sun and pull the fog in.
+    const w = g.sites[g.activeSite]?.weather;
+    const cloud = w ? Math.min(0.85, w.rain / 6 + (w.humidity > 0.85 ? 0.3 : 0) + (w.wind > 20 ? 0.3 : 0)) : 0;
     sunPos.set(Math.cos(ang) * 120, Math.max(8, elev * 160), -60 + Math.sin(p * Math.PI * 2) * 40);
     if (sun.current) {
       sun.current.position.copy(sunPos);
       const low = 1 - THREE.MathUtils.smoothstep(elev, 0.05, 0.5);
       tmp.copy(sunNoon).lerp(sunWarm, low * day).lerp(moon, night);
       sun.current.color.copy(tmp);
-      sun.current.intensity = 0.35 + day * 2.6;
+      sun.current.intensity = (0.35 + day * 2.6) * (1 - 0.6 * cloud);
       worldLight.color.copy(tmp).lerp(new THREE.Color('#ffffff'), 0.5 * day);
     }
     if (hemi.current) hemi.current.intensity = 0.35 + day * 0.55;
     scene.environmentIntensity = 0.25 + day * 0.7;
-    if (scene.fog) (scene.fog as THREE.Fog).color.copy(fogColor).lerp(nightFog, night * 0.85);
+    if (scene.fog) {
+      const fog = scene.fog as THREE.Fog;
+      fog.color.copy(fogColor).lerp(w && w.air < 0.5 && w.rain > 0.15 ? snowWhite : stormGrey, cloud * 0.45).lerp(nightFog, night * 0.85);
+      fog.near = 160 * (1 - 0.35 * cloud);
+      fog.far = 520 * (1 - 0.35 * cloud);
+    }
     gl.toneMappingExposure = 0.85 + day * 0.25;
     worldLight.night = night;
     setNightFactor(night);

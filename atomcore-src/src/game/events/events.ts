@@ -49,24 +49,26 @@ function randomBuilding(s: GameState, siteId: string, filter: (b: Building) => b
   return list[list.length - 1];
 }
 
+// Heatwaves, droughts, cold snaps and storms now come from the weather system
+// (game/weather); their old definitions stay (weight 0) for saves that have one active.
 export const EVENTS: EventDef[] = [
-  { id: 'heatwave', name: 'Heatwave', kind: 'bad', weight: 10, duration: 150, siteScoped: true,
+  { id: 'heatwave', name: 'Heatwave', kind: 'bad', weight: 0, duration: 150, siteScoped: true,
     description: 'Hot air and warm intake water reduce cooling capacity, while air-conditioning demand soars.',
     effect: { cooling: 0.85, demand: 1.25, price: 1.15, evaporation: 1.25, water: 0.8 } },
   { id: 'blackout', name: 'Loss of Offsite Power', kind: 'bad', weight: 5, duration: 70, siteScoped: true, minLevel: 5,
     description: 'The grid connection is lost. Reactors trip, and pumps and emergency cooling must run on emergency diesel generators — without enough backup power, decay heat boils off the coolant.',
     effect: { grid: 0, offsite: 0 } },
-  { id: 'drought', name: 'Drought', kind: 'bad', weight: 6, duration: 200, siteScoped: true, themes: ['river', 'desert'],
+  { id: 'drought', name: 'Drought', kind: 'bad', weight: 0, duration: 200, siteScoped: true, themes: ['river', 'desert'],
     description: 'Low river levels and a falling water table: raw water supply is cut sharply and evaporation rises.',
     effect: { water: 0.5, evaporation: 1.15 } },
   { id: 'intake', name: 'Intake Screens Clogged', kind: 'bad', weight: 4, duration: 90, siteScoped: true, themes: ['river', 'coast', 'arctic'],
     description: 'Debris (or jellyfish!) blocks the intake screens. Raw water supply is reduced.', effect: { water: 0.6 } },
   { id: 'outcry', name: 'Public Outcry', kind: 'bad', weight: 0, duration: 600, siteScoped: false,
     description: 'After a core damage incident customers and regulators lose trust: electricity prices are depressed.', effect: { price: 0.8 } },
-  { id: 'coldsnap', name: 'Cold Snap', kind: 'good', weight: 8, duration: 130, siteScoped: true,
+  { id: 'coldsnap', name: 'Cold Snap', kind: 'good', weight: 0, duration: 130, siteScoped: true,
     description: 'Freezing weather boosts heating demand and improves cooling.',
     effect: { cooling: 1.12, demand: 1.35, price: 1.1 } },
-  { id: 'storm', name: 'Severe Storm', kind: 'bad', weight: 7, duration: 90, siteScoped: true,
+  { id: 'storm', name: 'Severe Storm', kind: 'bad', weight: 0, duration: 90, siteScoped: true,
     description: 'Storm damage on transmission lines limits how much power the site can export.',
     effect: { grid: 0.65 } },
   { id: 'boom', name: 'Energy Market Boom', kind: 'good', weight: 8, duration: 100, siteScoped: false,

@@ -20,6 +20,7 @@ import { SitesPanel } from './components/panels/SitesPanel';
 import { SettingsPanel } from './components/panels/SettingsPanel';
 import { StatusPanel } from './components/panels/StatusPanel';
 import { ConnectBar } from './components/panels/Connections';
+import { WeatherPanel } from './components/panels/WeatherPanel';
 import { Tabs } from './components/ui/common';
 import { BUILDINGS } from './game/buildings/defs';
 import { rotatePlacement } from './ui/actions';
@@ -47,6 +48,7 @@ const PANELS: Record<PanelId, { title: string; icon: IconName; render: () => JSX
   goals: { title: 'Goals & Progress', icon: 'trophy', render: () => <GoalsPanel /> },
   sites: { title: 'More', icon: 'menu', render: () => <MorePanel /> },
   settings: { title: 'Settings', icon: 'gear', render: () => <SettingsPanel /> },
+  weather: { title: 'Weather & Seasons', icon: 'sun', render: () => <WeatherPanel /> },
 };
 
 export default function App() {

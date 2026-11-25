@@ -9,7 +9,7 @@ import { hasRoomFor } from './buildings/grid';
 import { LOCATION_BY_ID } from './progression/locations';
 import { HOURS_PER_SECOND } from './constants';
 import { creditLimit } from './engine';
-import { GRID_TIE, gridSide, linksOf, otherEnd, roleOf, linkRating, endpointName, KIND_LABEL } from './network/network';
+import { linkRepairCost, GRID_TIE, gridSide, linksOf, otherEnd, roleOf, linkRating, endpointName, KIND_LABEL } from './network/network';
 
 // Plant diagnostics: turns the simulation state into plain-language status
 // lines — what is fine, what is degraded and what is broken — each with the
@@ -28,7 +28,10 @@ export type FixAction =
   | { kind: 'setpoint'; id: number; value: number }
   | { kind: 'scram'; id: number }
   | { kind: 'expand' }
-  | { kind: 'connect'; id: number; link: import('./types').LinkKind };
+  | { kind: 'connect'; id: number; link: import('./types').LinkKind }
+  | { kind: 'repairLink'; id: number }
+  | { kind: 'deice'; siteId: string }
+  | { kind: 'weather' };
 
 export interface Issue {
   key: string;
@@ -195,6 +198,7 @@ export function diagnoseSite(s: GameState, site: Site): Issue[] {
   // Heat → steam → electricity → grid chain
   const reactorsRunning = site.buildings.some((b) => b.reactor && b.status === 'active' && b.reactor.power > 0.02);
   out.push(...diagnoseNetwork(site));
+  out.push(...diagnoseWeather(s, site));
   const hasTurbine = site.buildings.some((b) => roleOf(b.type) === 'turbine' && b.status !== 'constructing');
   if (reactorsRunning && st.steamCapMW <= 0.1 && !hasTurbine) add('turbines', 'error', 'No working turbine hall', 'Reactors make heat, but without a turbine none of it becomes electricity.', { label: 'Build turbine', action: { kind: 'build', type: 'turbine' } });
   else if (st.thermalMW > st.steamCapMW * 1.02 && st.steamCapMW > 0) add('turbines', 'warn', 'Turbines are full', `${fmt(st.thermalMW - st.steamCapMW)} MW of heat is wasted because turbine capacity is too small.`, { label: 'Build', action: { kind: 'panel', panel: 'build' } });
@@ -251,6 +255,24 @@ export function diagnoseSite(s: GameState, site: Site): Issue[] {
   return out;
 }
 
+/** Weather that is hurting the plant now or will soon. */
+export function diagnoseWeather(s: GameState, site: Site): Issue[] {
+  const out: Issue[] = [];
+  const w = site.weather;
+  if (!w) return out;
+  const add = (system: SystemId, severity: Severity, title: string, detail: string, fix?: Issue['fix']) =>
+    out.push({ key: `${site.id}:wx:${title}`, severity, system, siteId: site.id, title, detail, fix });
+  const fx = { label: 'Forecast', action: { kind: 'weather' as const } };
+  const intakes = site.buildings.some((b) => b.type === 'water_intake' || b.type === 'intake_large');
+  if (w.air < -3 && intakes && !w.deice) add('water', 'warn', 'Water intakes icing up', `It is ${Math.round(w.air)} °C: frazil ice cuts intake flow by 40%. De-icing heaters use 1.5 MW per intake level.`, { label: 'Turn on de-icing', action: { kind: 'deice', siteId: site.id } });
+  if (w.f.wet < 0.9 && site.stats.coolingRatio < 1.15 && site.stats.heatRejectMW > 1) add('cooling', 'warn', 'Hot weather is eating your cooling margin', `Cooling towers are at ${Math.round(w.f.wet * 100)}% in this heat. Lower reactor power or add cooling before the afternoon peak.`, fx);
+  if (w.riverFlow < 0.7 && intakes) add('water', 'warn', 'River running low', `Flow is ${Math.round(w.riverFlow * 100)}% of normal, so the intakes deliver less make-up water. A reservoir or water tanks help bridge droughts.`, fx);
+  const soon = w.fronts.find((f) => (f.kind === 'heatwave' || f.kind === 'storm') && f.start > s.gameTime && f.start - s.gameTime < 240);
+  if (soon) add(soon.kind === 'storm' ? 'grid' : 'cooling', 'info', `${soon.kind === 'storm' ? 'Storm' : 'Heatwave'} forecast in ${mins(soon.start - s.gameTime)}`,
+    soon.kind === 'storm' ? 'Overhead lines may trip or come down. Keep money for repairs; buried superconducting links are immune.' : 'Cooling will weaken: plan for lower output or add cooling now.', fx);
+  return out;
+}
+
 /** Missing, full or tripped pipes and cables. */
 export function diagnoseNetwork(site: Site): Issue[] {
   const out: Issue[] = [];
@@ -294,7 +316,8 @@ export function diagnoseNetwork(site: Site): Issue[] {
   for (const l of site.links) {
     const from = l.a === GRID_TIE ? l.b : l.a;
     const label = `${KIND_LABEL[l.kind]} ${endpointName(site, l.a)} → ${endpointName(site, l.b)}`;
-    if (l.trip > 0) add('grid', 'error', `Breaker open: ${label}`, `Tripped on overload; it recloses in ${Math.ceil(l.trip)} s. Upgrade it or add a parallel route so it is not overloaded again.`, { label: 'Open', action: { kind: 'select', id: from } }, from);
+    if (l.broken) add('grid', 'error', `Storm damage: ${label}`, `The line is down and carries nothing until it is repaired ($${linkRepairCost(l).toLocaleString('en-US')}). Maintenance workshops with auto-repair fix it automatically.`, { label: 'Repair', action: { kind: 'repairLink', id: l.id } }, from);
+    else if (l.trip > 0) add('grid', 'error', `Breaker open: ${label}`, `Tripped on overload; it recloses in ${Math.ceil(l.trip)} s. Upgrade it or add a parallel route so it is not overloaded again.`, { label: 'Open', action: { kind: 'select', id: from } }, from);
     else if (l.kind === 'power' && l.flow > linkRating(l) * 1.001) add('grid', 'error', `Overloaded: ${label}`, `Carrying ${Math.round((l.flow / linkRating(l)) * 100)}% of its rating and heating up — the breaker will trip.`, { label: 'Open', action: { kind: 'select', id: from } }, from);
     else if (l.flow >= linkRating(l) * 0.985) add(l.kind === 'steam' ? 'turbines' : l.kind === 'cooling' ? 'cooling' : 'grid', 'warn', `At its limit: ${label}`, 'This link is full and holds back the plant. Upgrade it to a bigger size or add parallel runs.', { label: 'Open', action: { kind: 'select', id: from } }, from);
   }

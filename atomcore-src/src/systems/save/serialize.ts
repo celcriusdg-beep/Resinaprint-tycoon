@@ -8,6 +8,7 @@ import { newReactorState, initEquilibrium } from '../../game/simulation/reactor'
 import { reserveFor } from '../../game/supply/fuelcycle';
 import { LOCATION_BY_ID } from '../../game/progression/locations';
 import { autoWire, pruneLinks } from '../../game/network/network';
+import { initWeather } from '../../game/weather/weather';
 
 // Pure (de)serialisation and migration. No storage APIs here so it can be unit tested.
 
@@ -87,6 +88,8 @@ export function migrate(raw: unknown): GameState {
     site.links = Array.isArray(site.links) ? site.links : [];
     pruneLinks(site);
     if (version < 4) autoWire(s, site);
+    // v4 → v5: weather and seasons.
+    initWeather(site, s.gameTime);
   }
   s.unlockedSites = s.unlockedSites.filter((id) => s.sites[id]);
   if (!s.unlockedSites.length) throw new Error('Save data has no plant sites.');

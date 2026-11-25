@@ -117,7 +117,7 @@ function linkGeometry(b: ModelBuilder, site: Site, l: Link) {
     }
     return;
   }
-  const mat = l.trip > 0 ? tripped() : l.cls === 0 ? m.rubber : m.copper;
+  const mat = l.trip > 0 || l.broken ? tripped() : l.cls === 0 ? m.rubber : m.copper;
   if (c.size === 0) {
     // Superconducting cable: buried, shown as a covered trench with marker posts.
     for (const [x, z] of routePoints(a, d, 12)) b.box(0.25, 0.9, 0.25, m.steel, [x, 0, z], 0, 1);

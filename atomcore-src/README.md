@@ -28,6 +28,7 @@ Browser smoke test (needs a running `npx vite preview --port 4173` and Playwrigh
 PLAYWRIGHT_PATH=$(npm root -g)/playwright node tools/smoke.mjs http://localhost:4173/ tests/output
 PLAYWRIGHT_PATH=$(npm root -g)/playwright node tools/smoke2.mjs http://localhost:4173/ tests/output  # offline, PWA, research, mouse placement
 PLAYWRIGHT_PATH=$(npm root -g)/playwright node tools/smoke3.mjs http://localhost:4173/ tests/output  # pipes & cables: connect mode, size picker
+PLAYWRIGHT_PATH=$(npm root -g)/playwright node tools/smoke4.mjs http://localhost:4173/ tests/output  # weather panel, rain, snow
 ```
 
 Useful URL parameters: `?quality=low|medium|high` overrides graphics quality, `?debug=1`
@@ -46,6 +47,7 @@ src/
     simulation/         reactor model, plant energy/heat balance, modifiers
     economy/            market, prices, contracts
     research/           technology tree (50 projects, 9 categories)
+    weather/            seasons, climate, fronts, forecast, weather effects on the plant
     network/            pipes & cables: link classes, max-flow solver, auto-wiring, breakers
     supply/             fuel cycle (mining, processing, refuelling, fuel integrity), vehicles, water balance
     events/             random management events
@@ -93,8 +95,9 @@ adaptive monitor lowers resolution when the frame rate drops.
 | Protection & accidents: trips on high flux, short period, high temperature, low level and loss of offsite power; rare failure-to-scram (ATWS); xenon dead time; station blackouts with emergency diesel generators; boil-off, core uncovery, cladding oxidation and fuel melting leading to core damage (INES-style severity); passive-safety research and passively safe designs (pilot, SMR, molten salt) | Implemented (simplified, educational) |
 | Fuel management: batch (⅓ core) or full reloads, enrichment choice 3–5%, leaking rods from defects and overpower, spent fuel pools and dry cask storage, finite ore reserves | Implemented |
 | Pipes & cables: nothing connects by itself — steam lines (reactor → turbine hall, turbine cross-ties), circulating-water pipes (turbine → cooling) and power cables (generators/storage/loads → switchyards → grid connection at the plot edge). 5–6 size classes each (DN300 → advanced loop; 11 kV MV → 765 kV UHV, HVDC, superconducting) with ratings, up to 4 parallel runs, cost per metre, voltage limits per equipment, I²R losses, cable overload heating and breaker trips. Max-flow routing; steam only goes to halls whose condensers are cooled; reactors with no heat sink trip. Tap-to-connect UI, Status diagnostics, old saves auto-wired | Implemented |
+| Weather & seasons: 4 seasons × 7 game days (year ≈ 2 h), per-site climate (annual mean, seasonal and daily swing, humidity, wind), weather fronts planned ahead (heatwave, cold snap, storm, rain, drought) with a real 3-day forecast. Wet cooling follows the wet-bulb temperature, dry cooling the air, once-through cooling the river/sea temperature; river flow follows rain and droughts; intakes ice up in frost unless de-iced (costs power); heating/cooling demand and prices; storms trip or bring down overhead lines (repair cost) and can cut the grid. HUD weather pill, Weather panel, rain/snow, cloudy skies, seasonal grass and snow cover | Implemented |
 | Automation: fuel procurement, outage planning (auto-refuel), auto-restart, predictive maintenance, load following, smart storage | Implemented |
-| Events: heatwave, cold snap, storms, market boom/slump, demand surge, fuel price shocks, equipment failures, pump faults, breakthroughs, grants, inspections, site-specific weather | Implemented |
+| Events (weather now comes from the weather system): market boom/slump, demand surge, fuel price shocks, equipment failures, pump faults, breakthroughs, grants, inspections, site-specific weather | Implemented |
 | Staff: capacity, salaries, understaffing penalty, training program | Implemented |
 | Energy contracts with premiums, penalties, bonuses and a global tier | Implemented |
 | Progression: levels, 37 achievements, 24 guided milestones, 3 daily objectives, prestige (shares), 4 unlockable sites, land expansion | Implemented |

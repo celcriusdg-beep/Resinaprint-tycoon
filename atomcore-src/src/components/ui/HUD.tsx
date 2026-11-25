@@ -1,3 +1,4 @@
+import { skyLabel, calendar, SEASONS } from '../../game/weather/weather';
 import { useGame } from '../../stores/gameStore';
 import { useUI, type PanelId } from '../../stores/uiStore';
 import { fmtMoney, fmtPower, fmtPct, fmtNum } from '../../ui/format';
@@ -75,6 +76,7 @@ export function HUD() {
           <Icon name="atom" size={14} />
           {scrammed ? `${scrammed} SCRAM` : refuelNeeded ? `${refuelNeeded} need fuel` : refueling ? `${refueling} refuelling` : `${st.reactorsOnline}/${st.reactorsTotal} online`}
         </button>
+        <WeatherPill />
         <button className={`hud-pill ${st.coolingRatio < 1 ? 'bad' : st.coolingRatio < 1.1 ? 'warn' : ''}`} onClick={() => open('manage')}>
           <Icon name="thermo" size={14} />
           {fmtPct(Math.min(9.99, st.maxTempFrac))}
@@ -128,6 +130,21 @@ function MilestoneBar() {
       <Icon name="star" size={14} />
       <span className="milestone-title">{m.title}</span>
       <span className="milestone-reward">+{fmtMoney(m.reward)}</span>
+    </button>
+  );
+}
+
+function WeatherPill() {
+  const g = useGame();
+  const site = g.sites[g.activeSite];
+  if (!site.weather) return null;
+  const sky = skyLabel(site, g.gameTime);
+  const c = calendar(g.gameTime);
+  const bad = site.weather.wind > 20 || site.weather.f.wet < 0.85;
+  return (
+    <button className={`hud-pill${bad ? ' warn' : ''}`} onClick={() => useUI.getState().setPanel('weather')} aria-label={`Weather: ${sky.label}`}>
+      <Icon name={sky.icon} size={14} />
+      {Math.round(site.weather.air)}° <span className="pill-text">{SEASONS[c.season]} {c.dayOfSeason}</span>
     </button>
   );
 }

@@ -20,6 +20,8 @@ import { autoWire, linkRating, suggestClass, linkLength, LINK_CLASSES } from '..
 function wire(s: GameState) {
   const site = s.sites[s.activeSite];
   autoWire(s, site, { pay: true, costMod: getMods(s, site.id).buildCost });
+  for (const l of site.links) if (l.broken) A.repairLink(s, l.id);
+  site.weather.deice = true;
   for (const l of site.links) {
     if (l.flow < linkRating(l) * 0.9 && l.trip <= 0) continue;
     const next = suggestClass(s, site, l.kind, l.a, l.b, linkRating(l) * 2);

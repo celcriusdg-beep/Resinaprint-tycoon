@@ -12,7 +12,8 @@ import { pendingShares } from './progression/prestige';
 import { acceptOffer as acceptOfferImpl, cancelContract as cancelContractImpl } from './economy/market';
 import { startRefuel, decommissionCost, buyVehicle, sellVehicle, buyItem, sellItem, deliverOrder as deliverOrderImpl, fuelQuotaLeft, shipSpentFuel as shipSpentFuelImpl, type Item } from './supply/fuelcycle';
 import { fuelCapacity } from './simulation/plant';
-import { removeLinksFor, linkProblem, classLockReason, linkCost, routeLength, makeLink, MAX_CIRCUITS, LINK_CLASSES, KIND_LABEL, endpointName, linkLength } from './network/network';
+import { initWeather } from './weather/weather';
+import { linkRepairCost, removeLinksFor, linkProblem, classLockReason, linkCost, routeLength, makeLink, MAX_CIRCUITS, LINK_CLASSES, KIND_LABEL, endpointName, linkLength } from './network/network';
 
 // Every player action validates fully and returns an error string, or null on success.
 export type Result = string | null;
@@ -216,6 +217,7 @@ export function unlockSite(s: GameState, id: string): Result {
   s.sites[id] = makeSite(id);
   s.unlockedSites.push(id);
   s.activeSite = id;
+  initWeather(s.sites[id], s.gameTime);
   pushLog(s, 'good', `Acquired land at ${loc.name}.`);
   return null;
 }
@@ -475,5 +477,29 @@ export function removeLink(s: GameState, id: number): Result {
   s.ledger.other += refund;
   site.links = site.links.filter((x) => x.id !== id);
   pushLog(s, 'info', `Removed ${KIND_LABEL[l.kind].toLowerCase()} ${endpointName(site, l.a)} → ${endpointName(site, l.b)}.`);
+  return null;
+}
+
+export function repairLink(s: GameState, id: number): Result {
+  const site = s.sites[s.activeSite];
+  const l = site.links.find((x) => x.id === id);
+  if (!l) return 'Connection not found.';
+  if (!l.broken) return 'Nothing to repair.';
+  const cost = linkRepairCost(l);
+  if (s.money < cost) return 'Not enough money.';
+  s.money -= cost;
+  s.ledger.maintenance += cost;
+  l.broken = false;
+  l.trip = 0;
+  l.heat = 0;
+  s.stats.repairs++;
+  pushLog(s, 'info', `Repaired storm damage on ${endpointName(site, l.a)} → ${endpointName(site, l.b)}.`);
+  return null;
+}
+
+export function setDeice(s: GameState, siteId: string, on: boolean): Result {
+  const site = s.sites[siteId];
+  if (!site) return 'Site not owned.';
+  site.weather.deice = on;
   return null;
 }
