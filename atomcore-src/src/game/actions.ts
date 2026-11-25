@@ -13,6 +13,7 @@ import { acceptOffer as acceptOfferImpl, cancelContract as cancelContractImpl } 
 import { startRefuel, decommissionCost, buyVehicle, sellVehicle, buyItem, sellItem, deliverOrder as deliverOrderImpl, fuelQuotaLeft, shipSpentFuel as shipSpentFuelImpl, type Item } from './supply/fuelcycle';
 import { fuelCapacity } from './simulation/plant';
 import { initWeather } from './weather/weather';
+import { hire, fire, keyHireFee, KEY_INFO, ROLE_INFO, type Role, type Shift, type KeyRole } from './staff/staff';
 import { linkRepairCost, removeLinksFor, linkProblem, classLockReason, linkCost, routeLength, makeLink, MAX_CIRCUITS, LINK_CLASSES, KIND_LABEL, endpointName, linkLength } from './network/network';
 
 // Every player action validates fully and returns an error string, or null on success.
@@ -501,5 +502,52 @@ export function setDeice(s: GameState, siteId: string, on: boolean): Result {
   const site = s.sites[siteId];
   if (!site) return 'Site not owned.';
   site.weather.deice = on;
+  return null;
+}
+
+// ── Staff ────────────────────────────────────────────────────────────────
+
+export function hireStaff(s: GameState, role: Role, n: number): Result {
+  const site = s.sites[s.activeSite];
+  const err = hire(s, site, role, n, site.stats.staffCap || 24);
+  if (!err) pushLog(s, 'info', `Hired ${n} ${ROLE_INFO[role].plural.toLowerCase()}${role === 'operator' ? ' (licence course first)' : ''}.`);
+  return err;
+}
+
+export function fireStaff(s: GameState, role: Role, n: number): Result {
+  return fire(s, s.sites[s.activeSite], role, n);
+}
+
+export function setShift(s: GameState, shift: Shift): Result {
+  s.sites[s.activeSite].staff.shift = shift;
+  return null;
+}
+
+export function setAutoHire(s: GameState, on: boolean): Result {
+  s.sites[s.activeSite].staff.autoHire = on;
+  return null;
+}
+
+export function hireKeyPerson(s: GameState, id: number): Result {
+  const site = s.sites[s.activeSite];
+  const p = s.candidates.find((c) => c.id === id);
+  if (!p) return 'That candidate is no longer available.';
+  const fee = keyHireFee(p);
+  if (s.money < fee) return 'Not enough money for the signing bonus.';
+  s.money -= fee;
+  s.ledger.salaries += fee;
+  const prev = site.staff.key[p.role];
+  site.staff.key[p.role] = p;
+  s.candidates = s.candidates.filter((c) => c.id !== id);
+  pushLog(s, 'good', `${p.name} joined as ${KEY_INFO[p.role].title}${prev ? `, replacing ${prev.name}` : ''}.`);
+  return null;
+}
+
+export function dismissKeyPerson(s: GameState, role: KeyRole): Result {
+  const site = s.sites[s.activeSite];
+  const p = site.staff.key[role];
+  if (!p) return 'Nobody in that position.';
+  delete site.staff.key[role];
+  pushLog(s, 'info', `${p.name} left the company.`);
   return null;
 }

@@ -11,6 +11,7 @@ import { fmtMoney, fmtPower, fmtPct, fmtTime, fmtNum, fmtEnergy } from '../../ui
 import { run, A } from '../../ui/actions';
 import { Bar, Button, Stat, Tabs, Section, Toggle, Sparkline, Empty } from '../ui/common';
 import { PlantBalance } from './PlantBalance';
+import { StaffPanel } from './StaffPanel';
 import type { Automation } from '../../game/types';
 
 type Tab = 'finance' | 'plant' | 'maint' | 'staff' | 'auto' | 'fuel' | 'log';
@@ -157,26 +158,9 @@ function Maintenance() {
 
 function Staff() {
   const g = useGame();
-  const site = g.sites[g.activeSite];
-  const st = site.stats;
-  const cost = A.trainingCost(g);
   return (
     <>
-      <div className="stat-grid">
-        <Stat label="Employees needed" value={Math.round(st.staffNeeded)} />
-        <Stat label="Staff capacity" value={Math.round(st.staffCap)} tone={st.staffNeeded > st.staffCap ? 'bad' : 'good'} sub="raise with Administration Buildings" />
-        <Stat label="Salaries" value={`${fmtMoney(st.salaries)}/s`} />
-        <Stat label="Staffing efficiency" value={fmtPct(st.staffFactor)} tone={st.staffFactor < 1 ? 'warn' : 'good'} />
-      </div>
-      <Section title="Training program">
-        <p className="muted small">Better trained operators and scientists: +4% reactor output and research per level, but +10% salaries.</p>
-        <div className="row-between">
-          <span>Level {g.staffTraining} / 8</span>
-          <Button variant="primary" icon="up" disabled={g.staffTraining >= 8 || g.money < cost} onClick={() => run((s) => A.trainStaff(s), { sound: 'complete' })}>
-            {g.staffTraining >= 8 ? 'Maxed' : `Train · ${fmtMoney(cost)}`}
-          </Button>
-        </div>
-      </Section>
+      <StaffPanel />
       <Section title="Contracts desk">
         <div className="muted small">Contract slots: {g.contracts.length} / {contractSlots(g)} (each Administration Building adds one).</div>
       </Section>

@@ -9,6 +9,7 @@ import { hasRoomFor } from './buildings/grid';
 import { LOCATION_BY_ID } from './progression/locations';
 import { HOURS_PER_SECOND } from './constants';
 import { creditLimit } from './engine';
+import { staffEffects, totalHired, inTraining, ROLES, ROLE_INFO } from './staff/staff';
 import { linkRepairCost, GRID_TIE, gridSide, linksOf, otherEnd, roleOf, linkRating, endpointName, KIND_LABEL } from './network/network';
 
 // Plant diagnostics: turns the simulation state into plain-language status
@@ -19,7 +20,7 @@ export type Severity = 'error' | 'warn' | 'info' | 'ok';
 
 export type FixAction =
   | { kind: 'select'; id: number }
-  | { kind: 'panel'; panel: 'build' | 'research' | 'manage' | 'supply' | 'market' }
+  | { kind: 'panel'; panel: 'build' | 'research' | 'manage' | 'supply' | 'market' | 'staff' }
   | { kind: 'reset'; id: number }
   | { kind: 'refuel'; id: number }
   | { kind: 'repair'; id: number }
@@ -213,7 +214,7 @@ export function diagnoseSite(s: GameState, site: Site): Issue[] {
   else if (st.curtailedMW > 0.5) add('grid', 'warn', 'Electricity curtailed', `${fmt(st.curtailedMW, 1)} MW can't be exported. Add or upgrade substations, or build a Hydrogen Plant to use it.`, { label: 'Build substation', action: { kind: 'build', type: 'substation' } });
   else if (st.exportMW >= st.gridCapMW * 0.97 && st.demandMW > st.exportMW) add('grid', 'warn', 'Grid connection full', 'You could sell more with more substation capacity.', { label: 'Build substation', action: { kind: 'build', type: 'substation' } });
   if (st.importMW > 0.5) add('grid', 'warn', 'Data centre is importing power', `Your plant covers only part of the on-site load: ${fmt(st.importMW, 1)} MW is bought from the grid at twice the market price. Raise reactor output or add generation.`, { label: 'Plant', action: { kind: 'panel', panel: 'manage' } });
-  if (st.staffFactor < 0.999) add('staff', 'warn', 'Understaffed', `${fmt(st.staffNeeded)} staff needed, room for ${fmt(st.staffCap)}. Output and research suffer.`, { label: 'Build admin', action: { kind: 'build', type: 'admin' } });
+  out.push(...diagnoseStaff(site));
   if (st.backupNeedMW > 0 && st.backupMW < st.backupNeedMW && s.level >= 4) add('safety', 'warn', 'Not enough backup power',
     `A grid blackout would leave only ${fmt(st.backupMW, 1)} of ${fmt(st.backupNeedMW, 1)} MW for pumps — large reactors could suffer core damage.`,
     s.research.completed.includes('s_egen') ? { label: 'Build generators', action: { kind: 'build', type: 'generator_emergency' } } : { label: 'Research', action: { kind: 'panel', panel: 'research' } });
@@ -252,6 +253,33 @@ export function diagnoseSite(s: GameState, site: Site): Issue[] {
       else if (out2.dig <= 0) add('mining', 'info', 'Mine has no excavators', 'Buy vehicles to start mining.', { label: 'Buy vehicles', action: { kind: 'panel', panel: 'supply' } }, b.id);
     }
   }
+  return out;
+}
+
+/** Missing people, fatigue and morale. */
+export function diagnoseStaff(site: Site): Issue[] {
+  const out: Issue[] = [];
+  const staff = site.staff;
+  if (!staff) return out;
+  const add = (severity: Severity, title: string, detail: string, fix?: Issue['fix']) =>
+    out.push({ key: `${site.id}:staff:${title}`, severity, system: 'staff', siteId: site.id, title, detail, fix });
+  const open = { label: 'Staff', action: { kind: 'panel' as const, panel: 'staff' as const } };
+  const fx = staffEffects(site, 1);
+  const office = site.stats.staffCap;
+  const full = totalHired(staff) >= office && ROLES.some((r) => staff.hired[r] < fx.needs[r]);
+  if (full) add('warn', 'No office space for more staff', `${fmt(totalHired(staff))} of ${fmt(office)} desks taken. Build or upgrade Administration Buildings to hire the people you need.`, { label: 'Build admin', action: { kind: 'build', type: 'admin' } });
+  for (const r of ROLES) {
+    const need = fx.needs[r];
+    if (need <= 0 || fx.cover[r] >= 0.999) continue;
+    const training = inTraining(staff, r);
+    const short = need - (staff.hired[r] - training);
+    const what = r === 'operator' ? 'Reactors and turbines run below full output' : r === 'technician' ? 'Equipment wears out faster' : r === 'engineer' ? 'Efficiency drops and faults trip reactors more often' : r === 'scientist' ? 'Research slows down' : 'The safety rating drops';
+    add(fx.cover[r] < 0.8 ? 'error' : 'warn', `Short of ${ROLE_INFO[r].plural.toLowerCase()} (${fmt(short)})`,
+      `${what}.${training ? ` ${fmt(training)} still in training${r === 'operator' ? ' for their licence' : ''}.` : ''}${staff.autoHire ? '' : ' Auto-hire is off.'}`, open);
+  }
+  if (staff.fatigue > 0.45) add(staff.fatigue > 0.7 ? 'error' : 'warn', `Crews are tired (${Math.round(staff.fatigue * 100)}%)`,
+    `Overtime${staff.shift === '2x12' ? ' and 12-hour shifts' : ''} wear people out: operator errors can trip reactors. Hire more people${staff.shift === '2x12' ? ' or go back to 8-hour shifts' : ''}.`, open);
+  if (staff.morale < 0.45) add('warn', `Low morale (${Math.round(staff.morale * 100)}%)`, 'Unhappy people quit. Reduce fatigue, run the training program or hire a popular leader.', open);
   return out;
 }
 

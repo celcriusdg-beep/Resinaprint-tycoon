@@ -1,3 +1,4 @@
+import { staffUp } from '../src/game/staff/staff';
 import { describe, it, expect } from 'vitest';
 import { createInitialState, makeBuilding } from '../src/game/state';
 import { tick } from '../src/game/engine';
@@ -101,6 +102,7 @@ describe('pipes and cables', () => {
     add('water_treatment', 18, 2, 2);
     add('admin', 5, 7, 4);
     autoWire(s, site);
+    staffUp(site);
     site.links = site.links.filter((l) => l.kind !== 'power');
     expect(A.buildLink(s, 'power', tb.id, GRID_TIE, 0, 1)).toBeNull(); // a single 40 MW MV cable
     pwr.reactor!.setpoint = 1;

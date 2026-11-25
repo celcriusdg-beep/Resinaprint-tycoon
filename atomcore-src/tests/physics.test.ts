@@ -1,3 +1,4 @@
+import { staffUp } from '../src/game/staff/staff';
 import { autoWire } from '../src/game/network/network';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createInitialState, makeBuilding } from '../src/game/state';
@@ -36,6 +37,7 @@ function pwrPlant(opts: { edg?: boolean } = {}) {
   if (opts.edg) { add('generator_emergency', 8, 7); add('generator_emergency', 8, 9); }
   site.links = [];
   autoWire(s, site);
+  staffUp(site);
   pwr.reactor!.setpoint = 1;
   initEquilibrium(pwr, 18, 1);
   s.fuel = 2000;
@@ -234,6 +236,7 @@ describe('new PWR cold startup', () => {
       site.buildings.push(makeBuilding(s, t, x, z, 0, true));
     site.links = [];
     autoWire(s, site);
+    staffUp(site);
     let minPeriod = Infinity;
     for (let t = 0; t < 1800; t += 0.1) {
       tick(s, 0.1);

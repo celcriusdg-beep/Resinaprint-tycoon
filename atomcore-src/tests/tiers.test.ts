@@ -1,3 +1,4 @@
+import { staffUp } from '../src/game/staff/staff';
 import { autoWire } from '../src/game/network/network';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createInitialState, makeBuilding } from '../src/game/state';
@@ -27,6 +28,7 @@ function site(types: [BuildingType, number, number][], reactor?: BuildingType) {
   for (const [t, x, z] of types) st.buildings.push(makeBuilding(s, t, x, z, 0, true));
   st.links = [];
   autoWire(s, st);
+  staffUp(st);
   return { s, st, r };
 }
 

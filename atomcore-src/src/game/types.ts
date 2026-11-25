@@ -369,6 +369,8 @@ export interface Site {
   links: Link[];
   /** Climate, weather fronts and the river/sea state. */
   weather: import('./weather/weather').WeatherState;
+  /** People employed at the site, shifts, fatigue, morale and key people. */
+  staff: import('./staff/staff').StaffState;
   storageMWh: number;
   storageWater: number; // raw water in tanks, m³
   spent: SpentFuelPool;
@@ -555,6 +557,9 @@ export interface GameState {
   stats: GameStats;
   nextBuildingId: number;
   pendingNotices: Notice[];
+  /** Key-person candidates on the job market (refreshed daily). */
+  candidates: import('./staff/staff').KeyPerson[];
+  candidateDay: number;
 }
 
 /** Notices are produced by the simulation and consumed by the UI (toasts, sounds). */

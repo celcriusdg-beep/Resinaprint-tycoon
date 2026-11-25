@@ -29,6 +29,7 @@ PLAYWRIGHT_PATH=$(npm root -g)/playwright node tools/smoke.mjs http://localhost:
 PLAYWRIGHT_PATH=$(npm root -g)/playwright node tools/smoke2.mjs http://localhost:4173/ tests/output  # offline, PWA, research, mouse placement
 PLAYWRIGHT_PATH=$(npm root -g)/playwright node tools/smoke3.mjs http://localhost:4173/ tests/output  # pipes & cables: connect mode, size picker
 PLAYWRIGHT_PATH=$(npm root -g)/playwright node tools/smoke4.mjs http://localhost:4173/ tests/output  # weather panel, rain, snow
+PLAYWRIGHT_PATH=$(npm root -g)/playwright node tools/smoke5.mjs http://localhost:4173/ tests/output  # staff panel, hiring, shifts, key people
 ```
 
 Useful URL parameters: `?quality=low|medium|high` overrides graphics quality, `?debug=1`
@@ -47,6 +48,7 @@ src/
     simulation/         reactor model, plant energy/heat balance, modifiers
     economy/            market, prices, contracts
     research/           technology tree (50 projects, 9 categories)
+    staff/              roles, hiring & training, shifts, fatigue, morale, key people
     weather/            seasons, climate, fronts, forecast, weather effects on the plant
     network/            pipes & cables: link classes, max-flow solver, auto-wiring, breakers
     supply/             fuel cycle (mining, processing, refuelling, fuel integrity), vehicles, water balance
@@ -98,7 +100,7 @@ adaptive monitor lowers resolution when the frame rate drops.
 | Weather & seasons: 4 seasons × 7 game days (year ≈ 2 h), per-site climate (annual mean, seasonal and daily swing, humidity, wind), weather fronts planned ahead (heatwave, cold snap, storm, rain, drought) with a real 3-day forecast. Wet cooling follows the wet-bulb temperature, dry cooling the air, once-through cooling the river/sea temperature; river flow follows rain and droughts; intakes ice up in frost unless de-iced (costs power); heating/cooling demand and prices; storms trip or bring down overhead lines (repair cost) and can cut the grid. HUD weather pill, Weather panel, rain/snow, cloudy skies, seasonal grass and snow cover | Implemented |
 | Automation: fuel procurement, outage planning (auto-refuel), auto-restart, predictive maintenance, load following, smart storage | Implemented |
 | Events (weather now comes from the weather system): market boom/slump, demand surge, fuel price shocks, equipment failures, pump faults, breakthroughs, grants, inspections, site-specific weather | Implemented |
-| Staff: capacity, salaries, understaffing penalty, training program | Implemented |
+| Staff & shifts: 5 roles (operators, technicians, engineers, security, scientists) split from each building's needs; office space from Administration Buildings; recruitment fees, training (operators need a 1-day licence course; auto-hire recruits during construction); 3×8 or 2×12 shifts; overtime (1.5× pay, covers up to 25% of a gap) builds fatigue → operator-error trips; morale and quitting; 5 named key people per site (supervisor, chief engineer, maintenance lead, security chief, lead scientist) with traits and levels from a daily candidate pool; company training program | Implemented |
 | Energy contracts with premiums, penalties, bonuses and a global tier | Implemented |
 | Progression: levels, 37 achievements, 24 guided milestones, 3 daily objectives, prestige (shares), 4 unlockable sites, land expansion | Implemented |
 | Saves: IndexedDB autosave + rolling backup, migration, export/import codes and files, offline earnings (4 h base, up to 12 h, 50–80 % efficiency) | Implemented |

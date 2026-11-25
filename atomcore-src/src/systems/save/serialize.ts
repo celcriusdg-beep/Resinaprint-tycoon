@@ -9,6 +9,7 @@ import { reserveFor } from '../../game/supply/fuelcycle';
 import { LOCATION_BY_ID } from '../../game/progression/locations';
 import { autoWire, pruneLinks } from '../../game/network/network';
 import { initWeather } from '../../game/weather/weather';
+import { newStaff, staffUp } from '../../game/staff/staff';
 
 // Pure (de)serialisation and migration. No storage APIs here so it can be unit tested.
 
@@ -90,7 +91,13 @@ export function migrate(raw: unknown): GameState {
     if (version < 4) autoWire(s, site);
     // v4 → v5: weather and seasons.
     initWeather(site, s.gameTime);
+    // v5 → v6: staff by role. Older plants start fully staffed and licensed.
+    if (!site.staff || !site.staff.hired) {
+      site.staff = newStaff();
+      staffUp(site);
+    } else site.staff = { ...newStaff(), ...site.staff, hired: { ...newStaff().hired, ...site.staff.hired } };
   }
+  s.candidates = Array.isArray(s.candidates) ? s.candidates : [];
   s.unlockedSites = s.unlockedSites.filter((id) => s.sites[id]);
   if (!s.unlockedSites.length) throw new Error('Save data has no plant sites.');
   if (!s.sites[s.activeSite]) s.activeSite = s.unlockedSites[0];

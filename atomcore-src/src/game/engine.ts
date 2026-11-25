@@ -3,6 +3,7 @@ import { BUILDINGS } from './buildings/defs';
 import { tickPlants, fuelCapacity, repairCost } from './simulation/plant';
 import { tickEvents, notify, pushLog } from './events/events';
 import { stepWeather } from './weather/weather';
+import { autoHire, refreshCandidates } from './staff/staff';
 import { linkRepairCost } from './network/network';
 import { tickMarket } from './economy/market';
 import { RESEARCH_BY_ID } from './research/tree';
@@ -107,6 +108,11 @@ function stepConstruction(s: GameState, dt: number, offline: boolean): void {
 
 function runAutomation(s: GameState, offline: boolean): void {
   const a = s.automation;
+  refreshCandidates(s);
+  for (const id of s.unlockedSites) {
+    const site = s.sites[id];
+    if (site.staff.autoHire) autoHire(s, site, site.stats.staffCap || 24);
+  }
   // While away, the fuel supplier keeps depots topped up so the plant keeps running.
   if (a.autoFuel || offline) {
     const cap = fuelCapacity(s);

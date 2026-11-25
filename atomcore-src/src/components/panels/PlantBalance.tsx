@@ -22,7 +22,7 @@ export function PlantBalance({ compact }: { compact?: boolean }) {
   else if (g.level >= 4 && st.backupNeedMW > 0.05 && st.backupMW < st.backupNeedMW) hints.push(`Backup power ${Math.round(st.backupMW)}/${Math.round(st.backupNeedMW)} MW — a grid blackout could cause core damage. Build Emergency Generators.`);
   if (st.waterFactor < 0.999) hints.unshift(`Cooling towers are short of water (${Math.round(st.waterFactor * 100)}%) — build a Water Intake, Wells or a Tank (Supply → Water).`);
   if (st.treatedFactor < 0.999) hints.unshift('Not enough demineralised water — reactors are derated. Build a Water Treatment Plant.');
-  if (staffShort) hints.push(`Understaffed (${Math.round(st.staffNeeded)}/${Math.round(st.staffCap)}) — build an Administration Building.`);
+  if (staffShort) hints.push(`Short of staff: output at ${Math.round(st.staffFactor * 100)}% — hire people (Plant → Staff) or build Administration Buildings for office space.`);
   return (
     <div className={`balance${compact ? ' compact' : ''}`}>
       {rows.slice(1).map((r) => {

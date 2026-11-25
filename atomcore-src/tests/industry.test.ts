@@ -1,3 +1,4 @@
+import { staffUp } from '../src/game/staff/staff';
 import { autoWire } from '../src/game/network/network';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createInitialState, makeBuilding } from '../src/game/state';
@@ -27,6 +28,7 @@ function plant(extra: [BuildingType, number, number][]) {
   for (const b of site.buildings) if (b.type === 'turbine_large') b.level = 3;
   site.links = [];
   autoWire(s, site);
+  staffUp(site);
   return { s, site, r };
 }
 

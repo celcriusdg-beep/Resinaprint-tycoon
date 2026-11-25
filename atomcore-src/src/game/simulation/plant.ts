@@ -1,7 +1,7 @@
 import type { GameState, Site, SiteStats, Modifiers, Building } from '../types';
-import { BUILDINGS, levelMult, upkeepAt, staffAt, isReactor } from '../buildings/defs';
+import { BUILDINGS, levelMult, upkeepAt, isReactor } from '../buildings/defs';
 import {
-  BASE_GRID_TIE_MW, BASE_STAFF_CAP, BASE_FUEL_CAP, HOURS_PER_SECOND, SALARY_PER_STAFF, SURPLUS_PRICE_FACTOR,
+  BASE_GRID_TIE_MW, BASE_STAFF_CAP, BASE_FUEL_CAP, HOURS_PER_SECOND, SURPLUS_PRICE_FACTOR,
   BASE_PRICE, DAY_LENGTH, BASE_CONTRACT_SLOTS, DATA_PRICE_FACTOR, H2_PRICE_FACTOR, IMPORT_PRICE_FACTOR,
 } from '../constants';
 import { getMods, companyMods } from './modifiers';
@@ -13,6 +13,7 @@ import { random } from '../rng';
 import { stepWater } from '../supply/water';
 import { mineOutput, tickSupply, onlineRefuel, stepFuelIntegrity, coreDamage, stepSpentFuel } from '../supply/fuelcycle';
 import { ASSEMBLY_MWH } from '../constants';
+import { staffEffects, stepStaff } from '../staff/staff';
 import { solvePlant, gridSide, stepCables, GRID_TIE, KIND_LABEL, endpointName, type PlantNetInput } from '../network/network';
 
 /** Battery-backed emergency feedwater lasts ≈ 6 game hours. */
@@ -158,7 +159,8 @@ export function safetyRating(s: GameState, siteId: string, mods: Modifiers): num
   }
   const avgCond = n ? condSum / n : 100;
   const crews = site.buildings.some((b) => BUILDINGS[b.type].stats.maintenance && b.status === 'active') ? 8 : 0;
-  return Math.max(0, Math.min(100, 30 + mods.safety + Math.min(30, gens) + crews + (avgCond - 50) * 0.4));
+  const staffPts = site.staff ? staffEffects(site, 1).safety : 0;
+  return Math.max(0, Math.min(100, 30 + mods.safety + Math.min(30, gens) + crews + (avgCond - 50) * 0.4 + staffPts));
 }
 
 export function repairCost(b: Building): number {
@@ -208,10 +210,15 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
     const cap = siteCapacities(s, site, mods);
     const ambient = loc.ambient;
 
-    // Staffing
+    // Staffing: people per role, training, overtime and fatigue (game/staff).
+    const sfx = staffEffects(site, mods.salary);
     let staffNeeded = 0;
-    for (const b of site.buildings) if (b.status !== 'constructing' && b.status !== 'destroyed') staffNeeded += staffAt(BUILDINGS[b.type], b.level);
-    const staffFactor = staffNeeded <= cap.staffCap ? 1 : Math.pow(cap.staffCap / staffNeeded, 0.8);
+    for (const n of Object.values(sfx.needs)) staffNeeded += n;
+    const staffFactor = sfx.output;
+    for (const n of stepStaff(s, site, sfx, dt, offline)) {
+      pushLog(s, n.kind, n.text);
+      if (!offline && n.kind !== 'info') notify(s, { kind: n.kind, title: n.kind === 'good' ? 'Staff' : 'Staff problem', text: n.text });
+    }
 
     const demand = regionalDemand(s, siteId, mods);
     const price = sitePrice(s, siteId, mods);
@@ -254,7 +261,7 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
     let siteOre = 0, dig = 0, haul = 0, vehicleUpkeep = 0;
     for (const b of site.buildings) {
       if (b.type !== 'uranium_mine' || b.status === 'constructing') continue;
-      const out = mineOutput(b, siteId, mods, staffNeeded <= cap.staffCap ? 1 : Math.pow(cap.staffCap / staffNeeded, 0.8));
+      const out = mineOutput(b, siteId, mods, Math.min(1, sfx.cover.technician + 0.2));
       if (b.reserve !== undefined) b.reserve = Math.max(0, b.reserve - out.ore * dt);
       siteOre += out.ore;
       dig += out.dig;
@@ -262,7 +269,7 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
       vehicleUpkeep += out.upkeep;
     }
     // Mines with their own crews (underground) and in-situ leaching need no vehicles.
-    const staffF = staffNeeded <= cap.staffCap ? 1 : Math.pow(cap.staffCap / staffNeeded, 0.8);
+    const staffF = Math.min(1, sfx.cover.technician + 0.2);
     const grade = loc.oreGrade ?? 1;
     for (const b of site.buildings) {
       if (!isOperating(b)) continue;
@@ -309,7 +316,7 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
     const efficiency = thermal > 0 ? effWeighted / thermal : 0;
     const netIn: PlantNetInput = {
       thermal: new Map(), steamCap: cap.by.steam, effBonus: cap.by.eff, condensers, coolCap, powerUp,
-      baseEff: efficiency, staffFactor, houseLoad, overload: !offline,
+      baseEff: efficiency + sfx.efficiency, staffFactor, houseLoad, overload: !offline,
     };
     for (const b of reactors) if (b.status !== 'destroyed') netIn.thermal.set(b.id, b.reactor!.thermal);
     const nw = solvePlant(site, netIn);
@@ -365,6 +372,13 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
         restart(b);
         s.stats.restarts++;
         pushLog(s, 'info', `Monitoring system restarted ${BUILDINGS[b.type].short} at ${loc.name}.`);
+      }
+      // Tired crews make mistakes: an operator error trips the reactor.
+      if (!offline && !r.scrammed && !r.tripCause && b.status === 'active' && r.power > 0.1 && random() < sfx.errorRate * dt) {
+        scram(r, 'Operator error (crew fatigue)', s.gameTime);
+        s.stats.scrams++;
+        pushLog(s, 'bad', `SCRAM: ${BUILDINGS[b.type].short} at ${loc.name} — operator error by a tired crew.`);
+        notify(s, { kind: 'scram', title: 'Reactor SCRAM', text: `Operator error at ${loc.name}: the crew is exhausted. Hire more operators or switch to 8-hour shifts.` });
       }
       // Badly degraded reactors may trip on their own.
       if (!offline && !r.scrammed && !r.tripCause && b.condition < 15 && r.power > 0.1 && random() < 0.01 * dt) {
@@ -422,10 +436,10 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
 
     // Research
     const labs = site.buildings.reduce((a, b) => a + (isOperating(b) ? stat(b, 'research') : 0), 0);
-    const researchRate = (labs * staffFactor + researchFromReactors) * mods.research;
+    const researchRate = (labs * sfx.research + researchFromReactors) * mods.research;
 
     // Wear, maintenance crews, failures
-    stepWear(s, site, mods, cap.crews, dt, offline);
+    stepWear(s, site, mods, cap.crews, dt, offline, sfx.wear);
 
     // Upkeep & salaries
     let upkeep = 0;
@@ -434,7 +448,7 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
       upkeep += upkeepAt(BUILDINGS[b.type], b.level) * (b.enabled ? 1 : 0.5);
     }
     upkeep = (upkeep + vehicleUpkeep) * mods.upkeep;
-    const salaries = Math.min(staffNeeded, cap.staffCap) * SALARY_PER_STAFF * mods.salary;
+    const salaries = sfx.salaries;
 
     Object.assign(st, {
       thermalMW: thermal, steamCapMW: nw.steamCapConnected, steamUsedMW: steamUsed, electricMW: electric, exportMW: exportAvail,
@@ -594,10 +608,10 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
   s.research.points += totalResearch * dt * (offline ? offlineEff : 1);
 }
 
-function stepWear(s: GameState, site: Site, mods: Modifiers, crews: number, dt: number, offline: boolean): void {
+function stepWear(s: GameState, site: Site, mods: Modifiers, crews: number, dt: number, offline: boolean, staffWear = 1): void {
   // While the player is away a skeleton crew does basic upkeep: slower wear,
   // and equipment never drops below 50% so nobody returns to a wrecked plant.
-  const wearFactor = (mods.wear / (1 + 0.45 * crews)) * (offline ? 0.3 : 1);
+  const wearFactor = (mods.wear / (1 + 0.45 * crews)) * (offline ? 0.3 : 1) * staffWear;
   const floor = offline ? 50 : 0;
   let worst: Building | null = null;
   for (const b of site.buildings) {
