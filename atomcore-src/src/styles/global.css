@@ -610,3 +610,38 @@ table.pl tr.big td { font-size: 15px; }
 .tier-tab .tier-badge { margin-left: 0; }
 .tier-group { display: flex; flex-direction: column; gap: 6px; }
 .tier-group-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 2px 4px 0; font-size: 13px; }
+
+/* Pipes & cables */
+.connect-bar { flex-wrap: wrap; border-color: rgba(91,224,138,0.55); }
+.connect-bar .placement-name { display: flex; align-items: center; gap: 6px; }
+.connect-bar.open > * { min-width: 0; max-width: 100%; }
+.connect-bar.open { flex-direction: column; align-items: stretch; gap: 8px; padding: 12px; max-height: calc(100dvh - 140px); overflow-y: auto; }
+.connect-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.connect-head .round-btn { width: 42px; height: 42px; flex: none; }
+.connect-sum { font-size: 12.5px; color: var(--muted); }
+.connect-sum.warn { color: var(--warn); }
+.connect-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.connect-actions .btn-primary { flex: 1; }
+.chip-row { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.chip-row::-webkit-scrollbar { display: none; }
+.size-chip { flex: none; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; min-width: 92px; padding: 7px 22px 7px 9px; border-radius: 10px;
+  border: 1px solid var(--line-2); background: var(--panel-2); color: inherit; font-size: 11px; text-align: left; position: relative; }
+.size-chip b { font-size: 13px; }
+.size-chip span { color: var(--muted); }
+.size-chip.on { border-color: var(--good); background: rgba(91,224,138,0.14); }
+.size-chip.locked { opacity: 0.45; }
+.size-chip svg { position: absolute; top: 6px; right: 6px; }
+.circuits { align-items: center; }
+.stepper { display: flex; align-items: center; gap: 10px; }
+.round-btn.sm { width: 34px; height: 34px; }
+.round-btn:disabled { opacity: 0.4; }
+.connections { gap: 8px; }
+.connect-add { display: flex; flex-wrap: wrap; gap: 6px; }
+.link-row { border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,0.03); }
+.link-row.tripped { border-color: rgba(255,90,90,0.6); }
+.link-main { width: 100%; display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: none; border: 0; color: inherit; text-align: left; }
+.link-text { flex: 1; min-width: 0; font-size: 13px; }
+.link-load { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.link-load .bar { flex: 1; }
+.link-load .mono { font-size: 11px; color: var(--muted); white-space: nowrap; }
+.link-editor { display: flex; flex-direction: column; gap: 8px; padding: 0 10px 10px; }

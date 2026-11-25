@@ -329,12 +329,42 @@ export interface SiteStats {
   caskCap: number;
   /** Assemblies per second moving from the pools into dry casks right now. */
   caskMove: number;
+  /** Reactor heat with no steam path to a turbine hall, MW(th). */
+  strandedHeatMW: number;
+  /** Generated power that no cable can carry to the grid tie, MW(e). */
+  strandedMW: number;
+  /** Resistive losses in on-site cables, MW(e). */
+  cableLossMW: number;
+}
+
+export type LinkKind = 'steam' | 'cooling' | 'power';
+
+/** A pipe or cable the player built between two buildings (or a building and the grid tie, id -1). */
+export interface Link {
+  id: number;
+  kind: LinkKind;
+  a: number;
+  b: number;
+  /** Index into LINK_CLASSES[kind]. */
+  cls: number;
+  /** Parallel circuits / pipe runs, 1..4. */
+  circuits: number;
+  /** Money spent on it (refund basis). */
+  paid: number;
+  /** Last computed flow, MW (thermal for pipes, electric for cables). */
+  flow: number;
+  /** Cable conductor heating from overload, 0..1 (1 = breaker trips). */
+  heat: number;
+  /** Seconds until a tripped breaker recloses (0 = in service). */
+  trip: number;
 }
 
 export interface Site {
   id: string; // location id
   size: number; // grid cells per side (square plot)
   buildings: Building[];
+  /** Steam lines, cooling-water pipes and power cables. */
+  links: Link[];
   storageMWh: number;
   storageWater: number; // raw water in tanks, m³
   spent: SpentFuelPool;

@@ -13,6 +13,7 @@ import { run, confirm, A, beginMove } from '../../ui/actions';
 import { Bar, Button, Stat } from '../ui/common';
 import { Icon } from '../ui/Icons';
 import { ReactorControl } from './ReactorControl';
+import { ConnectionsCard } from './Connections';
 import { keyStat } from './BuildPanel';
 import { buildingCenter } from '../world/sceneRegistry';
 import type { Building } from '../../game/types';
@@ -83,6 +84,7 @@ export function BuildingPanel({ id }: { id: number }) {
       {def.category === 'industry' && b.status !== 'constructing' && <IndustrySummary />}
       {b.type === 'generator_emergency' && <div className="hint-box"><Icon name="info" size={15} /> Site backup power {fmtPower(site.stats.backupMW)} · needed in a blackout {fmtPower(site.stats.backupNeedMW)}. {site.stats.backupMW < site.stats.backupNeedMW ? 'Not enough — build or upgrade more generators.' : 'Enough to keep cooling running.'}</div>}
       {b.type === 'dry_cask' && <SpentFuelCard />}
+      <ConnectionsCard b={b} />
 
       <div className="stat-grid">
         <Stat label="Output" value={keyStat(def, b.level, mods)} />

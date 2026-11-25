@@ -1,3 +1,4 @@
+import { autoWire } from '../src/game/network/network';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createInitialState, makeBuilding } from '../src/game/state';
 import { tick } from '../src/game/engine';
@@ -24,6 +25,8 @@ function plant(extra: [BuildingType, number, number][]) {
     site.buildings.push(makeBuilding(s, t, x, z, 0, true));
   for (const [t, x, z] of extra) site.buildings.push(makeBuilding(s, t, x, z, 0, true));
   for (const b of site.buildings) if (b.type === 'turbine_large') b.level = 3;
+  site.links = [];
+  autoWire(s, site);
   return { s, site, r };
 }
 

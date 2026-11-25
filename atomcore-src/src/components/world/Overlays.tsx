@@ -7,6 +7,8 @@ import { BUILDINGS, footprint } from '../../game/buildings/defs';
 import { CELL } from '../../game/constants';
 import { buildingCenter } from './sceneRegistry';
 import { getTemplate } from '../buildings/registry';
+import { validTargets, tieWorld, GRID_TIE } from '../../game/network/network';
+import { pickConnectTarget } from '../../ui/actions';
 
 // Selection ring under the selected building and a holographic core
 // visualisation hovering over a selected reactor.
@@ -135,6 +137,55 @@ function CoreHologram({ buildingId, height }: { buildingId: number; height: numb
         ))}
       </group>
       <points ref={sparks} geometry={sparkGeo} material={sparkMat} />
+    </group>
+  );
+}
+
+// ── Connect mode: highlight the source and every valid target ────────────
+
+const ringMat = (color: string) => new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.5, depthWrite: false });
+
+export function ConnectMarkers() {
+  const c = useUI((s) => s.connect);
+  useGameStore((s) => s.structure);
+  const g = useGameStore.getState().game;
+  const site = g.sites[g.activeSite];
+  const mats = useMemo(() => ({ src: ringMat('#4fd1ff'), ok: ringMat('#5be08a'), pick: ringMat('#ffe14a') }), []);
+  useFrame((s) => {
+    const k = 0.35 + 0.25 * Math.sin(s.clock.elapsedTime * 4);
+    mats.ok.opacity = k;
+    mats.pick.opacity = 0.55 + k * 0.4;
+  });
+  if (!c) return null;
+  const targets = validTargets(site, c.kind, c.from);
+  const marker = (id: number, mat: THREE.Material) => {
+    if (id === GRID_TIE) {
+      const [x, z] = tieWorld(site.size);
+      return (
+        <group key="tie" position={[x, 0.25, z]}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} material={mat} renderOrder={6}><ringGeometry args={[2.6, 3.6, 32]} /></mesh>
+          {/* Big invisible tap target around the grid connection pylon */}
+          <mesh position={[0, 4, 0]} onClick={(e) => { if (e.delta > 8) return; e.stopPropagation(); pickConnectTarget(GRID_TIE); }}>
+            <boxGeometry args={[7, 9, 7]} />
+            <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+          </mesh>
+        </group>
+      );
+    }
+    const b = site.buildings.find((x) => x.id === id);
+    if (!b) return null;
+    const [w, d] = footprint(BUILDINGS[b.type], b.rot);
+    const [cx, cz] = buildingCenter(b, site.size);
+    return (
+      <mesh key={id} position={[cx, 0.22, cz]} rotation={[-Math.PI / 2, 0, 0]} material={mat} renderOrder={6}>
+        <planeGeometry args={[w * CELL + 0.6, d * CELL + 0.6]} />
+      </mesh>
+    );
+  };
+  return (
+    <group>
+      {marker(c.from, mats.src)}
+      {targets.map((id) => marker(id, id === c.target ? mats.pick : mats.ok))}
     </group>
   );
 }

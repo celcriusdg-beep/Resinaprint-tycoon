@@ -11,7 +11,7 @@ Read this first when continuing work. Last updated 2026-11-25.
 - Other folders at repo root (`age-of-resin`, `realm-heroes`, resin tycoon files) are older projects — leave them alone.
 
 ## How to work on it
-- `cd atomcore-src && npm install` (if needed), `npx tsc --noEmit -p .`, `npx vitest run` (78 tests incl. a ~30 s balance bot), `npm run build`.
+- `cd atomcore-src && npm install` (if needed), `npx tsc --noEmit -p .`, `npx vitest run` (87 tests incl. a ~30 s balance bot), `npm run build`.
 - Browser checks: `npx vite preview --port 4173`, then Playwright (pre-installed: `require(\`${npm root -g}/playwright\`)`). URL params: `?debug=1` (exposes `window.__store`, `__ui`, `__atom`), `?quality=low|medium|high`, `?showcase=1` (sandbox with every building, never saved). Dismiss the welcome dialog ("Start operating") first.
 - The user plays on an iPhone (PWA, Add to Home Screen) — check UI at iPhone 13 size.
 - Commit messages end with the session attribution lines; push with `git push -u origin claude/atomcore-nuclear-tycoon-py4rcf`.
@@ -21,7 +21,11 @@ Read this first when continuing work. Last updated 2026-11-25.
 - `components/buildings/models/*.ts` procedural 3D models (reactors, plant, supply, industry, tiers) registered in `registry.ts`.
 - `components/panels/*` UI (BuildPanel = tier tabs, SupplyPanel, ReactorControl, StatusPanel, BuildingPanel…), `systems/save/serialize.ts` (versioned saves, `mergeDefaults` migration).
 
+## Agreed roadmap (user said "all of them", 2026-11-25)
+Order: 1 cables & pipes ✅ → 2 weather & seasons → 3 staff & shifts → 4 regulator & licensing → 5 accidents & emergencies (realistic but recoverable: can lose a reactor + fines, never the whole game) → 6 3D polish (tiered models, pylons/pipes, night lights, animated vehicles) → 7 iPhone UI pass (HUD, tutorial for new systems, haptics) → 8 long balance run. Cloud saves: SKIPPED by the user. Each phase: build, test (unit + bot + iPhone-size Playwright), commit, push.
+
 ## Recent work (newest first)
+0. **Pipes & cables (phase 1)** — `game/network/` (`network.ts`, `flow.ts`). `Site.links` (steam / cooling / power), save v4 migration auto-wires old saves (`autoWire`, free). New buildings must be connected by the player (Connections card in the building panel → tap-to-connect mode `ui.connect`, `ConnectBar` in `components/panels/Connections.tsx`, `ConnectMarkers` overlay; grid connection pylon = id `GRID_TIE` (-1) at the plot edge). `solvePlant` (max-flow) replaces the old pooled steam/cooling/grid sums in `plant.ts`; per-reactor heat-sink ratio; reactors with no steam line or uncooled condensers trip ("No heat sink"). Cables: voltage classes limited by `maxVoltage` per building, I²R loss, 125 % overload heats and trips the breaker for 30 s. Turbine halls may be cross-tied (steam and CW). Diagnostics in `diagnoseNetwork`. Bot wires with `autoWire({pay:true})` and upsizes full links; `NET_DEBUG=1` prints network state. Load-follow now includes house load and cable losses. Tests: `tests/network.test.ts`, browser: `tools/smoke3.mjs`.
 1. Roblox brief written (`ROBLOX_PROMPT.md`), Studio-only (no Rojo/GitHub). Also gave the user (in chat only) a Blender asset-quality prompt + critique of their Roblox vessel model (bad valves = stick + disc, crumpled-foil cladding, flat heads, no flanges/bevels, floating parts, random colours).
 2. Buildings can be moved at any time without interrupting anything (reactors keep running, upgrades keep progress); only destroyed reactors are locked.
 3. Build menu sub-tabs are **tiers T1 Basic → T5 Cutting-edge**. Inside a tier, buildings are grouped by job ("line") and sorted weakest → best; a unit test enforces that every higher-tier building beats every lower-tier one of the same line (`tests/tiers.test.ts`).
@@ -38,4 +42,4 @@ Read this first when continuing work. Last updated 2026-11-25.
 - Tiers must be strictly better than the tier below.
 
 ## Open ideas / not done
-- Nothing pending from the last request. Possible next steps: more polish of new 3D models, checking late-game balance with the new tiers in a long bot run, physical cables/pipes in the web version (the Roblox brief plans these).
+- Next: phase 2 (weather & seasons). Known: showcase extra sites (coastal/desert/arctic) have no water and one PWR there melts — pre-existing, sandbox only. Water pipes, backup-generator cables and on-site aux loads (desal, ISR) are still implicit (not linked).

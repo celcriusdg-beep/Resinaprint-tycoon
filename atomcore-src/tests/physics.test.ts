@@ -1,3 +1,4 @@
+import { autoWire } from '../src/game/network/network';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createInitialState, makeBuilding } from '../src/game/state';
 import { tick } from '../src/game/engine';
@@ -33,6 +34,8 @@ function pwrPlant(opts: { edg?: boolean } = {}) {
   add('substation', 2, 7, 6);
   add('admin', 5, 7, 4);
   if (opts.edg) { add('generator_emergency', 8, 7); add('generator_emergency', 8, 9); }
+  site.links = [];
+  autoWire(s, site);
   pwr.reactor!.setpoint = 1;
   initEquilibrium(pwr, 18, 1);
   s.fuel = 2000;
@@ -229,6 +232,8 @@ describe('new PWR cold startup', () => {
     site.buildings.push(r);
     for (const [t, x, z] of [['turbine_large', 15, 5], ['cooling_tower', 5, 15], ['cooling_tower', 12, 15], ['cooling_tower', 19, 15], ['substation', 25, 5], ['water_intake', 25, 15]] as const)
       site.buildings.push(makeBuilding(s, t, x, z, 0, true));
+    site.links = [];
+    autoWire(s, site);
     let minPeriod = Infinity;
     for (let t = 0; t < 1800; t += 0.1) {
       tick(s, 0.1);

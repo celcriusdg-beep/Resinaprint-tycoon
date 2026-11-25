@@ -9,11 +9,14 @@ export function PlantBalance({ compact }: { compact?: boolean }) {
   const hints: string[] = [];
   const rows = [
     { label: 'Reactor heat', value: st.thermalMW, cap: st.thermalMW, hint: '' },
-    { label: 'Turbine capacity', value: st.steamUsedMW, cap: st.steamCapMW, hint: st.thermalMW > st.steamCapMW * 1.01 ? 'Turbines are limiting output — build or upgrade Turbine Halls.' : '' },
-    { label: 'Cooling capacity', value: st.heatRejectMW, cap: st.coolingCapMW, hint: st.coolingRatio < 1 ? 'Cooling is overloaded — reactors are heating up!' : st.coolingRatio < 1.1 ? 'Cooling margin is thin.' : '' },
+    { label: 'Connected turbines', value: st.steamUsedMW, cap: st.steamCapMW, hint: st.thermalMW > st.steamCapMW * 1.01 ? 'Turbines are limiting output — build or upgrade Turbine Halls.' : '' },
+    { label: 'Connected cooling', value: st.heatRejectMW, cap: st.coolingCapMW, hint: st.coolingRatio < 1 ? 'Cooling is overloaded — reactors are heating up!' : st.coolingRatio < 1.1 ? 'Cooling margin is thin.' : '' },
     { label: 'Grid export', value: st.exportMW, cap: st.gridCapMW, hint: st.curtailedMW > 0.5 ? `${fmtPower(st.curtailedMW)} is being curtailed — add Substations.` : st.exportMW >= st.gridCapMW * 0.97 && st.demandMW > st.exportMW ? 'Grid connection is full — add or upgrade Substations to sell more.' : '' },
   ];
   hints.push(...rows.map((r) => r.hint).filter(Boolean));
+  if (st.strandedHeatMW > 1) hints.unshift(`${fmtPower(st.strandedHeatMW)} of reactor heat has no steam line to a turbine — connect or upgrade steam lines (open a reactor → Connections).`);
+  if (st.strandedMW > 0.5) hints.unshift(`${fmtPower(st.strandedMW)} can't reach the grid — a power cable is missing, full or tripped.`);
+  if (st.cableLossMW > 0.05) hints.push(`Cables lose ${fmtPower(st.cableLossMW)} as heat (I²R). Higher-voltage lines lose less.`);
   const staffShort = st.staffFactor < 0.999;
   if (!st.pumpsPowered) hints.unshift('STATION BLACKOUT — no power for coolant pumps. Build Emergency Generators so decay heat can be removed.');
   else if (g.level >= 4 && st.backupNeedMW > 0.05 && st.backupMW < st.backupNeedMW) hints.push(`Backup power ${Math.round(st.backupMW)}/${Math.round(st.backupNeedMW)} MW — a grid blackout could cause core damage. Build Emergency Generators.`);

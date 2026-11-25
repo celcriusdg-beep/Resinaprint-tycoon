@@ -19,6 +19,7 @@ import { GoalsPanel } from './components/panels/GoalsPanel';
 import { SitesPanel } from './components/panels/SitesPanel';
 import { SettingsPanel } from './components/panels/SettingsPanel';
 import { StatusPanel } from './components/panels/StatusPanel';
+import { ConnectBar } from './components/panels/Connections';
 import { Tabs } from './components/ui/common';
 import { BUILDINGS } from './game/buildings/defs';
 import { rotatePlacement } from './ui/actions';
@@ -123,6 +124,7 @@ export default function App() {
       const ui = useUI.getState();
       if (e.key === 'Escape') {
         if (ui.placement) ui.cancelPlacement();
+        else if (ui.connect) ui.cancelConnect();
         else if (ui.modal) ui.setModal(null);
         else if (ui.panel) ui.setPanel(null);
         else ui.select(null);
@@ -143,12 +145,14 @@ function GameShell() {
   const panel = useUI((s) => s.panel);
   const selectedId = useUI((s) => s.selectedId);
   const placement = useUI((s) => s.placement);
+  const connecting = useUI((s) => !!s.connect);
+  const picking = useUI((s) => s.connect?.target != null);
   useGameStore((s) => s.structure);
   const game = useGameStore.getState().game;
   const selected = selectedId !== null ? game.sites[game.activeSite].buildings.find((b) => b.id === selectedId) : undefined;
   const p = panel ? PANELS[panel] : null;
   return (
-    <div className={`app${placement ? ' placing' : ''}`}>
+    <div className={`app${placement || connecting ? ' placing' : ''}`}>
       <div className="scene">
         <SceneErrorBoundary>
           <Suspense fallback={<LoadingScreen text="Building the plant…" progress={0.7} />}>
@@ -158,8 +162,9 @@ function GameShell() {
       </div>
       <HUD />
       <Toasts />
-      {!placement && <CameraButtons />}
+      {!placement && !picking && <CameraButtons />}
       <PlacementBar />
+      <ConnectBar />
       {p && (
         <Sheet title={p.title} icon={p.icon} wide={p.wide} onClose={() => useUI.getState().setPanel(null)}>
           {p.render()}
@@ -170,7 +175,7 @@ function GameShell() {
           <BuildingPanel id={selected.id} />
         </Sheet>
       )}
-      {!placement && <NavBar />}
+      {!placement && !connecting && <NavBar />}
       <Modals />
     </div>
   );

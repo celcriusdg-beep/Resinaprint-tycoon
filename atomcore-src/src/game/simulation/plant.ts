@@ -13,6 +13,7 @@ import { random } from '../rng';
 import { stepWater } from '../supply/water';
 import { mineOutput, tickSupply, onlineRefuel, stepFuelIntegrity, coreDamage, stepSpentFuel } from '../supply/fuelcycle';
 import { ASSEMBLY_MWH } from '../constants';
+import { solvePlant, gridSide, stepCables, GRID_TIE, KIND_LABEL, endpointName, type PlantNetInput } from '../network/network';
 
 /** Battery-backed emergency feedwater lasts ≈ 6 game hours. */
 export const BATTERY_SECONDS = 60;
@@ -26,6 +27,7 @@ export function emptyStats(): SiteStats {
     maxTempFrac: 0, rawSupply: 0, evaporation: 0, treatedSupply: 0, treatedDemand: 0, rawToTreatment: 0, tankM3: 0,
     tankCapM3: 0, waterFactor: 1, treatedFactor: 1, waterCost: 0, houseLoadMW: 0, oreRate: 0, digRate: 0, haulRate: 0,
     offsitePower: true, backupMW: 0, backupNeedMW: 0, pumpsPowered: true, batteryLeft: 60, poolCap: 0, caskCap: 0, caskMove: 0,
+    strandedHeatMW: 0, strandedMW: 0, cableLossMW: 0,
   };
 }
 
@@ -72,6 +74,10 @@ function stat(b: Building, key: keyof (typeof BUILDINGS)['turbine']['stats']): n
 export function siteCapacities(s: GameState, site: Site, mods: Modifiers) {
   let steam = 0, cooling = 0, dryCooling = 0, grid = BASE_GRID_TIE_MW, storage = 0, rate = 0, staffCap = BASE_STAFF_CAP + mods.staffCap;
   let crews = 0, safety = 0, contractSlots = 0, effSum = 0, steamRaw = 0;
+  const by = {
+    steam: new Map<number, number>(), eff: new Map<number, number>(), wet: new Map<number, number>(), dry: new Map<number, number>(),
+    grid: new Map<number, number>(), storage: new Map<number, number>(), rate: new Map<number, number>(),
+  };
   for (const b of site.buildings) {
     if (b.status === 'constructing' || b.status === 'destroyed') continue;
     const def = BUILDINGS[b.type];
@@ -85,12 +91,26 @@ export function siteCapacities(s: GameState, site: Site, mods: Modifiers) {
     steam += st;
     steamRaw += st;
     effSum += st * (def.stats.effBonus ?? 0);
-    if (def.dry) dryCooling += stat(b, 'coolingMW') * cf;
-    else cooling += stat(b, 'coolingMW') * cf;
-    dryCooling += stat(b, 'dryMW') * cf;
+    if (st > 0) {
+      by.steam.set(b.id, st * mods.steamCap);
+      by.eff.set(b.id, def.stats.effBonus ?? 0);
+    }
+    const wet = def.dry ? 0 : stat(b, 'coolingMW') * cf;
+    const dry = (def.dry ? stat(b, 'coolingMW') : 0) * cf + stat(b, 'dryMW') * cf;
+    cooling += wet;
+    dryCooling += dry;
+    if (def.category === 'cooling') {
+      by.wet.set(b.id, wet);
+      by.dry.set(b.id, dry);
+    }
     grid += stat(b, 'gridMW');
     storage += stat(b, 'storageMWh');
     rate += stat(b, 'storageRateMW');
+    if (def.stats.gridMW) by.grid.set(b.id, stat(b, 'gridMW'));
+    if (def.stats.storageRateMW) {
+      by.storage.set(b.id, stat(b, 'storageMWh'));
+      by.rate.set(b.id, stat(b, 'storageRateMW'));
+    }
     crews += stat(b, 'maintenance');
     safety += stat(b, 'safety');
   }
@@ -102,7 +122,7 @@ export function siteCapacities(s: GameState, site: Site, mods: Modifiers) {
   storage *= mods.storage;
   rate *= mods.storage;
   const turbineEff = steamRaw > 0 ? effSum / steamRaw : 0;
-  return { steam, cooling, wetCooling: cooling, dryCooling, grid, storage, rate, staffCap, crews, safety, contractSlots, turbineEff };
+  return { steam, cooling, wetCooling: cooling, dryCooling, grid, storage, rate, staffCap, crews, safety, contractSlots, turbineEff, by };
 }
 
 export function fuelCapacity(s: GameState): number {
@@ -199,6 +219,32 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
     waterCostTotal += water.cost * (offline ? 0.5 : 1);
     // Without make-up water, wet cooling degrades but the basins keep some capacity.
     cap.cooling = cap.wetCooling * (0.35 + 0.65 * water.waterFactor) + cap.dryCooling;
+    const wetF = mods.cooling * eventEffect(s, site.id, 'cooling') * (0.35 + 0.65 * water.waterFactor);
+    const dryF = mods.cooling * Math.min(1, eventEffect(s, site.id, 'cooling'));
+    const coolCap = new Map<number, number>();
+    for (const [id, wet] of cap.by.wet) coolCap.set(id, wet * wetF + (cap.by.dry.get(id) ?? 0) * dryF);
+
+    // Plant networks: only what is connected by pipes and cables counts.
+    const condensers = new Set<number>();
+    const powerUp = new Set<number>();
+    for (const b of site.buildings) {
+      const def = BUILDINGS[b.type];
+      if (def.stats.steamMW && b.status !== 'constructing' && b.status !== 'destroyed') condensers.add(b.id);
+      if ((def.stats.gridMW || def.stats.storageRateMW || def.stats.dataMW || def.stats.h2MW) && isOperating(b)) powerUp.add(b.id);
+    }
+    const side = gridSide(site, (id) => id === GRID_TIE || condensers.has(id) || powerUp.has(id));
+    const gridF = mods.grid * eventEffect(s, site.id, 'grid');
+    cap.grid = BASE_GRID_TIE_MW * gridF;
+    for (const id of side.busSubs) cap.grid += (cap.by.grid.get(id) ?? 0) * gridF;
+    cap.storage = 0;
+    cap.rate = 0;
+    for (const [id, cableCap] of side.busStores) {
+      cap.storage += (cap.by.storage.get(id) ?? 0) * mods.storage;
+      cap.rate += Math.min((cap.by.rate.get(id) ?? 0) * mods.storage, cableCap);
+    }
+    let connSteam = 0, connCool = 0;
+    for (const [id, c] of cap.by.steam) if (site.links.some((l) => l.kind === 'steam' && (l.a === id || l.b === id))) connSteam += c;
+    for (const [id, c] of coolCap) if (site.links.some((l) => l.kind === 'cooling' && (l.a === id || l.b === id))) connCool += c;
 
     // Mining
     let siteOre = 0, dig = 0, haul = 0, vehicleUpkeep = 0;
@@ -225,7 +271,7 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
     // Load following (production optimisation automation)
     const reactors = site.buildings.filter((b) => b.reactor && b.status !== 'constructing');
     if (s.automation.loadFollow && reactors.length) {
-      applyLoadFollow(s, site, reactors, mods, cap, demand, contractMW * (Math.max(1, st.electricMW) / totalCapacityForShare), dt);
+      applyLoadFollow(s, site, reactors, mods, { ...cap, steam: connSteam, cooling: connCool }, demand, contractMW * (Math.max(1, st.electricMW) / totalCapacityForShare), dt);
     }
 
     // Offsite power and emergency diesel generators. Pumps and emergency core
@@ -257,20 +303,50 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
       if (spec.research) researchFromReactors += spec.research * b.reactor!.power * levelMult(BUILDINGS[b.type], b.level);
     }
     const efficiency = thermal > 0 ? effWeighted / thermal : 0;
-    const steamUsed = Math.min(thermal, cap.steam);
-    const cycleEff = thermal > 0 ? Math.min(0.6, efficiency + cap.turbineEff) : 0;
-    const gross = steamUsed * cycleEff * staffFactor;
-    const heatReject = Math.max(0, thermal - gross);
-    const electric = Math.max(0, gross - houseLoad);
-    const coolingRatio = heatReject > 0.01 ? cap.cooling / heatReject : 10;
+    const netIn: PlantNetInput = {
+      thermal: new Map(), steamCap: cap.by.steam, effBonus: cap.by.eff, condensers, coolCap, powerUp,
+      baseEff: efficiency, staffFactor, houseLoad, overload: !offline,
+    };
+    for (const b of reactors) if (b.status !== 'destroyed') netIn.thermal.set(b.id, b.reactor!.thermal);
+    const nw = solvePlant(site, netIn);
+    const steamUsed = nw.steamUsed;
+    const cycleEff = nw.cycleEff;
+    const heatReject = nw.heatReject;
+    const electric = nw.electric;
+    let coolingRatio = 10;
+    for (const [, rn] of nw.reactors) if (rn.ratio < coolingRatio) coolingRatio = rn.ratio;
+    if (heatReject > 0.01) coolingRatio = Math.min(coolingRatio, nw.coolingMargin);
+    if (!offline) {
+      for (const l of stepCables(site, dt)) {
+        pushLog(s, 'bad', `Breaker tripped: overloaded ${KIND_LABEL[l.kind].toLowerCase()} ${endpointName(site, l.a)} → ${endpointName(site, l.b)} at ${loc.name}.`);
+        notify(s, { kind: 'bad', title: 'Cable breaker tripped', text: `${endpointName(site, l.a)} → ${endpointName(site, l.b)} was overloaded. It recloses in 30 s — upgrade it or add another route.` });
+      }
+    }
 
     let maxTempFrac = 0;
     let online = 0;
     for (const b of reactors) {
       if (b.status === 'destroyed') continue;
-      const res = stepReactorTemp(b, inp, coolingRatio);
       const r = b.reactor!;
+      const rn = nw.reactors.get(b.id);
+      // Protection: a reactor at power whose heat has nowhere to go trips at once.
+      if (rn && !r.scrammed && !r.tripCause && b.status === 'active' && r.power > 0.05 && rn.removed < 0.35) {
+        const cause = !rn.connected ? 'No heat sink — no steam line to a turbine hall' : !rn.cooled ? 'Loss of condenser cooling — no cooling-water pipe' : null;
+        if (cause) {
+          scram(r, cause, s.gameTime);
+          // Rods are in: prompt drop of fission power.
+          r.power *= 0.12;
+          r.precursors *= 0.5;
+          r.fission *= 0.12;
+          r.thermal = r.fission + r.decayHeat;
+          s.stats.scrams++;
+          pushLog(s, 'bad', `SCRAM: ${BUILDINGS[b.type].short} at ${loc.name} — ${cause}.`);
+          if (!offline) notify(s, { kind: 'scram', title: 'Reactor SCRAM', text: `${BUILDINGS[b.type].short}: ${cause}.` });
+        }
+      }
+      const res = stepReactorTemp(b, inp, rn ? rn.ratio : 0);
       const name = `${BUILDINGS[b.type].short} at ${loc.name}`;
+
       if (res.tripped && !res.atws) {
         s.stats.scrams++;
         pushLog(s, 'bad', `SCRAM: ${name} — ${res.tripped}.`);
@@ -281,7 +357,7 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
         if (!offline) notify(s, { kind: 'scram', title: 'FAILURE TO SCRAM', text: `${name}: the rods did not insert automatically (${res.tripped}). Open the reactor and press SCRAM now.` });
       }
       if (res.damaged) coreDamage(s, site, b, !pumpsPowered ? 'station blackout' : 'loss of core cooling');
-      if (r.scrammed && (s.automation.autoRestart || offline) && canRestart(b, mods, s.gameTime, ambient)) {
+      if (r.scrammed && (s.automation.autoRestart || offline) && (!rn || (rn.connected && rn.cooled)) && canRestart(b, mods, s.gameTime, ambient)) {
         restart(b);
         s.stats.restarts++;
         pushLog(s, 'info', `Monitoring system restarted ${BUILDINGS[b.type].short} at ${loc.name}.`);
@@ -299,15 +375,17 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
       if (!r.scrammed && r.power > 0.02 && b.status === 'active') online++;
     }
 
-    const net = electric * (1 - mods.transmissionLoss);
+    const net = nw.delivered * (1 - mods.transmissionLoss);
     // On-site industry runs behind the meter: it takes power before the grid
     // connection, so it needs no export capacity. Shortfalls are imported.
     let dataLoad = 0, fixedLoad = 0, h2Cap = 0, isoBase = 0, tourBase = 0, towers = 0;
     for (const b of site.buildings) {
       if (!isOperating(b)) continue;
-      dataLoad += stat(b, 'dataMW');
+      // Customer loads only run when cabled to the grid side.
+      const feed = nw.busLoads.get(b.id) ?? 0;
+      dataLoad += Math.min(stat(b, 'dataMW'), feed);
       fixedLoad += stat(b, 'loadMW');
-      h2Cap += stat(b, 'h2MW');
+      h2Cap += Math.min(stat(b, 'h2MW'), feed);
       isoBase += stat(b, 'isotopes');
       tourBase += stat(b, 'tourism');
       if (b.type === 'cooling_tower' || b.type === 'cooling_mega') towers += b.type === 'cooling_mega' ? 2 : 1;
@@ -353,8 +431,8 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
     const salaries = Math.min(staffNeeded, cap.staffCap) * SALARY_PER_STAFF * mods.salary;
 
     Object.assign(st, {
-      thermalMW: thermal, steamCapMW: cap.steam, steamUsedMW: steamUsed, electricMW: electric, exportMW: exportAvail,
-      gridCapMW: cap.grid, coolingCapMW: cap.cooling, heatRejectMW: heatReject, coolingRatio, demandMW: demand,
+      thermalMW: thermal, steamCapMW: nw.steamCapConnected, steamUsedMW: steamUsed, electricMW: electric, exportMW: exportAvail,
+      gridCapMW: nw.tieConnected ? cap.grid : 0, coolingCapMW: nw.coolCapConnected, heatRejectMW: heatReject, coolingRatio, demandMW: demand,
       industryMW: fromPlant, importMW: imported, h2MW: h2Now, industryIncome,
       curtailedMW: curtailed, storageCapMWh: cap.storage, staffNeeded, staffCap: cap.staffCap, staffFactor,
       researchRate, upkeep, salaries, price, reactorsOnline: online, efficiency: cycleEff, reactorsTotal: reactors.length, maxTempFrac,
@@ -363,6 +441,7 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
       treatedDemand: water.treatedDemand, rawToTreatment: water.rawToTreatment, tankM3: water.tankM3, tankCapM3: water.tankCapM3,
       waterFactor: water.waterFactor, treatedFactor: water.treatedFactor, waterCost: water.cost, houseLoadMW: houseLoad,
       oreRate: siteOre, digRate: dig, haulRate: haul, offsitePower, backupMW, backupNeedMW: backupNeed, pumpsPowered, batteryLeft,
+      strandedHeatMW: nw.strandedHeat, strandedMW: nw.stranded, cableLossMW: nw.cableLoss,
     } satisfies Partial<SiteStats>);
   }
 
@@ -550,7 +629,8 @@ function applyLoadFollow(
   const eff = effSum / maxThermal;
   const storageRoom = cap.storage - site.storageMWh > 0.5 ? cap.rate : 0;
   const wantElectric = Math.min(cap.grid, demand + contractShare + storageRoom) / (1 - mods.transmissionLoss);
-  const thermalForDemand = wantElectric / Math.max(0.05, eff * st.staffFactor);
+  // Reactor coolant pumps (house load) and cable losses come out of the generated power too.
+  const thermalForDemand = (wantElectric + st.houseLoadMW + st.cableLossMW) / Math.max(0.05, eff * st.staffFactor);
   // Never ask for more heat than turbines can use or cooling can reject.
   const thermalLimit = Math.min(cap.steam * 1.0, (cap.cooling * 0.97) / Math.max(0.3, 1 - eff));
   const ratio = Math.max(0.1, Math.min(1, Math.min(thermalForDemand, thermalLimit) / maxThermal));

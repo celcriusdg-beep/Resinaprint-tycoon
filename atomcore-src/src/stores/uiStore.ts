@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { BuildingType, Notice } from '../game/types';
+import type { BuildingType, LinkKind, Notice } from '../game/types';
 import type { OfflineReport } from '../systems/offline/offline';
 
 export type PanelId = 'status' | 'build' | 'research' | 'manage' | 'supply' | 'market' | 'goals' | 'sites' | 'settings';
@@ -17,6 +17,13 @@ export interface Placement {
   z: number | null;
   /** When set, this placement relocates an existing building. */
   moveId?: number;
+}
+
+/** Connect mode: running a pipe or cable from one building to another. */
+export interface ConnectMode {
+  from: number;
+  kind: LinkKind;
+  target: number | null;
 }
 
 export type CameraCommand =
@@ -42,6 +49,11 @@ interface UIStore {
   modal: Modal | null;
   camera: CameraCommand | null;
   hoverId: number | null;
+  connect: ConnectMode | null;
+  startConnect: (from: number, kind: LinkKind, target?: number | null) => void;
+  setConnectTarget: (target: number | null) => void;
+  /** Leave connect mode and go back to the source building. */
+  cancelConnect: () => void;
   setPanel: (p: PanelId | null) => void;
   togglePanel: (p: PanelId) => void;
   select: (id: number | null) => void;
@@ -67,6 +79,10 @@ export const useUI = create<UIStore>((set) => ({
   modal: null,
   camera: null,
   hoverId: null,
+  connect: null,
+  startConnect: (from, kind, target = null) => set({ connect: { from, kind, target }, selectedId: null, panel: null, placement: null }),
+  setConnectTarget: (target) => set((s) => (s.connect ? { connect: { ...s.connect, target } } : {})),
+  cancelConnect: () => set((s) => (s.connect ? { connect: null, selectedId: s.connect.from } : {})),
   setPanel: (p) => set({ panel: p }),
   togglePanel: (p) => set((s) => ({ panel: s.panel === p ? null : p, selectedId: s.panel === p ? s.selectedId : null })),
   select: (id) => set((s) => ({ selectedId: id, panel: id !== null ? null : s.panel })),

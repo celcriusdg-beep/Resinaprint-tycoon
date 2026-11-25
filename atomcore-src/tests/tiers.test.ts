@@ -1,3 +1,4 @@
+import { autoWire } from '../src/game/network/network';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createInitialState, makeBuilding } from '../src/game/state';
 import { tick } from '../src/game/engine';
@@ -24,6 +25,8 @@ function site(types: [BuildingType, number, number][], reactor?: BuildingType) {
     initEquilibrium(r, LOCATION_BY_ID.riverside.ambient, 0);
   }
   for (const [t, x, z] of types) st.buildings.push(makeBuilding(s, t, x, z, 0, true));
+  st.links = [];
+  autoWire(s, st);
   return { s, st, r };
 }
 

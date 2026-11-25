@@ -14,6 +14,20 @@ import { coreSize } from '../src/game/simulation/reactor';
 import { LOCATIONS, expandCost, LOCATION_BY_ID } from '../src/game/progression/locations';
 import { clearModCache, getMods } from '../src/game/simulation/modifiers';
 import type { BuildingType, GameState } from '../src/game/types';
+import { autoWire, linkRating, suggestClass, linkLength, LINK_CLASSES } from '../src/game/network/network';
+
+// The bot wires new buildings to their nearest partners and resizes links that run full.
+function wire(s: GameState) {
+  const site = s.sites[s.activeSite];
+  autoWire(s, site, { pay: true, costMod: getMods(s, site.id).buildCost });
+  for (const l of site.links) {
+    if (l.flow < linkRating(l) * 0.9 && l.trip <= 0) continue;
+    const next = suggestClass(s, site, l.kind, l.a, l.b, linkRating(l) * 2);
+    if (next.cls === l.cls && next.circuits === l.circuits) continue;
+    if (s.money > A.relinkCost(s, l.id, next.cls, next.circuits) * 1.5) A.upgradeLink(s, l.id, next.cls, next.circuits);
+  }
+  void linkLength; void LINK_CLASSES;
+}
 
 function tryBuild(s: GameState, type: BuildingType): boolean {
   if (A.buildLockReason(s, type)) return false;
@@ -48,6 +62,7 @@ function botStep(s: GameState) {
     s.activeSite = id;
     const site = s.sites[id];
     const st = site.stats;
+    wire(s);
     for (const b of site.buildings) if (b.status === 'broken' || b.condition < 40) A.repairBuilding(s, b.id);
     for (const b of site.buildings) if (b.reactor?.scrammed) A.restartReactor(s, b.id);
     // Manual outage management before Outage Planning is researched
@@ -148,6 +163,19 @@ it('bot progresses through the game', () => {
       const st = site.stats;
       console.log(`  stats: thermal=${st.thermalMW.toFixed(1)} steamCap=${st.steamCapMW} cool=${st.coolingCapMW.toFixed(1)} wf=${st.waterFactor.toFixed(2)} tf=${st.treatedFactor.toFixed(2)} fuel=${s.fuel} money=${Math.round(s.money)}`);
       for (const b of site.buildings) console.log(`  ${b.type} ${b.status} L${b.level} cond=${Math.round(b.condition)}${b.reactor ? ` fuel=${b.reactor.coreFuel.toFixed(2)} sp=${b.reactor.setpoint} n=${b.reactor.power.toExponential(1)} trip=${b.reactor.tripCause} rods=${b.reactor.rods.toFixed(2)}` : ''}`);
+    }
+    if (process.env.NET_DEBUG && t % 1800 === 0 && t > 0) {
+      for (const id of s.unlockedSites) {
+        const site = s.sites[id];
+        const st = site.stats;
+        console.log(`  [${id}] th=${Math.round(st.thermalMW)} steamCap=${Math.round(st.steamCapMW)} used=${Math.round(st.steamUsedMW)} strandHeat=${Math.round(st.strandedHeatMW)} el=${Math.round(st.electricMW)} strandMW=${Math.round(st.strandedMW)} loss=${st.cableLossMW.toFixed(1)} grid=${Math.round(st.gridCapMW)} export=${Math.round(st.exportMW)} curt=${Math.round(st.curtailedMW)} cool=${st.coolingRatio.toFixed(2)} links=${site.links.length}`);
+        for (const l of site.links) if (l.flow > linkRating(l) * 0.95 || l.trip > 0) console.log(`     full ${l.kind} ${l.a}->${l.b} cls=${l.cls}x${l.circuits} flow=${Math.round(l.flow)} trip=${l.trip}`);
+        const unl = site.buildings.filter((b) => !site.links.some((l) => l.a === b.id || l.b === b.id) && ['reactor', 'power', 'cooling', 'grid'].includes(BUILDINGS[b.type].category));
+        if (st.gridCapMW === 0) for (const l of site.links.filter((x) => x.kind === 'power')) console.log(`     pw ${site.buildings.find((b) => b.id === l.a)?.type ?? l.a}:${site.buildings.find((b) => b.id === l.a)?.status ?? ''} -> ${site.buildings.find((b) => b.id === l.b)?.type ?? l.b}:${site.buildings.find((b) => b.id === l.b)?.status ?? ''} flow=${Math.round(l.flow)} trip=${l.trip.toFixed(0)} heat=${l.heat.toFixed(2)} r=${linkRating(l)}`);
+        if (st.gridCapMW === 0) console.log('     events: ' + s.events.map((e) => e.id).join(',') + ' log: ' + s.log.slice(0, 5).map((l) => l.text).join(' | '));
+        if (unl.length) console.log(`     unlinked: ${unl.map((b) => b.type + ':' + b.status[0]).join(' ')}`);
+        console.log(`     reactors: ${site.buildings.filter((b) => b.reactor).map((b) => `${b.type.slice(8)}:${b.status[0]}:p${Math.round(b.reactor!.power * 100)}:${b.reactor!.tripCause ?? ''}`).join(' ')}`);
+      }
     }
     if (t % 1800 === 0) {
       console.log(`t=${t / 60}min lvl=${s.level} money=${Math.round(s.money)} MW=${Math.round(totalMW())} demand=${Math.round(Object.values(s.sites).reduce((a, x) => a + x.stats.demandMW, 0))} research=${s.research.completed.length} buildings=${Object.values(s.sites).reduce((a, x) => a + x.buildings.length, 0)} scrams=${s.stats.scrams}`);

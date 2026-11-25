@@ -8,6 +8,7 @@ import { BUILDINGS } from '../game/buildings/defs';
 import type { GameState } from '../game/types';
 import type { FixAction } from '../game/diagnostics';
 import { LOCATION_BY_ID, expandCost, nextSize } from '../game/progression/locations';
+import { linkProblem } from '../game/network/network';
 
 // UI-facing wrappers: run a game action, then give feedback (sound, haptics,
 // error toast) and refresh the views.
@@ -101,6 +102,26 @@ export function confirm(title: string, text: string, confirmLabel: string, onCon
 
 export { A };
 
+/** Connect mode: the player tapped a building (or the grid connection). */
+export function pickConnectTarget(id: number): void {
+  const ui = useUI.getState();
+  const c = ui.connect;
+  if (!c) return;
+  if (id === c.from) {
+    ui.setConnectTarget(null);
+    return;
+  }
+  const g = getGame();
+  const problem = linkProblem(g.sites[g.activeSite], c.kind, c.from, id);
+  if (problem) {
+    audio.sfx('error');
+    ui.pushToast({ kind: 'warn', title: problem });
+    return;
+  }
+  haptic(15);
+  ui.setConnectTarget(id);
+}
+
 /** Carry out the suggested fix from a Status issue. */
 export function runFix(action: FixAction, siteId: string): void {
   const g = getGame();
@@ -113,6 +134,9 @@ export function runFix(action: FixAction, siteId: string): void {
     case 'select':
       ui.setPanel(null);
       ui.select(action.id);
+      break;
+    case 'connect':
+      ui.startConnect(action.id, action.link);
       break;
     case 'panel':
       ui.setPanel(action.panel);

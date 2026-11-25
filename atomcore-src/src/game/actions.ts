@@ -1,4 +1,4 @@
-import type { Automation, BuildingType, GameState } from './types';
+import type { Automation, BuildingType, GameState, LinkKind } from './types';
 import { BUILDINGS, upgradeCost, isReactor } from './buildings/defs';
 import { checkPlacement } from './buildings/grid';
 import { RESEARCH_BY_ID, isUnlockedByResearch, RESEARCH } from './research/tree';
@@ -12,6 +12,7 @@ import { pendingShares } from './progression/prestige';
 import { acceptOffer as acceptOfferImpl, cancelContract as cancelContractImpl } from './economy/market';
 import { startRefuel, decommissionCost, buyVehicle, sellVehicle, buyItem, sellItem, deliverOrder as deliverOrderImpl, fuelQuotaLeft, shipSpentFuel as shipSpentFuelImpl, type Item } from './supply/fuelcycle';
 import { fuelCapacity } from './simulation/plant';
+import { removeLinksFor, linkProblem, classLockReason, linkCost, routeLength, makeLink, MAX_CIRCUITS, LINK_CLASSES, KIND_LABEL, endpointName, linkLength } from './network/network';
 
 // Every player action validates fully and returns an error string, or null on success.
 export type Result = string | null;
@@ -87,6 +88,7 @@ export function demolishBuilding(s: GameState, id: number): Result {
   s.money += refund;
   s.ledger.other += refund;
   site.buildings.splice(idx, 1);
+  removeLinksFor(site, b.id);
   pushLog(s, 'info', `Demolished ${def.short} (refund $${refund.toLocaleString('en-US')}).`);
   return null;
 }
@@ -334,6 +336,7 @@ export function decommission(s: GameState, id: number): Result {
   s.money -= cost;
   s.ledger.construction += cost;
   site.buildings = site.buildings.filter((x) => x.id !== id);
+  removeLinksFor(site, id);
   pushLog(s, 'info', `Ruins of the ${BUILDINGS[b.type].short} decommissioned and the land cleaned up.`);
   return null;
 }
@@ -401,4 +404,76 @@ export function deliverMaterialOrder(s: GameState, id: number): Result {
 
 export function shipSpentFuel(s: GameState, siteId: string, qty: number): Result {
   return shipSpentFuelImpl(s, siteId, qty);
+}
+
+// ── Pipes and cables ─────────────────────────────────────────────────────
+
+export function newLinkCost(s: GameState, kind: LinkKind, a: number, b: number, cls: number, circuits: number): number {
+  return linkCost(kind, cls, circuits, routeLength(s.sites[s.activeSite], a, b), getMods(s, s.activeSite).buildCost);
+}
+
+export function buildLink(s: GameState, kind: LinkKind, a: number, b: number, cls: number, circuits: number): Result {
+  const site = s.sites[s.activeSite];
+  const problem = linkProblem(site, kind, a, b);
+  if (problem) return problem;
+  const lock = classLockReason(s, site, kind, cls, a, b);
+  if (lock) return lock;
+  if (circuits < 1 || circuits > MAX_CIRCUITS) return `1 to ${MAX_CIRCUITS} parallel runs.`;
+  const cost = newLinkCost(s, kind, a, b, cls, circuits);
+  if (s.money < cost) return 'Not enough money.';
+  s.money -= cost;
+  s.ledger.construction += cost;
+  makeLink(s, site, kind, a, b, cls, circuits, cost);
+  pushLog(s, 'info', `Built ${LINK_CLASSES[kind][cls].name}${circuits > 1 ? ` ×${circuits}` : ''}: ${endpointName(site, a)} → ${endpointName(site, b)}.`);
+  return null;
+}
+
+/** Price to change a link to another size / number of runs (full credit for what is already there, plus 10% work). */
+export function relinkCost(s: GameState, id: number, cls: number, circuits: number): number {
+  const site = s.sites[s.activeSite];
+  const l = site.links.find((x) => x.id === id);
+  if (!l) return 0;
+  const len = linkLength(site, l);
+  const mod = getMods(s, s.activeSite).buildCost;
+  const now = linkCost(l.kind, l.cls, l.circuits, len, mod);
+  const next = linkCost(l.kind, cls, circuits, len, mod);
+  return Math.round(Math.max(0, next - now) + next * 0.1);
+}
+
+export function upgradeLink(s: GameState, id: number, cls: number, circuits: number): Result {
+  const site = s.sites[s.activeSite];
+  const l = site.links.find((x) => x.id === id);
+  if (!l) return 'Connection not found.';
+  if (l.cls === cls && l.circuits === circuits) return 'Nothing to change.';
+  const lock = classLockReason(s, site, l.kind, cls, l.a, l.b);
+  if (lock) return lock;
+  if (circuits < 1 || circuits > MAX_CIRCUITS) return `1 to ${MAX_CIRCUITS} parallel runs.`;
+  const cost = relinkCost(s, id, cls, circuits);
+  if (s.money < cost) return 'Not enough money.';
+  s.money -= cost;
+  s.ledger.construction += cost;
+  l.paid += cost;
+  l.cls = cls;
+  l.circuits = circuits;
+  l.heat = 0;
+  l.trip = 0;
+  pushLog(s, 'info', `Rebuilt ${KIND_LABEL[l.kind].toLowerCase()} as ${LINK_CLASSES[l.kind][cls].name}${circuits > 1 ? ` ×${circuits}` : ''}.`);
+  return null;
+}
+
+export function removeLinkRefund(s: GameState, id: number): number {
+  const l = s.sites[s.activeSite].links.find((x) => x.id === id);
+  return l ? Math.round(l.paid * 0.4) : 0;
+}
+
+export function removeLink(s: GameState, id: number): Result {
+  const site = s.sites[s.activeSite];
+  const l = site.links.find((x) => x.id === id);
+  if (!l) return 'Connection not found.';
+  const refund = removeLinkRefund(s, id);
+  s.money += refund;
+  s.ledger.other += refund;
+  site.links = site.links.filter((x) => x.id !== id);
+  pushLog(s, 'info', `Removed ${KIND_LABEL[l.kind].toLowerCase()} ${endpointName(site, l.a)} → ${endpointName(site, l.b)}.`);
+  return null;
 }

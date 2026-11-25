@@ -1,33 +1,18 @@
 import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
-import type { Building, Site } from '../../game/types';
-import { BUILDINGS } from '../../game/buildings/defs';
-import { CELL } from '../../game/constants';
+import type { Link, Site } from '../../game/types';
 import { ModelBuilder, type Vec3 } from '../buildings/builder';
 import { materials } from '../buildings/materials';
-import { buildingCenter } from './sceneRegistry';
-import { roadX } from './Terrain';
+import { LINK_CLASSES, endpointWorld, tieWorld } from '../../game/network/network';
 
-// Automatically routed plant infrastructure, rebuilt when the layout changes:
-//  • steam lines on pipe racks from each reactor to its nearest turbine hall
-//  • cooling-water lines from each turbine hall to the nearest cooling unit
-//  • overhead power lines from turbine halls to substations, and from the
-//    site's grid tie out along the access road on lattice pylons.
-
-function nearest(from: Building, list: Building[], size: number): Building | null {
-  const [fx, fz] = buildingCenter(from, size);
-  let best: Building | null = null;
-  let bd = Infinity;
-  for (const b of list) {
-    const [x, z] = buildingCenter(b, size);
-    const d = (x - fx) ** 2 + (z - fz) ** 2;
-    if (d < bd) {
-      bd = d;
-      best = b;
-    }
-  }
-  return best;
-}
+// The plant's pipes and cables, exactly as the player built them, rebuilt when
+// the layout changes:
+//  • steam lines (white) on pipe racks, sized by pipe class, one run per circuit
+//  • circulating-water pipes (blue), lower down
+//  • power cables on poles (MV/HV) or lattice pylons (EHV and above), spaced by
+//    the line's maximum span, with sagging conductors; superconducting links
+//    are buried in a trench. Tripped cables glow red.
+//  • the grid connection pylon at the plot edge and the line leaving the site.
 
 function pipeRun(b: ModelBuilder, a: [number, number], c: [number, number], y: number, r: number, mat: THREE.Material, twin = true) {
   const m = materials();
@@ -88,56 +73,101 @@ function armPoints(x: number, z: number, h: number, rotY: number): Vec3[] {
   ];
 }
 
+let trippedMat: THREE.MeshStandardMaterial | null = null;
+function tripped() {
+  return (trippedMat ??= new THREE.MeshStandardMaterial({ color: '#ff4a3a', emissive: '#a01810', emissiveIntensity: 0.8, roughness: 0.6 }));
+}
+
+function woodPole(b: ModelBuilder, x: number, z: number, h: number, along: number) {
+  const m = materials();
+  b.box(0.22, h, 0.22, m.steelDark, [x, 0, z], 0, 1);
+  b.box(along > 0.5 ? 0.12 : 2.4, 0.12, along > 0.5 ? 2.4 : 0.12, m.steelDark, [x, h - 0.3, z], 0, 1);
+}
+
+/** Points every `span` metres along an L-shaped route a → corner → c. */
+function routePoints(a: [number, number], c: [number, number], span: number): [number, number][] {
+  const corner: [number, number] = [c[0], a[1]];
+  const pts: [number, number][] = [a];
+  for (const [p, q] of [[a, corner], [corner, c]] as const) {
+    const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
+    if (len < 0.1) continue;
+    const n = Math.max(1, Math.ceil(len / span));
+    for (let i = 1; i <= n; i++) pts.push([p[0] + ((q[0] - p[0]) * i) / n, p[1] + ((q[1] - p[1]) * i) / n]);
+  }
+  return pts;
+}
+
+function linkGeometry(b: ModelBuilder, site: Site, l: Link) {
+  const m = materials();
+  const p = endpointWorld(site, l.a);
+  const q = endpointWorld(site, l.b);
+  if (!p || !q) return;
+  const c = LINK_CLASSES[l.kind][l.cls];
+  // Spread parallel corridors a little so links between the same rows don't merge.
+  const lane = ((l.id % 5) - 2) * 0.45;
+  const a: [number, number] = [p[0] + lane, p[1] + lane];
+  const d: [number, number] = [q[0] + lane, q[1] + lane];
+  if (l.kind === 'steam' || l.kind === 'cooling') {
+    const y = l.kind === 'steam' ? 2.6 + l.cls * 0.25 : 1.0 + l.cls * 0.2;
+    const mat = l.kind === 'steam' ? m.pipeWhite : m.pipeBlue;
+    const runs = Math.min(l.circuits, 4);
+    for (let i = 0; i < runs; i++) {
+      const o = (i - (runs - 1) / 2) * c.size * 2.6;
+      pipeRun(b, [a[0] + o, a[1] + o], [d[0] + o, d[1] + o], y, c.size, mat, false);
+    }
+    return;
+  }
+  const mat = l.trip > 0 ? tripped() : l.cls === 0 ? m.rubber : m.copper;
+  if (c.size === 0) {
+    // Superconducting cable: buried, shown as a covered trench with marker posts.
+    for (const [x, z] of routePoints(a, d, 12)) b.box(0.25, 0.9, 0.25, m.steel, [x, 0, z], 0, 1);
+    pipeRun(b, a, d, 0.12, 0.3, m.concreteDark, false);
+    return;
+  }
+  const span = [30, 50, 70, 90, 100][l.cls] ?? 60;
+  const h = c.size;
+  const pts = routePoints(a, d, span);
+  const sets = Math.min(l.circuits, 2);
+  let prev: Vec3[] | null = null;
+  for (let i = 0; i < pts.length; i++) {
+    const [x, z] = pts[i];
+    const nx = pts[Math.min(i + 1, pts.length - 1)];
+    const px = pts[Math.max(i - 1, 0)];
+    const alongX = Math.abs(nx[0] - px[0]) > Math.abs(nx[1] - px[1]) ? 1 : 0;
+    const rotY = alongX ? Math.PI / 2 : 0;
+    const end = i === 0 || i === pts.length - 1;
+    if (!end) {
+      if (l.cls <= 1) woodPole(b, x, z, h, alongX);
+      else pylon(b, x, z, h * 1.15, rotY);
+    }
+    const arms: Vec3[] = [];
+    for (let k = 0; k < sets; k++) {
+      const off = (k - (sets - 1) / 2) * 1.2;
+      for (const side of [-1, 0, 1]) {
+        const w = side * (l.cls <= 1 ? 1.0 : 2.2);
+        const ax = alongX ? 0 : w, az = alongX ? w : 0;
+        arms.push([x + ax + (alongX ? 0 : 0), h - (side === 0 ? -0.25 : 0.35) + off, z + az]);
+      }
+    }
+    if (prev) for (let k = 0; k < arms.length; k++) cable(b, prev[k], arms[k], mat, Math.min(2.4, 0.4 + span * 0.02));
+    prev = arms;
+  }
+}
+
 export function Infrastructure({ site, structure }: { site: Site; structure: number }) {
   const group = useMemo(() => {
     void structure;
     const b = new ModelBuilder();
+    for (const l of site.links) linkGeometry(b, site, l);
+    // Grid connection at the plot edge next to the access road, and the
+    // transmission line leaving the site.
+    const [tx, tz] = tieWorld(site.size);
+    pylon(b, tx, tz, 9, 0);
+    let prev = armPoints(tx, tz, 9, 0);
     const m = materials();
-    const size = site.size;
-    const built = site.buildings.filter((x) => x.status !== 'constructing');
-    const reactors = built.filter((x) => x.reactor);
-    const turbines = built.filter((x) => BUILDINGS[x.type].category === 'power');
-    const cooling = built.filter((x) => BUILDINGS[x.type].category === 'cooling');
-    const subs = built.filter((x) => BUILDINGS[x.type].stats.gridMW);
-    for (const r of reactors) {
-      const t = nearest(r, turbines, size);
-      if (!t) continue;
-      pipeRun(b, buildingCenter(r, size), buildingCenter(t, size), 2.6, 0.22, m.pipeWhite);
-    }
-    for (const t of turbines) {
-      const c = nearest(t, cooling, size);
-      if (!c) continue;
-      const a = buildingCenter(t, size);
-      const d = buildingCenter(c, size);
-      pipeRun(b, [a[0] + 0.5, a[1] + 0.5], [d[0] + 0.5, d[1] + 0.5], 1.2, 0.28, m.pipeBlue);
-    }
-    // Grid tie at the plot edge next to the access road
-    const plotHalf = (size * CELL) / 2;
-    const rx = roadX(size);
-    const tie: [number, number] = [rx + 4.5, plotHalf + 4];
-    pylon(b, tie[0], tie[1], 9, 0);
-    const tiePts = armPoints(tie[0], tie[1], 9, 0);
-    const feeders = subs.length ? subs : turbines;
-    const feedHeight = subs.length ? 4.7 : 5.5;
-    for (const f of feeders) {
-      const [x, z] = buildingCenter(f, size);
-      const pts: Vec3[] = [[x - 1.6, feedHeight, z], [x + 1.6, feedHeight, z], [x, feedHeight + 0.3, z]];
-      for (let k = 0; k < 3; k++) cable(b, pts[k], tiePts[k], m.rubber, 1.2);
-    }
-    if (subs.length) {
-      for (const t of turbines) {
-        const s = nearest(t, subs, size);
-        if (!s) continue;
-        const [x1, z1] = buildingCenter(t, size);
-        const [x2, z2] = buildingCenter(s, size);
-        cable(b, [x1, 5.4, z1], [x2, 4.7, z2], m.copper, 0.6);
-      }
-    }
-    // Transmission line leaving the site
-    let prev = tiePts;
     for (let i = 1; i <= 7; i++) {
-      const z = plotHalf + 4 + i * 42;
-      const x = rx + 9 + Math.sin(i * 0.7) * 3;
+      const z = tz + i * 42;
+      const x = tx + 4.5 + Math.sin(i * 0.7) * 3;
       pylon(b, x, z, 16, 0);
       const pts = armPoints(x, z, 16, 0);
       for (let k = 0; k < 3; k++) cable(b, prev[k], pts[k], m.rubber, 2.4);

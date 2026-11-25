@@ -50,5 +50,6 @@ export function structureSignature(g: GameState): string {
     if (b.vehicles) sig += `|${b.vehicles.excavators.join('.')}|${b.vehicles.trucks.join('.')}`;
     sig += ';';
   }
+  for (const l of site.links) sig += `L${l.id},${l.a},${l.b},${l.cls},${l.circuits},${l.trip > 0 ? 1 : 0};`;
   return sig;
 }

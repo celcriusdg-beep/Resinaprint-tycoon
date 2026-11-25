@@ -9,6 +9,7 @@ import { hasRoomFor } from './buildings/grid';
 import { LOCATION_BY_ID } from './progression/locations';
 import { HOURS_PER_SECOND } from './constants';
 import { creditLimit } from './engine';
+import { GRID_TIE, gridSide, linksOf, otherEnd, roleOf, linkRating, endpointName, KIND_LABEL } from './network/network';
 
 // Plant diagnostics: turns the simulation state into plain-language status
 // lines — what is fine, what is degraded and what is broken — each with the
@@ -26,7 +27,8 @@ export type FixAction =
   | { kind: 'build'; type: BuildingType }
   | { kind: 'setpoint'; id: number; value: number }
   | { kind: 'scram'; id: number }
-  | { kind: 'expand' };
+  | { kind: 'expand' }
+  | { kind: 'connect'; id: number; link: import('./types').LinkKind };
 
 export interface Issue {
   key: string;
@@ -192,7 +194,9 @@ export function diagnoseSite(s: GameState, site: Site): Issue[] {
 
   // Heat → steam → electricity → grid chain
   const reactorsRunning = site.buildings.some((b) => b.reactor && b.status === 'active' && b.reactor.power > 0.02);
-  if (reactorsRunning && st.steamCapMW <= 0.1) add('turbines', 'error', 'No working turbine hall', 'Reactors make heat, but without a turbine none of it becomes electricity.', { label: 'Build turbine', action: { kind: 'build', type: 'turbine' } });
+  out.push(...diagnoseNetwork(site));
+  const hasTurbine = site.buildings.some((b) => roleOf(b.type) === 'turbine' && b.status !== 'constructing');
+  if (reactorsRunning && st.steamCapMW <= 0.1 && !hasTurbine) add('turbines', 'error', 'No working turbine hall', 'Reactors make heat, but without a turbine none of it becomes electricity.', { label: 'Build turbine', action: { kind: 'build', type: 'turbine' } });
   else if (st.thermalMW > st.steamCapMW * 1.02 && st.steamCapMW > 0) add('turbines', 'warn', 'Turbines are full', `${fmt(st.thermalMW - st.steamCapMW)} MW of heat is wasted because turbine capacity is too small.`, { label: 'Build', action: { kind: 'panel', panel: 'build' } });
   if (st.heatRejectMW > 0.5 && st.coolingRatio < 1) add('cooling', 'error', 'Cooling overloaded', 'More waste heat than the cooling can reject: reactors heat up and will trip. Lower power or add cooling.', { label: 'Build cooling', action: { kind: 'panel', panel: 'build' } });
   else if (st.heatRejectMW > 0.5 && st.coolingRatio < 1.1) add('cooling', 'warn', 'Cooling margin thin', 'A heatwave or one broken cooling unit could cause a trip.', { label: 'Build cooling', action: { kind: 'panel', panel: 'build' } });
@@ -243,6 +247,56 @@ export function diagnoseSite(s: GameState, site: Site): Issue[] {
       else if (out2.dig > 0 && out2.haul <= 0) add('mining', 'warn', 'Mine has no trucks', 'Excavators dig, but nothing hauls the ore out.', { label: 'Buy trucks', action: { kind: 'panel', panel: 'supply' } }, b.id);
       else if (out2.dig <= 0) add('mining', 'info', 'Mine has no excavators', 'Buy vehicles to start mining.', { label: 'Buy vehicles', action: { kind: 'panel', panel: 'supply' } }, b.id);
     }
+  }
+  return out;
+}
+
+/** Missing, full or tripped pipes and cables. */
+export function diagnoseNetwork(site: Site): Issue[] {
+  const out: Issue[] = [];
+  const add = (system: SystemId, severity: Severity, title: string, detail: string, fix?: Issue['fix'], buildingId?: number) =>
+    out.push({ key: `${site.id}:net:${buildingId ?? ''}:${title}`, severity, system, siteId: site.id, title, detail, fix, buildingId });
+  const connect = (id: number, link: 'steam' | 'cooling' | 'power', label: string) => ({ label, action: { kind: 'connect' as const, id, link } });
+  const side = gridSide(site, (id) => {
+    if (id === GRID_TIE) return true;
+    const b = site.buildings.find((x) => x.id === id);
+    return !!b && b.status !== 'constructing' && b.status !== 'destroyed' && b.status !== 'broken';
+  });
+  // Plant units (steam + cooling links) that contain at least one cooling unit.
+  const cooledUnit = new Set<number>();
+  const stack: number[] = [];
+  for (const b of site.buildings) if (roleOf(b.type) === 'cooler' && linksOf(site, b.id, 'cooling').length) stack.push(b.id);
+  while (stack.length) {
+    const u = stack.pop()!;
+    if (cooledUnit.has(u)) continue;
+    cooledUnit.add(u);
+    for (const l of site.links) if (l.kind !== 'power' && (l.a === u || l.b === u)) stack.push(otherEnd(l, u));
+  }
+  for (const b of site.buildings) {
+    if (b.status === 'constructing' || b.status === 'destroyed') continue;
+    const role = roleOf(b.type);
+    const name = endpointName(site, b.id);
+    if (role === 'reactor' && !linksOf(site, b.id, 'steam').length)
+      add('reactors', 'error', `${name} has no steam line`, 'Its heat has nowhere to go, so it trips as soon as it reaches power. Run a steam line to a turbine hall.', connect(b.id, 'steam', 'Connect'), b.id);
+    else if (role === 'turbine') {
+      const steam = linksOf(site, b.id, 'steam');
+      if (!steam.length) add('turbines', 'warn', `${name} has no steam supply`, 'Connect it to a reactor (or cross-tie it to another turbine hall) to use it.', connect(b.id, 'steam', 'Connect'), b.id);
+      else if (!cooledUnit.has(b.id)) add('cooling', 'error', `${name} has no cooling water`, 'Without circulating water its condenser cannot reject heat, and the reactors feeding it will trip.', connect(b.id, 'cooling', 'Connect'), b.id);
+      const onBus = linksOf(site, b.id, 'power').some((l) => l.trip <= 0 && (otherEnd(l, b.id) === GRID_TIE || side.busSubs.has(otherEnd(l, b.id))));
+      if (steam.length && !onBus) add('grid', 'error', `${name} is not connected to the grid`, 'Run a power cable to a switchyard/substation or to the grid connection at the plot edge.', connect(b.id, 'power', 'Connect'), b.id);
+    } else if (role === 'cooler' && !linksOf(site, b.id, 'cooling').length)
+      add('cooling', 'warn', `${name} is not piped`, 'It rejects no heat until a circulating-water pipe connects it to a turbine hall.', connect(b.id, 'cooling', 'Connect'), b.id);
+    else if (role === 'sub' && !side.busSubs.has(b.id) && b.status !== 'broken')
+      add('grid', 'warn', `${name} is not connected to the grid`, 'Cable it to the grid connection (or to another connected switchyard) so its export capacity counts.', connect(b.id, 'power', 'Connect'), b.id);
+    else if ((role === 'store' || role === 'load') && !(role === 'store' ? side.busStores : side.busLoads).get(b.id) && b.status !== 'broken')
+      add('grid', 'warn', `${name} has no power cable`, `It ${role === 'store' ? 'cannot charge or discharge' : 'has no electricity and earns nothing'} until it is cabled to a switchyard or the grid connection.`, connect(b.id, 'power', 'Connect'), b.id);
+  }
+  for (const l of site.links) {
+    const from = l.a === GRID_TIE ? l.b : l.a;
+    const label = `${KIND_LABEL[l.kind]} ${endpointName(site, l.a)} → ${endpointName(site, l.b)}`;
+    if (l.trip > 0) add('grid', 'error', `Breaker open: ${label}`, `Tripped on overload; it recloses in ${Math.ceil(l.trip)} s. Upgrade it or add a parallel route so it is not overloaded again.`, { label: 'Open', action: { kind: 'select', id: from } }, from);
+    else if (l.kind === 'power' && l.flow > linkRating(l) * 1.001) add('grid', 'error', `Overloaded: ${label}`, `Carrying ${Math.round((l.flow / linkRating(l)) * 100)}% of its rating and heating up — the breaker will trip.`, { label: 'Open', action: { kind: 'select', id: from } }, from);
+    else if (l.flow >= linkRating(l) * 0.985) add(l.kind === 'steam' ? 'turbines' : l.kind === 'cooling' ? 'cooling' : 'grid', 'warn', `At its limit: ${label}`, 'This link is full and holds back the plant. Upgrade it to a bigger size or add parallel runs.', { label: 'Open', action: { kind: 'select', id: from } }, from);
   }
   return out;
 }

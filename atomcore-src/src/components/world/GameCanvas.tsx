@@ -14,7 +14,7 @@ import { BuildingObject } from './BuildingObject';
 import { Infrastructure } from './Infrastructure';
 import { SteamParticles } from './SteamParticles';
 import { PlacementLayer } from './Placement';
-import { SelectionMarker } from './Overlays';
+import { SelectionMarker, ConnectMarkers } from './Overlays';
 
 const QUALITY = {
   low: { dpr: [0.75, 1] as [number, number], shadows: false, shadowSize: 1024, bloom: false, particles: 500, trees: 120, aa: false },
@@ -41,6 +41,7 @@ function World() {
       <Infrastructure site={site} structure={structure} />
       <SteamParticles key={site.id} max={q.particles} />
       <PlacementLayer siteSize={site.size} />
+      <ConnectMarkers />
       <SelectionMarker />
       <CameraRig siteSize={site.size} siteId={site.id} />
     </>

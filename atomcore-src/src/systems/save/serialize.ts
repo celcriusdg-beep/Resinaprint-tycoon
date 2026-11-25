@@ -7,6 +7,7 @@ import { BUILDINGS } from '../../game/buildings/defs';
 import { newReactorState, initEquilibrium } from '../../game/simulation/reactor';
 import { reserveFor } from '../../game/supply/fuelcycle';
 import { LOCATION_BY_ID } from '../../game/progression/locations';
+import { autoWire, pruneLinks } from '../../game/network/network';
 
 // Pure (de)serialisation and migration. No storage APIs here so it can be unit tested.
 
@@ -79,6 +80,13 @@ export function migrate(raw: unknown): GameState {
         if (!running) b.reactor.scrammed = b.status === 'active' && b.reactor.scrammed;
       }
     }
+  }
+  // v3 → v4: plants are wired with pipes and cables. Older saves get every
+  // building connected to its nearest partners, sized for full output, for free.
+  for (const site of Object.values(s.sites)) {
+    site.links = Array.isArray(site.links) ? site.links : [];
+    pruneLinks(site);
+    if (version < 4) autoWire(s, site);
   }
   s.unlockedSites = s.unlockedSites.filter((id) => s.sites[id]);
   if (!s.unlockedSites.length) throw new Error('Save data has no plant sites.');

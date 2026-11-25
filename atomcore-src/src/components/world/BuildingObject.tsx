@@ -9,6 +9,7 @@ import { materials } from '../buildings/materials';
 import { useGameStore } from '../../stores/gameStore';
 import { useUI } from '../../stores/uiStore';
 import { activity, buildingCenter, emitters } from './sceneRegistry';
+import { pickConnectTarget } from '../../ui/actions';
 import { audio } from '../../systems/audio/audio';
 import { MineVehicles } from './MineVehicles';
 
@@ -116,6 +117,10 @@ export function BuildingObject({ building, siteSize }: Props) {
     if (e.delta > 8) return; // it was a drag, not a tap
     e.stopPropagation();
     audio.sfx('click');
+    if (useUI.getState().connect) {
+      pickConnectTarget(building.id);
+      return;
+    }
     useUI.getState().select(building.id);
   };
 

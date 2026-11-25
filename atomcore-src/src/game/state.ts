@@ -8,6 +8,7 @@ import { LOCATION_BY_ID } from './progression/locations';
 import { dateKey, emptyCounters, generateDaily } from './progression/daily';
 import { BASE_FUEL_PRICE, SAVE_VERSION, START_FUEL, START_MONEY } from './constants';
 import { prestigeStartMoney } from './progression/prestige';
+import { autoWire } from './network/network';
 
 export function emptyLedger(): Ledger {
   return { sales: 0, contracts: 0, upkeep: 0, salaries: 0, fuel: 0, water: 0, maintenance: 0, construction: 0, research: 0, other: 0 };
@@ -35,7 +36,7 @@ export function makeBuilding(s: GameState, type: BuildingType, x: number, z: num
 
 export function makeSite(id: string): Site {
   const loc = LOCATION_BY_ID[id];
-  return { id, size: loc.startSize, buildings: [], storageMWh: 0, storageWater: 0, spent: { pool: 0, casks: 0 }, blackoutTime: 0, stats: emptyStats() };
+  return { id, size: loc.startSize, buildings: [], links: [], storageMWh: 0, storageWater: 0, spent: { pool: 0, casks: 0 }, blackoutTime: 0, stats: emptyStats() };
 }
 
 export function createInitialState(opts: { shares?: number; prestigeCount?: number; achievements?: string[]; lifetimeEarned?: number; createdAt?: number } = {}): GameState {
@@ -93,6 +94,8 @@ export function createInitialState(opts: { shares?: number; prestigeCount?: numb
   site.buildings.push(makeBuilding(s, 'reactor_pilot', 5, 5, 0, true));
   site.buildings.push(makeBuilding(s, 'turbine', 8, 5, 0, true));
   site.buildings.push(makeBuilding(s, 'cooling_mech', 5, 8, 0, true));
+  // …connected by a steam line, a cooling-water pipe and a cable to the grid.
+  autoWire(s, site);
   // Pre-warm the pilot reactor so the plant is alive at the first frame.
   const r = site.buildings[0].reactor!;
   r.setpoint = 0.6;
