@@ -399,7 +399,7 @@ export function forecast(site: Site, gameTime: number, days = 3): ForecastDay[] 
 }
 
 /** Short label of the current sky. */
-export function skyLabel(site: Site, gameTime: number): { label: string; icon: 'sun' | 'rain' | 'snow' | 'wind' | 'cloud' | 'thermo' } {
+export function skyLabel(site: Site, gameTime: number): { label: string; icon: 'sun' | 'moon' | 'rain' | 'snow' | 'wind' | 'cloud' | 'thermo' } {
   const w = site.weather;
   const on = (k: FrontKind) => w.fronts.some((f) => f.kind === k && envelope(f, gameTime) > 0.3);
   if (w.wind > 20) return { label: 'Storm', icon: 'wind' };
@@ -407,5 +407,7 @@ export function skyLabel(site: Site, gameTime: number): { label: string; icon: '
   if (on('heatwave')) return { label: 'Heatwave', icon: 'thermo' };
   if (on('coldsnap')) return { label: 'Cold snap', icon: 'snow' };
   if (on('drought')) return { label: 'Drought', icon: 'sun' };
-  return { label: w.humidity > 0.85 ? 'Overcast' : 'Clear', icon: w.humidity > 0.85 ? 'cloud' : 'sun' };
+  const dp = (gameTime % DAY_LENGTH) / DAY_LENGTH;
+  const night = dp < 0.22 || dp > 0.78;
+  return { label: w.humidity > 0.85 ? 'Overcast' : 'Clear', icon: w.humidity > 0.85 ? 'cloud' : night ? 'moon' : 'sun' };
 }

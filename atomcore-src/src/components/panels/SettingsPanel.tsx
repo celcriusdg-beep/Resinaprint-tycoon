@@ -10,6 +10,8 @@ import { createInitialState } from '../../game/state';
 import { Button, Section, Slider, Toggle, Tabs } from '../ui/common';
 import { confirm } from '../../ui/actions';
 import { audio } from '../../systems/audio/audio';
+import { TIPS, showTip } from '../ui/Tips';
+import { Icon } from '../ui/Icons';
 
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
@@ -75,6 +77,16 @@ export function SettingsPanel() {
         <Toggle label="Day / night cycle" on={s.dayNight} onChange={(v) => s.set({ dayNight: v })} sub="Lighting follows the in-game day" />
         <Toggle label="Show FPS" on={s.showFps} onChange={(v) => s.set({ showFps: v })} />
         <Toggle label="Vibration feedback" on={s.haptics} onChange={(v) => s.set({ haptics: v })} sub="Where the device supports it" />
+      </Section>
+      <Section title="Help & tips">
+        <div className="tip-list">
+          {TIPS.map((t) => (
+            <button key={t.id} type="button" className="tip-row" onClick={() => showTip(t.id)}>
+              <Icon name={t.icon} size={16} /> <span>{t.title}</span> <Icon name="help" size={15} />
+            </button>
+          ))}
+        </div>
+        <Button small variant="ghost" onClick={() => useSettings.getState().set({ seenTips: [] })}>Show all tips again as I play</Button>
       </Section>
       <Section title="Save game">
         <div className="muted small">Progress saves automatically every 15 s and when you leave the app. Last saved: {lastSaved ? new Date(lastSaved).toLocaleTimeString() : '—'}</div>

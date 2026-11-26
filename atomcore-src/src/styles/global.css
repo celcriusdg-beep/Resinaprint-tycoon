@@ -633,7 +633,7 @@ table.pl tr.big td { font-size: 15px; }
 .size-chip svg { position: absolute; top: 6px; right: 6px; }
 .circuits { align-items: center; }
 .stepper { display: flex; align-items: center; gap: 10px; }
-.round-btn.sm { width: 34px; height: 34px; }
+.round-btn.sm { width: 40px; height: 40px; }
 .round-btn:disabled { opacity: 0.4; }
 .connections { gap: 8px; }
 .connect-add { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -716,3 +716,20 @@ table.pl tr.big td { font-size: 15px; }
 .incident { padding: 7px 9px; border-radius: 10px; border: 1px solid var(--line); }
 .incident.ines1 { border-color: rgba(255,182,72,0.5); }
 .incident.ines2, .incident.ines3 { border-color: rgba(255,90,90,0.6); }
+
+.hud-pill.more { min-width: 36px; justify-content: center; color: var(--muted); }
+
+/* Tip cards */
+.tip-card { position: absolute; z-index: 35; left: 50%; transform: translateX(-50%); bottom: calc(var(--safe-bottom) + 86px); width: min(460px, calc(100% - 20px));
+  max-height: calc(100dvh - var(--safe-top) - 260px); overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 12px 14px;
+  background: var(--panel); border: 1px solid rgba(79,209,255,0.55); border-radius: 16px; box-shadow: 0 12px 32px rgba(0,0,0,0.45);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); animation: tip-in 0.25s ease-out; }
+@keyframes tip-in { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+.tip-head { display: flex; align-items: center; gap: 8px; color: var(--accent); }
+.tip-head b { color: var(--text, #fff); font-size: 15.5px; flex: 1; }
+.tip-card p { margin: 0; font-size: 13px; line-height: 1.4; color: #d7e3ee; }
+.tip-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+.tip-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.tip-row { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; border: 1px solid var(--line); background: rgba(255,255,255,0.03); color: inherit; text-align: left; }
+.tip-row span { flex: 1; }
+@media (min-width: 900px) { .tip-card { bottom: 24px; margin-left: 38px; } }

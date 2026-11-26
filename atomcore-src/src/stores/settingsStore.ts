@@ -14,6 +14,10 @@ export interface Settings {
   showFps: boolean;
   haptics: boolean;
   seenWelcome: boolean;
+  /** Tip cards already shown (ids). */
+  seenTips: string[];
+  /** HUD shows every status pill, not only the urgent ones. */
+  hudExpanded: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -27,6 +31,8 @@ export const DEFAULT_SETTINGS: Settings = {
   showFps: false,
   haptics: true,
   seenWelcome: false,
+  seenTips: [],
+  hudExpanded: false,
 };
 
 interface SettingsStore extends Settings {

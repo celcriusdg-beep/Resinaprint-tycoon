@@ -13,6 +13,7 @@ import { LOCATION_BY_ID } from '../../game/progression/locations';
 import { MILESTONES } from '../../game/progression/milestones';
 import { Icon, type IconName } from './Icons';
 import { audio } from '../../systems/audio/audio';
+import { useSettings } from '../../stores/settingsStore';
 
 export function HUD() {
   const g = useGame();
@@ -41,6 +42,11 @@ export function HUD() {
   const fuelFrac = g.fuel / fuelCap;
   const xpNeed = xpForNext(g.level);
   const open = (p: PanelId) => { audio.sfx('open'); useUI.getState().togglePanel(p); };
+  // Urgent pills are always shown; routine ones only when the HUD is expanded.
+  const expanded = useSettings((x) => x.hudExpanded);
+  const tempTone = st.coolingRatio < 1 ? 'bad' : st.coolingRatio < 1.1 ? 'warn' : '';
+  const fuelTone = fuelFrac < 0.1 ? 'bad' : fuelFrac < 0.25 ? 'warn' : '';
+  const hidden = [!tempTone, !fuelTone, waterOk, true].filter(Boolean).length + g.events.filter((e) => EVENT_BY_ID[e.id]?.kind !== 'bad').slice(0, 2).length;
 
   return (
     <header className="hud">
@@ -78,24 +84,30 @@ export function HUD() {
         </button>
         <WeatherPill />
         <RegulatorPill />
-        <button className={`hud-pill ${st.coolingRatio < 1 ? 'bad' : st.coolingRatio < 1.1 ? 'warn' : ''}`} onClick={() => open('manage')}>
-          <Icon name="thermo" size={14} />
-          {fmtPct(Math.min(9.99, st.maxTempFrac))}
-        </button>
-        <button className={`hud-pill ${fuelFrac < 0.1 ? 'bad' : fuelFrac < 0.25 ? 'warn' : ''}`} onClick={() => open('supply')} aria-label="Fuel assemblies in stock">
-          <Icon name="fuel" size={14} />
-          {fmtNum(g.fuel)}
-        </button>
+        {(expanded || tempTone) && (
+          <button className={`hud-pill ${tempTone}`} onClick={() => open('manage')} aria-label="Reactor temperature">
+            <Icon name="thermo" size={14} />
+            {fmtPct(Math.min(9.99, st.maxTempFrac))}
+          </button>
+        )}
+        {(expanded || fuelTone) && (
+          <button className={`hud-pill ${fuelTone}`} onClick={() => open('supply')} aria-label="Fuel assemblies in stock">
+            <Icon name="fuel" size={14} />
+            {fmtNum(g.fuel)}
+          </button>
+        )}
         {!st.offsitePower && (
           <button className={`hud-pill ${st.pumpsPowered ? 'warn' : 'bad'}`} onClick={() => open('manage')}>
             <Icon name="alert" size={14} /> {st.pumpsPowered ? 'On diesel' : 'BLACKOUT'}
           </button>
         )}
-        <button className={`hud-pill ${waterOk ? '' : 'bad'}`} onClick={() => open('supply')} aria-label="Water balance">
-          <Icon name="drop" size={14} />
-          {waterOk ? fmtNum(st.evaporation) + ' m³' : `${fmtPct(Math.min(st.waterFactor, st.treatedFactor))}`}
-        </button>
-        <button className="hud-pill research" onClick={() => open('research')}>
+        {(expanded || !waterOk) && (
+          <button className={`hud-pill ${waterOk ? '' : 'bad'}`} onClick={() => open('supply')} aria-label="Water balance">
+            <Icon name="drop" size={14} />
+            {waterOk ? fmtNum(st.evaporation) + ' m³' : `${fmtPct(Math.min(st.waterFactor, st.treatedFactor))}`}
+          </button>
+        )}
+        {expanded && <button className="hud-pill research" onClick={() => open('research')}>
           <Icon name="flask" size={14} />
           {active ? (
             <>
@@ -105,9 +117,10 @@ export function HUD() {
           ) : (
             <span className="pill-text">{Math.floor(g.research.points)} RP · +{rpRate.toFixed(1)}/s</span>
           )}
-        </button>
+        </button>}
         {g.events.slice(0, 2).map((e) => {
           const def = EVENT_BY_ID[e.id];
+          if (!expanded && def?.kind !== 'bad') return null;
           return (
             <span key={e.id + (e.siteId ?? '')} className={`hud-pill event ${def?.kind}`}>
               <Icon name={(def?.kind === 'bad' ? 'alert' : 'info') as IconName} size={14} />
@@ -116,6 +129,10 @@ export function HUD() {
             </span>
           );
         })}
+        <button className="hud-pill more" onClick={() => { audio.sfx('click'); useSettings.getState().set({ hudExpanded: !expanded }); }}
+          aria-label={expanded ? 'Show fewer status pills' : 'Show all status pills'} aria-expanded={expanded}>
+          {expanded ? <Icon name="minus" size={14} /> : <><Icon name="plus" size={14} />{hidden > 0 ? hidden : ''}</>}
+        </button>
       </div>
       <MilestoneBar />
     </header>

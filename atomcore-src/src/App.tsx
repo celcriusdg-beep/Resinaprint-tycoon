@@ -21,6 +21,7 @@ import { SettingsPanel } from './components/panels/SettingsPanel';
 import { StatusPanel } from './components/panels/StatusPanel';
 import { ConnectBar } from './components/panels/Connections';
 import { EmergencyCard } from './components/ui/EmergencyCard';
+import { TipCard } from './components/ui/Tips';
 import { WeatherPanel } from './components/panels/WeatherPanel';
 import { StaffPanel } from './components/panels/StaffPanel';
 import { RegulatorPanel } from './components/panels/RegulatorPanel';
@@ -178,6 +179,7 @@ function GameShell() {
       <HUD />
       <Toasts />
       {!placement && !connecting && <EmergencyCard />}
+      <TipCard />
       {!placement && !picking && <CameraButtons />}
       <PlacementBar />
       <ConnectBar />
