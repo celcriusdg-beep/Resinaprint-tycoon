@@ -105,6 +105,12 @@ export function BuildingObject({ building, siteSize }: Props) {
         case 'bob':
           a.object.position.x = Math.sin(t * (a.speed ?? 0.5) + building.id) * 2.5;
           break;
+        case 'float': {
+          // Gentle vertical drift around the part's own height.
+          const y0 = (a.object.userData.y0 ??= a.object.position.y) as number;
+          a.object.position.y = y0 + Math.sin(t * (a.speed ?? 0.6) + (a.phase ?? 0) + building.id) * 0.6;
+          break;
+        }
         case 'rock':
           a.object.rotation[a.axis ?? 'z'] = act > 0 ? Math.sin(t * (a.speed ?? 1) * 2 + (a.phase ?? 0)) * 0.35 : 0;
           break;

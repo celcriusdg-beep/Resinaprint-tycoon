@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { ModelBuilder, fanRotor } from '../builder';
+import { ModelBuilder, fanRotor, type Vec3 } from '../builder';
 import { materials } from '../materials';
 import { stack } from './reactors';
 
@@ -46,6 +46,65 @@ function hyperboloid(b: ModelBuilder, mat: THREE.Material, baseR: number, throat
   b.add(new THREE.LatheGeometry(pts.map(([x, y]) => new THREE.Vector2(x, y)), seg), mm);
   b.height = Math.max(b.height, y0 + h);
   return pts;
+}
+
+// ── Futuristic kit (late tiers): tapered halls, light seams, beams, robots ──
+
+/** A tapered four-sided hall, w × d at the base, `top` = top/base ratio.
+ *  `from`/`to` cut a horizontal slice of the same shape (for glass bands). */
+function taper(b: ModelBuilder, mat: THREE.Material, w: number, d: number, h: number, top: number, pos: Vec3, from = 0, to = h, grow = 0) {
+  const r = (y: number) => 1 - (1 - top) * (y / h);
+  const g = new THREE.CylinderGeometry(r(to), r(from), to - from, 4, 1);
+  g.rotateY(Math.PI / 4);
+  b.add(g, mat, [pos[0], pos[1] + (from + to) / 2, pos[2]], [0, 0, 0], [(w + grow) / Math.SQRT2, 1, (d + grow) / Math.SQRT2]);
+  b.height = Math.max(b.height, pos[1] + to);
+}
+
+/** A glowing strip that pulses with the building's activity. */
+function seam(b: ModelBuilder, mat: THREE.MeshStandardMaterial, w: number, pos: Vec3, rotY = 0, speed = 1.3) {
+  b.part(new THREE.BoxGeometry(w, 0.1, 0.08), mat, pos, { kind: 'pulse', speed, material: mat }, [0, rotY, 0]);
+}
+
+/** A straight bar between two points (glowing and pulsing when `pulse` is set). */
+function beam(b: ModelBuilder, mat: THREE.Material, p0: Vec3, p1: Vec3, t: number, pulse?: number) {
+  const a = new THREE.Vector3(...p0);
+  const c = new THREE.Vector3(...p1);
+  const dir = c.clone().sub(a);
+  const len = dir.length();
+  const e = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize()));
+  const mid = a.add(c).multiplyScalar(0.5);
+  const geo = new THREE.BoxGeometry(t, len, t);
+  if (pulse !== undefined) b.part(geo, mat, [mid.x, mid.y, mid.z], { kind: 'pulse', speed: pulse, material: mat as THREE.MeshStandardMaterial }, [e.x, e.y, e.z]);
+  else b.add(geo, mat, [mid.x, mid.y, mid.z], [e.x, e.y, e.z]);
+}
+
+/** Polished mirror finish. */
+function mirror(m: M) {
+  const mm = m.steel.clone();
+  mm.color.set('#dbe6ee');
+  mm.roughness = 0.06;
+  mm.metalness = 1;
+  return mm;
+}
+
+/** An industrial robot arm on a pedestal that swings while the building works. */
+function robotArm(b: ModelBuilder, m: M, x: number, y: number, z: number, s = 1, phase = 0) {
+  b.cyl(0.45 * s, 0.6 * s, 0.5 * s, m.steelDark, [x, y, z], 18);
+  const g = new THREE.Group();
+  const add = (geo: THREE.BufferGeometry, mat: THREE.Material, p: Vec3, rz = 0) => {
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(p[0] * s, p[1] * s, p[2] * s);
+    mesh.rotation.z = rz;
+    g.add(mesh);
+  };
+  add(new THREE.CylinderGeometry(0.38 * s, 0.38 * s, 0.4 * s, 16), m.paintWhite, [0, 0.2, 0]);
+  add(new THREE.BoxGeometry(0.34 * s, 1.7 * s, 0.34 * s), m.paintWhite, [0.28, 1.15, 0], -0.32);
+  add(new THREE.SphereGeometry(0.28 * s, 12, 8), m.steelDark, [0.56, 1.95, 0]);
+  add(new THREE.BoxGeometry(1.5 * s, 0.26 * s, 0.26 * s), m.paintWhite, [1.25, 1.75, 0], -0.28);
+  add(new THREE.SphereGeometry(0.16 * s, 10, 6), m.glowCyan, [1.98, 1.54, 0]);
+  add(new THREE.BoxGeometry(0.08 * s, 0.4 * s, 0.22 * s), m.steelDark, [2.05, 1.3, 0]);
+  g.position.set(x, y + 0.5 * s, z);
+  b.partGroup(g, { kind: 'rock', axis: 'y', speed: 0.9, phase });
 }
 
 // ── Reactors ────────────────────────────────────────────────────────────
@@ -128,59 +187,127 @@ export function turbineMedium(): ModelBuilder {
 }
 
 export function turbineSuper(): ModelBuilder {
+  // Gigawatt turbine island: an aerodynamic white hall and an open deck with
+  // the HP/IP/LP casings and generator laid out in white with lit couplings.
   const b = new ModelBuilder();
   const m = materials();
-  slab(b, 20, 12);
-  roofed(b, m, 18.6, 8.2, 8.4, m.cladWhite, [0, -1.4], m.cladBlue);
-  b.box(18.65, 0.9, 8.45, m.cladBlue, [0, 6.2, -1.4]);
-  lights(b, m, 17, 4.6, 2.85, 0, 12);
-  // Turbine deck on the open side with HP/IP/LP casings and a big generator
-  b.box(17.6, 1.0, 2.4, m.concrete, [0, 0.25, 4.2]);
-  turbineSet(b, m, -8.2, 8.0, 2.3, 4.2, 1.0);
-  // Feedwater heaters and a crane gantry
-  for (let i = 0; i < 4; i++) b.cyl(0.4, 0.4, 3.2, m.steel, [-6 + i * 1.2, 1.4, 2.9], 12, [0, 0, Math.PI / 2]);
-  b.box(18.6, 0.3, 0.3, m.paintYellow, [0, 8.6, 2.9]);
-  stack(b, 9.0, -5.0, 11, 0.3);
+  const cy = glow(m.glowCyan);
+  slab(b, 20, 12, m.concrete);
+  taper(b, m.paintWhite, 18.4, 7.0, 8.5, 0.7, [0, 0.25, -2.2]);
+  taper(b, m.glass, 18.4, 7.0, 8.5, 0.7, [0, 0.25, -2.2], 2.6, 4.6, 0.12);
+  b.box(12.4, 0.35, 4.4, m.steelDark, [0, 8.75, -2.2]);
+  seam(b, cy, 16.0, [0, 2.45, 1.18], 0);
+  seam(b, cy, 14.4, [0, 4.8, 0.8], 0);
+  // Turbine deck
+  b.box(18.6, 0.9, 3.8, m.concrete, [0, 0.25, 3.6]);
+  const y = 2.75, z = 3.6;
+  const casings: [number, number, number, THREE.Material][] = [
+    [-7.0, 0.85, 2.0, m.paintWhite], [-4.2, 1.1, 2.6, m.paintWhite], [-0.9, 1.5, 3.0, m.paintWhite],
+    [2.6, 1.5, 3.0, m.paintWhite], [6.4, 1.3, 3.4, m.steelDark],
+  ];
+  for (const [x, r, len, mat] of casings) {
+    b.cyl(r, r, len, mat, [x, y, z], 32, [0, 0, Math.PI / 2]);
+    b.cyl(r * 0.75, r, 0.4, mat, [x - len / 2 - 0.2, y, z], 32, [0, 0, Math.PI / 2]);
+    b.box(len * 0.7, y - 1.15 - r * 0.6, 0.4, m.steelDark, [x, 1.15, z]);
+  }
+  for (const x of [-5.75, -2.65, 0.85, 4.45, 8.2]) b.part(new THREE.TorusGeometry(0.62, 0.09, 8, 28), cy, [x, y, z], { kind: 'pulse', speed: 2.2, material: cy }, [0, Math.PI / 2, 0]);
+  for (const x of [5.4, 6.4, 7.4]) b.torus(1.32, 0.06, cy, [x, y, z], [0, Math.PI / 2, 0], 36);
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 17.4, 10), m.steel);
+  shaft.rotation.z = Math.PI / 2;
+  shaft.position.set(0, y, z);
+  const sg = new THREE.Group();
+  sg.add(shaft);
+  b.partGroup(sg, { kind: 'spin', axis: 'x', speed: 8 });
+  // Crossover pipes from the hall into the casings
+  for (const x of [-7.0, -4.2, -0.9, 2.6]) b.pipe([x, 4.6, 1.0], [x, 4.6, 3.0], 0.32, m.pipeWhite, 14);
+  b.part(new THREE.SphereGeometry(0.18, 8, 6), m.beacon, [8.6, 9.1, -2.2], { kind: 'beacon' });
+  b.height = 9.2;
   return b;
 }
 
 export function turbineSco2(): ModelBuilder {
+  // Supercritical CO2: the turbine is the size of a car, so it sits on a lit
+  // plinth under a floating canopy, fed by hexagonal recuperator stacks.
   const b = new ModelBuilder();
   const m = materials();
-  slab(b, 12, 12, m.concrete);
-  // Compact turbomachinery hall with a glass front: the turbine is tiny
-  roofed(b, m, 6.2, 3.6, 5.0, m.glass, [-2.4, -2.6], m.paintWhite);
+  const cy = glow(m.glowCyan);
   const core = glow(m.glowCyan);
-  b.part(new THREE.CylinderGeometry(0.35, 0.35, 3.2, 16), core, [-2.4, 1.6, -2.6], { kind: 'pulse', speed: 3, material: core }, [0, 0, Math.PI / 2]);
-  b.cyl(0.8, 0.8, 1.4, m.paintYellow, [0.2, 1.6, -2.6], 18, [0, 0, Math.PI / 2]);
-  // Printed-circuit recuperator blocks and CO2 inventory tanks
-  for (let i = 0; i < 3; i++) roofed(b, m, 1.4, 2.4, 1.4, m.steel, [-4.4 + i * 1.8, 2.8], m.steelDark);
-  for (let i = 0; i < 4; i++) b.cyl(0.45, 0.45, 3.2, m.paintWhite, [2.6 + (i % 2) * 1.2, 0.25, 1.2 + Math.floor(i / 2) * 2.2], 14);
-  // Dry gas coolers with fans
-  roofed(b, m, 4.0, 2.0, 3.0, m.cladGrey, [3.6, -3.2]);
-  fan(b, m, 2.8, 2.9, -3.2, 0.6, 7);
-  fan(b, m, 4.4, 2.9, -3.2, 0.6, 7);
-  b.pipe([0.8, 2.0, -2.0], [2.2, 2.0, -2.0], 0.22, m.pipeWhite);
+  slab(b, 12, 12, m.concrete);
+  // Plinth and floating canopy
+  b.box(8.0, 0.6, 4.6, m.concreteDark, [-1.2, 0.25, 2.6]);
+  for (const [x, zz] of [[-4.9, 0.6], [2.5, 0.6], [-4.9, 4.6], [2.5, 4.6]]) b.box(0.22, 4.0, 0.22, m.paintWhite, [x, 0.85, zz]);
+  b.box(8.4, 0.3, 4.9, m.paintWhite, [-1.2, 4.85, 2.6]);
+  seam(b, cy, 8.2, [-1.2, 4.8, 5.07]);
+  seam(b, cy, 4.7, [3.02, 4.8, 2.6], Math.PI / 2);
+  // Compressor, turbine and generator on one glowing shaft
+  const y = 2.1, z = 2.6;
+  b.cyl(0.7, 0.7, 1.4, m.paintWhite, [-3.6, y, z], 28, [0, 0, Math.PI / 2]);
+  b.cyl(0.85, 0.55, 0.6, m.paintWhite, [-2.6, y, z], 28, [0, 0, Math.PI / 2]);
+  b.cyl(0.9, 0.9, 1.2, m.paintWhite, [-1.6, y, z], 28, [0, 0, Math.PI / 2]);
+  b.cyl(1.05, 1.05, 2.0, m.steelDark, [0.8, y, z], 28, [0, 0, Math.PI / 2]);
+  for (const x of [-4.4, -2.9, -0.85, 1.9]) b.part(new THREE.TorusGeometry(0.6, 0.07, 8, 28), cy, [x, y, z], { kind: 'pulse', speed: 2.5, material: cy }, [0, Math.PI / 2, 0]);
+  b.part(new THREE.CylinderGeometry(0.22, 0.22, 6.2, 14), core, [-1.4, y, z], { kind: 'pulse', speed: 3, material: core }, [0, 0, Math.PI / 2]);
+  for (const x of [-3.6, -1.6, 0.8]) b.box(0.9, y - 0.85 - 0.5, 0.5, m.steelDark, [x, 0.85, z]);
+  // Hexagonal printed-circuit recuperator stacks
+  for (let i = 0; i < 3; i++) {
+    const x = -4.0 + i * 2.4;
+    b.cyl(1.0, 1.0, 5.6, m.paintWhite, [x, 0.25, -3.4], 6);
+    b.cyl(1.04, 1.04, 0.3, m.steelDark, [x, 5.85, -3.4], 6);
+    b.part(new THREE.CylinderGeometry(1.03, 1.03, 0.22, 6, 1, true), cy, [x, 4.2, -3.4], { kind: 'pulse', speed: 1.6, material: cy });
+    b.pipe([x, 2.6, -2.5], [x, 2.6, 0.6], 0.2, m.pipeWhite, 12);
+  }
+  // Dry CO2 gas cooler with three fans
+  b.box(3.0, 2.2, 6.2, m.paintWhite, [4.4, 0.25, -1.7]);
+  seam(b, cy, 6.0, [5.93, 1.4, -1.7], Math.PI / 2);
+  for (const zz of [-3.7, -1.7, 0.3]) fan(b, m, 4.4, 2.95, zz, 0.8, 7);
+  // CO2 inventory capsules
+  for (const zz of [3.5, 4.8]) {
+    b.cyl(0.5, 0.5, 2.6, m.paintWhite, [4.4, 0.85, zz], 20, [0, 0, Math.PI / 2]);
+    for (const dx of [-1.3, 1.3]) b.add(new THREE.SphereGeometry(0.5, 16, 10), m.paintWhite, [4.4 + dx, 0.85, zz]);
+  }
+  b.height = Math.max(b.height, 6.2);
   return b;
 }
 
 export function turbineMhd(): ModelBuilder {
+  // Magnetohydrodynamic topping cycle: a plasma channel blazing through a row
+  // of superconducting magnet coils, then a diffuser into the steam section.
   const b = new ModelBuilder();
   const m = materials();
-  slab(b, 16, 12);
-  // Superconducting magnet: a big torus-wrapped duct with glowing plasma channel
-  b.box(10, 1.2, 3.6, m.concrete, [-1.5, 0.25, -2.2]);
-  for (let i = 0; i < 5; i++) b.torus(1.6, 0.38, m.copper, [-5 + i * 1.75, 3.1, -2.2], [0, Math.PI / 2, 0], 28);
   const plasma = glow(m.glowPlasma);
-  b.part(new THREE.CylinderGeometry(0.75, 0.95, 9.2, 20), plasma, [-1.5, 3.1, -2.2], { kind: 'pulse', speed: 6, material: plasma }, [0, 0, Math.PI / 2]);
-  b.cyl(1.2, 1.2, 1.4, m.steelDark, [-6.8, 3.1, -2.2], 20, [0, 0, Math.PI / 2]);
-  // Cryostat tanks, inverter hall and the steam bottoming section
-  for (const x of [-5.5, -3.5]) b.cyl(0.7, 0.7, 3.4, m.paintWhite, [x, 0.25, 3.0], 16);
-  roofed(b, m, 6.0, 4.0, 4.2, m.cladBlue, [3.4, 3.0]);
-  lights(b, m, 5.4, 2.6, 0.88, 3.4, 5);
-  roofed(b, m, 3.4, 5.2, 3.4, m.cladGrey, [5.6, -2.6]);
-  b.pipe([3.5, 3.1, -2.2], [3.9, 3.1, -2.2], 0.6, m.steelDark);
-  stack(b, 6.8, 4.8, 10, 0.4);
+  const cy = glow(m.glowCyan);
+  const fire = glow(m.glowOrange);
+  slab(b, 16, 12);
+  const y = 3.3, z = 2.4;
+  b.box(12.6, 1.3, 3.8, m.concreteDark, [-1.2, 0.25, z]);
+  b.part(new THREE.CylinderGeometry(0.75, 0.95, 9.4, 24), plasma, [-1.6, y, z], { kind: 'pulse', speed: 6, material: plasma }, [0, 0, Math.PI / 2]);
+  for (let i = 0; i < 6; i++) {
+    const x = -5.6 + i * 1.6;
+    b.torus(1.6, 0.34, m.copper, [x, y, z], [0, Math.PI / 2, 0], 32);
+    b.torus(1.95, 0.12, m.paintWhite, [x + 0.8, y, z], [0, Math.PI / 2, 0], 36);
+  }
+  for (const x of [-4.8, -1.6, 1.6]) b.part(new THREE.TorusGeometry(2.0, 0.05, 6, 40), cy, [x, y, z], { kind: 'pulse', speed: 2, material: cy }, [0, Math.PI / 2, 0]);
+  // Combustor with an orange throat
+  b.cyl(1.35, 1.35, 1.8, m.steelDark, [-7.0, y, z], 28, [0, 0, Math.PI / 2]);
+  b.part(new THREE.TorusGeometry(1.0, 0.16, 8, 28), fire, [-6.08, y, z], { kind: 'pulse', speed: 4, material: fire }, [0, Math.PI / 2, 0]);
+  // Diffuser into the bottoming section
+  b.cyl(1.7, 0.95, 2.2, m.steelDark, [4.0, y, z], 28, [0, 0, -Math.PI / 2]);
+  b.pipe([5.1, y, z], [6.2, y, 0.2], 0.9, m.steelDark, 18);
+  // Steam bottoming hall
+  taper(b, m.paintWhite, 12.4, 5.0, 6.8, 0.74, [-0.6, 0.25, -3.1]);
+  taper(b, m.glass, 12.4, 5.0, 6.8, 0.74, [-0.6, 0.25, -3.1], 2.4, 4.0, 0.1);
+  seam(b, cy, 11.0, [-0.6, 1.95, -0.72]);
+  // Cryo dewars for the magnets
+  for (const zz of [-4.6, -2.8]) {
+    b.cyl(0.6, 0.6, 4.0, m.paintWhite, [6.6, 0.25, zz], 20);
+    b.dome(0.6, m.paintWhite, [6.6, 4.25, zz], 0.5, 16);
+    b.part(new THREE.CylinderGeometry(0.62, 0.62, 0.2, 20, 1, true), cy, [6.6, 3.2, zz], { kind: 'pulse', speed: 1.8, material: cy });
+  }
+  // Exhaust stack
+  b.cyl(0.55, 0.95, 13, m.paintWhite, [6.2, 0.25, 0.2], 24);
+  b.part(new THREE.CylinderGeometry(0.62, 0.62, 0.3, 24, 1, true), cy, [6.2, 11.6, 0.2], { kind: 'glow', material: cy });
+  b.part(new THREE.SphereGeometry(0.16, 8, 6), m.beacon, [6.2, 13.4, 0.2], { kind: 'beacon' });
+  b.emit({ pos: [6.2, 13.3, 0.2], radius: 0.5, rate: 0.25, size: 1.4, kind: 'vapor' });
   return b;
 }
 
@@ -246,23 +373,23 @@ export function coolingSeawater(): ModelBuilder {
   b.part(new THREE.BoxGeometry(14.8, 0.06, 2.4), cyan, [0, 0.83, 4.3], { kind: 'pulse', speed: 0.7, material: cyan });
   for (let i = 0; i < 7; i++) {
     const x = -6.3 + i * 2.1;
-    b.box(0.3, 3.0, 0.5, m.cladWhite, [x, 0.8, 5.4]);
+    b.box(0.3, 3.0, 0.5, m.paintWhite, [x, 0.8, 5.4]);
   }
-  b.box(13.4, 0.4, 0.6, m.cladWhite, [0, 3.8, 5.4]);
+  b.box(13.4, 0.4, 0.6, m.paintWhite, [0, 3.8, 5.4]);
   b.part(new THREE.BoxGeometry(13.2, 0.1, 0.06), seam, [0, 4.0, 5.72], { kind: 'pulse', speed: 1.3, material: seam });
   // Tapered main hall: dark glass body under a white shell with glowing seams
   const hallGeo = new THREE.CylinderGeometry(0.7, 1, 8, 4, 1);
   hallGeo.rotateY(Math.PI / 4);
   b.add(hallGeo, m.glass, [0, 4.25, -1.6], [0, 0, 0], [10.2, 1, 6.0]);
-  b.add(hallGeo.clone(), m.cladWhite, [0, 5.95, -1.6], [0, 0, 0], [10.6, 0.58, 6.3]);
-  b.add(hallGeo.clone(), m.cladWhite, [0, 1.35, -1.6], [0, 0, 0], [10.8, 0.28, 6.4]);
+  b.add(hallGeo.clone(), m.paintWhite, [0, 5.95, -1.6], [0, 0, 0], [10.6, 0.58, 6.3]);
+  b.add(hallGeo.clone(), m.paintWhite, [0, 1.35, -1.6], [0, 0, 0], [10.8, 0.28, 6.4]);
   b.part(new THREE.BoxGeometry(9.6, 0.12, 0.08), seam, [0, 3.1, 1.25], { kind: 'pulse', speed: 1.3, material: seam });
   b.part(new THREE.BoxGeometry(8.0, 0.12, 0.08), seam, [0, 5.4, 0.7], { kind: 'pulse', speed: 1.3, material: seam });
   // Four pump towers between basin and hall, impeller rings spinning on top
   for (let i = 0; i < 4; i++) {
     const x = -5.7 + i * 3.8;
     const z = 1.9;
-    b.cyl(1.05, 1.35, 15, m.cladWhite, [x, 0.8, z], 32);
+    b.cyl(1.05, 1.35, 15, m.paintWhite, [x, 0.8, z], 32);
     b.box(0.14, 13, 0.1, seam, [x, 2.0, z + 1.25]);
     b.cyl(1.4, 1.4, 0.6, dark, [x, 15.8, z], 32);
     b.torus(1.2, 0.09, dark, [x, 6.0, z]);
@@ -286,7 +413,7 @@ export function coolingSeawater(): ModelBuilder {
   }
   // Heat-exchange spire: a heavy six-sided tower with glowing edge seams
   const sx = 0, sz = -1.6;
-  b.cyl(1.4, 3.0, 30, m.cladWhite, [sx, 8.0, sz], 6);
+  b.cyl(1.4, 3.0, 30, m.paintWhite, [sx, 8.0, sz], 6);
   for (let k = 0; k < 6; k++) {
     const a = (k / 6) * Math.PI * 2;
     const p0 = new THREE.Vector3(Math.cos(a) * 3.02, 8.0, Math.sin(a) * 3.02);
@@ -310,7 +437,7 @@ export function coolingSeawater(): ModelBuilder {
     rings.add(t);
   }
   rings.position.set(sx, 0, sz);
-  b.partGroup(rings, { kind: 'bob', speed: 0.6 });
+  b.partGroup(rings, { kind: 'float', speed: 0.6 });
   b.part(new THREE.SphereGeometry(0.28, 8, 6), m.beacon, [sx, 44.2, sz], { kind: 'beacon' });
   b.height = 44.4;
   // Outfall: two return conduits to a lit discharge cascade at the back
@@ -322,28 +449,35 @@ export function coolingSeawater(): ModelBuilder {
 }
 
 export function coolingSky(): ModelBuilder {
+  // Radiative sky cooling: mirror-finish metamaterial panels around a central
+  // manifold hub, their edges glowing in the infrared window.
   const b = new ModelBuilder();
   const m = materials();
-  slab(b, 16, 16, m.gravel);
-  // Rows of tilted radiative panels with a faint infrared glow
   const ir = glow(m.glowCyan);
-  const panels = new THREE.Group();
-  for (let r = 0; r < 5; r++) {
-    for (let c = 0; c < 3; c++) {
-      const x = -5 + c * 5, z = -6 + r * 3;
-      b.box(0.12, 0.9, 0.12, m.steel, [x - 1.8, 0.25, z]);
-      b.box(0.12, 0.9, 0.12, m.steel, [x + 1.8, 0.25, z]);
-      b.add(new THREE.BoxGeometry(4.4, 0.08, 2.2), m.glass, [x, 1.25, z], [-0.35, 0, 0]);
-      const p = new THREE.Mesh(new THREE.BoxGeometry(4.3, 0.02, 2.1), ir);
-      p.position.set(x, 1.31, z);
-      p.rotation.x = -0.35;
-      panels.add(p);
+  const cy = glow(m.glowCyan);
+  const mir = mirror(m);
+  slab(b, 16, 16, m.concreteDark);
+  const edges = new THREE.Group();
+  for (const x of [-5.2, 0, 5.2]) {
+    for (const zz of [-5.2, 0, 5.2]) {
+      if (x === 0 && zz === 0) continue;
+      b.box(0.3, 1.0, 0.3, m.steel, [x, 0.25, zz]);
+      b.add(new THREE.BoxGeometry(4.4, 0.08, 4.0), mir, [x, 1.45, zz], [-0.22, 0, 0]);
+      const e = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.03, 4.2), ir);
+      e.position.set(x, 1.4, zz);
+      e.rotation.x = -0.22;
+      edges.add(e);
+      b.pipe([x, 0.5, zz], [x * 0.35, 0.5, zz * 0.35], 0.12, m.pipeWhite, 8);
     }
   }
-  b.partGroup(panels, { kind: 'pulse', speed: 0.8, material: ir });
-  // Coolant manifold and control hut
-  b.pipe([-7.4, 0.6, -6.5], [-7.4, 0.6, 6.5], 0.22, m.pipeWhite);
-  roofed(b, m, 2.0, 2.0, 2.0, m.cladWhite, [6.6, 6.6]);
+  b.partGroup(edges, { kind: 'pulse', speed: 0.8, material: ir });
+  // Central hub and emitter mast
+  b.cyl(1.8, 2.3, 1.8, m.paintWhite, [0, 0.25, 0], 6);
+  b.dome(1.5, mir, [0, 2.05, 0], 0.6, 24);
+  b.part(new THREE.CylinderGeometry(1.83, 1.83, 0.2, 6, 1, true), cy, [0, 1.6, 0], { kind: 'pulse', speed: 1.4, material: cy });
+  b.cyl(0.12, 0.25, 7.5, m.steel, [0, 2.9, 0], 10);
+  b.part(new THREE.TorusGeometry(0.6, 0.06, 8, 28), cy, [0, 8.0, 0], { kind: 'pulse', speed: 1.4, material: cy }, [Math.PI / 2, 0, 0]);
+  b.part(new THREE.SphereGeometry(0.16, 8, 6), m.beacon, [0, 10.5, 0], { kind: 'beacon' });
   return b;
 }
 
@@ -443,61 +577,96 @@ export function enrichCentrifuge(): ModelBuilder {
 }
 
 export function enrichLaser(): ModelBuilder {
+  // Laser isotope separation: a sleek separator hall fed by an open optics
+  // bench where the tuned beam zig-zags between mirrors.
   const b = new ModelBuilder();
   const m = materials();
+  const beamMat = glow(m.glowPlasma);
+  const cy = glow(m.glowCyan);
+  const mir = mirror(m);
   slab(b, 16, 12, m.concrete);
-  roofed(b, m, 9.6, 5.0, 8.0, m.cladGrey, [-2.4, -0.6], m.steelDark);
-  // Laser beam lines visible through a long window
-  b.box(8.8, 0.9, 0.06, m.glass, [-2.4, 2.6, 3.42]);
-  const beam = glow(m.glowPlasma);
-  for (let i = 0; i < 3; i++) b.part(new THREE.BoxGeometry(8.2, 0.05, 0.05), beam, [-2.4, 2.3 + i * 0.3, 3.3], { kind: 'pulse', speed: 7 + i, material: beam });
-  // Chillers and a separation vacuum vessel
-  for (let i = 0; i < 3; i++) roofed(b, m, 1.6, 1.4, 1.6, m.cladWhite, [5.0, -3.6 + i * 2.2]);
-  b.cyl(1.0, 1.0, 3.2, m.steel, [5.2, 0.25, 3.6], 18);
-  b.dome(1.0, m.steel, [5.2, 3.45, 3.6], 0.5, 16);
+  taper(b, m.paintWhite, 10.0, 8.4, 6.6, 0.7, [-2.6, 0.25, -1.2]);
+  taper(b, m.glass, 10.0, 8.4, 6.6, 0.7, [-2.6, 0.25, -1.2], 3.0, 5.0, 0.12);
+  b.box(6.6, 0.3, 5.4, m.steelDark, [-2.6, 6.85, -1.2]);
+  seam(b, cy, 9.0, [-2.6, 1.6, 2.86]);
+  // Optics bench
+  b.box(3.4, 0.9, 9.4, m.paintWhite, [5.9, 0.25, 0.4]);
+  b.box(1.4, 0.9, 0.9, m.paintWhite, [5.9, 1.15, 4.6]);
+  b.part(new THREE.SphereGeometry(0.18, 12, 8), beamMat, [5.9, 1.6, 4.1], { kind: 'pulse', speed: 7, material: beamMat });
+  const pts: Vec3[] = [[5.9, 1.6, 4.1], [7.2, 1.6, 3.0], [4.6, 1.6, 1.4], [7.2, 1.6, -0.2], [4.6, 1.6, -1.8], [7.2, 1.6, -3.4], [2.3, 1.6, -3.4]];
+  for (let i = 0; i < pts.length - 1; i++) beam(b, beamMat, pts[i], pts[i + 1], 0.07, 7 + i * 0.4);
+  for (const p of pts.slice(1, -1)) {
+    b.cyl(0.1, 0.12, 0.5, m.steel, [p[0], 1.15, p[2]], 10);
+    b.box(0.5, 0.5, 0.08, mir, [p[0], 1.35, p[2]]);
+  }
+  // Guard rails around the bench
+  for (const x of [4.15, 7.65]) b.box(0.06, 0.06, 9.2, m.steel, [x, 2.2, 0.4]);
+  // Separator vessel with a violet band
+  b.cyl(1.1, 1.1, 5.0, m.paintWhite, [-6.2, 0.25, 4.3], 28);
+  b.dome(1.1, m.paintWhite, [-6.2, 5.25, 4.3], 0.45, 24);
+  b.part(new THREE.CylinderGeometry(1.12, 1.12, 0.25, 28, 1, true), beamMat, [-6.2, 3.6, 4.3], { kind: 'glow', material: beamMat });
+  b.pipe([-6.2, 2.0, 3.2], [-6.2, 2.0, 2.4], 0.25, m.pipeWhite, 12);
   return b;
 }
 
 export function fabAuto(): ModelBuilder {
+  // Robotic fuel fabrication: an open, lit production bay where two robot
+  // arms tend the sintering furnace and the conveyor of fuel assemblies.
   const b = new ModelBuilder();
   const m = materials();
-  slab(b, 16, 12, m.concrete);
-  roofed(b, m, 13.6, 5.4, 7.4, m.cladWhite, [0, -1.6], m.cladBlue);
-  b.box(12.8, 1.0, 0.06, m.glass, [0, 3.8, 2.12]);
-  // Sintering furnace glow and a robot arm swinging inside the window
+  const cy = glow(m.glowCyan);
   const furnace = glow(m.glowOrange);
-  b.part(new THREE.BoxGeometry(3.0, 0.5, 0.1), furnace, [-3.6, 3.7, 2.0], { kind: 'pulse', speed: 2, material: furnace });
-  const arm = new THREE.Group();
-  const a1 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.2, 0.2), m.paintYellow);
-  a1.position.y = 0.6;
-  const a2 = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.16, 0.16), m.paintYellow);
-  a2.position.set(0.45, 1.2, 0);
-  arm.add(a1, a2);
-  arm.position.set(2.2, 3.2, 1.9);
-  b.partGroup(arm, { kind: 'rock', axis: 'y', speed: 1.4 });
-  // Loading dock with fuel containers
-  for (let i = 0; i < 3; i++) b.box(1.2, 1.0, 2.0, m.paintYellow, [-4 + i * 1.6, 0.25, 4.4]);
-  b.box(1.8, 2.4, 0.06, m.hazard, [4.2, 0.25, 2.12]);
-  stack(b, 6.6, -4.8, 8.5, 0.28);
+  slab(b, 16, 12, m.concrete);
+  taper(b, m.paintWhite, 14.6, 6.0, 6.4, 0.78, [0, 0.25, -2.6]);
+  taper(b, m.glass, 14.6, 6.0, 6.4, 0.78, [0, 0.25, -2.6], 3.6, 5.2, 0.12);
+  b.box(11.0, 0.3, 4.4, m.steelDark, [0, 6.65, -2.6]);
+  // Production bay under a canopy
+  b.box(14.4, 0.4, 4.6, m.concreteDark, [0, 0.25, 2.8]);
+  for (const x of [-6.9, 6.9]) for (const zz of [0.7, 4.9]) b.box(0.24, 3.9, 0.24, m.paintWhite, [x, 0.65, zz]);
+  b.box(14.6, 0.3, 4.9, m.paintWhite, [0, 4.55, 2.8]);
+  seam(b, cy, 14.4, [0, 4.5, 5.27]);
+  // Conveyor with fuel assemblies
+  b.box(12.4, 0.55, 0.9, m.steelDark, [0, 0.65, 3.9]);
+  b.part(new THREE.BoxGeometry(12.2, 0.04, 0.12), cy, [0, 1.22, 4.4], { kind: 'pulse', speed: 2, material: cy });
+  for (let i = 0; i < 5; i++) b.box(1.5, 0.3, 0.3, m.steel, [-4.6 + i * 2.4, 1.2, 3.9]);
+  // Sintering furnace
+  b.box(3.0, 2.4, 1.6, m.cladGrey, [-4.6, 0.65, 1.7]);
+  b.part(new THREE.BoxGeometry(2.2, 0.9, 0.06), furnace, [-4.6, 1.8, 2.53], { kind: 'pulse', speed: 2, material: furnace });
+  robotArm(b, m, -0.6, 0.65, 2.2, 1.1, 0);
+  robotArm(b, m, 3.6, 0.65, 2.2, 1.1, 1.7);
+  // Exhaust vent
+  b.cyl(0.32, 0.5, 9.5, m.paintWhite, [6.8, 0.25, -4.8], 20);
+  b.part(new THREE.CylinderGeometry(0.38, 0.38, 0.25, 20, 1, true), cy, [6.8, 8.6, -4.8], { kind: 'glow', material: cy });
   return b;
 }
 
 export function qaAuto(): ModelBuilder {
+  // Automated inspection: assemblies slide through a spinning ring scanner.
   const b = new ModelBuilder();
   const m = materials();
-  slab(b, 12, 8, m.concrete);
-  roofed(b, m, 8.0, 3.4, 5.0, m.facade, [-1.2, -0.6], m.paintWhite);
-  // Scanner gantry with a sweeping beam
-  b.box(0.3, 2.6, 0.3, m.steel, [4.0, 0.25, -1.6]);
-  b.box(0.3, 2.6, 0.3, m.steel, [4.0, 0.25, 1.6]);
-  b.box(0.4, 0.4, 3.6, m.paintWhite, [4.0, 2.85, 0]);
+  const cy = glow(m.glowCyan);
   const scan = glow(m.ledGreen);
-  const beam = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.4, 0.06), scan);
-  beam.position.set(4.0, 1.6, 0);
-  const g = new THREE.Group();
-  g.add(beam);
-  b.partGroup(g, { kind: 'bob', speed: 1.6 });
-  for (let i = 0; i < 4; i++) b.box(0.5, 0.3, 3.2, m.steel, [-4.4 + i * 0.7, 0.25, 3.0]);
+  slab(b, 12, 8, m.concrete);
+  taper(b, m.paintWhite, 7.2, 5.6, 3.8, 0.8, [-2.2, 0.25, -0.6]);
+  taper(b, m.glass, 7.2, 5.6, 3.8, 0.8, [-2.2, 0.25, -0.6], 1.3, 2.8, 0.1);
+  seam(b, cy, 6.4, [-2.2, 1.05, 2.12]);
+  // Assembly on rollers through the ring
+  for (const zz of [-2.4, 2.4]) b.box(0.6, 1.4, 0.4, m.steelDark, [3.4, 0.25, zz]);
+  b.box(0.36, 0.36, 6.6, m.steel, [3.4, 1.65, 0]);
+  // Ring scanner: white ring, spinning lit inner ring and sweep beam
+  for (const dx of [-0.9, 0.9]) b.box(0.4, 0.9, 0.9, m.paintWhite, [3.4 + dx, 0.25, 0]);
+  b.torus(1.6, 0.3, m.paintWhite, [3.4, 2.4, 0], [0, Math.PI / 2, 0], 40);
+  const ring = new THREE.Group();
+  const inner = new THREE.Mesh(new THREE.TorusGeometry(1.25, 0.06, 8, 40), cy);
+  const sweep = new THREE.Mesh(new THREE.BoxGeometry(0.04, 2.5, 0.04), scan);
+  ring.add(inner, sweep);
+  ring.rotation.y = Math.PI / 2;
+  const holder = new THREE.Group();
+  holder.add(ring);
+  holder.position.set(3.4, 2.4, 0);
+  b.partGroup(holder, { kind: 'spin', axis: 'x', speed: 2.4 });
+  b.part(new THREE.BoxGeometry(0.1, 0.1, 0.1), cy, [3.4, 4.1, 0], { kind: 'pulse', speed: 2, material: cy });
+  b.height = Math.max(b.height, 4.3);
   return b;
 }
 
@@ -524,24 +693,35 @@ export function fuelVault(): ModelBuilder {
 }
 
 export function spentVault(): ModelBuilder {
+  // Deep geological repository: a terraced earth berm with a lit monolith
+  // portal, a cask on its rail and sleek ventilation pylons.
   const b = new ModelBuilder();
   const m = materials();
+  const cy = glow(m.glowCyan);
   slab(b, 16, 12, m.gravel);
-  // Portal into the hillside: a sloped earth mound with a concrete tunnel mouth
-  b.add(new THREE.CylinderGeometry(4.2, 6.4, 3.4, 6, 1), m.concreteWarm, [-1.6, 1.95, -1.4], [0, Math.PI / 6, 0], [1.2, 1, 0.8]);
-  b.box(4.0, 3.0, 1.6, m.concrete, [-1.6, 0.25, 2.6]);
-  b.box(2.6, 2.2, 0.06, m.rubber, [-1.6, 0.25, 3.42]);
-  b.box(3.0, 0.3, 0.1, m.hazard, [-1.6, 2.6, 3.44]);
-  // Rail into the tunnel with a shielded transfer cask
-  for (const dx of [-0.5, 0.5]) b.box(0.08, 0.1, 4.6, m.steel, [-1.6 + dx, 0.25, 5.2]);
-  b.cyl(0.7, 0.7, 1.8, m.paintWhite, [-1.6, 1.0, 4.8], 18, [Math.PI / 2, 0, 0]);
-  // Ventilation shafts and the surface handling building
-  for (const x of [-4.8, 1.6]) {
-    b.cyl(0.45, 0.45, 4.6, m.concreteDark, [x, 0.25, -4.2], 14);
-    b.emit({ pos: [x, 4.9, -4.2], radius: 0.3, rate: 0.08, size: 0.7, kind: 'vapor' });
+  b.box(12.0, 1.2, 8.0, m.concreteWarm, [-1.4, 0.25, -1.6]);
+  b.box(10.0, 1.2, 6.6, m.concreteWarm, [-1.4, 1.45, -1.9]);
+  b.box(7.6, 1.0, 5.0, m.concreteWarm, [-1.4, 2.65, -2.2]);
+  // Monolith portal with a glowing door frame
+  taper(b, m.concrete, 5.4, 2.4, 4.6, 0.72, [-1.4, 0.25, 3.0]);
+  b.box(2.4, 2.6, 0.1, m.steelDark, [-1.4, 0.25, 4.22]);
+  beam(b, cy, [-2.75, 0.3, 4.3], [-2.75, 3.0, 4.3], 0.12, 1.4);
+  beam(b, cy, [-0.05, 0.3, 4.3], [-0.05, 3.0, 4.3], 0.12, 1.4);
+  beam(b, cy, [-2.75, 3.0, 4.3], [-0.05, 3.0, 4.3], 0.12, 1.4);
+  // Rail and a shielded transfer cask
+  for (const dx of [-0.5, 0.5]) b.box(0.08, 0.1, 1.6, m.steel, [-1.4 + dx, 0.25, 5.1]);
+  b.cyl(0.65, 0.65, 1.6, m.paintWhite, [-1.4, 1.0, 5.1], 20, [Math.PI / 2, 0, 0]);
+  b.part(new THREE.TorusGeometry(0.67, 0.05, 6, 24), cy, [-1.4, 1.0, 5.1], { kind: 'pulse', speed: 1.4, material: cy }, [0, 0, 0]);
+  // Ventilation pylons
+  for (const x of [-6.6, 3.8]) {
+    b.cyl(0.35, 0.75, 6.0, m.paintWhite, [x, 0.25, -4.8], 6);
+    b.part(new THREE.CylinderGeometry(0.4, 0.4, 0.25, 6, 1, true), cy, [x, 5.7, -4.8], { kind: 'glow', material: cy });
+    b.emit({ pos: [x, 6.3, -4.8], radius: 0.3, rate: 0.08, size: 0.7, kind: 'vapor' });
   }
-  roofed(b, m, 3.6, 3.8, 4.4, m.cladGrey, [5.6, 1.6]);
-  lights(b, m, 3.0, 2.4, 3.82, 5.6, 3);
+  // Surface handling building
+  taper(b, m.paintWhite, 3.8, 4.8, 4.2, 0.8, [5.8, 0.25, 1.4]);
+  taper(b, m.glass, 3.8, 4.8, 4.2, 0.8, [5.8, 0.25, 1.4], 1.6, 3.0, 0.1);
+  seam(b, cy, 3.2, [5.8, 1.3, 3.65]);
   return b;
 }
 
@@ -568,40 +748,68 @@ export function substation400(): ModelBuilder {
 }
 
 export function gridSc(): ModelBuilder {
+  // Superconducting link: frosted cryostats and three terminations wrapped in
+  // glowing frost rings, feeding a lit cryogenic cable trench.
   const b = new ModelBuilder();
   const m = materials();
-  slab(b, 12, 8, m.concrete);
-  // Cryogenic plant: LN2 dewars, cold box and the cable terminations
-  for (let i = 0; i < 3; i++) {
-    b.cyl(0.7, 0.7, 4.4, m.paintWhite, [-4.4 + i * 1.6, 0.25, -2.2], 18);
-    b.dome(0.7, m.paintWhite, [-4.4 + i * 1.6, 4.65, -2.2], 0.5, 14);
-  }
-  roofed(b, m, 4.2, 3.0, 3.0, m.cladBlue, [1.8, -1.8]);
+  const cy = glow(m.glowCyan);
   const frost = glow(m.glowCyan);
+  slab(b, 12, 8, m.concrete);
   for (let i = 0; i < 3; i++) {
-    b.cyl(0.3, 0.3, 2.4, m.steel, [-2 + i * 2, 0.25, 2.4], 14);
-    b.part(new THREE.TorusGeometry(0.34, 0.06, 8, 20), frost, [-2 + i * 2, 1.6, 2.4], { kind: 'pulse', speed: 2 + i * 0.5, material: frost }, [Math.PI / 2, 0, 0]);
-    b.pipe([-2 + i * 2, 0.4, 2.4], [-2 + i * 2, 0.4, 3.9], 0.18, m.steelDark);
+    const x = -4.4 + i * 1.6;
+    b.cyl(0.7, 0.7, 4.4, m.paintWhite, [x, 0.25, -2.2], 20);
+    b.dome(0.7, m.paintWhite, [x, 4.65, -2.2], 0.5, 16);
+    for (const y of [1.4, 3.2]) b.part(new THREE.CylinderGeometry(0.72, 0.72, 0.16, 20, 1, true), frost, [x, y, -2.2], { kind: 'pulse', speed: 1.5 + i * 0.3, material: frost });
+    b.emit({ pos: [x, 5.0, -2.2], radius: 0.3, rate: 0.15, size: 0.8, kind: 'vapor' });
   }
-  b.emit({ pos: [-4.4, 5.0, -2.2], radius: 0.3, rate: 0.2, size: 0.8, kind: 'vapor' });
+  taper(b, m.paintWhite, 4.6, 3.4, 3.4, 0.78, [2.8, 0.25, -1.6]);
+  taper(b, m.glass, 4.6, 3.4, 3.4, 0.78, [2.8, 0.25, -1.6], 1.2, 2.4, 0.1);
+  seam(b, cy, 4.0, [2.8, 0.85, 0.1]);
+  b.pipe([-3.7, 3.0, -2.2], [0.5, 3.0, -2.2], 0.16, m.pipeWhite, 10);
+  // Cable terminations with stacked frost rings
+  for (let i = 0; i < 3; i++) {
+    const x = -2 + i * 2;
+    b.cyl(0.28, 0.4, 3.6, m.steel, [x, 0.25, 2.2], 16);
+    for (let k = 0; k < 4; k++) b.part(new THREE.TorusGeometry(0.46 - k * 0.03, 0.06, 8, 24), frost, [x, 1.0 + k * 0.75, 2.2], { kind: 'pulse', speed: 2 + i * 0.4, material: frost }, [Math.PI / 2, 0, 0]);
+    b.part(new THREE.SphereGeometry(0.22, 12, 8), cy, [x, 4.0, 2.2], { kind: 'glow', material: cy });
+    b.pipe([x, 0.45, 2.2], [x, 0.45, 3.4], 0.16, m.steelDark, 10);
+    b.emit({ pos: [x, 1.0, 2.2], radius: 0.4, rate: 0.06, size: 0.6, kind: 'vapor' });
+  }
+  // Cryogenic cable trench
+  b.box(10.8, 0.14, 0.7, m.steelDark, [0, 0.25, 3.4]);
+  b.part(new THREE.BoxGeometry(10.6, 0.04, 0.22), cy, [0, 0.41, 3.4], { kind: 'pulse', speed: 1.2, material: cy });
   return b;
 }
 
 export function storageThermal(): ModelBuilder {
+  // Molten-salt storage: an insulated hot tank streaked with glowing seams,
+  // a cold tank and a sleek capsule steam generator.
   const b = new ModelBuilder();
   const m = materials();
-  slab(b, 12, 12, m.concrete);
-  // Hot tank (glowing seam) and cold tank
-  b.cyl(2.4, 2.4, 5.2, m.steel, [-2.6, 0.25, -1.6], 32);
-  b.dome(2.4, m.steel, [-2.6, 5.45, -1.6], 0.25, 28);
   const hot = glow(m.glowOrange);
-  b.part(new THREE.CylinderGeometry(2.42, 2.42, 0.18, 32, 1, true), hot, [-2.6, 4.2, -1.6], { kind: 'glow', material: hot });
-  b.cyl(2.2, 2.2, 4.4, m.cladWhite, [2.6, 0.25, -1.6], 32);
-  b.dome(2.2, m.cladWhite, [2.6, 4.65, -1.6], 0.25, 28);
-  b.pipe([-0.2, 1.4, -1.6], [0.4, 1.4, -1.6], 0.3, m.pipeWhite);
-  // Steam generator train and turbine
-  roofed(b, m, 8.0, 2.8, 2.6, m.cladGrey, [0, 3.8]);
-  b.cyl(0.4, 0.4, 3.0, m.paintRed, [-3.0, 3.3, 3.8], 14, [0, 0, Math.PI / 2]);
+  const cy = glow(m.glowCyan);
+  slab(b, 12, 12, m.concrete);
+  b.cyl(2.4, 2.5, 6.2, m.steelDark, [-2.6, 0.25, -1.6], 36);
+  b.dome(2.4, m.steelDark, [-2.6, 6.45, -1.6], 0.22, 32);
+  for (let k = 0; k < 8; k++) {
+    const a = (k / 8) * Math.PI * 2 + 0.2;
+    b.part(new THREE.BoxGeometry(0.12, 5.2, 0.12), hot, [-2.6 + Math.cos(a) * 2.47, 3.4, -1.6 + Math.sin(a) * 2.47], { kind: 'pulse', speed: 1.6, material: hot });
+  }
+  b.part(new THREE.CylinderGeometry(2.5, 2.5, 0.25, 36, 1, true), hot, [-2.6, 5.9, -1.6], { kind: 'glow', material: hot });
+  b.cyl(2.2, 2.25, 5.0, m.paintWhite, [2.6, 0.25, -1.6], 36);
+  b.dome(2.2, m.paintWhite, [2.6, 5.25, -1.6], 0.22, 32);
+  b.part(new THREE.CylinderGeometry(2.27, 2.27, 0.22, 36, 1, true), cy, [2.6, 4.6, -1.6], { kind: 'glow', material: cy });
+  b.pipe([-0.2, 1.4, -1.6], [0.45, 1.4, -1.6], 0.32, m.pipeWhite, 14);
+  b.pipe([-0.2, 4.0, -1.6], [0.45, 4.0, -1.6], 0.22, m.pipeWhite, 14);
+  // Capsule steam generator and pipes from both tanks
+  const y = 1.6, z = 3.9;
+  b.cyl(0.9, 0.9, 6.0, m.paintWhite, [0, y, z], 28, [0, 0, Math.PI / 2]);
+  for (const dx of [-3.0, 3.0]) b.add(new THREE.SphereGeometry(0.9, 20, 12), m.paintWhite, [dx, y, z]);
+  for (const x of [-1.5, 0, 1.5]) b.part(new THREE.TorusGeometry(0.92, 0.06, 8, 28), x < 0 ? hot : cy, [x, y, z], { kind: 'pulse', speed: 2, material: x < 0 ? hot : cy }, [0, Math.PI / 2, 0]);
+  for (const x of [-2.2, 2.2]) b.box(0.5, 0.75, 1.2, m.steelDark, [x, 0.25, z]);
+  b.pipe([-2.6, 1.6, 0.9], [-2.6, 1.6, 3.0], 0.25, m.pipeWhite, 12);
+  b.pipe([2.6, 1.6, 0.6], [2.6, 1.6, 3.0], 0.25, m.pipeWhite, 12);
+  b.emit({ pos: [-2.6, 6.9, -1.6], radius: 0.8, rate: 0.06, size: 1.0, kind: 'vapor' });
   return b;
 }
 
@@ -727,26 +935,39 @@ export function researchCampus(): ModelBuilder {
 }
 
 export function roboticsDepot(): ModelBuilder {
+  // Robotic maintenance hub: a ribbed white drone hangar with a lit portal,
+  // a robot arm out front and two pads with hovering drones.
   const b = new ModelBuilder();
   const m = materials();
+  const cy = glow(m.glowCyan);
   slab(b, 12, 8, m.concrete);
-  roofed(b, m, 7.0, 3.6, 5.6, m.cladGrey, [-1.8, -0.6]);
-  for (let i = 0; i < 3; i++) b.box(1.6, 2.6, 0.06, m.hazard, [-4.0 + i * 2.2, 0.25, 2.22]);
-  // Drone landing pads with hovering drones
-  for (const z of [-2.0, 1.4]) {
-    b.cyl(0.9, 0.9, 0.08, m.paintYellow, [3.8, 0.25, z], 20);
+  const hx = -1.6, hz = -0.8, r = 3.0, len = 7.0;
+  b.add(new THREE.CylinderGeometry(r, r, len, 32, 1, false, 0, Math.PI), m.paintWhite, [hx, 0.25, hz], [0, 0, Math.PI / 2]);
+  b.add(new THREE.CircleGeometry(r - 0.05, 32, 0, Math.PI), m.glass, [hx + len / 2 + 0.02, 0.25, hz], [0, Math.PI / 2, 0]);
+  b.add(new THREE.CircleGeometry(r - 0.05, 32, 0, Math.PI), m.paintWhite, [hx - len / 2 - 0.02, 0.25, hz], [0, -Math.PI / 2, 0]);
+  for (const dx of [-2.4, -0.8, 0.8, 2.4]) b.torus(r + 0.03, 0.07, m.steelDark, [hx + dx, 0.25, hz], [0, Math.PI / 2, 0], 32, Math.PI);
+  b.part(new THREE.TorusGeometry(r - 0.1, 0.09, 8, 36, Math.PI), cy, [hx + len / 2 + 0.06, 0.25, hz], { kind: 'pulse', speed: 1.4, material: cy }, [0, Math.PI / 2, 0]);
+  b.height = Math.max(b.height, 0.25 + r);
+  robotArm(b, m, -1.0, 0.25, 3.0, 0.9, 0.5);
+  // Drone pads with hovering drones
+  for (const [zz, ph] of [[-2.0, 0], [1.8, 2]] as [number, number][]) {
+    b.cyl(1.1, 1.1, 0.1, m.steelDark, [4.2, 0.25, zz], 24);
+    b.part(new THREE.TorusGeometry(0.95, 0.05, 6, 28), cy, [4.2, 0.37, zz], { kind: 'pulse', speed: 2, material: cy }, [Math.PI / 2, 0, 0]);
     const d = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.15, 0.5), m.steelDark);
-    d.add(body);
-    for (const [x, zz] of [[-0.35, -0.35], [0.35, -0.35], [-0.35, 0.35], [0.35, 0.35]]) {
-      const rot = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.02, 10), m.steel);
-      rot.position.set(x, 0.1, zz);
-      d.add(rot);
+    d.add(new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.16, 0.55), m.paintWhite));
+    for (const [x, z2] of [[-0.38, -0.38], [0.38, -0.38], [-0.38, 0.38], [0.38, 0.38]]) {
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.025, 6, 16), m.steelDark);
+      ring.rotation.x = Math.PI / 2;
+      ring.position.set(x, 0.06, z2);
+      d.add(ring);
     }
-    d.position.set(3.8, 1.6, z);
-    b.partGroup(d, { kind: 'spin', axis: 'y', speed: 0.6 });
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 6), m.glowCyan);
+    eye.position.set(0.28, -0.02, 0);
+    d.add(eye);
+    d.scale.setScalar(1.7);
+    d.position.set(4.2, 1.9, zz);
+    b.partGroup(d, { kind: 'float', speed: 1.3, phase: ph });
   }
-  b.height = Math.max(b.height, 2);
   return b;
 }
 
