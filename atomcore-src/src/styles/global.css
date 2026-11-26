@@ -379,7 +379,19 @@ table.pl tr.big td { font-size: 15px; }
 .btag span { display: none; color: #eef3f8; padding-right: 4px; }
 .btag.full { padding: 3px 6px 3px 5px; }
 .btag.full span { display: inline; }
-.btag::after { content: ''; position: absolute; left: 50%; bottom: -5px; width: 6px; height: 6px; background: var(--tag); transform: translateX(-50%) rotate(45deg); border-radius: 1px; opacity: 0.9; z-index: -1; }
+.btag em { font-style: normal; margin-left: 5px; color: var(--mt, #9fb0c0); font-weight: 750; }
+.btag em:empty { display: none; }
+.btag i { position: absolute; left: 4px; right: 4px; bottom: -7px; height: 4px; border-radius: 3px; background: rgba(10,16,24,0.85); overflow: hidden; box-shadow: 0 0 0 1px rgba(0,0,0,0.4); }
+.btag i b { display: block; height: 100%; width: 0; background: var(--mt, #9fb0c0); border-radius: 3px; transition: width .4s linear; }
+.btag[data-tone='ok'] { --mt: #5be08a; }
+.btag[data-tone='warn'] { --mt: #ffc94d; }
+.btag[data-tone='bad'] { --mt: #ff5b5b; }
+.btag[data-tone='bad'] i { animation: meterBlink 1s ease-in-out infinite; }
+.btag[data-tone='info'] { --mt: #5cc8ff; }
+.btag[data-tone='idle'] { --mt: #7d8a97; }
+.btag[data-tone='build'] { --mt: #ffb35c; }
+@keyframes meterBlink { 50% { opacity: 0.35; } }
+.btag::after { content: ''; position: absolute; left: 50%; bottom: -5px; display: none; width: 6px; height: 6px; background: var(--tag); transform: translateX(-50%) rotate(45deg); border-radius: 1px; opacity: 0.9; z-index: -1; }
 .cam-btn.on { color: var(--accent); border-color: var(--accent); }
 .cam-btn { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); display: grid; place-items: center; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
 .app:has(.sheet) .camera-buttons { display: none; }

@@ -20,6 +20,12 @@ import { solvePlant, gridSide, stepCables, GRID_TIE, KIND_LABEL, endpointName, t
 /** Battery-backed emergency feedwater lasts ≈ 6 game hours. */
 export const BATTERY_SECONDS = 60;
 
+/** Live per-building readings for the map meters (not saved): site id → building id → value.
+ *  `load`: share of capacity in use (turbines, cooling, switchyards) or reactor power;
+ *  `heat`: reactor temperature as a share of its trip limit. */
+export const liveLoad = new Map<string, Map<number, number>>();
+export const liveHeat = new Map<string, Map<number, number>>();
+
 export function emptyStats(): SiteStats {
   return {
     thermalMW: 0, industryMW: 0, importMW: 0, h2MW: 0, industryIncome: 0, steamCapMW: 0, steamUsedMW: 0, electricMW: 0, exportMW: 0, gridCapMW: 0, coolingCapMW: 0,
@@ -331,6 +337,14 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
     };
     for (const b of reactors) if (b.status !== 'destroyed') netIn.thermal.set(b.id, b.reactor!.thermal);
     const nw = solvePlant(site, netIn);
+    const loads = new Map(nw.load);
+    for (const b of site.buildings) {
+      const g = BUILDINGS[b.type].stats.gridMW;
+      if (g && isOperating(b)) loads.set(b.id, (nw.through.get(b.id) ?? 0) / Math.max(1, stat(b, 'gridMW')));
+    }
+    const heats = new Map<number, number>();
+    liveLoad.set(site.id, loads);
+    liveHeat.set(site.id, heats);
     const steamUsed = nw.steamUsed;
     const cycleEff = nw.cycleEff;
     const heatReject = nw.heatReject;
@@ -404,6 +418,8 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
       }
       const frac = (r.temp - ambient) / Math.max(1, (BUILDINGS[b.type].reactor!.nominalTemp - ambient) * (1.18 + mods.tripMargin));
       if (frac > maxTempFrac) maxTempFrac = frac;
+      heats.set(b.id, frac);
+      loads.set(b.id, r.scrammed ? 0 : r.power);
       fines += stepFuelIntegrity(s, site, b, dt, offline);
       if (!r.scrammed && r.power > 0.02 && b.status === 'active') online++;
     }

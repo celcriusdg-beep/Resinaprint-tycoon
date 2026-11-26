@@ -9,6 +9,7 @@ import { CELL } from '../../game/constants';
 import type { BuildingCategory } from '../../game/types';
 import { Icon, type IconName } from '../ui/Icons';
 import { labelAnchors } from './sceneRegistry';
+import { buildingMeter, meterContext } from '../../game/meters';
 
 // Floating building tags. A DOM layer over the canvas holds one tag per
 // building; a projector inside the canvas moves them every frame. A tag shows
@@ -48,7 +49,8 @@ export function LabelLayer() {
             ref={(el) => { if (el) tags.set(b.id, el); else tags.delete(b.id); }}
           >
             <Icon name={c.icon} size={13} />
-            <span>{def.short}</span>
+            <span>{def.short}<em /></span>
+            <i><b /></i>
           </div>
         );
       })}
@@ -63,10 +65,20 @@ interface Slot { el: HTMLDivElement; x: number; y: number; px: number; w: number
 export function LabelProjector() {
   const { camera, size } = useThree();
   const on = useSettings((s) => s.showLabels);
-  useFrame(() => {
+  useFrame((state) => {
     if (!on) return;
     const g = useGameStore.getState().game;
     const site = g.sites[g.activeSite];
+    // Gauges change slowly: refresh them a few times a second.
+    const t = state.clock.elapsedTime;
+    if (t - meterAt >= 0.4) {
+      meterAt = t;
+      const ctx = meterContext(g);
+      for (const b of site.buildings) {
+        const el = tags.get(b.id);
+        if (el) paintMeter(el, buildingMeter(g, site, b, ctx));
+      }
+    }
     const ui = useUI.getState();
     const fov = ((camera as THREE.PerspectiveCamera).fov * Math.PI) / 180;
     const slots: Slot[] = [];
@@ -85,7 +97,7 @@ export function LabelProjector() {
         el, px,
         x: (v.x * 0.5 + 0.5) * size.width,
         y: (-v.y * 0.5 + 0.5) * size.height,
-        w: 30 + def.short.length * 6.6,
+        w: 62 + def.short.length * 6.6,
         pri: ORDER.indexOf(def.category) * 1000 - px,
       });
     }
@@ -95,8 +107,8 @@ export function LabelProjector() {
     const placed: [number, number, number, number][] = [];
     const free = (r: [number, number, number, number]) => !placed.some((p) => r[0] < p[2] && r[2] > p[0] && r[1] < p[3] && r[3] > p[1]);
     for (const s of slots) {
-      const name: [number, number, number, number] = [s.x - s.w / 2, s.y - 24, s.x + s.w / 2, s.y];
-      const icon: [number, number, number, number] = [s.x - 11, s.y - 24, s.x + 11, s.y];
+      const name: [number, number, number, number] = [s.x - s.w / 2, s.y - 26, s.x + s.w / 2, s.y + 8];
+      const icon: [number, number, number, number] = [s.x - 11, s.y - 26, s.x + 11, s.y + 8];
       let mode = 'none';
       if (s.px >= 46 && free(name)) { mode = 'full'; placed.push(name); }
       else if (free(icon)) { mode = 'icon'; placed.push(icon); }
@@ -105,11 +117,32 @@ export function LabelProjector() {
       if (last.get(s.el) === key) continue;
       last.set(s.el, key);
       s.el.style.display = '';
-      s.el.style.transform = `translate(${Math.round(s.x)}px, ${Math.round(s.y)}px) translate(-50%, -100%)`;
+      s.el.style.transform = `translate(${Math.round(s.x)}px, ${Math.round(s.y)}px) translate(-50%, calc(-100% - 6px))`;
       s.el.classList.toggle('full', mode === 'full');
     }
   });
   return null;
+}
+
+let meterAt = -1;
+
+function paintMeter(el: HTMLDivElement, mt: ReturnType<typeof buildingMeter>) {
+  const key = mt ? `${mt.tone}|${mt.text}|${Math.round(mt.value * 50)}` : '-';
+  if (el.dataset.m === key) return;
+  el.dataset.m = key;
+  const bar = el.querySelector('i') as HTMLElement;
+  const fill = bar.firstChild as HTMLElement;
+  const pctEl = el.querySelector('em') as HTMLElement;
+  if (!mt) {
+    bar.style.display = 'none';
+    pctEl.textContent = '';
+    el.removeAttribute('data-tone');
+    return;
+  }
+  bar.style.display = '';
+  fill.style.width = `${Math.round(mt.value * 100)}%`;
+  pctEl.textContent = mt.text;
+  el.dataset.tone = mt.tone;
 }
 
 // Last written state per tag element, so unchanged tags cost nothing.

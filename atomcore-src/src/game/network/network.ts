@@ -506,6 +506,10 @@ export interface PlantNetResult extends GridSide {
   stranded: number;
   steamCapConnected: number;
   coolCapConnected: number;
+  /** Turbine halls and cooling units: share of their capacity in use (0..1). */
+  load: Map<number, number>;
+  /** Power passing through each building's cable connections, MW(e). */
+  through: Map<number, number>;
 }
 
 function findRoot(p: Map<number, number>, x: number): number {
@@ -541,6 +545,7 @@ export function solvePlant(site: Site, inp: PlantNetInput): PlantNetResult {
     const tn = new Map<number, number>();
     const cn = new Map<number, number>();
     const src = new Map<number, number>();
+    const sink = new Map<number, number>();
     for (const id of turbIds) {
       const n = f.node();
       tn.set(id, n);
@@ -550,7 +555,7 @@ export function solvePlant(site: Site, inp: PlantNetInput): PlantNetResult {
     for (const [id, cap] of inp.coolCap) {
       const n = f.node();
       cn.set(id, n);
-      if (cap > 0) f.edge(n, t, cap);
+      if (cap > 0) sink.set(id, f.edge(n, t, cap));
     }
     const edges = new Map<Link, number>();
     for (const l of coolLinks) {
@@ -565,7 +570,7 @@ export function solvePlant(site: Site, inp: PlantNetInput): PlantNetResult {
       edges.set(l, f.edge(tn.get(tb)!, cn.get(c)!, linkRating(l)));
     }
     f.maxflow(s, t);
-    return { f, src, edges };
+    return { f, src, edges, sink };
   };
 
   // ── Steam: reactors → turbine halls ──
@@ -770,6 +775,22 @@ export function solvePlant(site: Site, inp: PlantNetInput): PlantNetResult {
 
   const side = gridSide(site, (id) => id === GRID_TIE || turbIds.has(id) || inp.powerUp.has(id));
 
+  const load = new Map<number, number>();
+  for (const id of turbIds) {
+    const cap = inp.steamCap.get(id) ?? 0;
+    load.set(id, cap > 0 ? (G.get(id) ?? 0) / cap : (H.get(id) ?? 0) > 0 ? 1 : 0);
+  }
+  for (const [id, cap] of inp.coolCap) {
+    const e = actual.sink.get(id);
+    load.set(id, cap > 0 && e !== undefined ? actual.f.flow(e) / cap : 0);
+  }
+  const through = new Map<number, number>();
+  for (const l of powerLinks) {
+    if (!l.flow) continue;
+    through.set(l.a, (through.get(l.a) ?? 0) + l.flow / 2);
+    through.set(l.b, (through.get(l.b) ?? 0) + l.flow / 2);
+  }
+
   let steamCapConnected = 0;
   for (const [id, cap] of inp.steamCap) if (steamLinks.some((l) => (l.a === id || l.b === id) && inp.thermal.has(otherEnd(l, id)))) steamCapConnected += cap;
   let coolCapConnected = 0;
@@ -779,7 +800,7 @@ export function solvePlant(site: Site, inp: PlantNetInput): PlantNetResult {
     reactors, steamUsed, heatToTurbines, strandedHeat: Math.max(0, thermalTotal - heatToTurbines), cycleEff, gross,
     heatReject, heatRejected, coolingMargin, electric, delivered: delivered - cableLoss, cableLoss,
     stranded: Math.max(0, genTotal - delivered), ...side,
-    steamCapConnected, coolCapConnected,
+    steamCapConnected, coolCapConnected, load, through,
   };
 }
 
