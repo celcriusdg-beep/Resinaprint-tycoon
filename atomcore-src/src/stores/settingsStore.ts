@@ -18,6 +18,8 @@ export interface Settings {
   seenTips: string[];
   /** HUD shows every status pill, not only the urgent ones. */
   hudExpanded: boolean;
+  /** Lower the rendering resolution when the frame rate drops. */
+  adaptiveRes: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -33,6 +35,7 @@ export const DEFAULT_SETTINGS: Settings = {
   seenWelcome: false,
   seenTips: [],
   hudExpanded: false,
+  adaptiveRes: true,
 };
 
 interface SettingsStore extends Settings {

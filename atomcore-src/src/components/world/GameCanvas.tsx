@@ -1,7 +1,7 @@
 import { Suspense, useMemo, useState } from 'react';
 import * as THREE from 'three';
 import { Canvas } from '@react-three/fiber';
-import { PerformanceMonitor, AdaptiveDpr, Stats } from '@react-three/drei';
+import { PerformanceMonitor, Stats } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette, SMAA } from '@react-three/postprocessing';
 import { useGameStore } from '../../stores/gameStore';
 import { useSettings, resolveQuality } from '../../stores/settingsStore';
@@ -18,10 +18,14 @@ import { SelectionMarker, ConnectMarkers } from './Overlays';
 import { WeatherFX } from './WeatherFX';
 import { SiteLights, Traffic } from './SiteLife';
 
+// Device pixel ratio range per quality tier, capped at the screen's own ratio.
+const screenDpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+const cap = (lo: number, hi: number): [number, number] => [Math.min(lo, screenDpr), Math.min(hi, screenDpr)];
+
 const QUALITY = {
   low: { dpr: [0.75, 1] as [number, number], shadows: false, shadowSize: 1024, bloom: false, particles: 500, trees: 120, aa: false, weatherFx: 0, traffic: 3 },
-  medium: { dpr: [1, 1.5] as [number, number], shadows: true, shadowSize: 1024, bloom: true, particles: 900, trees: 260, aa: false, weatherFx: 900, traffic: 6 },
-  high: { dpr: [1, 2] as [number, number], shadows: true, shadowSize: 2048, bloom: true, particles: 1500, trees: 420, aa: true, weatherFx: 1500, traffic: 8 },
+  medium: { dpr: cap(1.25, 2), shadows: true, shadowSize: 1024, bloom: true, particles: 900, trees: 260, aa: false, weatherFx: 900, traffic: 6 },
+  high: { dpr: cap(1.5, 2.5), shadows: true, shadowSize: 2048, bloom: true, particles: 1500, trees: 420, aa: true, weatherFx: 1500, traffic: 8 },
 };
 
 function World() {
@@ -58,7 +62,10 @@ export default function GameCanvas() {
   const showFps = useSettings((s) => s.showFps);
   const tier = resolveQuality(quality);
   const q = QUALITY[tier];
+  const adaptive = useSettings((s) => s.adaptiveRes);
   const [dpr, setDpr] = useState(q.dpr[1]);
+  // Fixed resolution when auto-adjust is off (no canvas resizes during play).
+  const usedDpr = adaptive ? dpr : q.dpr[1];
   const glOptions = useMemo(
     () => ({ antialias: !q.bloom, powerPreference: 'high-performance' as const, alpha: false, stencil: false }),
     [q.bloom],
@@ -67,7 +74,7 @@ export default function GameCanvas() {
     <Canvas
       key={tier}
       shadows={q.shadows ? 'soft' : false}
-      dpr={dpr}
+      dpr={usedDpr}
       gl={glOptions}
       camera={{ fov: 40, near: 1, far: 2000, position: [60, 70, 60] }}
       onCreated={(state) => {
@@ -80,16 +87,19 @@ export default function GameCanvas() {
       }}
       style={{ touchAction: 'none' }}
     >
-      <PerformanceMonitor
-        onDecline={() => setDpr((d) => Math.max(q.dpr[0], d - 0.25))}
-        onIncline={() => setDpr((d) => Math.min(q.dpr[1], d + 0.25))}
-      />
-      <AdaptiveDpr pixelated={false} />
+      {adaptive && (
+        // Step the resolution down (or back up) only a few times, then settle:
+        // every change resizes the canvas, and endless flip-flopping flickers.
+        <PerformanceMonitor flipflops={3}
+          onDecline={() => setDpr((d) => Math.max(q.dpr[0], d - 0.25))}
+          onIncline={() => setDpr((d) => Math.min(q.dpr[1], d + 0.25))}
+        />
+      )}
       <Suspense fallback={null}>
         <World />
       </Suspense>
       {q.bloom && (
-        <EffectComposer multisampling={0} enableNormalPass={false}>
+        <EffectComposer multisampling={q.aa ? 4 : 0} enableNormalPass={false}>
           <Bloom mipmapBlur intensity={0.9} luminanceThreshold={1.05} luminanceSmoothing={0.15} radius={0.65} />
           {q.aa ? <SMAA /> : <></>}
           <Vignette eskil={false} offset={0.25} darkness={0.55} />

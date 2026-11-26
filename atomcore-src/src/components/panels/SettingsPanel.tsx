@@ -75,6 +75,8 @@ export function SettingsPanel() {
           tabs={[{ id: 'auto', label: `Auto (${resolveQuality('auto')})` }, { id: 'low', label: 'Low' }, { id: 'medium', label: 'Medium' }, { id: 'high', label: 'High' }]} />
         <div className="muted small">Low: no shadows or bloom (best battery). High: soft shadows, bloom, more particles.</div>
         <Toggle label="Day / night cycle" on={s.dayNight} onChange={(v) => s.set({ dayNight: v })} sub="Lighting follows the in-game day" />
+        <Toggle label="Auto-adjust resolution" on={s.adaptiveRes} onChange={(v) => s.set({ adaptiveRes: v })}
+          sub="Lowers sharpness a little when the frame rate drops. Turn off for a fixed, always-sharp picture (uses more battery)." />
         <Toggle label="Show FPS" on={s.showFps} onChange={(v) => s.set({ showFps: v })} />
         <Toggle label="Vibration feedback" on={s.haptics} onChange={(v) => s.set({ haptics: v })} sub="Where the device supports it" />
       </Section>
