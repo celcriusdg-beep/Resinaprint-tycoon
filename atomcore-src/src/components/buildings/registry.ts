@@ -75,6 +75,9 @@ const BUILDERS: Record<BuildingType, () => ModelBuilder> = {
   research_campus: T.researchCampus,
   robotics_depot: T.roboticsDepot,
   backup_gt: T.backupGasTurbine,
+  fire_station: T.fireStation,
+  emergency_centre: T.emergencyCentre,
+  flood_wall: T.floodWall,
 };
 
 const templates = new Map<BuildingType, ModelData>();

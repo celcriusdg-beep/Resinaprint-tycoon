@@ -1,3 +1,5 @@
+import { RANDOM_INCIDENTS } from '../src/game/accidents/accidents';
+RANDOM_INCIDENTS.on = false; // deterministic: no random incidents
 import { staffUp } from '../src/game/staff/staff';
 import { autoWire } from '../src/game/network/network';
 import { describe, it, expect, beforeEach } from 'vitest';

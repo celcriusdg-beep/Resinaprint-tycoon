@@ -101,6 +101,13 @@ export function migrate(raw: unknown): GameState {
   s.candidates = Array.isArray(s.candidates) ? s.candidates : [];
   // v6 → v7: regulator. Existing reactors keep their (implicit) operating licence.
   for (const site of Object.values(s.sites)) site.reg = { ...newSiteRegulator(s.gameTime), ...(site.reg ?? {}) };
+  // v7 → v8: emergencies and preparedness.
+  for (const site of Object.values(s.sites)) {
+    site.drill = Number.isFinite(site.drill) ? site.drill : 0;
+    site.lastFlood = Number.isFinite(site.lastFlood) ? site.lastFlood : -1e9;
+  }
+  s.emergencies = Array.isArray(s.emergencies) ? s.emergencies : [];
+  s.incidents = Array.isArray(s.incidents) ? s.incidents : [];
   s.regulator.permits = Array.isArray(s.regulator.permits) ? s.regulator.permits : [];
   s.regulator.findings = Array.isArray(s.regulator.findings) ? s.regulator.findings : [];
   s.unlockedSites = s.unlockedSites.filter((id) => s.sites[id]);

@@ -13,6 +13,7 @@ import { acceptOffer as acceptOfferImpl, cancelContract as cancelContractImpl } 
 import { startRefuel, decommissionCost, buyVehicle, sellVehicle, buyItem, sellItem, deliverOrder as deliverOrderImpl, fuelQuotaLeft, shipSpentFuel as shipSpentFuelImpl, type Item } from './supply/fuelcycle';
 import { fuelCapacity } from './simulation/plant';
 import { initWeather } from './weather/weather';
+import { resolveEmergency, runDrill as runDrillImpl } from './accidents/accidents';
 import { grantedPermit, usePermit, applyPermit, licenceBlock, INSPECTION_INTERVAL } from './regulator/regulator';
 import { hire, fire, keyHireFee, KEY_INFO, ROLE_INFO, type Role, type Shift, type KeyRole } from './staff/staff';
 import { linkRepairCost, removeLinksFor, linkProblem, classLockReason, linkCost, routeLength, makeLink, MAX_CIRCUITS, LINK_CLASSES, KIND_LABEL, endpointName, linkLength } from './network/network';
@@ -570,4 +571,23 @@ export function applyForPermit(s: GameState, type: BuildingType): Result {
 export function setCommunity(s: GameState, level: number): Result {
   s.regulator.community = Math.max(0, Math.min(5, Math.round(level)));
   return null;
+}
+
+// ── Emergencies ──────────────────────────────────────────────────────────
+
+export function respondEmergency(s: GameState, id: number, option: string | null): Result {
+  const e = s.emergencies.find((x) => x.id === id);
+  if (!e) return 'That emergency is over.';
+  const n = resolveEmergency(s, id, option);
+  if (n) {
+    pushLog(s, n.kind, `${n.title}: ${n.text}`);
+    s.pendingNotices.push({ kind: n.kind, title: n.title, text: n.text });
+  }
+  return null;
+}
+
+export function runDrill(s: GameState): Result {
+  const err = runDrillImpl(s, s.sites[s.activeSite]);
+  if (!err) pushLog(s, 'good', `Emergency drill held at ${LOCATION_BY_ID[s.activeSite].name}.`);
+  return err;
 }

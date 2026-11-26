@@ -15,6 +15,7 @@ import { LOCATIONS, expandCost, LOCATION_BY_ID } from '../src/game/progression/l
 import { clearModCache, getMods } from '../src/game/simulation/modifiers';
 import type { BuildingType, GameState } from '../src/game/types';
 import { licenceChecklist, REGULATOR_OFF } from '../src/game/regulator/regulator';
+import { EMERGENCIES } from '../src/game/accidents/accidents';
 import { autoWire, linkRating, suggestClass, linkLength, LINK_CLASSES } from '../src/game/network/network';
 
 // The bot wires new buildings to their nearest partners and resizes links that run full.
@@ -65,6 +66,8 @@ function botStep(s: GameState) {
   for (const k of ['autoFuel', 'autoRefuel', 'autoRestart', 'autoRepair', 'loadFollow', 'smartStorage'] as const) A.setAutomation(s, k, true);
   if (s.fuel < fuelCapacity(s) * 0.4) A.buyFuel(s, 1e9);
   for (const o of s.daily.objectives) A.claimDaily(s, o.id);
+  // A competent operator: answer every alarm with the first (textbook) response.
+  for (const e of s.emergencies.filter((x) => x.started <= s.gameTime)) A.respondEmergency(s, e.id, EMERGENCIES[e.kind].options[0].id);
   // Sites
   for (const loc of LOCATIONS) if (!s.unlockedSites.includes(loc.id) && s.level >= loc.unlockLevel && s.money > loc.cost * 1.3) A.unlockSite(s, loc.id);
   for (const id of s.unlockedSites) {
@@ -134,9 +137,12 @@ it('bot progresses through the game', () => {
   const mark = (k: string, cond: boolean) => { if (cond && marks[k] === undefined) marks[k] = Math.round(s.gameTime / 60); };
   const totalMW = () => Object.values(s.sites).reduce((a, x) => a + x.stats.exportMW, 0);
   const hours = Number(process.env.BALANCE_HOURS ?? 6);
+  const incCount: Record<string, number> = {};
+  let incSeen = 0;
   const down: Record<string, number> = {};
   for (let t = 0; t < hours * 3600; t += 1) {
     tick(s, 1);
+    if (process.env.INC_DEBUG && s.incidents.length && s.incidents[0].t !== incSeen) { incSeen = s.incidents[0].t; const k = `${s.incidents[0].kind}:${s.incidents[0].ines}`; incCount[k] = (incCount[k] ?? 0) + 1; }
     if (process.env.DOWN_DEBUG) for (const id of s.unlockedSites) for (const b of s.sites[id].buildings) if (b.reactor && (b.reactor.scrammed || b.status !== 'active')) {
       const k = b.status !== 'active' ? b.status : (b.reactor.tripCause ?? b.reactor.scramReason ?? 'scrammed');
       down[k] = (down[k] ?? 0) + 1;
@@ -209,6 +215,7 @@ it('bot progresses through the game', () => {
     }
   }
   console.log('Milestones (minutes):', JSON.stringify(marks));
+  if (process.env.INC_DEBUG) console.log('INCIDENTS', s.stats.coreDamage, JSON.stringify(incCount));
   if (process.env.DOWN_DEBUG) console.log('Reactor-seconds down:', JSON.stringify(Object.entries(down).sort((x, y) => y[1] - x[1])));
   console.log('Final:', { level: s.level, money: Math.round(s.money), runEarned: Math.round(s.runEarned), research: s.research.completed.length, sites: s.unlockedSites });
   expect(s.level).toBeGreaterThan(5);

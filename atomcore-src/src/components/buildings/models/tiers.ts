@@ -694,3 +694,59 @@ export function backupGasTurbine(): ModelBuilder {
   b.cyl(1.0, 1.0, 2.2, m.paintWhite, [4.8, 0.25, 0], 18);
   return b;
 }
+
+export function fireStation(): ModelBuilder {
+  const b = new ModelBuilder();
+  const m = materials();
+  slab(b, 8, 8, m.concrete);
+  // Engine bay with three red doors, crew wing and a hose-drying tower
+  b.box(6.2, 3.6, 4.2, m.cladWhite, [-0.5, 0.25, -1.4]);
+  for (const x of [-2.4, -0.5, 1.4]) b.box(1.6, 2.6, 0.08, m.paintRed, [x, 0.25, 0.73]);
+  b.box(6.4, 0.25, 4.4, m.steelDark, [-0.5, 3.85, -1.4]);
+  b.box(1.4, 6.2, 1.4, m.paintRed, [3.3, 0.25, -2.6]);
+  b.box(1.6, 0.3, 1.6, m.steelDark, [3.3, 6.45, -2.6]);
+  b.box(6.2, 0.5, 0.12, m.sign, [-0.5, 3.2, 0.76]);
+  // Two foam tenders on the apron
+  for (const x of [-1.8, 0.9]) {
+    b.box(2.2, 1.3, 1.0, m.paintRed, [x, 0.35, 2.4]);
+    b.box(0.7, 0.9, 1.0, m.glass, [x + 1.1, 0.6, 2.4]);
+    b.box(1.6, 0.12, 0.5, m.steel, [x - 0.2, 1.65, 2.4]);
+  }
+  b.box(0.2, 0.2, 0.2, m.beacon, [3.3, 6.75, -2.6]);
+  return b;
+}
+
+export function emergencyCentre(): ModelBuilder {
+  const b = new ModelBuilder();
+  const m = materials();
+  slab(b, 12, 8, m.concrete);
+  // Low bunker with earth berm, comms mast and mobile (FLEX) equipment
+  b.box(7.5, 3.2, 5.0, m.concreteDark, [-1.4, 0.25, -0.6]);
+  b.box(8.3, 0.9, 5.8, m.gravel, [-1.4, 0.25, -0.6]);
+  b.box(7.7, 0.3, 5.2, m.concrete, [-1.4, 3.45, -0.6]);
+  b.box(1.8, 2.4, 0.15, m.steelDark, [-1.4, 0.25, 1.95]);
+  b.lattice(10, 1.0, m.steel, [-4.2, 3.75, -2.4], 5);
+  b.cyl(0.05, 0.05, 1.6, m.steel, [-4.2, 13.7, -2.4], 6);
+  b.dome(0.7, m.paintWhite, [1.0, 3.75, -1.6], 0.6, 16);
+  for (const [x, z] of [[3.6, 1.8], [3.6, -0.4]] as const) {
+    b.box(2.4, 1.5, 1.4, m.paintYellow, [x, 0.25, z]);
+    b.box(2.4, 0.2, 1.4, m.steelDark, [x, 1.75, z]);
+  }
+  b.box(0.2, 0.2, 0.2, m.beacon, [-4.2, 14.5, -2.4]);
+  return b;
+}
+
+export function floodWall(): ModelBuilder {
+  const b = new ModelBuilder();
+  const m = materials();
+  // A section of tall reinforced-concrete wall with a watertight gate and pumps
+  b.box(16, 0.3, 3.6, m.gravel, [0, 0, 0]);
+  b.box(15.6, 5.0, 1.0, m.concrete, [0, 0.3, -0.6]);
+  b.box(15.8, 0.4, 1.3, m.concreteDark, [0, 5.3, -0.6]);
+  for (let x = -7; x <= 7; x += 2.33) b.box(0.5, 5.0, 1.6, m.concreteDark, [x, 0.3, -0.4]);
+  b.box(3.0, 3.6, 0.3, m.steelDark, [3.5, 0.3, 0.05]);
+  b.box(3.0, 0.3, 0.3, m.hazard, [3.5, 3.9, 0.05]);
+  for (const x of [-5, -3.2]) b.cyl(0.45, 0.45, 1.6, m.pipeBlue, [x, 0.3, 1.0], 14);
+  b.pipe([-5, 1.4, 1.0], [-5, 5.6, -0.6], 0.18, m.pipeBlue);
+  return b;
+}

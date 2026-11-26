@@ -5,6 +5,7 @@ import { tickEvents, notify, pushLog } from './events/events';
 import { stepWeather } from './weather/weather';
 import { autoHire, refreshCandidates } from './staff/staff';
 import { stepRegulator } from './regulator/regulator';
+import { stepAccidents } from './accidents/accidents';
 import { linkRepairCost } from './network/network';
 import { tickMarket } from './economy/market';
 import { RESEARCH_BY_ID } from './research/tree';
@@ -51,6 +52,10 @@ export function tick(s: GameState, dt: number, opts: TickOptions = {}): void {
   tickWeather(s, dt, offline);
   tickMarket(s, dt, offline);
   tickPlants(s, dt, offline);
+  for (const n of stepAccidents(s, dt, offline)) {
+    pushLog(s, n.kind, `${n.title}: ${n.text}`);
+    if (!offline) notify(s, { kind: n.alarm ? 'scram' : n.kind, title: n.title, text: n.text });
+  }
   for (const n of stepRegulator(s, dt, offline)) {
     pushLog(s, n.kind, `${n.title}: ${n.text}`);
     if (!offline) notify(s, { kind: n.kind, title: n.title, text: n.text });

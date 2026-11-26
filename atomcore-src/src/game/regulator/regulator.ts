@@ -201,12 +201,17 @@ function findingOpen(s: GameState, site: Site, kind: FindingKind): boolean {
 const KINDS: FindingKind[] = ['backup', 'security', 'condition', 'pool', 'fatigue', 'operators', 'trips'];
 
 /** Record a reactor trip or incident for the regulator and public opinion. */
-export function reportIncident(s: GameState, siteId: string, weight: 'trip' | 'error' | 'atws' | 'core'): void {
+export function reportIncident(s: GameState, siteId: string, weight: 'trip' | 'error' | 'atws' | 'core' | 'ines', ines = 0): void {
   const site = s.sites[siteId];
   const r = s.regulator;
   if (weight === 'trip') { site.reg.trips += 1; r.opinion -= 0.3; }
   if (weight === 'error') { site.reg.trips += 1.5; r.opinion -= 1; }
   if (weight === 'atws') { site.reg.severe += 1; r.opinion -= 5; r.lastIncident = s.gameTime; }
+  if (weight === 'ines') {
+    if (ines === 1) { site.reg.trips += 1; r.opinion -= 1; }
+    if (ines === 2) { site.reg.severe += 1; r.opinion -= 4; r.lastIncident = s.gameTime; }
+    if (ines >= 3) { site.reg.severe += 2; r.opinion -= 10; r.lastIncident = s.gameTime; }
+  }
   if (weight === 'core') {
     site.reg.severe += 4;
     r.opinion -= 35;

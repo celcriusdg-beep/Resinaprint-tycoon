@@ -730,6 +730,24 @@ const defs: BuildingDef[] = [
     size: [3, 2], cost: 200_000, buildTime: 70, upkeep: 2, staff: 3, maxLevel: 5, levelGrowth: 1.6, upgradeBase: 0.55, upgradeGrowth: 1.9,
     wear: 0.014, unlock: { research: 's_egen', level: 9 }, stats: { safety: 15, backupMW: 60 },
   },
+  {
+    type: 'fire_station', name: 'Site Fire Station', short: 'Fire Station', category: 'support',
+    description: 'On-site fire brigade with foam tenders. Puts out transformer and cable fires within minutes and drills the crews for emergencies.',
+    size: [2, 2], cost: 25_000, buildTime: 40, upkeep: 1.5, staff: 6, maxLevel: 4, levelGrowth: 1.35, upgradeBase: 0.5, upgradeGrowth: 1.8,
+    wear: 0.008, unlock: { level: 4 }, maxPerSite: 2, stats: { prep: 0.2, safety: 6 },
+  },
+  {
+    type: 'emergency_centre', name: 'Emergency Response Centre', short: 'Emergency Centre', category: 'support',
+    description: 'Bunkered technical support centre with backup communications, mobile pumps and generators (FLEX equipment). Greatly improves the response to every incident.',
+    size: [3, 2], cost: 250_000, buildTime: 90, upkeep: 4, staff: 12, maxLevel: 4, levelGrowth: 1.3, upgradeBase: 0.5, upgradeGrowth: 1.8,
+    wear: 0.006, unlock: { level: 8 }, maxPerSite: 1, stats: { prep: 0.35, safety: 12 },
+  },
+  {
+    type: 'flood_wall', name: 'Flood Defence Wall', short: 'Flood Wall', category: 'support',
+    description: 'Reinforced concrete wall and watertight doors around the safety buildings. Protects the site from river floods and storm surges.',
+    size: [4, 1], cost: 120_000, buildTime: 80, upkeep: 0.5, staff: 1, maxLevel: 1, levelGrowth: 1, upgradeBase: 0.5, upgradeGrowth: 1.8,
+    wear: 0.002, unlock: { level: 6 }, maxPerSite: 1, needsWaterBody: true, stats: { flood: 1, safety: 5 },
+  },
 ];
 
 /** Tier names shown on the build-menu sub-tabs. */
@@ -749,7 +767,7 @@ export const SECTIONS: Record<BuildingCategory, { id: string; label: string }[]>
     { id: 'fabrication', label: 'Fabrication' }, { id: 'inspection', label: 'Inspection' }, { id: 'storage', label: 'Fresh fuel storage' }, { id: 'spent', label: 'Spent fuel storage' }],
   grid: [{ id: 'export', label: 'Grid export' }, { id: 'storage', label: 'Energy storage' }],
   industry: [{ id: 'tourism', label: 'Tourism' }, { id: 'isotopes', label: 'Medical isotopes' }, { id: 'data', label: 'Data centres' }, { id: 'hydrogen', label: 'Hydrogen' }],
-  support: [{ id: 'staff', label: 'Staff & offices' }, { id: 'research', label: 'Research' }, { id: 'maintenance', label: 'Maintenance' }, { id: 'safety', label: 'Backup power' }],
+  support: [{ id: 'staff', label: 'Staff & offices' }, { id: 'research', label: 'Research' }, { id: 'maintenance', label: 'Maintenance' }, { id: 'safety', label: 'Backup power' }, { id: 'emergency', label: 'Emergency preparedness' }, { id: 'flood', label: 'Flood protection' }],
 };
 
 const META: Record<BuildingType, [string, number]> = {
@@ -771,6 +789,7 @@ const META: Record<BuildingType, [string, number]> = {
   visitor: ['tourism', 1], isotopes: ['isotopes', 2], datacenter: ['data', 2], hydrogen: ['hydrogen', 3],
   admin: ['staff', 1], hq: ['staff', 2], lab: ['research', 1], research_campus: ['research', 2],
   maintenance: ['maintenance', 1], robotics_depot: ['maintenance', 2], generator_emergency: ['safety', 1], backup_gt: ['safety', 2],
+  fire_station: ['emergency', 1], emergency_centre: ['emergency', 2], flood_wall: ['flood', 2],
 };
 for (const d of defs) {
   const [section, tier] = META[d.type];
@@ -794,6 +813,8 @@ export function buildingScore(def: BuildingDef): [number, string] | null {
   if (s.fabRate) return [s.fabRate * 60, 'assemblies/min'];
   if (s.inspectRate) return [s.inspectRate * 60, 'checks/min'];
   if (s.caskCap) return [s.caskCap, 'spent assemblies'];
+  if (s.prep) return [s.prep * 100, 'preparedness'];
+  if (s.flood) return [s.flood, 'flood protection'];
   if (s.fuelCap) return [s.fuelCap, 'assemblies'];
   if (s.rawWater) return [s.rawWater, 'm³/h'];
   if (s.treatedWater) return [s.treatedWater, 'm³/h'];

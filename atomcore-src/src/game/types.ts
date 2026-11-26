@@ -48,6 +48,9 @@ export type BuildingType =
   | 'research_campus'
   | 'robotics_depot'
   | 'backup_gt'
+  | 'fire_station'
+  | 'emergency_centre'
+  | 'flood_wall'
   | 'cooling_mech'
   | 'cooling_tower'
   | 'turbine'
@@ -131,6 +134,8 @@ export interface BuildingStats {
   oreRate?: number; // ore t/s from a mine that needs no vehicles
   ycRate?: number; // yellowcake/s produced directly (in-situ leaching)
   caskRate?: number; // spent assemblies/s loaded into storage
+  prep?: number; // emergency preparedness (0..1 contribution)
+  flood?: number; // flood protection (1 = the site is protected)
 }
 
 export interface BuildingDef {
@@ -375,6 +380,10 @@ export interface Site {
   staff: import('./staff/staff').StaffState;
   /** Regulator rating, inspection schedule and incident record. */
   reg: import('./regulator/regulator').SiteRegulator;
+  /** Emergency drill readiness 0..0.3 (decays). */
+  drill: number;
+  /** Game time of the last flood (floods need a couple of days to come back). */
+  lastFlood: number;
   storageMWh: number;
   storageWater: number; // raw water in tanks, m³
   spent: SpentFuelPool;
@@ -566,6 +575,10 @@ export interface GameState {
   candidateDay: number;
   /** Nuclear regulator: permits, findings, public opinion. */
   regulator: import('./regulator/regulator').RegulatorState;
+  /** Emergencies waiting for the player's decision. */
+  emergencies: import('./accidents/accidents').Emergency[];
+  /** Recent incidents with their INES rating (newest first). */
+  incidents: import('./accidents/accidents').IncidentRecord[];
 }
 
 /** Notices are produced by the simulation and consumed by the UI (toasts, sounds). */

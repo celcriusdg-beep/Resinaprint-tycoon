@@ -39,7 +39,7 @@ export function makeBuilding(s: GameState, type: BuildingType, x: number, z: num
 
 export function makeSite(id: string): Site {
   const loc = LOCATION_BY_ID[id];
-  return { id, size: loc.startSize, buildings: [], links: [], weather: newWeather(id), staff: newStaff(), reg: newSiteRegulator(0), storageMWh: 0, storageWater: 0, spent: { pool: 0, casks: 0 }, blackoutTime: 0, stats: emptyStats() };
+  return { id, size: loc.startSize, buildings: [], links: [], weather: newWeather(id), staff: newStaff(), reg: newSiteRegulator(0), drill: 0, lastFlood: -1e9, storageMWh: 0, storageWater: 0, spent: { pool: 0, casks: 0 }, blackoutTime: 0, stats: emptyStats() };
 }
 
 export function createInitialState(opts: { shares?: number; prestigeCount?: number; achievements?: string[]; lifetimeEarned?: number; createdAt?: number } = {}): GameState {
@@ -93,6 +93,8 @@ export function createInitialState(opts: { shares?: number; prestigeCount?: numb
     candidates: [],
     candidateDay: -1,
     regulator: newRegulator(),
+    emergencies: [],
+    incidents: [],
   };
   const site = makeSite('riverside');
   s.sites.riverside = site;

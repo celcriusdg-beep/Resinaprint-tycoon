@@ -1,3 +1,5 @@
+import { RANDOM_INCIDENTS } from '../src/game/accidents/accidents';
+RANDOM_INCIDENTS.on = false; // deterministic: no random incidents
 import { staffUp } from '../src/game/staff/staff';
 import { describe, it, expect } from 'vitest';
 import { createInitialState, makeBuilding } from '../src/game/state';

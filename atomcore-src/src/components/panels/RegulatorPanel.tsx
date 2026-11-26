@@ -11,6 +11,7 @@ import { fmtMoney, fmtTime } from '../../ui/format';
 import { run, A } from '../../ui/actions';
 import { Bar, Button, Section, Stat } from '../ui/common';
 import { Icon } from '../ui/Icons';
+import { preparedness, drillCost, riskFactor, inesLabel, EMERGENCIES, BASE_INCIDENT_INTERVAL } from '../../game/accidents/accidents';
 
 // Regulator & public opinion: site rating, inspection schedule, findings,
 // reactor licences, construction permits and the community programme.
@@ -52,6 +53,8 @@ export function RegulatorPanel() {
       </Section>
 
       <PermitList />
+
+      <Preparedness />
 
       <Section title="Community programme">
         <p className="muted small">Open days, school visits, local sponsorship. Each level raises public opinion over time.</p>
@@ -134,5 +137,46 @@ function PermitRow({ type, siteId }: { type: BuildingType; siteId: string }) {
         Apply · {fmtMoney(fee)}
       </Button>
     </div>
+  );
+}
+
+function Preparedness() {
+  const g = useGame();
+  const site = g.sites[g.activeSite];
+  const prep = preparedness(g, site);
+  const risk = riskFactor(g, site);
+  const hasStation = site.buildings.some((b) => b.type === 'fire_station');
+  const hasCentre = site.buildings.some((b) => b.type === 'emergency_centre');
+  const wall = site.buildings.some((b) => b.type === 'flood_wall');
+  const loc = LOCATION_BY_ID[site.id];
+  const history = g.incidents.filter((i) => i.siteId === site.id).slice(0, 6);
+  return (
+    <Section title="Emergency preparedness">
+      <div className="stat-grid">
+        <Stat label="Preparedness" value={`${Math.round(prep * 100)}%`} tone={prep < 0.3 ? 'warn' : 'good'} sub={<Bar value={prep} max={1} warn={prep < 0.3} />} />
+        <Stat label="Incident risk" value={`×${risk.toFixed(2)}`} sub={`≈ every ${fmtTime(BASE_INCIDENT_INTERVAL / risk)} of running`} tone={risk > 1.6 ? 'warn' : undefined} />
+      </div>
+      <ul className="checklist">
+        <li className={hasStation ? 'ok' : 'no'}><Icon name={hasStation ? 'check' : 'x'} size={13} /> Fire station (fast firefighting)</li>
+        <li className={hasCentre ? 'ok' : 'no'}><Icon name={hasCentre ? 'check' : 'x'} size={13} /> Emergency response centre</li>
+        {loc.waterBody && <li className={wall ? 'ok' : 'no'}><Icon name={wall ? 'check' : 'x'} size={13} /> Flood defence wall</li>}
+        <li className={(site.drill ?? 0) > 0.05 ? 'ok' : 'no'}><Icon name={(site.drill ?? 0) > 0.05 ? 'check' : 'x'} size={13} /> Recent emergency drill ({Math.round((site.drill ?? 0) * 100)}%)</li>
+      </ul>
+      <div className="row-between">
+        <span className="muted small">Drills raise preparedness (it fades over ~10 game days) and tire the crews a little.</span>
+        <Button small variant="primary" disabled={(site.drill ?? 0) >= 0.3 || g.money < drillCost(site)} onClick={() => run((s) => A.runDrill(s), { sound: 'complete' })}>Drill · {fmtMoney(drillCost(site))}</Button>
+      </div>
+      {history.length > 0 && (
+        <div className="incident-list">
+          {history.map((i) => (
+            <div key={i.t + i.kind} className={`incident ines${Math.min(3, i.ines)}`}>
+              <div className="row-between"><b>{EMERGENCIES[i.kind].title}</b><span className="mono">INES {i.ines}</span></div>
+              <div className="muted small">{i.text}</div>
+            </div>
+          ))}
+          <div className="muted small">{inesLabel(0)} … {inesLabel(3)}.</div>
+        </div>
+      )}
+    </Section>
   );
 }
