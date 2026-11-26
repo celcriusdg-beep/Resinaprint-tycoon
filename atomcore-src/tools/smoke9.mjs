@@ -41,6 +41,15 @@ check('toggle off', (await count()).tags === 0);
 await page.click('[aria-label="Building labels"]');
 await page.waitForTimeout(800);
 check('toggle on', (await count()).tags > 0);
+// Tapping a building shows the same meter with numbers in its panel.
+await page.evaluate(() => {
+  const g = window.__atom();
+  const t = g?.sites[g.activeSite].buildings.find((b) => b.type.startsWith('turbine'));
+  if (t) window.__ui.getState().select(t.id);
+});
+await page.waitForTimeout(1200);
+check('meter card in panel', await page.evaluate(() => !!document.querySelector('.meter-card')));
+await page.screenshot({ path: `${out}/tags-4-panel.png` });
 await browser.close();
 console.log(results.join('\n'));
 console.log(errors.length ? 'ERRORS\n' + errors.join('\n') : 'No console errors');

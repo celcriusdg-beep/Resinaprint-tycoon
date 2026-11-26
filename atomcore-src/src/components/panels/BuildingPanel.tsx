@@ -8,7 +8,8 @@ import { decommissionCost, mineOutput, reserveFor, poolCapacity, caskLoadRate, C
 import { canAffordEssential } from '../../game/engine';
 import { slotsFor } from '../../game/supply/vehicles';
 import { LOCATION_BY_ID } from '../../game/progression/locations';
-import { fmtMoney, fmtPower, fmtTime, fmtNum } from '../../ui/format';
+import { fmtMoney, fmtPower, fmtTime, fmtNum, fmtEnergy } from '../../ui/format';
+import { buildingMeter, meterContext, type MeterTone } from '../../game/meters';
 import { run, confirm, A, beginMove } from '../../ui/actions';
 import { Bar, Button, Stat } from '../ui/common';
 import { Icon } from '../ui/Icons';
@@ -81,6 +82,7 @@ export function BuildingPanel({ id }: { id: number }) {
         </div>
       )}
 
+      {!busy && <MeterCard b={b} />}
       {b.reactor && b.licence && b.licence !== 'operating' && <LicenceCard b={b} />}
       {b.reactor && b.status !== 'constructing' && <ReactorControl b={b} />}
       {b.type === 'uranium_mine' && b.status !== 'constructing' && <MineSummary b={b} />}
@@ -212,6 +214,35 @@ function LicenceCard({ b }: { b: Building }) {
       <div className="row-between"><b>Operating licence</b><span className="status-chip warn">{b.status === 'constructing' ? 'after construction' : 'pre-start inspection'}</span></div>
       <div className="muted small">The reactor may start up once every item passes; it then starts automatically.</div>
       <LicenceChecklist items={items} />
+    </div>
+  );
+}
+
+const TONE_COLOR: Record<MeterTone, string> = { ok: '#5be08a', warn: '#ffc94d', bad: '#ff5b5b', info: '#5cc8ff', idle: '#7d8a97', build: '#ffb35c' };
+
+/** The same gauge as the map tag, with the numbers behind it and what to do. */
+function MeterCard({ b }: { b: Building }) {
+  const g = useGame();
+  const site = g.sites[g.activeSite];
+  const mt = buildingMeter(g, site, b, meterContext(g));
+  if (!mt) return null;
+  const fmt = (v: number) => {
+    if (mt.unit === 'MW') return fmtPower(v);
+    if (mt.unit === 'MWh') return fmtEnergy(v);
+    return `${fmtNum(v)} ${mt.unit}`;
+  };
+  const color = TONE_COLOR[mt.tone];
+  return (
+    <div className={`meter-card tone-${mt.tone}`}>
+      <div className="row-between">
+        <span>{mt.what}</span>
+        <b style={{ color }}>{mt.text}</b>
+      </div>
+      <Bar value={mt.value} height={10} color={color} />
+      {mt.used !== undefined && mt.cap !== undefined && mt.cap > 0 && (
+        <div className="muted small">{fmt(mt.used)} of {fmt(mt.cap)}</div>
+      )}
+      {mt.hint && <div className="small meter-hint"><Icon name="alert" size={13} /> {mt.hint}</div>}
     </div>
   );
 }

@@ -255,6 +255,12 @@ button.list-row:hover { border-color: var(--line-2); }
 /* ── Building panel ───────────────────────────────────── */
 .bp-head { display: flex; justify-content: space-between; align-items: flex-start; }
 .bp-level { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.meter-card { background: rgba(255,255,255,0.04); border: 1px solid var(--line); border-radius: 11px; padding: 9px 11px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.meter-card.tone-warn { border-color: rgba(255,201,77,0.5); background: rgba(255,201,77,0.07); }
+.meter-card.tone-bad { border-color: rgba(255,91,91,0.55); background: rgba(255,91,91,0.08); }
+.meter-card b { font-size: 15px; }
+.meter-hint { display: flex; gap: 6px; align-items: flex-start; color: #ffd9a0; }
+.meter-hint svg { flex: none; margin-top: 1px; }
 .progress-card { background: rgba(255,182,72,0.08); border: 1px solid rgba(255,182,72,0.35); border-radius: 11px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
 .maxed { display: grid; place-items: center; color: var(--good); font-weight: 700; font-size: 13px; }
 .reactor-card { border: 1px solid rgba(79,209,255,0.35); background: linear-gradient(180deg, rgba(20,50,70,0.55), rgba(12,22,32,0.6)); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }

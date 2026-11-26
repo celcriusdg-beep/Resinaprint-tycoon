@@ -25,6 +25,8 @@ export const BATTERY_SECONDS = 60;
  *  `heat`: reactor temperature as a share of its trip limit. */
 export const liveLoad = new Map<string, Map<number, number>>();
 export const liveHeat = new Map<string, Map<number, number>>();
+/** Capacity behind each `load` reading right now (MW), for the building panel. */
+export const liveCap = new Map<string, Map<number, number>>();
 
 export function emptyStats(): SiteStats {
   return {
@@ -343,6 +345,11 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
       if (g && isOperating(b)) loads.set(b.id, (nw.through.get(b.id) ?? 0) / Math.max(1, stat(b, 'gridMW')));
     }
     const heats = new Map<number, number>();
+    const caps = new Map<number, number>();
+    for (const [id, c] of netIn.steamCap) caps.set(id, c);
+    for (const [id, c] of netIn.coolCap) caps.set(id, c);
+    for (const b of site.buildings) if (BUILDINGS[b.type].stats.gridMW) caps.set(b.id, stat(b, 'gridMW'));
+    liveCap.set(site.id, caps);
     liveLoad.set(site.id, loads);
     liveHeat.set(site.id, heats);
     const steamUsed = nw.steamUsed;
