@@ -30,6 +30,7 @@ PLAYWRIGHT_PATH=$(npm root -g)/playwright node tools/smoke2.mjs http://localhost
 PLAYWRIGHT_PATH=$(npm root -g)/playwright node tools/smoke3.mjs http://localhost:4173/ tests/output  # pipes & cables: connect mode, size picker
 PLAYWRIGHT_PATH=$(npm root -g)/playwright node tools/smoke4.mjs http://localhost:4173/ tests/output  # weather panel, rain, snow
 PLAYWRIGHT_PATH=$(npm root -g)/playwright node tools/smoke5.mjs http://localhost:4173/ tests/output  # staff panel, hiring, shifts, key people
+PLAYWRIGHT_PATH=$(npm root -g)/playwright node tools/smoke6.mjs http://localhost:4173/ tests/output  # permits, regulator panel
 ```
 
 Useful URL parameters: `?quality=low|medium|high` overrides graphics quality, `?debug=1`
@@ -48,6 +49,7 @@ src/
     simulation/         reactor model, plant energy/heat balance, modifiers
     economy/            market, prices, contracts
     research/           technology tree (50 projects, 9 categories)
+    regulator/          permits, operating licences, inspections, findings, public opinion
     staff/              roles, hiring & training, shifts, fatigue, morale, key people
     weather/            seasons, climate, fronts, forecast, weather effects on the plant
     network/            pipes & cables: link classes, max-flow solver, auto-wiring, breakers
@@ -98,6 +100,7 @@ adaptive monitor lowers resolution when the frame rate drops.
 | Fuel management: batch (⅓ core) or full reloads, enrichment choice 3–5%, leaking rods from defects and overpower, spent fuel pools and dry cask storage, finite ore reserves | Implemented |
 | Pipes & cables: nothing connects by itself — steam lines (reactor → turbine hall, turbine cross-ties), circulating-water pipes (turbine → cooling) and power cables (generators/storage/loads → switchyards → grid connection at the plot edge). 5–6 size classes each (DN300 → advanced loop; 11 kV MV → 765 kV UHV, HVDC, superconducting) with ratings, up to 4 parallel runs, cost per metre, voltage limits per equipment, I²R losses, cable overload heating and breaker trips. Max-flow routing; steam only goes to halls whose condensers are cooled; reactors with no heat sink trip. Tap-to-connect UI, Status diagnostics, old saves auto-wired | Implemented |
 | Weather & seasons: 4 seasons × 7 game days (year ≈ 2 h), per-site climate (annual mean, seasonal and daily swing, humidity, wind), weather fronts planned ahead (heatwave, cold snap, storm, rain, drought) with a real 3-day forecast. Wet cooling follows the wet-bulb temperature, dry cooling the air, once-through cooling the river/sea temperature; river flow follows rain and droughts; intakes ice up in frost unless de-iced (costs power); heating/cooling demand and prices; storms trip or bring down overhead lines (repair cost) and can cut the grid. HUD weather pill, Weather panel, rain/snow, cloudy skies, seasonal grass and snow cover | Implemented |
+| Regulator & public opinion: construction permits per reactor (fee, review time by size, minimum site safety, security staff); operating licence after a pre-start checklist (steam/cooling/grid connections, licensed operators, security, emergency power) — reactors start automatically once licensed; scheduled inspections every 3 game days with findings, deadlines, fines, escalation to major findings and licence suspension (from company level 5, never while offline); regulatory hold after core damage; site regulator rating; company public opinion (incidents, clean record, visitor centres, community programme) sets licensing speed, fees and protests | Implemented |
 | Automation: fuel procurement, outage planning (auto-refuel), auto-restart, predictive maintenance, load following, smart storage | Implemented |
 | Events (weather now comes from the weather system): market boom/slump, demand surge, fuel price shocks, equipment failures, pump faults, breakthroughs, grants, inspections, site-specific weather | Implemented |
 | Staff & shifts: 5 roles (operators, technicians, engineers, security, scientists) split from each building's needs; office space from Administration Buildings; recruitment fees, training (operators need a 1-day licence course; auto-hire recruits during construction); 3×8 or 2×12 shifts; overtime (1.5× pay, covers up to 25% of a gap) builds fatigue → operator-error trips; morale and quitting; 5 named key people per site (supervisor, chief engineer, maintenance lead, security chief, lead scientist) with traits and levels from a daily candidate pool; company training program | Implemented |

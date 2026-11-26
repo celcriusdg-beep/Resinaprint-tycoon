@@ -14,6 +14,8 @@ import { Bar, Button, Stat } from '../ui/common';
 import { Icon } from '../ui/Icons';
 import { ReactorControl } from './ReactorControl';
 import { ConnectionsCard } from './Connections';
+import { LicenceChecklist } from './RegulatorPanel';
+import { licenceChecklist } from '../../game/regulator/regulator';
 import { keyStat } from './BuildPanel';
 import { buildingCenter } from '../world/sceneRegistry';
 import type { Building } from '../../game/types';
@@ -79,6 +81,7 @@ export function BuildingPanel({ id }: { id: number }) {
         </div>
       )}
 
+      {b.reactor && b.licence && b.licence !== 'operating' && <LicenceCard b={b} />}
       {b.reactor && b.status !== 'constructing' && <ReactorControl b={b} />}
       {b.type === 'uranium_mine' && b.status !== 'constructing' && <MineSummary b={b} />}
       {def.category === 'industry' && b.status !== 'constructing' && <IndustrySummary />}
@@ -188,6 +191,27 @@ function SpentFuelCard() {
         Ship {fmtNum(lot)} to reprocessing · {fmtMoney(lot * SHIP_COST_PER_ASSEMBLY)}
       </Button>
       <div className="muted small">Reprocessing returns {SHIP_YELLOWCAKE_BACK} yellowcake of recovered uranium per assembly.</div>
+    </div>
+  );
+}
+
+function LicenceCard({ b }: { b: Building }) {
+  const g = useGame();
+  const site = g.sites[g.activeSite];
+  if (b.licence === 'suspended') {
+    return (
+      <div className="alert-box">
+        <b>Licence suspended.</b> The regulator keeps this reactor shut down until the major finding at this site is fixed.{' '}
+        <button type="button" className="linklike" onClick={() => { useUI.getState().select(null); useUI.getState().setPanel('regulator'); }}>See findings</button>
+      </div>
+    );
+  }
+  const items = licenceChecklist(g, site, b);
+  return (
+    <div className="flow-card">
+      <div className="row-between"><b>Operating licence</b><span className="status-chip warn">{b.status === 'constructing' ? 'after construction' : 'pre-start inspection'}</span></div>
+      <div className="muted small">The reactor may start up once every item passes; it then starts automatically.</div>
+      <LicenceChecklist items={items} />
     </div>
   );
 }

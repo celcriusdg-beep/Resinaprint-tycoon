@@ -40,7 +40,7 @@ describe('staff & shifts', () => {
     run(s, 2);
     expect(inTraining(site.staff, 'operator')).toBeGreaterThan(0);
     expect(staffEffects(site, 1).cover.operator).toBeLessThan(1);
-    run(s, DAY_LENGTH + 5, 1);
+    run(s, DAY_LENGTH / 2 + 5, 1);
     expect(inTraining(site.staff, 'operator')).toBe(0);
     expect(staffEffects(site, 1).cover.operator).toBe(1);
   });

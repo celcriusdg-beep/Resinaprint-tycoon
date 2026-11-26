@@ -1,3 +1,4 @@
+import { PermitList } from './RegulatorPanel';
 import { useState } from 'react';
 import type { BuildingCategory, BuildingDef } from '../../game/types';
 import { BUILDING_LIST, CATEGORY_LABEL, CATEGORY_ORDER, SECTIONS, TIER_NAMES, buildingScore, levelMult, staffAt } from '../../game/buildings/defs';
@@ -90,6 +91,7 @@ export function BuildPanel() {
           </button>
         ))}
       </div>
+      {cat === 'reactor' && <PermitList compact />}
       {groups.map(({ line, items }) => {
         const lo = buildingScore(items[0]);
         const hi = buildingScore(items[items.length - 1]);

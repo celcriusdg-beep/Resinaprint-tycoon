@@ -15,7 +15,7 @@ export type Role = 'operator' | 'technician' | 'engineer' | 'security' | 'scient
 export const ROLES: Role[] = ['operator', 'technician', 'engineer', 'security', 'scientist'];
 
 export const ROLE_INFO: Record<Role, { name: string; plural: string; wage: number; fee: number; train: number; job: string }> = {
-  operator: { name: 'Reactor operator', plural: 'Operators', wage: 0.12, fee: 300, train: DAY_LENGTH, job: 'Run the reactors and turbines in the control room. Need a licence (1 game day of training).' },
+  operator: { name: 'Reactor operator', plural: 'Operators', wage: 0.12, fee: 300, train: DAY_LENGTH / 2, job: 'Run the reactors and turbines in the control room. Need a licence (half a game day of training).' },
   technician: { name: 'Technician', plural: 'Technicians', wage: 0.08, fee: 150, train: 45, job: 'Maintain equipment: too few and everything wears out faster.' },
   engineer: { name: 'Engineer', plural: 'Engineers', wage: 0.14, fee: 350, train: 60, job: 'Keep the plant efficient and catch faults before they trip a reactor.' },
   security: { name: 'Security officer', plural: 'Security', wage: 0.07, fee: 120, train: 45, job: 'Guard the site and the nuclear material. Counts towards the safety rating.' },

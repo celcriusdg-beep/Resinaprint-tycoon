@@ -114,7 +114,7 @@ export const EVENTS: EventDef[] = [
       s.ledger.other += amount;
       return `Clean energy grant received: $${amount.toLocaleString('en-US')}.`;
     } },
-  { id: 'inspection', name: 'Regulatory Inspection', kind: 'info', weight: 6, duration: 0, siteScoped: true,
+  { id: 'inspection', name: 'Regulatory Inspection', kind: 'info', weight: 0, duration: 0, siteScoped: true,
     description: 'Inspectors review the site. A high safety rating earns a bonus, a poor one a fine.',
     apply: (s, siteId) => {
       const rating = safetyRating(s, siteId, getMods(s, siteId));

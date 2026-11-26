@@ -154,7 +154,11 @@ describe('construction', () => {
     s.money = 1e6;
     expect(A.placeBuilding(s, 'reactor_smr', 1, 1, 0)).toMatch(/research/i);
     s.research.completed.push('r_smr');
+    expect(A.placeBuilding(s, 'reactor_smr', 1, 1, 0)).toMatch(/permit/i);
+    expect(A.applyForPermit(s, 'reactor_smr')).toBeNull();
+    s.gameTime += 240;
     expect(A.placeBuilding(s, 'reactor_smr', 1, 1, 0)).toBeNull();
+    expect(s.sites.riverside.buildings.at(-1)!.licence).toBe('pending');
   });
 });
 

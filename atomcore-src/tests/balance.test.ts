@@ -14,6 +14,7 @@ import { coreSize } from '../src/game/simulation/reactor';
 import { LOCATIONS, expandCost, LOCATION_BY_ID } from '../src/game/progression/locations';
 import { clearModCache, getMods } from '../src/game/simulation/modifiers';
 import type { BuildingType, GameState } from '../src/game/types';
+import { licenceChecklist, REGULATOR_OFF } from '../src/game/regulator/regulator';
 import { autoWire, linkRating, suggestClass, linkLength, LINK_CLASSES } from '../src/game/network/network';
 
 // The bot wires new buildings to their nearest partners and resizes links that run full.
@@ -32,7 +33,13 @@ function wire(s: GameState) {
 }
 
 function tryBuild(s: GameState, type: BuildingType): boolean {
-  if (A.buildLockReason(s, type)) return false;
+  const lock = A.buildLockReason(s, type);
+  if (lock?.includes('permit')) {
+    // Apply, then save up for the reactor while the permit is in review.
+    if (!s.regulator.permits.some((p) => p.siteId === s.activeSite && p.type === type)) return A.applyForPermit(s, type) === null;
+    return true;
+  }
+  if (lock) return false;
   if (s.money < A.buildCost(s, type)) return false;
   const site = s.sites[s.activeSite];
   for (const rot of [0, 1]) {
@@ -44,7 +51,7 @@ function tryBuild(s: GameState, type: BuildingType): boolean {
 
 function bestReactor(s: GameState): BuildingType | null {
   const order: BuildingType[] = ['reactor_fusion', 'reactor_msr', 'reactor_bwr', 'reactor_pwr', 'reactor_smr', 'reactor_pilot'];
-  for (const t of order) if (!A.buildLockReason(s, t)) return t;
+  for (const t of order) { const l = A.buildLockReason(s, t); if (!l || l.includes('permit')) return t; }
   return null;
 }
 
@@ -120,14 +127,23 @@ function upgradeCheapest(s: GameState, types: BuildingType[]): boolean {
 
 it('bot progresses through the game', () => {
   setRandom(mulberry32(Number(process.env.BALANCE_SEED ?? 7)));
+  REGULATOR_OFF.on = !!process.env.REG_OFF;
   clearModCache();
   const s = createInitialState();
   const marks: Record<string, number> = {};
   const mark = (k: string, cond: boolean) => { if (cond && marks[k] === undefined) marks[k] = Math.round(s.gameTime / 60); };
   const totalMW = () => Object.values(s.sites).reduce((a, x) => a + x.stats.exportMW, 0);
   const hours = Number(process.env.BALANCE_HOURS ?? 6);
+  const down: Record<string, number> = {};
   for (let t = 0; t < hours * 3600; t += 1) {
     tick(s, 1);
+    if (process.env.DOWN_DEBUG) for (const id of s.unlockedSites) for (const b of s.sites[id].buildings) if (b.reactor && (b.reactor.scrammed || b.status !== 'active')) {
+      const k = b.status !== 'active' ? b.status : (b.reactor.tripCause ?? b.reactor.scramReason ?? 'scrammed');
+      down[k] = (down[k] ?? 0) + 1;
+    }
+    if (process.env.NO_INSPECT) for (const id of s.unlockedSites) s.sites[id].reg.nextInspection = 1e12;
+    if (process.env.NO_PERMIT_WAIT) for (const p of s.regulator.permits) p.ready = 0;
+    if (process.env.NO_REG) for (const id of s.unlockedSites) { s.sites[id].reg.nextInspection = 1e12; for (const b of s.sites[id].buildings) if (b.licence) b.licence = 'operating'; for (const p of s.regulator.permits) p.ready = 0; }
     if (t % 5 === 0) botStep(s);
     const has = (ty: BuildingType) => Object.values(s.sites).some((x) => x.buildings.some((b) => b.type === ty && b.status !== 'constructing'));
     mark('smr', has('reactor_smr'));
@@ -179,11 +195,21 @@ it('bot progresses through the game', () => {
         console.log(`     reactors: ${site.buildings.filter((b) => b.reactor).map((b) => `${b.type.slice(8)}:${b.status[0]}:p${Math.round(b.reactor!.power * 100)}:${b.reactor!.tripCause ?? ''}`).join(' ')}`);
       }
     }
+    if (process.env.REG_DEBUG && t % 1800 === 0 && t > 0) {
+      for (const id of s.unlockedSites) {
+        const site = s.sites[id];
+        console.log(`  [${id}] reg=${Math.round(site.reg.rating)} op=${Math.round(s.regulator.opinion)} findings=${s.regulator.findings.filter((f) => f.siteId === id).map((f) => f.kind + (f.major ? '!' : '')).join(',')} permits=${s.regulator.permits.filter((p) => p.siteId === id).map((p) => p.type.slice(8) + (p.ready <= s.gameTime ? '✓' : '…')).join(',')} reactors=${site.buildings.filter((b) => b.reactor).map((b) => `${b.type.slice(8)}:${b.status[0]}:${b.licence ?? 'op'}`).join(' ')}`);
+      }
+      for (const id of s.unlockedSites) for (const b of s.sites[id].buildings) if (b.licence === 'pending' && b.status === 'active') console.log('   PENDING ' + b.type + ': ' + licenceChecklist(s, s.sites[id], b).filter((c) => !c.ok).map((c) => c.label).join('; '));
+      const regLog = s.log.filter((l) => /Licence|fine|Inspection|permit/i.test(l.text)).slice(0, 4).map((l) => l.text.slice(0, 120));
+      if (regLog.length) console.log('   ' + regLog.join('\n   '));
+    }
     if (t % 1800 === 0) {
       console.log(`t=${t / 60}min lvl=${s.level} money=${Math.round(s.money)} MW=${Math.round(totalMW())} demand=${Math.round(Object.values(s.sites).reduce((a, x) => a + x.stats.demandMW, 0))} research=${s.research.completed.length} buildings=${Object.values(s.sites).reduce((a, x) => a + x.buildings.length, 0)} scrams=${s.stats.scrams}`);
     }
   }
   console.log('Milestones (minutes):', JSON.stringify(marks));
+  if (process.env.DOWN_DEBUG) console.log('Reactor-seconds down:', JSON.stringify(Object.entries(down).sort((x, y) => y[1] - x[1])));
   console.log('Final:', { level: s.level, money: Math.round(s.money), runEarned: Math.round(s.runEarned), research: s.research.completed.length, sites: s.unlockedSites });
   expect(s.level).toBeGreaterThan(5);
 }, 600_000);

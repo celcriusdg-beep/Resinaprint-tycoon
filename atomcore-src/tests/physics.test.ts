@@ -237,6 +237,7 @@ describe('new PWR cold startup', () => {
     site.links = [];
     autoWire(s, site);
     staffUp(site);
+    site.reg.nextInspection = 1e9; // physics only: no regulator visits
     let minPeriod = Infinity;
     for (let t = 0; t < 1800; t += 0.1) {
       tick(s, 0.1);

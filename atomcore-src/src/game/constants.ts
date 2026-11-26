@@ -1,6 +1,6 @@
 // Global tuning constants. Balance lives here and in the definition tables.
 
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 
 /** Game hours that pass per real second. 1 s = 6 game minutes. */
 export const HOURS_PER_SECOND = 0.1;

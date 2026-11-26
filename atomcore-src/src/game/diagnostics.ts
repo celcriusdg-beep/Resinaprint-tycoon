@@ -9,6 +9,7 @@ import { hasRoomFor } from './buildings/grid';
 import { LOCATION_BY_ID } from './progression/locations';
 import { HOURS_PER_SECOND } from './constants';
 import { creditLimit } from './engine';
+import { FINDING_INFO, licenceChecklist } from './regulator/regulator';
 import { staffEffects, totalHired, inTraining, ROLES, ROLE_INFO } from './staff/staff';
 import { linkRepairCost, GRID_TIE, gridSide, linksOf, otherEnd, roleOf, linkRating, endpointName, KIND_LABEL } from './network/network';
 
@@ -20,7 +21,7 @@ export type Severity = 'error' | 'warn' | 'info' | 'ok';
 
 export type FixAction =
   | { kind: 'select'; id: number }
-  | { kind: 'panel'; panel: 'build' | 'research' | 'manage' | 'supply' | 'market' | 'staff' }
+  | { kind: 'panel'; panel: 'build' | 'research' | 'manage' | 'supply' | 'market' | 'staff' | 'regulator' }
   | { kind: 'reset'; id: number }
   | { kind: 'refuel'; id: number }
   | { kind: 'repair'; id: number }
@@ -215,6 +216,7 @@ export function diagnoseSite(s: GameState, site: Site): Issue[] {
   else if (st.exportMW >= st.gridCapMW * 0.97 && st.demandMW > st.exportMW) add('grid', 'warn', 'Grid connection full', 'You could sell more with more substation capacity.', { label: 'Build substation', action: { kind: 'build', type: 'substation' } });
   if (st.importMW > 0.5) add('grid', 'warn', 'Data centre is importing power', `Your plant covers only part of the on-site load: ${fmt(st.importMW, 1)} MW is bought from the grid at twice the market price. Raise reactor output or add generation.`, { label: 'Plant', action: { kind: 'panel', panel: 'manage' } });
   out.push(...diagnoseStaff(site));
+  out.push(...diagnoseRegulator(s, site));
   if (st.backupNeedMW > 0 && st.backupMW < st.backupNeedMW && s.level >= 4) add('safety', 'warn', 'Not enough backup power',
     `A grid blackout would leave only ${fmt(st.backupMW, 1)} of ${fmt(st.backupNeedMW, 1)} MW for pumps — large reactors could suffer core damage.`,
     s.research.completed.includes('s_egen') ? { label: 'Build generators', action: { kind: 'build', type: 'generator_emergency' } } : { label: 'Research', action: { kind: 'panel', panel: 'research' } });
@@ -252,6 +254,33 @@ export function diagnoseSite(s: GameState, site: Site): Issue[] {
       else if (out2.dig > 0 && out2.haul <= 0) add('mining', 'warn', 'Mine has no trucks', 'Excavators dig, but nothing hauls the ore out.', { label: 'Buy trucks', action: { kind: 'panel', panel: 'supply' } }, b.id);
       else if (out2.dig <= 0) add('mining', 'info', 'Mine has no excavators', 'Buy vehicles to start mining.', { label: 'Buy vehicles', action: { kind: 'panel', panel: 'supply' } }, b.id);
     }
+  }
+  return out;
+}
+
+/** Inspection findings, licences waiting or suspended, regulatory holds. */
+export function diagnoseRegulator(s: GameState, site: Site): Issue[] {
+  const out: Issue[] = [];
+  if (!site.reg || !s.regulator) return out;
+  const add = (severity: Severity, title: string, detail: string, fix?: Issue['fix'], buildingId?: number) =>
+    out.push({ key: `${site.id}:reg:${buildingId ?? ''}:${title}`, severity, system: 'safety', siteId: site.id, title, detail, fix, buildingId });
+  const open = { label: 'Regulator', action: { kind: 'panel' as const, panel: 'regulator' as const } };
+  for (const f of s.regulator.findings.filter((x) => x.siteId === site.id)) {
+    add(f.major ? 'error' : 'warn', `${f.major ? 'Major' : 'Inspection'} finding: ${FINDING_INFO[f.kind].title}`, `${FINDING_INFO[f.kind].fix} Deadline in ${mins(f.deadline - s.gameTime)}${f.major ? ' — then a reactor is suspended' : ' — then a fine'}.`, open);
+  }
+  if (site.reg.holdUntil > s.gameTime) add('error', 'Regulatory hold after an incident', `All reactors at this site stay shut down for ${mins(site.reg.holdUntil - s.gameTime)} while the regulator investigates.`, open);
+  for (const b of site.buildings) {
+    if (!b.reactor || b.status !== 'active') continue;
+    if (b.licence === 'suspended') add('error', `${BUILDINGS[b.type].short}: licence suspended`, 'It stays shut down until the major finding at this site is fixed.', open, b.id);
+    if (b.licence === 'pending') {
+      const missing = licenceChecklist(s, site, b).filter((c) => !c.ok).map((c) => c.label.toLowerCase());
+      add('warn', `${BUILDINGS[b.type].short}: awaiting operating licence`, missing.length ? `Before start-up the inspectors need: ${missing.join('; ')}.` : 'The pre-start inspection is under way.', { label: 'Open', action: { kind: 'select', id: b.id } }, b.id);
+    }
+  }
+  for (const p of s.regulator.permits) {
+    if (p.siteId !== site.id || p.ready > s.gameTime) continue;
+    add('info', `Permit granted: ${BUILDINGS[p.type].short}`, 'You may now build it (Build → Reactors).', { label: 'Build', action: { kind: 'build', type: p.type } });
+    break;
   }
   return out;
 }

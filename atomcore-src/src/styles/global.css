@@ -677,3 +677,16 @@ table.pl tr.big td { font-size: 15px; }
 .lvl { font-size: 10.5px; padding: 1px 6px; border-radius: 99px; background: rgba(79,209,255,0.18); color: var(--accent); font-weight: 700; }
 .cand { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .cand .btn { flex: none; }
+
+/* Regulator */
+.finding { padding: 8px 10px; border: 1px solid rgba(255,182,72,0.5); border-radius: 10px; background: rgba(255,182,72,0.06); display: flex; flex-direction: column; gap: 3px; margin-bottom: 6px; }
+.finding.major { border-color: rgba(255,90,90,0.6); background: rgba(255,90,90,0.07); }
+.licence-row { padding: 7px 0; border-bottom: 1px solid var(--line); }
+.checklist { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; }
+.checklist li { display: flex; gap: 6px; align-items: center; }
+.checklist li.ok { color: var(--good); }
+.checklist li.no { color: var(--warn); }
+.permit-list { display: flex; flex-direction: column; }
+.permit-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.permit-row .btn { flex: none; }
+.linklike { background: none; border: 0; padding: 0; color: var(--accent); font: inherit; font-weight: 700; cursor: pointer; text-decoration: underline; }

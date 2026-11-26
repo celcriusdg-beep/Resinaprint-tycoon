@@ -19,7 +19,7 @@ export function PlantBalance({ compact }: { compact?: boolean }) {
   if (st.cableLossMW > 0.05) hints.push(`Cables lose ${fmtPower(st.cableLossMW)} as heat (I²R). Higher-voltage lines lose less.`);
   const staffShort = st.staffFactor < 0.999;
   if (!st.pumpsPowered) hints.unshift('STATION BLACKOUT — no power for coolant pumps. Build Emergency Generators so decay heat can be removed.');
-  else if (g.level >= 4 && st.backupNeedMW > 0.05 && st.backupMW < st.backupNeedMW) hints.push(`Backup power ${Math.round(st.backupMW)}/${Math.round(st.backupNeedMW)} MW — a grid blackout could cause core damage. Build Emergency Generators.`);
+  else if (g.level >= 4 && st.backupNeedMW > 0.05 && st.backupMW < st.backupNeedMW) hints.push(`Backup power ${st.backupMW.toFixed(1)}/${st.backupNeedMW.toFixed(1)} MW — a grid blackout could cause core damage. Build Emergency Generators.`);
   if (st.waterFactor < 0.999) hints.unshift(`Cooling towers are short of water (${Math.round(st.waterFactor * 100)}%) — build a Water Intake, Wells or a Tank (Supply → Water).`);
   if (st.treatedFactor < 0.999) hints.unshift('Not enough demineralised water — reactors are derated. Build a Water Treatment Plant.');
   if (staffShort) hints.push(`Short of staff: output at ${Math.round(st.staffFactor * 100)}% — hire people (Plant → Staff) or build Administration Buildings for office space.`);

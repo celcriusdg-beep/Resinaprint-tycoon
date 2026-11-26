@@ -77,6 +77,7 @@ export function HUD() {
           {scrammed ? `${scrammed} SCRAM` : refuelNeeded ? `${refuelNeeded} need fuel` : refueling ? `${refueling} refuelling` : `${st.reactorsOnline}/${st.reactorsTotal} online`}
         </button>
         <WeatherPill />
+        <RegulatorPill />
         <button className={`hud-pill ${st.coolingRatio < 1 ? 'bad' : st.coolingRatio < 1.1 ? 'warn' : ''}`} onClick={() => open('manage')}>
           <Icon name="thermo" size={14} />
           {fmtPct(Math.min(9.99, st.maxTempFrac))}
@@ -145,6 +146,23 @@ function WeatherPill() {
     <button className={`hud-pill${bad ? ' warn' : ''}`} onClick={() => useUI.getState().setPanel('weather')} aria-label={`Weather: ${sky.label}`}>
       <Icon name={sky.icon} size={14} />
       {Math.round(site.weather.air)}° <span className="pill-text">{SEASONS[c.season]} {c.dayOfSeason}</span>
+    </button>
+  );
+}
+
+function RegulatorPill() {
+  const g = useGame();
+  const site = g.sites[g.activeSite];
+  if (!g.regulator) return null;
+  const findings = g.regulator.findings.filter((f) => f.siteId === site.id);
+  const suspended = site.buildings.filter((b) => b.licence === 'suspended').length;
+  const pending = site.buildings.filter((b) => b.licence === 'pending' && b.status === 'active').length;
+  if (!findings.length && !suspended && !pending && site.reg.holdUntil <= g.gameTime) return null;
+  const bad = suspended > 0 || findings.some((f) => f.major) || site.reg.holdUntil > g.gameTime;
+  const text = suspended ? `${suspended} suspended` : site.reg.holdUntil > g.gameTime ? 'Regulator hold' : findings.length ? `${findings.length} finding${findings.length > 1 ? 's' : ''}` : `${pending} awaiting licence`;
+  return (
+    <button className={`hud-pill ${bad ? 'bad' : 'warn'}`} onClick={() => useUI.getState().setPanel('regulator')} aria-label="Regulator">
+      <Icon name="scram" size={14} /> {text}
     </button>
   );
 }

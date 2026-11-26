@@ -4,6 +4,7 @@ import { tickPlants, fuelCapacity, repairCost } from './simulation/plant';
 import { tickEvents, notify, pushLog } from './events/events';
 import { stepWeather } from './weather/weather';
 import { autoHire, refreshCandidates } from './staff/staff';
+import { stepRegulator } from './regulator/regulator';
 import { linkRepairCost } from './network/network';
 import { tickMarket } from './economy/market';
 import { RESEARCH_BY_ID } from './research/tree';
@@ -50,6 +51,10 @@ export function tick(s: GameState, dt: number, opts: TickOptions = {}): void {
   tickWeather(s, dt, offline);
   tickMarket(s, dt, offline);
   tickPlants(s, dt, offline);
+  for (const n of stepRegulator(s, dt, offline)) {
+    pushLog(s, n.kind, `${n.title}: ${n.text}`);
+    if (!offline) notify(s, { kind: n.kind, title: n.title, text: n.text });
+  }
   runAutomation(s, offline);
   stepResearch(s, offline);
   stepLevel(s, offline);
@@ -67,7 +72,8 @@ function stepConstruction(s: GameState, dt: number, offline: boolean): void {
     const mods = getMods(s, id);
     for (const b of site.buildings) {
       if (b.status !== 'constructing' && b.status !== 'upgrading' && b.status !== 'refueling') continue;
-      const speed = b.status === 'refueling' ? 1 : mods.buildSpeed;
+      // Protests at the gate slow construction when public opinion is very low.
+      const speed = b.status === 'refueling' ? 1 : mods.buildSpeed * (s.regulator.opinion < 30 ? 0.8 : 1);
       b.progress += (dt * speed) / Math.max(1, b.buildTotal);
       if (b.progress < 1) continue;
       b.progress = 1;

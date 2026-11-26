@@ -11,6 +11,7 @@ import { prestigeStartMoney } from './progression/prestige';
 import { autoWire } from './network/network';
 import { newWeather } from './weather/weather';
 import { newStaff, staffUp } from './staff/staff';
+import { newRegulator, newSiteRegulator } from './regulator/regulator';
 
 export function emptyLedger(): Ledger {
   return { sales: 0, contracts: 0, upkeep: 0, salaries: 0, fuel: 0, water: 0, maintenance: 0, construction: 0, research: 0, other: 0 };
@@ -38,7 +39,7 @@ export function makeBuilding(s: GameState, type: BuildingType, x: number, z: num
 
 export function makeSite(id: string): Site {
   const loc = LOCATION_BY_ID[id];
-  return { id, size: loc.startSize, buildings: [], links: [], weather: newWeather(id), staff: newStaff(), storageMWh: 0, storageWater: 0, spent: { pool: 0, casks: 0 }, blackoutTime: 0, stats: emptyStats() };
+  return { id, size: loc.startSize, buildings: [], links: [], weather: newWeather(id), staff: newStaff(), reg: newSiteRegulator(0), storageMWh: 0, storageWater: 0, spent: { pool: 0, casks: 0 }, blackoutTime: 0, stats: emptyStats() };
 }
 
 export function createInitialState(opts: { shares?: number; prestigeCount?: number; achievements?: string[]; lifetimeEarned?: number; createdAt?: number } = {}): GameState {
@@ -91,6 +92,7 @@ export function createInitialState(opts: { shares?: number; prestigeCount?: numb
     pendingNotices: [],
     candidates: [],
     candidateDay: -1,
+    regulator: newRegulator(),
   };
   const site = makeSite('riverside');
   s.sites.riverside = site;

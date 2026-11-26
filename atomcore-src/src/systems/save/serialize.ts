@@ -10,6 +10,7 @@ import { LOCATION_BY_ID } from '../../game/progression/locations';
 import { autoWire, pruneLinks } from '../../game/network/network';
 import { initWeather } from '../../game/weather/weather';
 import { newStaff, staffUp } from '../../game/staff/staff';
+import { newSiteRegulator } from '../../game/regulator/regulator';
 
 // Pure (de)serialisation and migration. No storage APIs here so it can be unit tested.
 
@@ -98,6 +99,10 @@ export function migrate(raw: unknown): GameState {
     } else site.staff = { ...newStaff(), ...site.staff, hired: { ...newStaff().hired, ...site.staff.hired } };
   }
   s.candidates = Array.isArray(s.candidates) ? s.candidates : [];
+  // v6 → v7: regulator. Existing reactors keep their (implicit) operating licence.
+  for (const site of Object.values(s.sites)) site.reg = { ...newSiteRegulator(s.gameTime), ...(site.reg ?? {}) };
+  s.regulator.permits = Array.isArray(s.regulator.permits) ? s.regulator.permits : [];
+  s.regulator.findings = Array.isArray(s.regulator.findings) ? s.regulator.findings : [];
   s.unlockedSites = s.unlockedSites.filter((id) => s.sites[id]);
   if (!s.unlockedSites.length) throw new Error('Save data has no plant sites.');
   if (!s.sites[s.activeSite]) s.activeSite = s.unlockedSites[0];

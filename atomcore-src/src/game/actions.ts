@@ -13,6 +13,7 @@ import { acceptOffer as acceptOfferImpl, cancelContract as cancelContractImpl } 
 import { startRefuel, decommissionCost, buyVehicle, sellVehicle, buyItem, sellItem, deliverOrder as deliverOrderImpl, fuelQuotaLeft, shipSpentFuel as shipSpentFuelImpl, type Item } from './supply/fuelcycle';
 import { fuelCapacity } from './simulation/plant';
 import { initWeather } from './weather/weather';
+import { grantedPermit, usePermit, applyPermit, licenceBlock, INSPECTION_INTERVAL } from './regulator/regulator';
 import { hire, fire, keyHireFee, KEY_INFO, ROLE_INFO, type Role, type Shift, type KeyRole } from './staff/staff';
 import { linkRepairCost, removeLinksFor, linkProblem, classLockReason, linkCost, routeLength, makeLink, MAX_CIRCUITS, LINK_CLASSES, KIND_LABEL, endpointName, linkLength } from './network/network';
 
@@ -39,6 +40,7 @@ export function buildLockReason(s: GameState, type: BuildingType, siteId = s.act
     const n = s.sites[siteId].buildings.filter((b) => b.type === type).length;
     if (n >= def.maxPerSite) return `Limit of ${def.maxPerSite} per site`;
   }
+  if (def.reactor && s.regulator && !grantedPermit(s, siteId, type)) return 'Needs a construction permit (see Permits above)';
   return null;
 }
 
@@ -52,9 +54,11 @@ export function placeBuilding(s: GameState, type: BuildingType, x: number, z: nu
   if (problem === 'bounds') return 'Outside the plot. Buy more land: Build → Land → Expand.';
   if (problem === 'road') return 'Keep the access road clear.';
   if (problem === 'overlap') return 'That space is occupied.';
+  if (BUILDINGS[type].reactor && !usePermit(s, s.activeSite, type)) return 'Needs a construction permit.';
   s.money -= cost;
   s.ledger.construction += cost;
   const b = makeBuilding(s, type, x, z, rot);
+  if (b.reactor) b.licence = 'pending';
   site.buildings.push(b);
   pushLog(s, 'info', `Started construction of ${BUILDINGS[type].name}.`);
   return null;
@@ -137,6 +141,8 @@ export function restartReactor(s: GameState, id: number): Result {
   const site = s.sites[s.activeSite];
   const b = site.buildings.find((x) => x.id === id);
   if (!b?.reactor) return 'Not a reactor.';
+  const block = licenceBlock(s, site, b);
+  if (block) return `${block}.`;
   if (!canRestart(b, getMods(s, site.id), s.gameTime, LOCATION_BY_ID[site.id].ambient))
     return 'Not safe to restart yet — wait for the core to cool and the restart delay to pass.';
   restart(b);
@@ -219,6 +225,7 @@ export function unlockSite(s: GameState, id: string): Result {
   s.unlockedSites.push(id);
   s.activeSite = id;
   initWeather(s.sites[id], s.gameTime);
+  s.sites[id].reg.nextInspection = s.gameTime + INSPECTION_INTERVAL;
   pushLog(s, 'good', `Acquired land at ${loc.name}.`);
   return null;
 }
@@ -549,5 +556,18 @@ export function dismissKeyPerson(s: GameState, role: KeyRole): Result {
   if (!p) return 'Nobody in that position.';
   delete site.staff.key[role];
   pushLog(s, 'info', `${p.name} left the company.`);
+  return null;
+}
+
+// ── Regulator ────────────────────────────────────────────────────────────
+
+export function applyForPermit(s: GameState, type: BuildingType): Result {
+  const err = applyPermit(s, s.activeSite, type);
+  if (!err) pushLog(s, 'info', `Applied for a construction permit for a ${BUILDINGS[type].name} at ${LOCATION_BY_ID[s.activeSite].name}.`);
+  return err;
+}
+
+export function setCommunity(s: GameState, level: number): Result {
+  s.regulator.community = Math.max(0, Math.min(5, Math.round(level)));
   return null;
 }

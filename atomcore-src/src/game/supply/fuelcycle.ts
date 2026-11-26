@@ -1,3 +1,4 @@
+import { reportIncident } from '../regulator/regulator';
 import type { Building, GameState, MaterialOrder, Modifiers, Site, Vehicles } from '../types';
 import { BUILDINGS, levelMult } from '../buildings/defs';
 import {
@@ -444,6 +445,7 @@ export function coreDamage(s: GameState, site: Site, b: Building, cause: string)
   // INES-style severity from reactor size and containment.
   const severity = Math.min(7, Math.max(4, Math.round(4 + Math.log10(Math.max(10, def.reactor!.thermalMW)) - 1 + (phys.containment ? 0 : 2))));
   const fine = Math.round(def.cost * (0.3 + 0.1 * (severity - 4)));
+  reportIncident(s, site.id, 'core');
   const outcry = Math.min(1800, 400 + (severity - 4) * 300);
   s.money -= fine;
   s.ledger.other -= fine;

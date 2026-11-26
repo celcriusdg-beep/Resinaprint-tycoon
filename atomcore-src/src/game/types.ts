@@ -268,6 +268,8 @@ export interface Building {
   vehicles?: Vehicles;
   /** Ore remaining in a mine's pit, t. */
   reserve?: number;
+  /** Reactors: operating licence. Missing = licensed (older saves, starter plant). */
+  licence?: 'pending' | 'operating' | 'suspended';
 }
 
 export interface SiteStats {
@@ -371,6 +373,8 @@ export interface Site {
   weather: import('./weather/weather').WeatherState;
   /** People employed at the site, shifts, fatigue, morale and key people. */
   staff: import('./staff/staff').StaffState;
+  /** Regulator rating, inspection schedule and incident record. */
+  reg: import('./regulator/regulator').SiteRegulator;
   storageMWh: number;
   storageWater: number; // raw water in tanks, m³
   spent: SpentFuelPool;
@@ -560,6 +564,8 @@ export interface GameState {
   /** Key-person candidates on the job market (refreshed daily). */
   candidates: import('./staff/staff').KeyPerson[];
   candidateDay: number;
+  /** Nuclear regulator: permits, findings, public opinion. */
+  regulator: import('./regulator/regulator').RegulatorState;
 }
 
 /** Notices are produced by the simulation and consumed by the UI (toasts, sounds). */

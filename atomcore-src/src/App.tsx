@@ -22,6 +22,7 @@ import { StatusPanel } from './components/panels/StatusPanel';
 import { ConnectBar } from './components/panels/Connections';
 import { WeatherPanel } from './components/panels/WeatherPanel';
 import { StaffPanel } from './components/panels/StaffPanel';
+import { RegulatorPanel } from './components/panels/RegulatorPanel';
 import { Tabs } from './components/ui/common';
 import { BUILDINGS } from './game/buildings/defs';
 import { rotatePlacement } from './ui/actions';
@@ -30,11 +31,11 @@ import type { IconName } from './components/ui/Icons';
 const GameCanvas = lazy(() => import('./components/world/GameCanvas'));
 
 function MorePanel() {
-  const [tab, setTab] = useState<'sites' | 'settings'>('sites');
+  const [tab, setTab] = useState<'sites' | 'regulator' | 'settings'>('sites');
   return (
     <div className="panel-stack">
-      <Tabs<'sites' | 'settings'> value={tab} onChange={setTab} tabs={[{ id: 'sites', label: 'Sites & Corporation', icon: 'globe' }, { id: 'settings', label: 'Settings', icon: 'gear' }]} />
-      {tab === 'sites' ? <SitesPanel /> : <SettingsPanel />}
+      <Tabs<'sites' | 'regulator' | 'settings'> value={tab} onChange={setTab} tabs={[{ id: 'sites', label: 'Sites', icon: 'globe' }, { id: 'regulator', label: 'Regulator', icon: 'scram' }, { id: 'settings', label: 'Settings', icon: 'gear' }]} />
+      {tab === 'sites' ? <SitesPanel /> : tab === 'regulator' ? <RegulatorPanel /> : <SettingsPanel />}
     </div>
   );
 }
@@ -51,6 +52,7 @@ const PANELS: Record<PanelId, { title: string; icon: IconName; render: () => JSX
   settings: { title: 'Settings', icon: 'gear', render: () => <SettingsPanel /> },
   weather: { title: 'Weather & Seasons', icon: 'sun', render: () => <WeatherPanel /> },
   staff: { title: 'Staff & Shifts', icon: 'users', render: () => <StaffPanel /> },
+  regulator: { title: 'Regulator & Public', icon: 'scram', render: () => <RegulatorPanel /> },
 };
 
 export default function App() {

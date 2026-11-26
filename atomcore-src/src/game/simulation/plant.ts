@@ -14,6 +14,7 @@ import { stepWater } from '../supply/water';
 import { mineOutput, tickSupply, onlineRefuel, stepFuelIntegrity, coreDamage, stepSpentFuel } from '../supply/fuelcycle';
 import { ASSEMBLY_MWH } from '../constants';
 import { staffEffects, stepStaff } from '../staff/staff';
+import { licenceBlock, reportIncident } from '../regulator/regulator';
 import { solvePlant, gridSide, stepCables, GRID_TIE, KIND_LABEL, endpointName, type PlantNetInput } from '../network/network';
 
 /** Battery-backed emergency feedwater lasts ≈ 6 game hours. */
@@ -305,6 +306,16 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
     let houseLoad = 0;
     for (const b of reactors) {
       if (b.status === 'destroyed') continue;
+      // No licence, no criticality: the reactor is held shut down.
+      const block = b.status === 'active' ? licenceBlock(s, site, b) : null;
+      if (block && !b.reactor!.scrammed) {
+        const r0 = b.reactor!;
+        scram(r0, block, s.gameTime);
+        r0.power *= 0.12;
+        r0.fission *= 0.12;
+        r0.precursors *= 0.5;
+        r0.thermal = r0.fission + r0.decayHeat;
+      }
       stepReactorPower(b, inp);
       if (BUILDINGS[b.type].reactor!.onlineRefuel && b.status === 'active') onlineRefuel(s, b, dt, mods);
       houseLoad += b.reactor!.houseLoad;
@@ -344,6 +355,7 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
       if (rn && !r.scrammed && !r.tripCause && b.status === 'active' && r.power > 0.05 && rn.removed < 0.35) {
         const cause = !rn.connected ? 'No heat sink — no steam line to a turbine hall' : !rn.cooled ? 'Loss of condenser cooling — no cooling-water pipe' : null;
         if (cause) {
+          reportIncident(s, site.id, 'trip');
           scram(r, cause, s.gameTime);
           // Rods are in: prompt drop of fission power.
           r.power *= 0.12;
@@ -358,6 +370,8 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
       const res = stepReactorTemp(b, inp, rn ? rn.ratio : 0);
       const name = `${BUILDINGS[b.type].short} at ${loc.name}`;
 
+      // Trips caused by the outside grid are reported but not held against the plant.
+      if (res.tripped && (res.atws || !res.tripped.startsWith('Loss of offsite power'))) reportIncident(s, site.id, res.atws ? 'atws' : 'trip');
       if (res.tripped && !res.atws) {
         s.stats.scrams++;
         pushLog(s, 'bad', `SCRAM: ${name} — ${res.tripped}.`);
@@ -368,7 +382,7 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
         if (!offline) notify(s, { kind: 'scram', title: 'FAILURE TO SCRAM', text: `${name}: the rods did not insert automatically (${res.tripped}). Open the reactor and press SCRAM now.` });
       }
       if (res.damaged) coreDamage(s, site, b, !pumpsPowered ? 'station blackout' : 'loss of core cooling');
-      if (r.scrammed && (s.automation.autoRestart || offline) && (!rn || (rn.connected && rn.cooled)) && canRestart(b, mods, s.gameTime, ambient)) {
+      if (r.scrammed && (s.automation.autoRestart || offline) && (!rn || (rn.connected && rn.cooled)) && !licenceBlock(s, site, b) && canRestart(b, mods, s.gameTime, ambient)) {
         restart(b);
         s.stats.restarts++;
         pushLog(s, 'info', `Monitoring system restarted ${BUILDINGS[b.type].short} at ${loc.name}.`);
@@ -376,6 +390,7 @@ export function tickPlants(s: GameState, dt: number, offline: boolean): void {
       // Tired crews make mistakes: an operator error trips the reactor.
       if (!offline && !r.scrammed && !r.tripCause && b.status === 'active' && r.power > 0.1 && random() < sfx.errorRate * dt) {
         scram(r, 'Operator error (crew fatigue)', s.gameTime);
+        reportIncident(s, site.id, 'error');
         s.stats.scrams++;
         pushLog(s, 'bad', `SCRAM: ${BUILDINGS[b.type].short} at ${loc.name} — operator error by a tired crew.`);
         notify(s, { kind: 'scram', title: 'Reactor SCRAM', text: `Operator error at ${loc.name}: the crew is exhausted. Hire more operators or switch to 8-hour shifts.` });
