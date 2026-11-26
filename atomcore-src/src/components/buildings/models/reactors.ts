@@ -178,22 +178,27 @@ export function msrReactor(): ModelBuilder {
   b.cyl(4.0, 4.0, 1.2, m.glass, [-0.8, 4.45, -0.8], 6);
   b.cyl(4.3, 4.3, 0.25, m.steelDark, [-0.8, 5.65, -0.8], 6);
   b.cyl(2.4, 3.2, 1.6, m.cladWhite, [-0.8, 5.9, -0.8], 6);
-  // Glowing salt loops wrapping the hall
+  // Heat exchanger tanks fed by glowing (trace-heated, insulated) salt loops
   const salt = materials().glowOrange.clone();
   const loops = new THREE.Group();
+  const seg = (a: THREE.Vector3, c: THREE.Vector3, r: number) => {
+    const len = a.distanceTo(c);
+    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 10), salt);
+    mesh.position.copy(a).add(c).multiplyScalar(0.5);
+    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), c.clone().sub(a).normalize());
+    loops.add(mesh);
+  };
   for (let i = 0; i < 3; i++) {
-    const t = new THREE.Mesh(new THREE.TorusGeometry(4.75, 0.11, 8, 64), salt);
-    t.rotation.x = Math.PI / 2;
-    t.position.set(-0.8, 1.2 + i * 1.1, -0.8);
-    loops.add(t);
+    const z = -3.6 + i * 2.6;
+    b.cyl(0.8, 0.8, 3.4, m.steel, [4.9, 0.25, z], 20);
+    b.dome(0.8, m.steel, [4.9, 3.65, z], 0.6, 16);
+    // Hot leg high, cold leg low, each on a pipe support
+    for (const [y, r] of [[2.7, 0.16], [1.1, 0.13]] as const) {
+      seg(new THREE.Vector3(3.0, y, z * 0.55 - 0.4), new THREE.Vector3(4.15, y, z), r);
+      b.box(0.12, y - 0.3, 0.12, m.steelDark, [3.6, 0.25, (z * 0.55 - 0.4 + z) / 2], 0, 1);
+    }
   }
   b.partGroup(loops, { kind: 'glow', material: salt });
-  // Heat exchanger tanks
-  for (let i = 0; i < 3; i++) {
-    b.cyl(0.8, 0.8, 3.4, m.steel, [4.3, 0.25, -3.6 + i * 2.6], 20);
-    b.dome(0.8, m.steel, [4.3, 3.65, -3.6 + i * 2.6], 0.6, 16);
-    b.pipe([3.4, 2.6, -3.6 + i * 2.6], [3.5, 2.6, -3.6 + i * 2.6], 0.18, m.steelDark);
-  }
   // Drain tank bunker
   b.box(3.2, 1.4, 2.6, m.concreteDark, [-3.6, 0.25, 4.2]);
   b.box(3.2, 0.1, 0.5, m.hazard, [-3.6, 1.65, 4.2]);

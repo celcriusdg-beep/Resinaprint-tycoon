@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
+import { materials } from './materials';
 
 // ModelBuilder collects transformed primitives into one bucket per material and
 // merges each bucket into a single geometry. A whole building therefore costs a
@@ -66,13 +68,62 @@ export class ModelBuilder {
     return this;
   }
 
-  /** Box resting on y (pos is bottom-centre). */
+  /** Box resting on y (pos is bottom-centre). Large volumes get softly bevelled edges. */
   box(w: number, h: number, d: number, mat: THREE.Material, pos: Vec3 = [0, 0, 0], rotY = 0, uvScale = 0.25): this {
-    const g = new THREE.BoxGeometry(w, h, d);
-    scaleBoxUVs(g, w, h, d, uvScale);
+    const small = Math.min(w, h, d);
+    let g: THREE.BufferGeometry;
+    if (small >= 0.45 && Math.max(w, h, d) >= 1.2) {
+      g = new RoundedBoxGeometry(w, h, d, 2, Math.min(0.12, small * 0.08));
+      worldUVs(g, uvScale);
+    } else {
+      g = new THREE.BoxGeometry(w, h, d);
+      scaleBoxUVs(g as THREE.BoxGeometry, w, h, d, uvScale);
+    }
     this.add(g, mat, [pos[0], pos[1] + h / 2, pos[2]], [0, rotY, 0]);
-    this.height = Math.max(this.height, pos[1] + h);
+    this.noteTop(pos, h);
+    if (this.autoDetail) this.detailWall(w, h, d, mat, pos, rotY);
     return this;
+  }
+
+  /** Highest point so far (for the automatic aircraft beacon). */
+  private top: Vec3 = [0, 0, 0];
+  private noteTop(pos: Vec3, h: number): void {
+    if (pos[1] + h > this.top[1]) this.top = [pos[0], pos[1] + h, pos[2]];
+    this.height = Math.max(this.height, pos[1] + h);
+  }
+
+  /** Automatic dressing of large clad buildings: roof coping, rooftop units, a wall ladder. */
+  autoDetail = true;
+  private detailWall(w: number, h: number, d: number, mat: THREE.Material, pos: Vec3, rotY: number): void {
+    const m = materials();
+    const walls = [m.cladBlue, m.cladGrey, m.cladWhite, m.facade, m.slats, m.concreteWarm];
+    if (!walls.includes(mat as THREE.MeshStandardMaterial) || h < 2.4 || w < 2.8 || d < 2.8) return;
+    this.autoDetail = false;
+    const c = Math.cos(rotY), s = Math.sin(rotY);
+    const at = (x: number, z: number, y: number): Vec3 => [pos[0] + x * c + z * s, y, pos[2] - x * s + z * c];
+    const top = pos[1] + h;
+    // Coping along the roof edge
+    const t = 0.16;
+    this.box(w + 0.1, 0.22, t, m.steelDark, at(0, d / 2 - t / 2 + 0.05, top), rotY, 1);
+    this.box(w + 0.1, 0.22, t, m.steelDark, at(0, -d / 2 + t / 2 - 0.05, top), rotY, 1);
+    this.box(t, 0.22, d + 0.1, m.steelDark, at(w / 2 - t / 2 + 0.05, 0, top), rotY, 1);
+    this.box(t, 0.22, d + 0.1, m.steelDark, at(-w / 2 + t / 2 - 0.05, 0, top), rotY, 1);
+    // Rooftop air handlers (deterministic layout from the size)
+    const n = Math.min(4, Math.max(1, Math.floor((w * d) / 30)));
+    for (let i = 0; i < n; i++) {
+      const fx = ((i + 0.5) / n - 0.5) * (w - 2.2);
+      const fz = (((i * 37) % 7) / 7 - 0.5) * (d - 2.2) * 0.6;
+      this.box(1.1, 0.55, 0.8, m.paintWhite, at(fx, fz, top), rotY, 1);
+      this.box(0.5, 0.08, 0.5, m.steelDark, at(fx, fz, top + 0.55), rotY, 1);
+    }
+    // Access ladder with safety cage on one gable
+    if (h > 12) { this.autoDetail = true; return; }
+    const lx = w / 2 - 0.6;
+    const lz = d / 2 + 0.06;
+    for (const off of [-0.18, 0.18]) this.box(0.04, h + 0.9, 0.04, m.steel, at(lx + off, lz, pos[1]), rotY, 1);
+    for (let y = pos[1] + 0.3; y < top + 0.8; y += 0.35) this.box(0.36, 0.03, 0.03, m.steel, at(lx, lz, y), rotY, 1);
+    for (let y = pos[1] + 2.2; y < top + 0.8; y += 0.8) this.box(0.5, 0.03, 0.4, m.steel, at(lx, lz + 0.2, y), rotY, 1);
+    this.autoDetail = true;
   }
 
   /** Cylinder resting on y. */
@@ -82,7 +133,7 @@ export class ModelBuilder {
     for (let i = 0; i < uvs.count; i++) uvs.setXY(i, uvs.getX(i) * Math.max(1, rBot * 1.5), uvs.getY(i) * Math.max(1, h / 4));
     if (rot[0] === 0 && rot[2] === 0) {
       this.add(g, mat, [pos[0], pos[1] + h / 2, pos[2]], rot);
-      this.height = Math.max(this.height, pos[1] + h);
+      this.noteTop(pos, h);
     } else this.add(g, mat, pos, rot);
     return this;
   }
@@ -165,6 +216,10 @@ export class ModelBuilder {
   }
 
   build(): ModelData {
+    // Aviation obstruction light on anything taller than 11 m that has none yet.
+    if (this.top[1] > 11 && !this.anims.some((a) => a.kind === 'beacon')) {
+      this.part(new THREE.SphereGeometry(0.14, 6, 4), materials().beacon, [this.top[0], this.top[1] + 0.14, this.top[2]], { kind: 'beacon' });
+    }
     for (const [mat, geos] of this.buckets) {
       const merged = mergeGeometries(geos, false);
       if (!merged) continue;
@@ -178,6 +233,20 @@ export class ModelBuilder {
       for (const g of geos) g.dispose();
     }
     return { group: this.root, anims: this.anims, emitters: this.emitters, height: this.height, coreTop: this.coreTop || this.height };
+  }
+}
+
+/** Planar UVs from world position (dominant normal axis), for bevelled boxes. */
+function worldUVs(g: THREE.BufferGeometry, s: number) {
+  const pos = g.attributes.position as THREE.BufferAttribute;
+  const nor = g.attributes.normal as THREE.BufferAttribute;
+  const uv = g.attributes.uv as THREE.BufferAttribute;
+  for (let i = 0; i < pos.count; i++) {
+    const ax = Math.abs(nor.getX(i)), ay = Math.abs(nor.getY(i)), az = Math.abs(nor.getZ(i));
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    if (ax >= ay && ax >= az) uv.setXY(i, z * s, y * s);
+    else if (ay >= az) uv.setXY(i, x * s, z * s);
+    else uv.setXY(i, x * s, y * s);
   }
 }
 

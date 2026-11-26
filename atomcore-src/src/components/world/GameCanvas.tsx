@@ -16,11 +16,12 @@ import { SteamParticles } from './SteamParticles';
 import { PlacementLayer } from './Placement';
 import { SelectionMarker, ConnectMarkers } from './Overlays';
 import { WeatherFX } from './WeatherFX';
+import { SiteLights, Traffic } from './SiteLife';
 
 const QUALITY = {
-  low: { dpr: [0.75, 1] as [number, number], shadows: false, shadowSize: 1024, bloom: false, particles: 500, trees: 120, aa: false, weatherFx: 0 },
-  medium: { dpr: [1, 1.5] as [number, number], shadows: true, shadowSize: 1024, bloom: true, particles: 900, trees: 260, aa: false, weatherFx: 900 },
-  high: { dpr: [1, 2] as [number, number], shadows: true, shadowSize: 2048, bloom: true, particles: 1500, trees: 420, aa: true, weatherFx: 1500 },
+  low: { dpr: [0.75, 1] as [number, number], shadows: false, shadowSize: 1024, bloom: false, particles: 500, trees: 120, aa: false, weatherFx: 0, traffic: 3 },
+  medium: { dpr: [1, 1.5] as [number, number], shadows: true, shadowSize: 1024, bloom: true, particles: 900, trees: 260, aa: false, weatherFx: 900, traffic: 6 },
+  high: { dpr: [1, 2] as [number, number], shadows: true, shadowSize: 2048, bloom: true, particles: 1500, trees: 420, aa: true, weatherFx: 1500, traffic: 8 },
 };
 
 function World() {
@@ -40,6 +41,8 @@ function World() {
         <BuildingObject key={`${site.id}-${b.id}-${b.type}`} building={b} siteSize={site.size} />
       ))}
       <Infrastructure site={site} structure={structure} />
+      <SiteLights siteSize={site.size} />
+      {q.traffic > 0 && <Traffic key={`tr-${site.id}-${site.size}`} siteSize={site.size} count={q.traffic} />}
       <SteamParticles key={site.id} max={q.particles} />
       {q.weatherFx > 0 && <WeatherFX key={`wx-${site.id}`} max={q.weatherFx} />}
       <PlacementLayer siteSize={site.size} />

@@ -120,8 +120,12 @@ export function fuelQa(): ModelBuilder {
   b.box(6.0, 0.2, 4.8, m.steelDark, [0, 3.0, -0.8]);
   b.box(4.6, 0.6, 0.06, m.windowGlow, [0, 1.6, 1.52]);
   const scan = materials().glowCyan.clone();
-  b.part(new THREE.TorusGeometry(0.9, 0.08, 8, 32), scan, [2.2, 1.2, 2.6], { kind: 'pulse', material: scan, speed: 3 }, [0, 0, 0]);
-  b.box(0.3, 2.2, 0.3, m.steel, [2.2, 0.2, 2.6]);
+  // Ultrasonic scanning ring around a fuel assembly on its inspection stand
+  b.cyl(0.9, 1.0, 0.25, m.steelDark, [2.2, 0.2, 2.6], 20);
+  b.box(0.22, 2.6, 0.22, m.paintYellow, [2.2, 0.45, 2.6]);
+  for (const x of [1.1, 3.3]) b.box(0.14, 2.4, 0.14, m.steel, [x, 0.2, 2.6]);
+  b.box(2.4, 0.14, 0.14, m.steel, [2.2, 2.6, 2.6]);
+  b.part(new THREE.TorusGeometry(0.55, 0.06, 8, 32), scan, [2.2, 1.4, 2.6], { kind: 'pulse', material: scan, speed: 3 }, [Math.PI / 2, 0, 0]);
   return b;
 }
 

@@ -56,7 +56,15 @@ const PANELS: Record<PanelId, { title: string; icon: IconName; render: () => JSX
   regulator: { title: 'Regulator & Public', icon: 'scram', render: () => <RegulatorPanel /> },
 };
 
+const ModelViewer = lazy(() => import('./components/world/ModelViewer'));
+
 export default function App() {
+  // Developer model viewer (?viewer=<type>) bypasses the game entirely.
+  if (new URLSearchParams(window.location.search).has('viewer')) return <Suspense fallback={null}><ModelViewer /></Suspense>;
+  return <GameApp />;
+}
+
+function GameApp() {
   const [phase, setPhase] = useState<'loading' | 'ready'>('loading');
   const [loadText, setLoadText] = useState('Loading save…');
 

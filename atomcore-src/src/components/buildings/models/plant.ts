@@ -284,8 +284,12 @@ export function maintenance(): ModelBuilder {
   const m = materials();
   slab(b, 8, 8, m.concrete);
   // Arched hangar
+  // Half cylinder lying along z, curved side up (squashed to a low arch)
   const arch = new THREE.CylinderGeometry(3.0, 3.0, 5.6, 24, 1, false, -Math.PI / 2, Math.PI);
-  b.add(arch, m.cladGrey, [0, 0.2, -0.6], [Math.PI / 2, 0, Math.PI / 2], [1, 1, 0.75]);
+  b.add(arch, m.cladGrey, [0, 0.2, -0.6], [-Math.PI / 2, 0, 0], [1, 1, 0.75]);
+  // Gable walls closing the arch
+  const gable = new THREE.CircleGeometry(3.0, 24, 0, Math.PI);
+  b.add(gable, m.cladGrey, [0, 0.2, -3.4], [0, Math.PI, 0], [1, 0.75, 1]);
   b.box(5.4, 2.6, 0.06, m.hazard, [0, 0.2, 2.2]);
   b.box(4.6, 2.3, 0.07, m.slats, [0, 0.2, 2.21]);
   // Gantry crane outside
@@ -306,7 +310,9 @@ export function maintenance(): ModelBuilder {
   b.box(0.7, 0.7, 0.7, m.paintGreen, [-1.7, 0.2, 3.2]);
   b.cyl(0.35, 0.35, 0.9, m.paintRed, [2.5, 0.2, 2.9], 12);
   b.cyl(0.35, 0.35, 0.9, m.paintYellow, [3.0, 0.2, 2.6], 12);
-  b.cyl(0.08, 0.1, 1.2, m.steelDark, [2.4, 3.2, -2.5], 8);
+  // Roof vents on the arch
+  b.cyl(0.12, 0.14, 0.7, m.steelDark, [1.4, 2.0, -1.5], 8);
+  b.cyl(0.12, 0.14, 0.7, m.steelDark, [-1.4, 2.0, -1.5], 8);
   return b;
 }
 

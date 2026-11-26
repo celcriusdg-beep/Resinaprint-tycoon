@@ -7,6 +7,7 @@ import * as A from '../src/game/actions';
 import { migrate, toEnvelope } from '../src/systems/save/serialize';
 import { calendar, forecast, conditionsAt, stepWeather, wetBulb, DAYS_PER_SEASON, YEAR_DAYS } from '../src/game/weather/weather';
 import { DAY_LENGTH } from '../src/game/constants';
+import { setRandom, mulberry32 } from '../src/game/rng';
 import { diagnoseSite } from '../src/game/diagnostics';
 import type { GameState } from '../src/game/types';
 
@@ -58,6 +59,7 @@ describe('weather & seasons', () => {
   });
 
   it('storms bring down overhead lines, which can be repaired', () => {
+    setRandom(mulberry32(5));
     const s = createInitialState();
     s.nextEventIn = 1e9;
     s.money = 1e6;
