@@ -62,6 +62,8 @@ function pylon(b: ModelBuilder, x: number, z: number, h: number, rotY: number) {
   // Cross arms
   b.box(5, 0.16, 0.16, m.steel, [x, h * 0.82, z], rotY, 1);
   b.box(3.6, 0.16, 0.16, m.steel, [x, h * 0.96, z], rotY, 1);
+  // Insulator strings hanging from the arms
+  for (const p of armPoints(x, z, h, rotY)) b.cyl(0.09, 0.09, 0.45, m.insulator, [p[0], p[1] - 0.05, p[2]], 8);
 }
 
 function armPoints(x: number, z: number, h: number, rotY: number): Vec3[] {
@@ -82,6 +84,8 @@ function woodPole(b: ModelBuilder, x: number, z: number, h: number, along: numbe
   const m = materials();
   b.box(0.22, h, 0.22, m.steelDark, [x, 0, z], 0, 1);
   b.box(along > 0.5 ? 0.12 : 2.4, 0.12, along > 0.5 ? 2.4 : 0.12, m.steelDark, [x, h - 0.3, z], 0, 1);
+  for (const o of [-1, 1]) b.cyl(0.06, 0.06, 0.3, m.insulator, [x + (along > 0.5 ? 0 : o), h - 0.18, z + (along > 0.5 ? o : 0)], 6);
+  b.cyl(0.06, 0.06, 0.3, m.insulator, [x, h, z], 6);
 }
 
 /** Points every `span` metres along an L-shaped route a → corner → c. */

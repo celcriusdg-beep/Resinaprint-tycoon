@@ -32,6 +32,8 @@ export interface Finding {
   kind: FindingKind;
   major: boolean;
   deadline: number;
+  /** A reactor has already been suspended over this finding. */
+  suspended?: boolean;
 }
 
 export interface Permit {
@@ -276,9 +278,17 @@ export function stepRegulator(s: GameState, dt: number, offline: boolean): RegNe
         f.deadline = s.gameTime + FINDING_DEADLINE;
         r.opinion = Math.max(0, r.opinion - 2);
         news.push({ kind: 'bad', title: 'Regulator fine', text: `${FINDING_INFO[f.kind].title} at ${loc.name} not fixed: fined $${fine.toLocaleString('en-US')}.${f.major ? ' It is now a major finding — fix it within a day or a reactor is suspended.' : ''}` });
+      } else if (f.suspended) {
+        // One suspension per finding; after that, the regulator keeps fining until it is fixed.
+        const fine = Math.round(Math.max(2000, site.stats.revenue * 30));
+        s.money -= fine;
+        s.ledger.other -= fine;
+        news.push({ kind: 'bad', title: 'Regulator fine', text: FINDING_INFO[f.kind].title + ' at ' + loc.name + ' is still not fixed: fined $' + fine.toLocaleString('en-US') + '.' });
+        f.deadline = s.gameTime + FINDING_DEADLINE;
       } else {
         const target = site.buildings.filter((b) => b.reactor && b.licence !== 'suspended' && b.status !== 'destroyed' && b.status !== 'constructing')
           .sort((a, b) => (BUILDINGS[b.type].reactor!.thermalMW - BUILDINGS[a.type].reactor!.thermalMW))[0];
+        f.suspended = true;
         if (target) {
           target.licence = 'suspended';
           r.opinion = Math.max(0, r.opinion - 5);

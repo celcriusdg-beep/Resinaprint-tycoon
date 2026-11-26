@@ -98,6 +98,8 @@ function botStep(s: GameState) {
       continue;
     }
     if (st.backupMW < st.backupNeedMW && !A.buildLockReason(s, 'generator_emergency')) { if (!tryBuild(s, 'generator_emergency')) upgradeCheapest(s, ['generator_emergency']); continue; }
+    // Casks nearly full: ship spent fuel for reprocessing.
+    if (site.spent.casks + site.spent.pool > Math.max(50, site.stats.caskCap * 0.85 + site.stats.poolCap * 0.5)) A.shipSpentFuel(s, id, Math.floor(site.spent.casks * 0.5 + site.spent.pool * 0.3));
     if (site.spent.pool > site.stats.poolCap * 0.6 && site.stats.caskCap - site.spent.casks < site.spent.pool) { if (!tryBuild(s, 'dry_cask')) upgradeCheapest(s, ['dry_cask']); continue; }
     if (st.treatedFactor < 1) { if (!tryBuild(s, 'water_treatment')) upgradeCheapest(s, ['water_treatment']); continue; }
     if (st.coolingRatio < 1.15 && st.thermalMW > 0) { if (!tryBuild(s, s.research.completed.includes('c_tower') ? 'cooling_tower' : 'cooling_mech')) upgradeCheapest(s, ['cooling_mech', 'cooling_tower']); continue; }
