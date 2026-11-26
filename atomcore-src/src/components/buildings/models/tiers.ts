@@ -231,23 +231,93 @@ export function coolingFanAssist(): ModelBuilder {
 }
 
 export function coolingSeawater(): ModelBuilder {
+  // A late-game hydro-thermal exchange station: a glowing intake basin, four
+  // 18 m pump towers with spinning impeller rings, a tapered dark-glass hall
+  // and a 38 m heat-exchange spire. Sized to read as the top cooling tier.
   const b = new ModelBuilder();
   const m = materials();
-  slab(b, 16, 12, m.concrete);
-  // Intake channel with water and travelling screens
-  b.box(14.6, 0.5, 3.4, m.concreteDark, [0, 0.25, -3.6]);
-  b.box(14.2, 0.08, 3.0, m.water, [0, 0.72, -3.6]);
-  for (let i = 0; i < 6; i++) b.box(0.25, 2.6, 3.2, m.paintGreen, [-6 + i * 2.4, 0.75, -3.6]);
-  // Pump house with four big vertical pumps and the outfall pipes
-  roofed(b, m, 13.6, 4.2, 4.0, m.cladBlue, [0, 0.6]);
-  lights(b, m, 12.6, 2.4, 2.62, 0, 8);
-  for (let i = 0; i < 4; i++) {
-    const x = -5 + i * 3.3;
-    b.cyl(0.55, 0.55, 1.2, m.paintYellow, [x, 4.45, 0.6], 16);
-    b.pipe([x, 0.9, 2.6], [x, 0.9, 5.6], 0.55, m.pipeBlue, 16);
+  const cyan = glow(m.glowCyan);
+  const cyan2 = glow(m.glowCyan);
+  const seam = glow(m.glowCyan);
+  const dark = m.steelDark;
+  slab(b, 16, 12, m.concreteDark);
+  // Intake basin along the front: concrete rim, glowing water, screen gantry
+  b.box(15.4, 0.6, 3.0, m.concrete, [0, 0.2, 4.3]);
+  b.part(new THREE.BoxGeometry(14.8, 0.06, 2.4), cyan, [0, 0.83, 4.3], { kind: 'pulse', speed: 0.7, material: cyan });
+  for (let i = 0; i < 7; i++) {
+    const x = -6.3 + i * 2.1;
+    b.box(0.3, 3.0, 0.5, m.cladWhite, [x, 0.8, 5.4]);
   }
-  b.box(0.8, 5, 0.8, m.steel, [7.0, 0.25, 4.6]);
-  b.part(new THREE.SphereGeometry(0.1, 6, 4), m.beacon, [7.0, 5.4, 4.6], { kind: 'beacon' });
+  b.box(13.4, 0.4, 0.6, m.cladWhite, [0, 3.8, 5.4]);
+  b.part(new THREE.BoxGeometry(13.2, 0.1, 0.06), seam, [0, 4.0, 5.72], { kind: 'pulse', speed: 1.3, material: seam });
+  // Tapered main hall: dark glass body under a white shell with glowing seams
+  const hallGeo = new THREE.CylinderGeometry(0.7, 1, 8, 4, 1);
+  hallGeo.rotateY(Math.PI / 4);
+  b.add(hallGeo, m.glass, [0, 4.25, -1.6], [0, 0, 0], [10.2, 1, 6.0]);
+  b.add(hallGeo.clone(), m.cladWhite, [0, 5.95, -1.6], [0, 0, 0], [10.6, 0.58, 6.3]);
+  b.add(hallGeo.clone(), m.cladWhite, [0, 1.35, -1.6], [0, 0, 0], [10.8, 0.28, 6.4]);
+  b.part(new THREE.BoxGeometry(9.6, 0.12, 0.08), seam, [0, 3.1, 1.25], { kind: 'pulse', speed: 1.3, material: seam });
+  b.part(new THREE.BoxGeometry(8.0, 0.12, 0.08), seam, [0, 5.4, 0.7], { kind: 'pulse', speed: 1.3, material: seam });
+  // Four pump towers between basin and hall, impeller rings spinning on top
+  for (let i = 0; i < 4; i++) {
+    const x = -5.7 + i * 3.8;
+    const z = 1.9;
+    b.cyl(1.05, 1.35, 15, m.cladWhite, [x, 0.8, z], 32);
+    b.box(0.14, 13, 0.1, seam, [x, 2.0, z + 1.25]);
+    b.cyl(1.4, 1.4, 0.6, dark, [x, 15.8, z], 32);
+    b.torus(1.2, 0.09, dark, [x, 6.0, z]);
+    b.torus(1.13, 0.09, dark, [x, 11.0, z]);
+    b.part(new THREE.CylinderGeometry(1.12, 1.18, 0.35, 32, 1, true), cyan2, [x, 8.5, z], { kind: 'glow', material: cyan2, phase: i });
+    const rotor = new THREE.Group();
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(1.65, 0.16, 8, 40), m.steel);
+    ring.rotation.x = Math.PI / 2;
+    rotor.add(ring);
+    for (let k = 0; k < 6; k++) {
+      const vane = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.08, 0.4), dark);
+      vane.rotation.y = (k / 6) * Math.PI;
+      vane.rotation.x = 0.35;
+      rotor.add(vane);
+    }
+    rotor.add(new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 10), cyan2));
+    rotor.position.set(x, 16.7, z);
+    b.partGroup(rotor, { kind: 'spin', axis: 'y', speed: 1.6 + i * 0.15 });
+    // Penstock from the basin into the tower
+    b.pipe([x, 1.1, 3.2], [x, 1.1, 2.6], 0.65, m.pipeBlue, 16);
+  }
+  // Heat-exchange spire: a heavy six-sided tower with glowing edge seams
+  const sx = 0, sz = -1.6;
+  b.cyl(1.4, 3.0, 30, m.cladWhite, [sx, 8.0, sz], 6);
+  for (let k = 0; k < 6; k++) {
+    const a = (k / 6) * Math.PI * 2;
+    const p0 = new THREE.Vector3(Math.cos(a) * 3.02, 8.0, Math.sin(a) * 3.02);
+    const p1 = new THREE.Vector3(Math.cos(a) * 1.42, 38.0, Math.sin(a) * 1.42);
+    const mid = p0.clone().add(p1).multiplyScalar(0.5);
+    const len = p0.distanceTo(p1);
+    const geo = new THREE.BoxGeometry(0.16, len, 0.16);
+    const dir = p1.clone().sub(p0).normalize();
+    const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+    const e = new THREE.Euler().setFromQuaternion(q);
+    b.part(geo, seam, [sx + mid.x, mid.y, sz + mid.z], { kind: 'pulse', speed: 1.3, material: seam }, [e.x, e.y, e.z]);
+  }
+  b.cyl(1.7, 1.7, 1.0, dark, [sx, 38.0, sz], 6);
+  b.cyl(0.25, 0.45, 5, m.steel, [sx, 39.0, sz], 10);
+  const rings = new THREE.Group();
+  for (let k = 0; k < 5; k++) {
+    const r = 3.4 - k * 0.38;
+    const t = new THREE.Mesh(new THREE.TorusGeometry(r, 0.12, 8, 48), cyan);
+    t.rotation.x = Math.PI / 2;
+    t.position.y = 12 + k * 5.2;
+    rings.add(t);
+  }
+  rings.position.set(sx, 0, sz);
+  b.partGroup(rings, { kind: 'bob', speed: 0.6 });
+  b.part(new THREE.SphereGeometry(0.28, 8, 6), m.beacon, [sx, 44.2, sz], { kind: 'beacon' });
+  b.height = 44.4;
+  // Outfall: two return conduits to a lit discharge cascade at the back
+  for (const x of [-5.5, 5.5]) b.pipe([x, 1.4, -3.9], [x, 1.4, -5.0], 0.75, m.pipeBlue, 18);
+  for (let k = 0; k < 3; k++) b.box(14.6 - k * 0.6, 0.3, 0.55, m.concrete, [0, 0.25 + k * 0.3, -5.6 + k * 0.5]);
+  b.part(new THREE.BoxGeometry(14.0, 0.05, 1.2), cyan, [0, 0.52, -5.35], { kind: 'pulse', speed: 0.9, material: cyan, phase: 1.5 });
+  b.emit({ pos: [0, 0.8, -5.4], radius: 5, rate: 1.4, size: 3, kind: 'vapor' });
   return b;
 }
 
