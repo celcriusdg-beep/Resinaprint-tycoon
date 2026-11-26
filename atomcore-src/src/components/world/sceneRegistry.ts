@@ -7,6 +7,9 @@ import { buildingRect } from '../../game/buildings/grid';
 // Shared helpers between scene components: world-space placement and a
 // registry of active steam emitters fed by building instances.
 
+/** World-space point above each building where its floating tag sits. */
+export const labelAnchors = new Map<number, THREE.Vector3>();
+
 export function cellToWorld(x: number, z: number, size: number): [number, number] {
   return [(x - size / 2) * CELL, (z - size / 2) * CELL];
 }

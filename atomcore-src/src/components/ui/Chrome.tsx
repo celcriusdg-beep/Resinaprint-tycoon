@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useUI, type PanelId, type CameraInput } from '../../stores/uiStore';
 import { useGame } from '../../stores/gameStore';
+import { useSettings } from '../../stores/settingsStore';
 import { Icon, type IconName } from './Icons';
 import { audio } from '../../systems/audio/audio';
 import { BUILDINGS } from '../../game/buildings/defs';
@@ -110,12 +111,14 @@ export function PlacementBar() {
 
 export function CameraButtons() {
   const cmd = (c: CameraInput) => { audio.sfx('click'); useUI.getState().cameraCmd(c); };
+  const labels = useSettings((s) => s.showLabels);
   return (
     <div className="camera-buttons">
       <button className="cam-btn" onClick={() => cmd({ kind: 'zoom', factor: 0.75 })} aria-label="Zoom in"><Icon name="zoomIn" /></button>
       <button className="cam-btn" onClick={() => cmd({ kind: 'zoom', factor: 1.33 })} aria-label="Zoom out"><Icon name="zoomOut" /></button>
       <button className="cam-btn" onClick={() => cmd({ kind: 'rotate', delta: Math.PI / 4 })} aria-label="Rotate view"><Icon name="rotate" /></button>
       <button className="cam-btn" onClick={() => cmd({ kind: 'reset' })} aria-label="Reset view"><Icon name="home" /></button>
+      <button className={`cam-btn${labels ? ' on' : ''}`} onClick={() => { audio.sfx('click'); useSettings.getState().set({ showLabels: !labels }); }} aria-label="Building labels" aria-pressed={labels}><Icon name="tag" /></button>
     </div>
   );
 }

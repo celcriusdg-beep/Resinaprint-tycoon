@@ -30,6 +30,7 @@ import { BUILDINGS } from './game/buildings/defs';
 import { rotatePlacement } from './ui/actions';
 import type { IconName } from './components/ui/Icons';
 
+import { LabelLayer } from './components/world/Labels';
 const GameCanvas = lazy(() => import('./components/world/GameCanvas'));
 
 function MorePanel() {
@@ -175,6 +176,7 @@ function GameShell() {
             <GameCanvas />
           </Suspense>
         </SceneErrorBoundary>
+        <LabelLayer />
       </div>
       <HUD />
       <Toasts />

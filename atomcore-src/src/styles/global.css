@@ -373,6 +373,14 @@ table.pl tr.big td { font-size: 15px; }
 @media (pointer: coarse) { .show-touch { display: inline; } .hide-touch { display: none; } }
 
 .camera-buttons { position: absolute; z-index: 15; right: calc(var(--safe-right) + 8px); bottom: calc(var(--nav-h) + var(--safe-bottom) + 10px); display: flex; flex-direction: column; gap: 6px; }
+/* Floating building tags */
+.btags { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 5; }
+.btag { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 4px; padding: 3px; border-radius: 999px; background: rgba(10,16,24,0.78); border: 1.5px solid var(--tag); color: var(--tag); font-size: 11px; font-weight: 650; line-height: 1; white-space: nowrap; will-change: transform; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); box-shadow: 0 2px 6px rgba(0,0,0,0.35); }
+.btag span { display: none; color: #eef3f8; padding-right: 4px; }
+.btag.full { padding: 3px 6px 3px 5px; }
+.btag.full span { display: inline; }
+.btag::after { content: ''; position: absolute; left: 50%; bottom: -5px; width: 6px; height: 6px; background: var(--tag); transform: translateX(-50%) rotate(45deg); border-radius: 1px; opacity: 0.9; z-index: -1; }
+.cam-btn.on { color: var(--accent); border-color: var(--accent); }
 .cam-btn { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); display: grid; place-items: center; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
 .app:has(.sheet) .camera-buttons { display: none; }
 

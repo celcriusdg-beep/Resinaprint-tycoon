@@ -17,6 +17,7 @@ import { PlacementLayer } from './Placement';
 import { SelectionMarker, ConnectMarkers } from './Overlays';
 import { WeatherFX } from './WeatherFX';
 import { SiteLights, Traffic } from './SiteLife';
+import { LabelProjector } from './Labels';
 
 // Device pixel ratio range per quality tier, capped at the screen's own ratio.
 const screenDpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
@@ -52,6 +53,7 @@ function World() {
       <PlacementLayer siteSize={site.size} />
       <ConnectMarkers />
       <SelectionMarker />
+      <LabelProjector />
       <CameraRig siteSize={site.size} siteId={site.id} />
     </>
   );

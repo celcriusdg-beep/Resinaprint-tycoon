@@ -74,6 +74,7 @@ export function SettingsPanel() {
         <Tabs<Quality> value={s.quality} onChange={(q) => s.set({ quality: q })}
           tabs={[{ id: 'auto', label: `Auto (${resolveQuality('auto')})` }, { id: 'low', label: 'Low' }, { id: 'medium', label: 'Medium' }, { id: 'high', label: 'High' }]} />
         <div className="muted small">Low: no shadows or bloom (best battery). High: soft shadows, bloom, more particles.</div>
+        <Toggle label="Building labels" on={s.showLabels} onChange={(v) => s.set({ showLabels: v })} sub="Coloured tags over buildings: icon + name when zoomed in, icon only when zoomed out" />
         <Toggle label="Day / night cycle" on={s.dayNight} onChange={(v) => s.set({ dayNight: v })} sub="Lighting follows the in-game day" />
         <Toggle label="Auto-adjust resolution" on={s.adaptiveRes} onChange={(v) => s.set({ adaptiveRes: v })}
           sub="Lowers sharpness a little when the frame rate drops. Turn off for a fixed, always-sharp picture (uses more battery)." />

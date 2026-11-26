@@ -20,6 +20,8 @@ export interface Settings {
   hudExpanded: boolean;
   /** Lower the rendering resolution when the frame rate drops. */
   adaptiveRes: boolean;
+  /** Floating name/icon tags over buildings. */
+  showLabels: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -36,6 +38,7 @@ export const DEFAULT_SETTINGS: Settings = {
   seenTips: [],
   hudExpanded: false,
   adaptiveRes: true,
+  showLabels: true,
 };
 
 interface SettingsStore extends Settings {

@@ -8,7 +8,7 @@ import { instantiate } from '../buildings/registry';
 import { materials } from '../buildings/materials';
 import { useGameStore } from '../../stores/gameStore';
 import { useUI } from '../../stores/uiStore';
-import { activity, buildingCenter, emitters } from './sceneRegistry';
+import { activity, buildingCenter, emitters, labelAnchors } from './sceneRegistry';
 import { pickConnectTarget } from '../../ui/actions';
 import { audio } from '../../systems/audio/audio';
 import { MineVehicles } from './MineVehicles';
@@ -44,6 +44,12 @@ export function BuildingObject({ building, siteSize }: Props) {
     inst.group.scale.set(1, 0.55, 1);
     inst.group.rotation.z = 0.04;
   }, [destroyed, inst]);
+
+  // Tag anchor: just above the roof (capped so towers keep their tag near the ground).
+  useEffect(() => {
+    labelAnchors.set(building.id, new THREE.Vector3(cx, Math.min(inst.height, 16) + 1.2, cz));
+    return () => { labelAnchors.delete(building.id); };
+  }, [inst, cx, cz, building.id]);
 
   // Register steam emitters in world space.
   useEffect(() => {
