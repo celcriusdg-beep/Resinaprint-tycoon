@@ -75,7 +75,9 @@ Studio scene (js/workshop.js), story chapters, regulars, events and figure shelf
 ## 3.7 Shop and machines
 Shop hub (js/shop.js), machine illustrations (js/machart.js) and the machine catalogue, fleet and tuning UI (js/machui.js).
 
-## ATOMCORE
-A 3D nuclear power plant tycoon in `atomcore/` (built game, open `atomcore/index.html` via a web server) with its
-TypeScript/React/Three.js source in `atomcore-src/` (see `atomcore-src/README.md`). Installable as a PWA on iPhone
-(Safari → Share → Add to Home Screen); saves are stored on the device and can be moved between devices with export codes.
+## Rift Shop
+A private Riftbound card-shop game in `riftshop/` (built PWA) with its TypeScript/React source in `riftshop-src/`.
+Run a card shop: buy sealed product from a distributor, sell to customers, open packs with Riftbound's published
+pull rates, sell singles, grade cards and collect sets. Card data comes from Riot's official card gallery; card
+pictures load from Riot's CDN at runtime (not stored here); prices are TCGplayer market prices. Unofficial fan
+project, not endorsed by Riot Games. `atomcore/` only redirects old ATOMCORE installs to Rift Shop.
