@@ -172,7 +172,9 @@ export function Terrain({ loc, siteSize, trees }: Props) {
   const plotHalf = (siteSize * CELL) / 2;
   const theme = loc.theme;
   const ground = useMemo(() => makeGround(theme, plotHalf), [theme, plotHalf]);
-  const groundMat = useMemo(() => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.97 }), []);
+  // Ground layers are drawn with polygon offsets so each one reliably sits on top of the one
+  // below at any distance, whatever the depth-buffer precision (phones with MSAA can be low).
+  const groundMat = useMemo(() => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.97, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 4 }), []);
   const snowMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#dfe6ea', roughness: 0.95, transparent: true, opacity: 0, depthWrite: false }), []);
   const tint = useMemo(() => new THREE.Color(), []);
   useFrame(() => {
@@ -236,18 +238,18 @@ export function Terrain({ loc, siteSize, trees }: Props) {
         <boxGeometry args={[siteSize * CELL + 3, 0.12, siteSize * CELL + 3]} />
         <meshStandardMaterial color="#9a9c98" roughness={0.95} />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.125, 0]} receiveShadow>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.16, 0]} receiveShadow>
         <planeGeometry args={[siteSize * CELL, siteSize * CELL]} />
-        <meshStandardMaterial map={padTex} color="#c4c6c4" roughness={0.92} />
+        <meshStandardMaterial map={padTex} color="#c4c6c4" roughness={0.92} polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-4} />
       </mesh>
       {/* Internal road along the south edge and the access road leaving the site */}
-      <mesh rotation={[-Math.PI / 2, 0, Math.PI / 2]} position={[0, 0.14, plotHalf - (ROAD_ROWS * CELL) / 2]} receiveShadow>
+      <mesh rotation={[-Math.PI / 2, 0, Math.PI / 2]} position={[0, 0.2, plotHalf - (ROAD_ROWS * CELL) / 2]} receiveShadow>
         <planeGeometry args={[ROAD_ROWS * CELL, siteSize * CELL]} />
-        <meshStandardMaterial map={roadTex} roughness={0.85} />
+        <meshStandardMaterial map={roadTex} roughness={0.85} polygonOffset polygonOffsetFactor={-2} polygonOffsetUnits={-8} />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[rx, 0.13, plotHalf + roadLen / 2]} receiveShadow>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[rx, 0.19, plotHalf + roadLen / 2]} receiveShadow>
         <planeGeometry args={[CELL * 1.6, roadLen]} />
-        <meshStandardMaterial map={accessTex} roughness={0.85} />
+        <meshStandardMaterial map={accessTex} roughness={0.85} polygonOffset polygonOffsetFactor={-2} polygonOffsetUnits={-6} />
       </mesh>
       <primitive object={fence} />
       <primitive object={forest} />

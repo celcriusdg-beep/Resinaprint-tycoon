@@ -102,7 +102,7 @@ function Ghost({ siteSize }: { siteSize: number }) {
       <group ref={group} rotation={[0, -placement.rot * (Math.PI / 2), 0]}>
         <primitive object={inst.group} />
       </group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.2, 0]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.23, 0]}>
         <planeGeometry args={[w * CELL - 0.2, d * CELL - 0.2]} />
         <meshBasicMaterial color={valid ? '#3dff8a' : '#ff4a3a'} transparent opacity={0.28} depthWrite={false} />
       </mesh>
@@ -132,7 +132,7 @@ function GridOverlay({ siteSize }: { siteSize: number }) {
   );
   useFrame((s) => (mat.uniforms.uTime.value = s.clock.elapsedTime));
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.16, 0]} material={mat} renderOrder={5}>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.215, 0]} material={mat} renderOrder={5}>
       <planeGeometry args={[siteSize * CELL, siteSize * CELL]} />
     </mesh>
   );

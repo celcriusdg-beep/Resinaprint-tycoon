@@ -78,7 +78,7 @@ export default function GameCanvas() {
       shadows={q.shadows ? 'soft' : false}
       dpr={usedDpr}
       gl={glOptions}
-      camera={{ fov: 40, near: 1, far: 2000, position: [60, 70, 60] }}
+      camera={{ fov: 40, near: 3, far: 2500, position: [60, 70, 60] }}
       onCreated={(state) => {
         state.gl.toneMapping = THREE.ACESFilmicToneMapping;
         state.gl.outputColorSpace = THREE.SRGBColorSpace;

@@ -185,7 +185,7 @@ export function Traffic({ siteSize, count }: { siteSize: number; count: number }
       // Keep right: offset to the right of the direction of travel.
       tmp.a.x += -tmp.d.z * 1.6;
       tmp.a.z += tmp.d.x * 1.6;
-      c.obj.position.set(tmp.a.x, 0.14, tmp.a.z);
+      c.obj.position.set(tmp.a.x, 0.2, tmp.a.z);
       c.obj.rotation.y = Math.atan2(tmp.d.x, tmp.d.z);
     });
   });
