@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 import { CARD_BY_ID, SET_IDS, SETS, kindLabel, setCards, type SetId } from '../data/cards';
-import { BUYLIST_RATE, GRADE_NAMES, GRADE_TIERS, ONLINE_FEE, fmt, marketMult, rawValue, singleValue } from '../game/economy';
+import { BUYLIST_RATE, ONLINE_FEE, fmt, marketMult, rawValue, singleValue } from '../game/economy';
+import { COMPANIES, slabTitle } from '../game/grading';
 import { displaySlots, listInDisplay, listOnline, rawCount, sellToBuylist, sendToGrading } from '../game/sim';
-import type { GradeTier, Single } from '../game/types';
+import type { Company, Single } from '../game/types';
+import { Slab } from './visuals';
 import { act, tryAct, useStore } from '../store';
 import { CardImage, RARITY_COLOR } from './CardImage';
 import { Button, Modal, PriceInput } from './common';
@@ -67,7 +69,8 @@ export function CardModal() {
   useStore((s) => s.rev);
   const [action, setAction] = useState<{ s: Single; mode: 'display' | 'online' | 'grade' } | null>(null);
   const [price, setPrice] = useState(0);
-  const [tier, setTier] = useState<GradeTier>('standard');
+  const [company, setCompany] = useState<Company>('PSA');
+  const [tier, setTier] = useState('regular');
   if (!id) return null;
   const c = CARD_BY_ID[id];
   const close = () => { setAction(null); useStore.getState().showCard(null); };
@@ -76,11 +79,13 @@ export function CardModal() {
   for (const foil of [false, true]) {
     if (rawCount(g, id, foil) > 0) copies.push({ s: { uid: 0, cardId: id, foil }, label: `${foil && c.kind === 'std' ? 'Foil' : 'Raw'} ×${rawCount(g, id, foil)}` });
   }
-  for (const gr of g.graded.filter((x) => x.cardId === id)) copies.push({ s: gr, label: `Graded ${gr.grade} · ${GRADE_NAMES[gr.grade!] ?? ''}` });
+  for (const sl of g.slabs.filter((x) => x.cardId === id)) copies.push({ s: sl, label: slabTitle(sl.slab!) });
   const begin = (s: Single, mode: 'display' | 'online' | 'grade') => {
     setAction({ s, mode });
     setPrice(Math.max(0.1, Math.round(singleValue(g, s) * (mode === 'display' ? 1.1 : 1) * 100) / 100));
   };
+  const pickCompany = (co: Company) => { setCompany(co); setTier(COMPANIES[co].tiers[1].id); };
+  const t = COMPANIES[company].tiers.find((x) => x.id === tier) ?? COMPANIES[company].tiers[1];
   return (
     <Modal title={c.name} onClose={close}>
       <div className="card-detail">
@@ -99,11 +104,12 @@ export function CardModal() {
       {copies.length === 0 && <p className="muted small center">You don't own this card yet.</p>}
       {!action && copies.map(({ s, label }) => (
         <div className="copy-row" key={`${s.uid}-${s.foil}`}>
+          {s.slab && <div className="copy-slab"><Slab s={{ ...s, slab: s.slab }} small /></div>}
           <div><b>{label}</b><div className="muted small">worth {fmt(singleValue(g, s))}</div></div>
           <div className="row wrap">
-            <Button small onClick={() => begin(s, 'display')} disabled={g.display.length >= displaySlots(g)}>Display</Button>
+            <Button small kind="primary" onClick={() => begin(s, 'display')} disabled={g.display.length >= displaySlots(g)}>Put in display case</Button>
             <Button small onClick={() => begin(s, 'online')}>Sell online</Button>
-            {!s.grade && <Button small onClick={() => begin(s, 'grade')}>Grade</Button>}
+            {!s.slab && <Button small kind="gold" onClick={() => begin(s, 'grade')}>Grade it</Button>}
             <Button small kind="ghost" onClick={() => {
               const v = act((st) => sellToBuylist(st, s));
               if (v > 0) useStore.getState().say(`Sold to a buylist for ${fmt(v)}.`);
@@ -114,10 +120,11 @@ export function CardModal() {
       {action && action.mode !== 'grade' && (
         <div className="action-box">
           <b>{action.mode === 'display' ? 'Put it in your display case' : 'List it on the online marketplace'}</b>
+          <span>Your price</span>
           <PriceInput value={price} onChange={setPrice} />
           <p className="muted small">
             Market {fmt(singleValue(g, action.s))}.{' '}
-            {action.mode === 'online' ? `Sells in a day or two near market; fees ${Math.round(ONLINE_FEE * 100)}% (you get ${fmt(price * (1 - ONLINE_FEE))}).` : 'Walk-in customers pay up to about 1.4× market.'}
+            {action.mode === 'online' ? `Sells in a day or two near market; fees ${Math.round(ONLINE_FEE * 100)}% (you get ${fmt(price * (1 - ONLINE_FEE))}).` : 'Customers who come in pay 0.85–1.35× market.'}
           </p>
           <div className="row">
             <Button kind="primary" onClick={() => {
@@ -130,17 +137,25 @@ export function CardModal() {
       )}
       {action && action.mode === 'grade' && (
         <div className="action-box">
-          <b>Send to Rift Grading Co.</b>
-          <div className="tiers">
-            {(Object.keys(GRADE_TIERS) as GradeTier[]).map((t) => (
-              <button key={t} className={t === tier ? 'on' : ''} onClick={() => setTier(t)}>
-                <b>{GRADE_TIERS[t].name}</b><span>{fmt(GRADE_TIERS[t].fee)} · {GRADE_TIERS[t].label}</span>
+          <b>Send for grading</b>
+          <div className="companies">
+            {(['PSA', 'BGS'] as Company[]).map((co) => (
+              <button key={co} className={`co ${co.toLowerCase()}${co === company ? ' on' : ''}`} onClick={() => pickCompany(co)}>
+                <b>{co === 'PSA' ? 'PSA' : 'BECKETT'}</b><span>{COMPANIES[co].full}</span>
               </button>
             ))}
           </div>
-          <p className="muted small">Pack-fresh cards usually grade 8–9. A Gem Mint 10 is worth about 3× raw (3.5× for chase cards); a 7 or lower is worth less than raw.</p>
+          <p className="muted small">{COMPANIES[company].blurb}</p>
+          <div className="tiers">
+            {COMPANIES[company].tiers.map((x) => (
+              <button key={x.id} className={x.id === t.id ? 'on' : ''} onClick={() => setTier(x.id)}>
+                <b>{x.name}</b><span>{fmt(x.fee)} · {x.days} day{x.days > 1 ? 's' : ''}</span>
+              </button>
+            ))}
+          </div>
+          <p className="muted small">The grade is luck of the draw. Worth {fmt(singleValue(g, action.s))} raw — a {company === 'PSA' ? 'PSA 10' : 'BGS 9.5'} would be about {fmt(singleValue(g, { ...action.s, slab: company === 'PSA' ? { company: 'PSA', grade: 10, cert: 0 } : { company: 'BGS', grade: 9.5, cert: 0 } }))}, a {company === 'PSA' ? 'PSA 7' : 'BGS 8'} about {fmt(singleValue(g, { ...action.s, slab: company === 'PSA' ? { company: 'PSA', grade: 7, cert: 0 } : { company: 'BGS', grade: 8, cert: 0 } }))}.</p>
           <div className="row">
-            <Button kind="primary" onClick={() => { if (tryAct((st) => sendToGrading(st, action.s, tier), 'Sent for grading.')) setAction(null); }}>Send ({fmt(GRADE_TIERS[tier].fee)})</Button>
+            <Button kind="primary" onClick={() => { if (tryAct((st) => sendToGrading(st, action.s, company, t.id), `Sent to ${company}.`)) setAction(null); }}>Send to {company} ({fmt(t.fee)})</Button>
             <Button kind="ghost" onClick={() => setAction(null)}>Cancel</Button>
           </div>
         </div>

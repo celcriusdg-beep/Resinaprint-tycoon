@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { CARD_BY_ID, SET_IDS, SETS } from '../src/data/cards';
+import { CARD_BY_ID, CARDS, SET_IDS, SETS } from '../src/data/cards';
 import { openPack } from '../src/game/packs';
 import { mulberry32, setRandom } from '../src/game/rng';
-import { advance, buySealed, newGame, openSealed, sellBulk, sendToGrading, listInDisplay } from '../src/game/sim';
-import { rawValue, wholesale } from '../src/game/economy';
+import { advance, buySealed, listInDisplay, migrate, newGame, openSealed, sellBulk, sendToGrading, shelveSealed } from '../src/game/sim';
+import { rollGrade } from '../src/game/grading';
+import { rawValue, sealedValue, wholesale } from '../src/game/economy';
 
 describe('booster packs', () => {
   it('follow the published structure and odds', () => {
@@ -43,38 +44,66 @@ describe('booster packs', () => {
 });
 
 describe('the shop', () => {
-  it('buys stock, opens a box, sells to customers and pays rent', () => {
+  it('only sells what you put on the shelf, at your price', () => {
     setRandom(mulberry32(3));
     const g = newGame();
     g.cash = 5_000;
+    advance(g, 6);
+    expect(g.stats.sales).toBe(0); // nothing listed, nothing sold
     expect(buySealed(g, 'VEN', 'box', 2)).toBeNull();
-    expect(g.sealed['VEN:box']).toBe(2);
     openSealed(g, 'VEN', 'box');
     expect(g.sealed['VEN:pack']).toBe(12 + 24);
-    for (let i = 0; i < 5; i++) openSealed(g, 'VEN', 'pack');
-    expect(g.stats.packsOpened).toBe(5);
-    const cash0 = g.cash;
-    advance(g, 24);
-    expect(g.day).toBe(3);
-    expect(g.stats.sales).toBeGreaterThan(10);
-    expect(g.cash).not.toBe(cash0);
+    const v = sealedValue(g, 'VEN', 'pack');
+    expect(shelveSealed(g, 'VEN', 'pack', 30, v)).toBeNull();
+    expect(g.sealed['VEN:pack']).toBe(6);
+    advance(g, 12);
+    expect(g.stats.sales).toBeGreaterThan(5);
+    // Way overpriced: nobody buys.
+    const g2 = newGame();
+    shelveSealed(g2, 'VEN', 'pack', 12, v * 3);
+    advance(g2, 12);
+    expect(g2.stats.sales).toBe(0);
+    expect(g2.feed.some((f) => f.kind === 'leave')).toBe(true);
   });
 
-  it('grades cards and lists them', () => {
+  it('grades with PSA and Beckett and slabs the card', () => {
     setRandom(mulberry32(11));
     const g = newGame();
     g.cash = 1_000;
     openSealed(g, 'VEN', 'pack');
-    const id = Object.keys(g.cards)[0];
-    const foil = g.cards[id][0] === 0;
-    expect(sendToGrading(g, { uid: 0, cardId: id, foil }, 'express')).toBeNull();
-    advance(g, 5);
-    expect(g.graded.length).toBe(1);
-    const gr = g.graded[0];
-    expect(gr.grade).toBeGreaterThanOrEqual(3);
-    expect(listInDisplay(g, gr, 99)).toBeNull();
-    expect(g.graded.length).toBe(0);
-    expect(g.display.length).toBe(1);
+    const ids = Object.keys(g.cards);
+    const one = (i: number) => ({ uid: 0, cardId: ids[i], foil: g.cards[ids[i]][0] === 0 });
+    expect(sendToGrading(g, one(0), 'PSA', 'express')).toBeNull();
+    expect(sendToGrading(g, one(1), 'BGS', 'express')).toBeNull();
+    advance(g, 13);
+    expect(g.slabs.length).toBe(2);
+    expect(g.reveals.length).toBe(2);
+    const psa = g.slabs.find((x) => x.slab!.company === 'PSA')!;
+    const bgs = g.slabs.find((x) => x.slab!.company === 'BGS')!;
+    expect(Number.isInteger(psa.slab!.grade)).toBe(true);
+    expect(bgs.slab!.sub).toBeDefined();
+    expect(listInDisplay(g, psa, 99)).toBeNull();
+    expect(g.display[0].slab).toBeDefined();
+  });
+
+  it('Beckett overall grades follow the subgrades', () => {
+    setRandom(mulberry32(5));
+    let black = 0;
+    for (let i = 0; i < 50000; i++) {
+      const s = rollGrade('BGS', i);
+      const subs = Object.values(s.sub!);
+      expect(s.grade).toBeLessThanOrEqual(Math.min(...subs) + 1);
+      if (s.black) { black++; expect(s.grade).toBe(10); }
+    }
+    expect(black).toBeGreaterThan(0);
+    expect(black).toBeLessThan(60);
+  });
+
+  it('migrates a version 1 save', () => {
+    const g = migrate({ version: 1, cash: 42, cards: { [CARDS[0].id]: [2, 0] }, graded: [{ uid: 5, cardId: CARDS[0].id, foil: false, grade: 9 }], markup: { pack: 1.1 } });
+    expect(g.version).toBe(2);
+    expect(g.cash).toBe(42);
+    expect(g.slabs[0].slab).toMatchObject({ company: 'PSA', grade: 9 });
   });
 
   it('sells bulk', () => {

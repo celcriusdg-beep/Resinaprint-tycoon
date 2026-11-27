@@ -1,5 +1,6 @@
 import { CARD_BY_ID, SETS, type Card, type SetId } from '../data/cards';
 import type { GameState, SealedKind, Single } from './types';
+import { slabMult } from './grading';
 
 // Prices, shop levels, wholesale and grading.
 
@@ -7,13 +8,14 @@ export const DAY_HOURS = 12; // shop open 09:00–21:00
 export const SECONDS_PER_HOUR = 20; // a shop day lasts 4 real minutes
 export const OPEN_HOUR = 9;
 
+/** display = single cards in the glass case; shelf = sealed stacks on the shelves. */
 export const SHOP_LEVELS = [
-  { name: 'Market Stall', cost: 0, display: 6, traffic: 1, rent: 25 },
-  { name: 'Corner Shop', cost: 2_500, display: 12, traffic: 1.5, rent: 60 },
-  { name: 'Game Store', cost: 9_000, display: 24, traffic: 2.2, rent: 150 },
-  { name: 'Card Emporium', cost: 30_000, display: 40, traffic: 3.1, rent: 380 },
-  { name: 'Flagship Store', cost: 90_000, display: 64, traffic: 4.2, rent: 900 },
-  { name: 'Rift Megastore', cost: 260_000, display: 100, traffic: 5.6, rent: 2_100 },
+  { name: 'Market Stall', cost: 0, display: 6, shelf: 3, traffic: 1, rent: 25 },
+  { name: 'Corner Shop', cost: 2_500, display: 12, shelf: 5, traffic: 1.5, rent: 60 },
+  { name: 'Game Store', cost: 9_000, display: 24, shelf: 8, traffic: 2.2, rent: 150 },
+  { name: 'Card Emporium', cost: 30_000, display: 40, shelf: 12, traffic: 3.1, rent: 380 },
+  { name: 'Flagship Store', cost: 90_000, display: 64, shelf: 16, traffic: 4.2, rent: 900 },
+  { name: 'Rift Megastore', cost: 260_000, display: 100, shelf: 24, traffic: 5.6, rent: 2_100 },
 ];
 
 export const CLERK_WAGE = 110; // per day
@@ -25,21 +27,6 @@ export const BUYLIST_RATE = 0.55; // what a store-to-store buylist pays for raw 
 export function foilMult(card: Card, foil: boolean): number {
   if (!foil || card.kind !== 'std') return 1;
   return card.rarity === 'Common' || card.rarity === 'Uncommon' ? 4 : 1.6;
-}
-
-export const GRADE_NAMES: Record<number, string> = {
-  10: 'Gem Mint', 9: 'Mint', 8: 'Near Mint–Mint', 7: 'Near Mint', 6: 'Excellent–Mint', 5: 'Excellent', 4: 'Very Good', 3: 'Good',
-};
-
-/** Value of a graded copy relative to a raw one. Gem Mint chase cards carry the biggest premium. */
-export function gradeMult(grade: number | undefined, raw: number): number {
-  if (!grade) return 1;
-  if (grade >= 10) return raw >= 20 ? 3.5 : 3;
-  if (grade === 9) return 1.5;
-  if (grade === 8) return 1.05;
-  if (grade === 7) return 0.85;
-  if (grade === 6) return 0.7;
-  return 0.55;
 }
 
 export function marketMult(g: GameState, card: Card): number {
@@ -55,9 +42,9 @@ export function rawValue(g: GameState, cardId: string, foil: boolean): number {
   return c.price * foilMult(c, foil) * marketMult(g, c);
 }
 
-export function singleValue(g: GameState, s: Pick<Single, 'cardId' | 'foil' | 'grade'>): number {
+export function singleValue(g: GameState, s: Pick<Single, 'cardId' | 'foil' | 'slab'>): number {
   const raw = rawValue(g, s.cardId, s.foil);
-  return raw * gradeMult(s.grade, raw);
+  return raw * slabMult(s.slab, raw);
 }
 
 /** Market price of sealed product. */
@@ -80,15 +67,6 @@ export function allocation(set: SetId, kind: SealedKind): number {
   if (kind === 'box') return older ? 2 : 8;
   return older ? 24 : 96;
 }
-
-export const GRADE_TIERS = {
-  value: { name: 'Value', fee: 18, hours: 5 * 24, label: '5 days' },
-  standard: { name: 'Standard', fee: 40, hours: 2 * 24, label: '2 days' },
-  express: { name: 'Express', fee: 95, hours: 4, label: '4 hours' },
-} as const;
-
-/** Grade distribution for pack-fresh cards. */
-export const GRADE_ODDS: [number, number][] = [[10, 0.13], [9, 0.4], [8, 0.28], [7, 0.11], [6, 0.05], [5, 0.03]];
 
 export function fmt(n: number): string {
   const a = Math.abs(n);

@@ -8,7 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "data": "python3 tools/build-data.py ../.data/riftbound-card-data ../.data/riftbound-prices"
+    "data": "python3 tools/build-data.py ../.data/riftbound-card-data ../.data/riftbound-prices ../.data/riftdex-data"
   },
   "dependencies": {
     "react": "18.3.1",

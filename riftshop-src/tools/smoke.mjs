@@ -1,5 +1,5 @@
-// Browser walk-through on an iPhone: first run, open packs, binder, card actions, market, grading.
-// Usage: PLAYWRIGHT_PATH=$(npm root -g)/playwright node tools/smoke.mjs [baseUrl] [outDir]
+// Browser walk-through on an iPhone: first run, shelve + open packs, binder, PSA grading + reveal,
+// deals board, distributor, customers. Usage: PLAYWRIGHT_PATH=$(npm root -g)/playwright node tools/smoke.mjs [baseUrl] [outDir]
 import { createRequire } from 'node:module';
 import { mkdirSync } from 'node:fs';
 const require = createRequire(import.meta.url);
@@ -19,58 +19,79 @@ const click = (text, sel = 'button') => page.evaluate(([t, s]) => {
   const el = [...document.querySelectorAll(s)].find((x) => x.textContent.trim().includes(t));
   if (!el) return false; el.click(); return true;
 }, [text, sel]);
-await page.goto(base);
+const shot = (n) => page.screenshot({ path: `${out}/${n}.png` });
+await page.goto(base + '?debug');
 await page.waitForSelector('.top', { timeout: 30000 });
 await page.waitForTimeout(800);
-await page.screenshot({ path: `${out}/1-first-run.png` });
-check('first run card', await click('Open my first pack'));
-await page.waitForTimeout(500);
-await page.screenshot({ path: `${out}/2-stock.png` });
-check('open a pack', await click('Open a pack'));
-await page.waitForTimeout(500);
-await page.click('.tear');
-await page.waitForTimeout(500);
-await page.screenshot({ path: `${out}/3-reveal.png` });
-for (let i = 0; i < 14; i++) { await page.click('.reveal-card'); await page.waitForTimeout(120); }
+await shot('01-first-run');
+check('first run', await click('Open my first pack'));
 await page.waitForTimeout(400);
-await page.screenshot({ path: `${out}/4-pack-summary.png` });
-check('pack summary', await page.evaluate(() => document.querySelectorAll('.summary-grid .slot').length === 14));
-await click('Done');
+// Put Unleashed packs on the shelf at a fair price
+check('shelve', await click('Put on shelf'));
 await page.waitForTimeout(300);
-check('open 5', await click('Open 5'));
+await shot('02-shelve');
+check('confirm shelve', await click('on the shelf'));
 await page.waitForTimeout(300);
-await click('Skip to best pulls');
+await shot('03-stock');
+// Open Vendetta packs
+check('open', await click('Open', '.sealed-row button.primary'));
 await page.waitForTimeout(400);
-await page.screenshot({ path: `${out}/5-best-pulls.png` });
+await shot('04-pack');
+await page.click('.tear-pack', { force: true });
+await page.waitForTimeout(400);
+for (let i = 0; i < 14; i++) { await page.click('.reveal-card', { force: true }); await page.waitForTimeout(80); }
+await page.waitForTimeout(300);
+await shot('05-pack-summary');
 await click('Done');
-await click('Binder', 'nav button');
-await page.waitForTimeout(500);
-await page.screenshot({ path: `${out}/6-binder.png` });
-await page.click('.grid3 .slot:not(:has(.dim))');
-await page.waitForTimeout(400);
-await page.screenshot({ path: `${out}/7-card.png` });
-check('card modal', await page.evaluate(() => !!document.querySelector('.card-detail')));
-check('display it', await click('Display'));
+// Grade the best card with PSA, the next with Beckett
+await page.click('.grid4 .slot');
+await page.waitForTimeout(300);
+check('grade it', await click('Grade it'));
 await page.waitForTimeout(200);
-await click('Confirm');
+await click('Express');
+await page.waitForTimeout(200);
+await shot('06-grade-psa');
+check('send PSA', await click('Send to PSA'));
+await page.waitForTimeout(200);
+await page.click('.modal .x');
+await page.click('.grid4 .slot');
 await page.waitForTimeout(300);
+await click('Grade it');
+await click('BECKETT');
+await click('Express');
+await page.waitForTimeout(200);
+await shot('07-grade-bgs');
+check('send BGS', await click('Send to BGS'));
+await page.click('.modal .x');
+// Fast-forward a shop day: grades come back
+await page.evaluate(() => window.__advance(13));
+await page.waitForTimeout(600);
+check('grade reveal', await page.evaluate(() => !!document.querySelector('.grade-pop')));
+await shot('08-reveal');
+await click('Next slab');
+await page.waitForTimeout(600);
+await shot('09-reveal-2');
+await click('Nice');
+await click('Grading', 'nav button');
+await page.waitForTimeout(300);
+await shot('10-slabs');
+check('slabs shown', await page.evaluate(() => document.querySelectorAll('.slab').length >= 2));
+// Put a slab in the display case
+await page.click('.slab-grid > div');
+await page.waitForTimeout(300);
+await click('Put in display case');
+await click('Confirm');
+await page.waitForTimeout(200);
 await page.click('.modal .x').catch(() => {});
 await click('Market', 'nav button');
 await page.waitForTimeout(400);
-check('buy a box', await page.evaluate(() => {
-  const b = [...document.querySelectorAll('.dist-row')].find((r) => r.textContent.includes('Box'));
-  const btn = b && [...b.querySelectorAll('button')].find((x) => x.textContent === 'Buy');
-  if (!btn) return false; btn.click(); return true;
-}));
-await page.waitForTimeout(300);
-await page.screenshot({ path: `${out}/8-market.png`, fullPage: false });
+await shot('11-market');
+check('buy deal', await page.evaluate(() => { const b = document.querySelector('.deal button:not([disabled])'); if (!b) return false; b.click(); return true; }));
 await click('Shop', 'nav button');
-await page.waitForTimeout(6000);
-await page.screenshot({ path: `${out}/9-shop.png` });
-check('customers come in', await page.evaluate(() => document.querySelectorAll('.feed-row').length > 0));
-await click('Grading', 'nav button');
-await page.waitForTimeout(300);
-await page.screenshot({ path: `${out}/10-grading.png` });
+await page.evaluate(() => window.__advance(3));
+await page.waitForTimeout(500);
+await shot('12-shop');
+check('customers bought', await page.evaluate(() => [...document.querySelectorAll('.feed-row.sale')].length > 0));
 await browser.close();
 console.log(results.join('\n'));
 console.log(errors.length ? 'ERRORS\n' + errors.join('\n') : 'No console errors');

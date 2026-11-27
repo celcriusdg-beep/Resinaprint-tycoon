@@ -3,7 +3,7 @@ import raw from './cards.json';
 // Official Riftbound card data (Riot's card gallery) with TCGplayer market prices.
 // Card pictures are loaded from Riot's CDN at runtime; nothing is copied here.
 
-export type SetId = 'OGN' | 'SFD' | 'UNL' | 'RAD' | 'VEN';
+export type SetId = 'OGN' | 'SFD' | 'UNL' | 'VEN' | 'RAD';
 export type Rarity = 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Showcase';
 /** std = normal printing, alt = alternate art, over = overnumbered, sig = signed overnumbered. */
 export type Kind = 'std' | 'alt' | 'over' | 'sig';
@@ -35,10 +35,11 @@ export interface SetInfo {
   pack: number;
   box: number;
   case: number;
-  est?: string[];
+  /** TCGplayer product ids (official product photos). */
+  tcg: { pack: number; box: number; case: number };
 }
 
-const data = raw as unknown as { meta: { pricesDate: string; galleryDate: string; source: string }; sets: Record<SetId, SetInfo>; cards: Card[] };
+const data = raw as unknown as { meta: { pricesDate: string; sealedDate: string; galleryDate: string; source: string }; sets: Record<SetId, SetInfo>; cards: Card[] };
 
 export const META = data.meta;
 export const SETS = data.sets;
@@ -60,4 +61,9 @@ export function kindLabel(k: Kind): string {
 /** Cards of one set in collector order (for the binder). */
 export function setCards(set: SetId): Card[] {
   return CARDS.filter((c) => c.set === set).sort((a, b) => a.n - b.n || a.code.localeCompare(b.code));
+}
+
+/** Official product photo (TCGplayer), loaded at runtime. */
+export function productImage(set: SetId, kind: 'pack' | 'box' | 'case', small = false): string {
+  return `https://tcgplayer-cdn.tcgplayer.com/product/${SETS[set].tcg[kind]}_${small ? '200w' : 'in_1000x1000'}.jpg`;
 }

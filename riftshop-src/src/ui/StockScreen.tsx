@@ -1,18 +1,24 @@
 import { useState } from 'react';
 import { CARD_BY_ID, SET_IDS, SETS, type SetId } from '../data/cards';
-import { BUYLIST_RATE, fmt, rawValue } from '../game/economy';
+import { BUYLIST_RATE, fmt, rawValue, sealedValue, wholesale } from '../game/economy';
 import type { SealedKind } from '../game/types';
-import { openSealed, sealedCount, sellBulk } from '../game/sim';
+import { openSealed, sealedCount, sealedName, sellBulk, shelfSlots, shelveSealed } from '../game/sim';
 import type { Pull } from '../game/packs';
-import { act, useStore } from '../store';
+import { act, tryAct, useStore } from '../store';
 import { CardImage } from './CardImage';
-import { Button, Section } from './common';
+import { Button, Modal, PriceInput, Section } from './common';
+import { ProductImage } from './visuals';
+
+const KINDS: SealedKind[] = ['case', 'box', 'pack'];
 
 export function StockScreen() {
   const g = useStore((s) => s.g);
   useStore((s) => s.rev);
   const [bulkMax, setBulkMax] = useState(0.5);
-  const owned = SET_IDS.filter((s) => (['pack', 'box', 'case'] as SealedKind[]).some((k) => sealedCount(g, s, k) > 0));
+  const [shelving, setShelving] = useState<{ set: SetId; kind: SealedKind } | null>(null);
+  const [qty, setQty] = useState(1);
+  const [price, setPrice] = useState(0);
+  const owned = SET_IDS.filter((s) => KINDS.some((k) => sealedCount(g, s, k) > 0));
 
   const open = (set: SetId, n: number) => {
     const packs: Pull[][] = [];
@@ -24,6 +30,12 @@ export function StockScreen() {
     });
     if (packs.length) useStore.getState().setOpening({ set, packs });
   };
+  const startShelf = (set: SetId, kind: SealedKind) => {
+    setShelving({ set, kind });
+    setQty(sealedCount(g, set, kind));
+    const onShelf = g.shelf.find((l) => l.set === set && l.kind === kind);
+    setPrice(onShelf?.price ?? Math.round(sealedValue(g, set, kind) * 1.1 * 100) / 100);
+  };
 
   const top = Object.entries(g.cards)
     .flatMap(([id, [n, f]]) => [n > 0 ? { id, foil: false, n } : null, f > 0 ? { id, foil: true, n: f } : null])
@@ -34,33 +46,32 @@ export function StockScreen() {
 
   return (
     <div className="screen">
-      <Section title="Sealed stock">
-        {owned.length === 0 && <p className="muted small">No sealed product. Buy packs, boxes or cases from the distributor on the Market tab.</p>}
+      <Section title="Back room" right={<span className="muted small">Shelves {g.shelf.length}/{shelfSlots(g)}</span>}>
+        {owned.length === 0 && <p className="muted small">No sealed product. Buy from the distributor or the deals board on the Market tab.</p>}
         {owned.map((set) => (
           <div className="sealed-set" key={set}>
-            <div className="pack-art" data-set={set}><span>{SETS[set].name}</span></div>
-            <div className="sealed-info">
-              <b>{SETS[set].name}</b>
-              <div className="row wrap">
-                {sealedCount(g, set, 'case') > 0 && (
-                  <Button small onClick={() => act((s) => openSealed(s, set, 'case'))}>Open case ({sealedCount(g, set, 'case')}) → 6 boxes</Button>
-                )}
-                {sealedCount(g, set, 'box') > 0 && (
-                  <Button small onClick={() => act((s) => openSealed(s, set, 'box'))}>Open box ({sealedCount(g, set, 'box')}) → 24 packs</Button>
-                )}
-              </div>
-              {sealedCount(g, set, 'pack') > 0 && (
-                <div className="row wrap">
-                  <span className="muted small">{sealedCount(g, set, 'pack')} packs</span>
-                  <Button kind="primary" small onClick={() => open(set, 1)}>Open a pack</Button>
-                  {sealedCount(g, set, 'pack') >= 5 && <Button small onClick={() => open(set, 5)}>Open 5</Button>}
-                  {sealedCount(g, set, 'pack') >= 24 && <Button small onClick={() => open(set, 24)}>Open 24</Button>}
+            <b>{SETS[set].name}</b>
+            {KINDS.filter((k) => sealedCount(g, set, k) > 0).map((kind) => {
+              const n = sealedCount(g, set, kind);
+              return (
+                <div className="sealed-row" key={kind}>
+                  <ProductImage set={set} kind={kind} qty={n} />
+                  <div className="sealed-info">
+                    <span>{sealedName(set, kind, n)}</span>
+                    <span className="muted small">market {fmt(sealedValue(g, set, kind))} each</span>
+                    <div className="row wrap">
+                      <Button small onClick={() => startShelf(set, kind)}>Put on shelf</Button>
+                      {kind === 'pack' && <Button kind="primary" small onClick={() => open(set, 1)}>Open</Button>}
+                      {kind === 'pack' && n >= 5 && <Button small onClick={() => open(set, Math.min(n, 24))}>Open {Math.min(n, 24)}</Button>}
+                      {kind !== 'pack' && <Button kind="primary" small onClick={() => act((s) => openSealed(s, set, kind))}>{kind === 'box' ? 'Open box → 24 packs' : 'Open case → 6 boxes'}</Button>}
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
+              );
+            })}
           </div>
         ))}
-        <p className="muted small">Sealed packs and boxes on your shelf sell to customers at your shelf price. Opening them is a gamble: some boxes are worth far more opened, most are worth less.</p>
+        <p className="muted small">Sell sealed on your shelf for a steady profit, or gamble and open it: most packs are worth less than sealed, but one big hit can pay for a whole box.</p>
       </Section>
 
       <Section title="Your best cards" right={<span className="muted small">{top.reduce((a, x) => a + x.n, 0)} cards</span>}>
@@ -74,6 +85,7 @@ export function StockScreen() {
             </div>
           ))}
         </div>
+        {top.length > 0 && <p className="muted small">Tap a card to put it in your display case, sell it online, or send it to PSA or Beckett.</p>}
       </Section>
 
       <Section title="Sell bulk">
@@ -85,8 +97,29 @@ export function StockScreen() {
           const r = act((s) => sellBulk(s, bulkMax, true));
           useStore.getState().say(`Sold ${r.count} cards to a buylist for ${fmt(r.total)}.`);
         }}>Sell bulk for about {fmt(bulkPreview)}</Button>
-        <p className="muted small">Buylists pay {Math.round(BUYLIST_RATE * 100)}% of market. Valuable cards sell better in your display case or online.</p>
       </Section>
+
+      {shelving && (
+        <Modal title={`Shelve ${sealedName(shelving.set, shelving.kind)}`} onClose={() => setShelving(null)}>
+          <div className="edit-listing">
+            <ProductImage set={shelving.set} kind={shelving.kind} big />
+            <div>
+              <label className="markup">
+                <span>How many: <b>{qty}</b> of {sealedCount(g, shelving.set, shelving.kind)}</span>
+                <input type="range" min={1} max={Math.max(1, sealedCount(g, shelving.set, shelving.kind))} value={qty} onChange={(e) => setQty(parseInt(e.target.value))} />
+              </label>
+              <span>Price each</span>
+              <PriceInput value={price} onChange={setPrice} />
+              <p className="muted small">
+                Market {fmt(sealedValue(g, shelving.set, shelving.kind))} · distributor {fmt(wholesale(g, shelving.set, shelving.kind))} · profit at this price {fmt(price - wholesale(g, shelving.set, shelving.kind))} each
+              </p>
+              <Button kind="primary" wide onClick={() => {
+                if (tryAct((s) => shelveSealed(s, shelving.set, shelving.kind, qty, price), `On the shelf at ${fmt(price)}.`)) setShelving(null);
+              }}>Put {qty} on the shelf</Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
@@ -105,6 +138,7 @@ export function PackOpening() {
   const cards = [...pack].sort((a, b) => order[a.slot] - order[b.slot]);
   const done = shown >= cards.length;
   const value = cards.reduce((a, p) => a + rawValue(g, p.cardId, p.foil), 0);
+  const totalAll = opening.packs.flat().reduce((a, p) => a + rawValue(g, p.cardId, p.foil), 0);
   const close = () => {
     useStore.getState().setOpening(null);
     setPackIdx(0);
@@ -117,8 +151,18 @@ export function PackOpening() {
     setShown(0);
     setTorn(false);
   };
-  const totalAll = opening.packs.flat().reduce((a, p) => a + rawValue(g, p.cardId, p.foil), 0);
   const current = cards[Math.min(shown, cards.length - 1)];
+  const grid = (list: Pull[]) => (
+    <div className="summary-grid">
+      {list.map((p, i) => (
+        <div className="slot" key={i} onClick={() => useStore.getState().showCard(p.cardId)}>
+          <CardImage id={p.cardId} foil={p.foil} thumb />
+          <span className="tag">{fmt(rawValue(g, p.cardId, p.foil))}</span>
+        </div>
+      ))}
+    </div>
+  );
+  const byValue = (list: Pull[]) => [...list].sort((a, b) => rawValue(g, b.cardId, b.foil) - rawValue(g, a.cardId, a.foil));
   return (
     <div className="opening">
       <div className="opening-top">
@@ -128,24 +172,15 @@ export function PackOpening() {
       {all ? (
         <div className="summary">
           <b>Best pulls from {opening.packs.length} packs</b>
-          <div className="summary-grid">
-            {opening.packs.flat().sort((a, b) => rawValue(g, b.cardId, b.foil) - rawValue(g, a.cardId, a.foil)).slice(0, 15).map((p, i) => (
-              <div className="slot" key={i} onClick={() => useStore.getState().showCard(p.cardId)}>
-                <CardImage id={p.cardId} foil={p.foil} thumb />
-                <span className="tag">{fmt(rawValue(g, p.cardId, p.foil))}</span>
-              </div>
-            ))}
-          </div>
+          {grid(byValue(opening.packs.flat()).slice(0, 15))}
           <p>Total value <b>{fmt(totalAll)}</b> ({opening.packs.length * 14} cards)</p>
           <Button kind="primary" onClick={close}>Done</Button>
         </div>
       ) : !torn ? (
-        <div className="tear" onClick={() => setTorn(true)}>
-          <div className="pack-art big" data-set={opening.set}><span>{SETS[opening.set].name}</span></div>
-          <p>Tap to open</p>
-          {opening.packs.length > 1 && (
-            <Button small kind="ghost" onClick={() => setAll(true)}>Skip to best pulls</Button>
-          )}
+        <div className="tear">
+          <div className="tear-pack" onClick={() => setTorn(true)}><ProductImage set={opening.set} kind="pack" big /></div>
+          <p>Tap the pack to rip it open</p>
+          {opening.packs.length > 1 && <Button small kind="ghost" onClick={() => setAll(true)}>Skip to best pulls</Button>}
         </div>
       ) : !done ? (
         <div className="reveal" onClick={() => setShown((n) => n + 1)}>
@@ -161,14 +196,7 @@ export function PackOpening() {
         </div>
       ) : (
         <div className="summary">
-          <div className="summary-grid">
-            {[...cards].sort((a, b) => rawValue(g, b.cardId, b.foil) - rawValue(g, a.cardId, a.foil)).map((p, i) => (
-              <div className="slot" key={i} onClick={() => useStore.getState().showCard(p.cardId)}>
-                <CardImage id={p.cardId} foil={p.foil} thumb />
-                <span className="tag">{fmt(rawValue(g, p.cardId, p.foil))}</span>
-              </div>
-            ))}
-          </div>
+          {grid(byValue(cards))}
           <p>Pack value <b>{fmt(value)}</b>{opening.packs.length > 1 ? <> · all {opening.packs.length} packs <b>{fmt(totalAll)}</b></> : null}</p>
           <div className="row">
             {packIdx + 1 < opening.packs.length ? (

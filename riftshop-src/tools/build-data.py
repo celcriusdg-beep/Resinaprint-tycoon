@@ -5,17 +5,20 @@
   - TCGplayer market prices in USD, keyed by printed card code:
       git clone --depth 1 https://github.com/rleutz/riftbound-prices
 
-Usage: python3 tools/build-data.py <riftbound-card-data dir> <riftbound-prices dir>
+  - Sealed product market prices by TCGplayer product id:
+      git clone --depth 1 https://github.com/ehreese/riftdex-data
+
+Usage: python3 tools/build-data.py <riftbound-card-data dir> <riftbound-prices dir> <riftdex-data dir>
 Card images are not downloaded; the game loads them from Riot's CDN.
 """
 import json, re, sys, statistics, collections
 
-cards_dir, prices_dir = sys.argv[1], sys.argv[2]
+cards_dir, prices_dir, rdx_dir = sys.argv[1], sys.argv[2], sys.argv[3]
 gallery = json.load(open(f'{cards_dir}/data/cards.json'))
 pfile = json.load(open(f'{prices_dir}/prices/riftbound_prices_updated.json'))
 prices = pfile['prices']
 
-BOOSTER_SETS = ['OGN', 'SFD', 'UNL', 'RAD', 'VEN']
+BOOSTER_SETS = ['OGN', 'SFD', 'UNL', 'VEN', 'RAD']  # release order
 
 def price_key(code):
     """'OGN-299*/298' -> 'OGN-299-SIG'; 'RAD-061a/167' -> 'RAD-061a'."""
@@ -55,16 +58,27 @@ for c in out:
         c['price'] = round(statistics.median(g), 2)
     c['price'] = max(0.05, c['price'])
 
-# Sealed products (USD). Market from TCGplayer via the riftdex-data snapshot where the product id is
-# known (Origins, Unleashed, 26 Nov 2026); otherwise from TCGplayer listings found by search (Oct-Nov 2026).
-SETS = {
-    'OGN': {'name': 'Origins', 'msrpPack': 4.99, 'msrpBox': 119.99, 'pack': 11.18, 'box': 148.23, 'case': 936.21},
-    'SFD': {'name': 'Spiritforged', 'msrpPack': 4.99, 'msrpBox': 119.99, 'pack': 7.25, 'box': 161.51, 'case': 1010.0, 'est': ['pack', 'case']},
-    'UNL': {'name': 'Unleashed', 'msrpPack': 4.99, 'msrpBox': 119.99, 'pack': 6.72, 'box': 162.60, 'case': 1052.67},
-    'RAD': {'name': 'Radiance', 'msrpPack': 4.99, 'msrpBox': 119.99, 'pack': 5.99, 'box': 127.13, 'case': 790.0, 'est': ['pack', 'case']},
-    'VEN': {'name': 'Vendetta', 'msrpPack': 4.99, 'msrpBox': 119.99, 'pack': 5.99, 'box': 126.22, 'case': 780.0, 'est': ['pack', 'case']},
+# Sealed products: TCGplayer product ids (pack, box = booster display, case = 6 displays).
+# Market prices for those ids come from the riftdex-data daily TCGplayer snapshot; images are
+# TCGplayer's product photos, loaded by the game at runtime.
+TCG = {
+    'OGN': ('Origins', 635366, 635368, 635369),
+    'SFD': ('Spiritforged', 661954, 661934, 661937),
+    'UNL': ('Unleashed', 678149, 678150, 678152),
+    'VEN': ('Vendetta', 693377, 693380, 693382),
+    'RAD': ('Radiance', 711362, 711365, 711366),
 }
+rdx = json.load(open(f'{rdx_dir}/prices.json'))
+sealed_price = {r[0]: r[1] for r in rdx['prices']}
+SETS = {}
+for sid, (name, pack, box, case) in TCG.items():
+    SETS[sid] = {
+        'name': name, 'msrpPack': 4.99, 'msrpBox': 119.99,
+        'pack': sealed_price[pack], 'box': sealed_price[box], 'case': sealed_price[case],
+        'tcg': {'pack': pack, 'box': box, 'case': case},
+    }
 meta = {
+    'sealedDate': rdx['sourceUpdatedAt'][:10],
     'pricesDate': pfile.get('updated'), 'galleryDate': gallery.get('fetched_at'),
     'source': 'Card data: Riot Games official card gallery. Prices: TCGplayer market (USD).',
 }

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { GameState } from './game/types';
-import { SAVE_VERSION, advance, catchUp, newGame } from './game/sim';
+import { SAVE_VERSION, advance, catchUp, migrate, newGame } from './game/sim';
 import { SECONDS_PER_HOUR } from './game/economy';
 import type { Pull } from './game/packs';
 import type { SetId } from './data/cards';
@@ -33,8 +33,9 @@ function load(): { g: GameState; away: number } {
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
-      const g = { ...newGame(), ...JSON.parse(raw) } as GameState;
-      if (g.version === SAVE_VERSION) {
+      const parsed = JSON.parse(raw);
+      if (parsed.version <= SAVE_VERSION) {
+        const g = migrate(parsed);
         const away = (Date.now() - (g.savedAt || Date.now())) / 1000;
         const hours = catchUp(g, away, SECONDS_PER_HOUR);
         return { g, away: hours };
