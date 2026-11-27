@@ -58,6 +58,8 @@ export const PHYSICS: Record<string, PhysicsParams> = {
   // strong negative temperature feedback, fuel drains to passively cooled tanks.
   reactor_msr: P({ beta: 330, rodWorth: 3500, rodSpeed: 0.02, rhoBOL: 3200, doppler: 900, fuelDT: 120, alphaM: -75, xenonWorth: 350, passive: 0.2, drainable: true }),
   reactor_fusion: P({ fission: false, passive: 1, containment: true }),
+  reactor_stellarator: P({ fission: false, passive: 1, containment: true }),
+  reactor_citadel: P({ fission: false, passive: 1, containment: true }),
   // Six SMR modules: SMR physics, slightly slower rods across the bank.
   reactor_smr_park: P({ rodWorth: 6500, rodSpeed: 0.018, boron: true, boronWorth: 9, rhoBOL: 9500, doppler: 1300, fuelDT: 550, alphaM: -32, xenonWorth: 2600, passive: 0.07 }),
   // Fast spectrum: small β, tiny xenon effect, weak sodium coefficient, large passive heat capacity of the pool.

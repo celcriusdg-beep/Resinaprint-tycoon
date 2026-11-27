@@ -46,11 +46,11 @@ describe('build menu tiers', () => {
     }
   });
 
-  it('every building has a section that exists in its category and a tier 1–5', () => {
+  it('every building has a section that exists in its category and a tier 1–6', () => {
     for (const d of BUILDING_LIST) {
       expect(SECTIONS[d.category].some((x) => x.id === d.section), d.type).toBe(true);
       expect(d.tier).toBeGreaterThanOrEqual(1);
-      expect(d.tier).toBeLessThanOrEqual(5);
+      expect(d.tier).toBeLessThanOrEqual(6);
       if (d.unlock.research) expect(RESEARCH.find((r) => r.id === d.unlock.research)?.unlocks ?? [], d.type).toContain(d.type);
     }
     for (const [cat, secs] of Object.entries(SECTIONS)) for (const x of secs) expect(BUILDING_LIST.some((d) => d.category === cat && d.section === x.id), `${cat}/${x.id}`).toBe(true);

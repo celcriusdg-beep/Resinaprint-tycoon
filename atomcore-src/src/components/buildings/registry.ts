@@ -6,6 +6,7 @@ import * as P from './models/plant';
 import * as S from './models/supply';
 import * as I from './models/industry';
 import * as T from './models/tiers';
+import * as L from './models/legendary';
 
 const BUILDERS: Record<BuildingType, () => ModelBuilder> = {
   reactor_pilot: R.pilotReactor,
@@ -78,6 +79,36 @@ const BUILDERS: Record<BuildingType, () => ModelBuilder> = {
   fire_station: T.fireStation,
   emergency_centre: T.emergencyCentre,
   flood_wall: T.floodWall,
+  reactor_stellarator: L.stellarator,
+  reactor_citadel: L.laserCitadel,
+  turbine_brayton: L.heliumBrayton,
+  turbine_collector: L.plasmaCollector,
+  cooling_vortex: L.vortexTower,
+  cooling_spire: L.heatSpire,
+  storage_gravity: L.gravityTower,
+  storage_smes: L.smesRing,
+  water_graphene: L.grapheneDesal,
+  water_harvester: L.waterHarvester,
+  treatment_sieve: L.molecularSieve,
+  treatment_cathedral: L.pureCathedral,
+  water_cistern: L.cavernCistern,
+  water_hanging: L.hangingReservoir,
+  grid_mega: L.scMegastation,
+  grid_beacon: L.powerBeacon,
+  fuel_silo: L.maglevSilo,
+  fuel_citadel: L.fuelCitadel,
+  spent_borehole: L.deepBorehole,
+  spent_transmute: L.transmutationRing,
+  mine_bore: L.roboticBore,
+  mine_seawater: L.seawaterExtractor,
+  mill_plasma: L.plasmaSeparator,
+  mill_molecular: L.molecularMill,
+  enrich_ring: L.isotopeRing,
+  enrich_quantum: L.quantumSorter,
+  fab_printer: L.fuelPrinter,
+  fab_foundry: L.fuelFoundry,
+  qa_muon: L.muonArch,
+  qa_spire: L.aiSpire,
 };
 
 const templates = new Map<BuildingType, ModelData>();
