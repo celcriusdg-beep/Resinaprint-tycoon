@@ -62,7 +62,7 @@ const ModelViewer = lazy(() => import('./components/world/ModelViewer'));
 
 export default function App() {
   // Developer model viewer (?viewer=<type>) bypasses the game entirely.
-  if (new URLSearchParams(window.location.search).has('viewer')) return <Suspense fallback={null}><ModelViewer /></Suspense>;
+  if (new URLSearchParams(window.location.search).has('viewer') || new URLSearchParams(window.location.search).has('concept')) return <Suspense fallback={null}><ModelViewer /></Suspense>;
   return <GameApp />;
 }
 

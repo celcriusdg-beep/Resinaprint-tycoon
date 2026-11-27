@@ -6,27 +6,27 @@ import { stack } from './reactors';
 // Tier-expansion buildings. Units are metres (one grid cell = 4 m); origin is
 // the footprint centre at ground level.
 
-type M = ReturnType<typeof materials>;
+export type M = ReturnType<typeof materials>;
 
-function slab(b: ModelBuilder, w: number, d: number, mat?: THREE.Material) {
+export function slab(b: ModelBuilder, w: number, d: number, mat?: THREE.Material) {
   b.box(w - 0.3, 0.25, d - 0.3, mat ?? materials().concreteDark, [0, 0, 0]);
 }
 
-function roofed(b: ModelBuilder, m: M, w: number, h: number, d: number, wall: THREE.Material, pos: [number, number], roof: THREE.Material = m.steelDark) {
+export function roofed(b: ModelBuilder, m: M, w: number, h: number, d: number, wall: THREE.Material, pos: [number, number], roof: THREE.Material = m.steelDark) {
   b.box(w, h, d, wall, [pos[0], 0.25, pos[1]]);
   b.box(w + 0.15, 0.22, d + 0.15, roof, [pos[0], 0.25 + h, pos[1]]);
 }
 
-function lights(b: ModelBuilder, m: M, w: number, y: number, z: number, x0 = 0, n = 6) {
+export function lights(b: ModelBuilder, m: M, w: number, y: number, z: number, x0 = 0, n = 6) {
   const step = w / n;
   for (let i = 0; i < n; i++) b.box(step * 0.6, 0.4, 0.06, m.windowGlow, [x0 - w / 2 + step * (i + 0.5), y, z]);
 }
 
-function glow(base: THREE.MeshStandardMaterial) {
+export function glow(base: THREE.MeshStandardMaterial) {
   return base.clone();
 }
 
-function fan(b: ModelBuilder, m: M, x: number, y: number, z: number, r: number, speed = 5) {
+export function fan(b: ModelBuilder, m: M, x: number, y: number, z: number, r: number, speed = 5) {
   b.cyl(r + 0.12, r + 0.12, 0.5, m.cladGrey, [x, y - 0.5, z], 20, [0, 0, 0], true);
   const f = fanRotor(r, 6, m.steelDark, m.steel);
   f.position.set(x, y, z);
@@ -52,7 +52,7 @@ function hyperboloid(b: ModelBuilder, mat: THREE.Material, baseR: number, throat
 
 /** A tapered four-sided hall, w × d at the base, `top` = top/base ratio.
  *  `from`/`to` cut a horizontal slice of the same shape (for glass bands). */
-function taper(b: ModelBuilder, mat: THREE.Material, w: number, d: number, h: number, top: number, pos: Vec3, from = 0, to = h, grow = 0) {
+export function taper(b: ModelBuilder, mat: THREE.Material, w: number, d: number, h: number, top: number, pos: Vec3, from = 0, to = h, grow = 0) {
   const r = (y: number) => 1 - (1 - top) * (y / h);
   const g = new THREE.CylinderGeometry(r(to), r(from), to - from, 4, 1);
   g.rotateY(Math.PI / 4);
@@ -61,12 +61,12 @@ function taper(b: ModelBuilder, mat: THREE.Material, w: number, d: number, h: nu
 }
 
 /** A glowing strip that pulses with the building's activity. */
-function seam(b: ModelBuilder, mat: THREE.MeshStandardMaterial, w: number, pos: Vec3, rotY = 0, speed = 1.3) {
+export function seam(b: ModelBuilder, mat: THREE.MeshStandardMaterial, w: number, pos: Vec3, rotY = 0, speed = 1.3) {
   b.part(new THREE.BoxGeometry(w, 0.1, 0.08), mat, pos, { kind: 'pulse', speed, material: mat }, [0, rotY, 0]);
 }
 
 /** A straight bar between two points (glowing and pulsing when `pulse` is set). */
-function beam(b: ModelBuilder, mat: THREE.Material, p0: Vec3, p1: Vec3, t: number, pulse?: number) {
+export function beam(b: ModelBuilder, mat: THREE.Material, p0: Vec3, p1: Vec3, t: number, pulse?: number) {
   const a = new THREE.Vector3(...p0);
   const c = new THREE.Vector3(...p1);
   const dir = c.clone().sub(a);
@@ -79,7 +79,7 @@ function beam(b: ModelBuilder, mat: THREE.Material, p0: Vec3, p1: Vec3, t: numbe
 }
 
 /** Polished mirror finish. */
-function mirror(m: M) {
+export function mirror(m: M) {
   const mm = m.steel.clone();
   mm.color.set('#dbe6ee');
   mm.roughness = 0.06;
@@ -88,7 +88,7 @@ function mirror(m: M) {
 }
 
 /** An industrial robot arm on a pedestal that swings while the building works. */
-function robotArm(b: ModelBuilder, m: M, x: number, y: number, z: number, s = 1, phase = 0) {
+export function robotArm(b: ModelBuilder, m: M, x: number, y: number, z: number, s = 1, phase = 0) {
   b.cyl(0.45 * s, 0.6 * s, 0.5 * s, m.steelDark, [x, y, z], 18);
   const g = new THREE.Group();
   const add = (geo: THREE.BufferGeometry, mat: THREE.Material, p: Vec3, rz = 0) => {
