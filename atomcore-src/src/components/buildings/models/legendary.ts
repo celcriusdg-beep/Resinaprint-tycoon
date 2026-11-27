@@ -686,6 +686,380 @@ export function transmutationRing(): ModelBuilder {
   return b;
 }
 
+// ── Fuel chain ──────────────────────────────────────────────────────────
+
+/** Uranium yellow-green glow. */
+function uraniumGlow() {
+  return new THREE.MeshStandardMaterial({ color: '#3a4a10', emissive: new THREE.Color('#c8ff4d'), emissiveIntensity: 2.2, roughness: 0.3, toneMapped: false });
+}
+
+function hauler(b: ModelBuilder, m: M, x: number, z: number, rot: number) {
+  b.add(new THREE.BoxGeometry(3.0, 1.4, 1.8), m.paintWhite, [x, 1.0, z], [0, rot, 0]);
+  b.add(new THREE.BoxGeometry(1.0, 1.0, 1.7), m.glass, [x + Math.cos(rot) * 1.0, 1.9, z - Math.sin(rot) * 1.0], [0, rot, 0]);
+  for (const d of [-1, 1]) b.add(new THREE.CylinderGeometry(0.45, 0.45, 2.0, 14), m.rubber, [x + Math.cos(rot) * d, 0.7, z - Math.sin(rot) * d], [Math.PI / 2, rot, 0]);
+  b.add(new THREE.BoxGeometry(0.1, 0.12, 1.6), m.glowCyan, [x + Math.cos(rot) * 1.52, 1.3, z - Math.sin(rot) * 1.52], [0, rot, 0]);
+}
+
+export function roboticBore(): ModelBuilder {
+  // Robotic deep bore: a hexagonal drill tower over a glowing cutting head,
+  // a conveyor boom to the ore pile and autonomous haulers.
+  const b = new ModelBuilder();
+  const m = materials();
+  const hot = glow(m.glowOrange);
+  const cy = glow(m.glowCyan);
+  slab(b, 20, 20, m.gravel);
+  b.cyl(4.6, 4.6, 0.3, m.steelDark, [-2, 0.25, -2], 32);
+  const head = new THREE.Group();
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(3.4, 0.45, 8, 32), hot);
+  ring.rotation.x = Math.PI / 2;
+  head.add(ring);
+  for (let i = 0; i < 6; i++) {
+    const t = new THREE.Mesh(new THREE.BoxGeometry(6.6, 0.3, 0.5), m.steel);
+    t.rotation.y = (i / 6) * Math.PI;
+    head.add(t);
+  }
+  head.position.set(-2, 0.7, -2);
+  b.partGroup(head, { kind: 'spin', axis: 'y', speed: 1.5 });
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    beam(b, m.paintWhite, [-2 + Math.cos(a) * 4.2, 0.4, -2 + Math.sin(a) * 4.2], [-2 + Math.cos(a) * 1.4, 26, -2 + Math.sin(a) * 1.4], 0.55);
+  }
+  for (const y of [8, 16, 23]) b.part(new THREE.CylinderGeometry(4.4 - y * 0.12, 4.4 - y * 0.12, 0.3, 6, 1, true), cy, [-2, y, -2], { kind: 'pulse', speed: 1.4, material: cy });
+  b.cyl(1.8, 1.8, 2.2, m.paintWhite, [-2, 25.5, -2], 6);
+  beam(b, cy, [-2, 1, -2], [-2, 25.4, -2], 0.18, 2);
+  // Conveyor boom to the ore pile
+  beam(b, m.paintWhite, [1.0, 3.0, 0.5], [6.4, 7.0, 5.6], 0.8);
+  b.add(new THREE.ConeGeometry(3.4, 4.2, 20), m.concreteDark, [6.6, 2.35, 6.2]);
+  // Autonomous haulers
+  hauler(b, m, 6.5, -5.5, 0.3);
+  hauler(b, m, 2.0, 7.4, -0.4);
+  hauler(b, m, -7.0, 6.0, 1.2);
+  beacon(b, m, 27);
+  return b;
+}
+
+export function seawaterExtractor(): ModelBuilder {
+  // Uranium from seawater: braided absorbent arrays float in a lagoon and
+  // glow as they load up; the elution tower strips the uranium off them.
+  const b = new ModelBuilder();
+  const m = materials();
+  const u = uraniumGlow();
+  const cy = glow(m.glowCyan);
+  slab(b, 28, 28, m.concrete);
+  b.add(new THREE.BoxGeometry(26, 0.8, 18), m.paintWhite, [0, 0.65, 3.5]);
+  b.add(new THREE.BoxGeometry(25.2, 0.1, 17.2), clearWater(0.85), [0, 1.0, 3.5]);
+  // Floating braid rows
+  for (let r = 0; r < 6; r++) {
+    const z = -3.5 + r * 2.8;
+    b.add(new THREE.CapsuleGeometry(0.35, 21, 4, 10), m.paintWhite, [0, 1.15, z], [0, 0, Math.PI / 2]);
+    b.part(new THREE.CylinderGeometry(0.16, 0.16, 20.5, 8), u, [0, 1.15, z + 0.55], { kind: 'pulse', speed: 1 + r * 0.15, material: u }, [0, 0, Math.PI / 2]);
+    for (let k = 0; k < 6; k++) b.cyl(0.5, 0.5, 0.5, m.paintYellow, [-9 + k * 3.6, 0.95, z], 12);
+  }
+  // Pier and elution tower
+  b.box(2.0, 0.4, 18, m.paintWhite, [-11.6, 1.2, 3.5]);
+  b.cyl(2.2, 2.8, 20, m.paintWhite, [-8.5, 0.25, -9.5], 8);
+  for (const y of [6, 12, 18]) b.part(new THREE.CylinderGeometry(2.7 - y * 0.03, 2.7 - y * 0.03, 0.3, 8, 1, true), u, [-8.5, y, -9.5], { kind: 'pulse', speed: 1.3, material: u });
+  b.cyl(2.4, 2.4, 0.6, m.steelDark, [-8.5, 20.25, -9.5], 8);
+  taper(b, m.paintWhite, 9.0, 5.0, 5.0, 0.76, [4.0, 0.25, -9.4]);
+  taper(b, m.glass, 9.0, 5.0, 5.0, 0.76, [4.0, 0.25, -9.4], 1.8, 3.4, 0.1);
+  seam(b, cy, 8, [4.0, 1.3, -6.85]);
+  beacon(b, m, 21.2, -8.5, -9.5);
+  return b;
+}
+
+export function plasmaSeparator(): ModelBuilder {
+  // Plasma mass separation: ore is vaporised in a torch, ionised and split by
+  // a magnetic field into three streams; yellowcake silos collect the heavy one.
+  const b = new ModelBuilder();
+  const m = materials();
+  const plasma = glow(m.glowPlasma);
+  const u = uraniumGlow();
+  slab(b, 20, 16, m.concrete);
+  b.box(15, 1.2, 4.4, m.concreteDark, [-1.5, 0.25, 2.8]);
+  // Feed hopper and torch
+  b.add(new THREE.ConeGeometry(2.0, 3.0, 4, 1, true), m.paintWhite, [-8.0, 5.6, 2.8], [Math.PI, Math.PI / 4, 0]);
+  b.cyl(1.6, 1.6, 2.6, m.paintWhite, [-8.0, 1.45, 2.8], 24);
+  b.part(new THREE.CylinderGeometry(0.6, 1.0, 10, 20), plasma, [-1.6, 3.4, 2.8], { kind: 'pulse', speed: 6, material: plasma }, [0, 0, Math.PI / 2]);
+  for (let i = 0; i < 6; i++) b.torus(1.7, 0.32, i % 2 ? m.copper : m.paintWhite, [-5.6 + i * 1.6, 3.4, 2.8], [0, Math.PI / 2, 0], 28);
+  // Three collector chutes fanning out
+  for (const [dz, mat] of [[-1.8, m.paintWhite], [0, m.paintWhite], [1.8, m.paintWhite]] as [number, THREE.Material][]) {
+    beam(b, mat, [3.6, 3.4, 2.8], [6.2, 2.0, 2.8 + dz * 1.4], 0.7);
+  }
+  // Yellowcake silos
+  for (let i = 0; i < 3; i++) {
+    const x = 7.6, z = -0.2 + i * 2.6;
+    b.cyl(1.0, 1.0, 6, m.paintWhite, [x, 0.25, z], 20);
+    b.part(new THREE.CylinderGeometry(1.02, 1.02, 0.3, 20, 1, true), u, [x, 4.4, z], { kind: 'pulse', speed: 1.4 + i * 0.2, material: u });
+  }
+  taper(b, m.paintWhite, 12, 4.4, 5.2, 0.8, [-2, 0.25, -4.8]);
+  taper(b, m.glass, 12, 4.4, 5.2, 0.8, [-2, 0.25, -4.8], 2, 3.6, 0.1);
+  beacon(b, m, 7, 7.6, 5);
+  return b;
+}
+
+export function molecularMill(): ModelBuilder {
+  // Molecular assembler mill: a honeycomb hive where nano-assemblers pick
+  // uranium atoms out of ore; drones orbit the central spire.
+  const b = new ModelBuilder();
+  const m = materials();
+  const u = uraniumGlow();
+  const cy = glow(m.glowCyan);
+  slab(b, 24, 24, m.concrete);
+  podium(b, m, 10.5, 1.0, 6);
+  // Honeycomb cells in rings, taller towards the middle
+  const cells: [number, number][] = [[0, 0]];
+  for (let ring = 1; ring <= 3; ring++) {
+    for (let side = 0; side < 6; side++) {
+      for (let k = 0; k < ring; k++) {
+        const a0 = (side / 6) * Math.PI * 2, a1 = ((side + 2) / 6) * Math.PI * 2;
+        const x = Math.cos(a0) * ring * 2.7 + Math.cos(a1) * k * 2.7;
+        const z = Math.sin(a0) * ring * 2.7 + Math.sin(a1) * k * 2.7;
+        cells.push([x, z]);
+      }
+    }
+  }
+  cells.forEach(([x, z], i) => {
+    const d = Math.hypot(x, z);
+    const h = 12 - d * 1.05;
+    if (i === 0) return;
+    b.cyl(1.45, 1.45, h, m.paintWhite, [x, 1.25, z], 6, [0, 0, 0]);
+    const lit = i % 3 === 0 ? u : cy;
+    b.part(new THREE.CylinderGeometry(1.2, 1.2, 0.12, 6), lit, [x, 1.25 + h + 0.07, z], { kind: 'pulse', speed: 1 + (i % 5) * 0.3, material: lit as THREE.MeshStandardMaterial });
+  });
+  // Central spire with orbiting drones
+  b.cyl(0.8, 1.6, 22, m.paintWhite, [0, 1.25, 0], 6);
+  b.part(new THREE.OctahedronGeometry(1.2, 0), u, [0, 24.6, 0], { kind: 'pulse', speed: 2, material: u });
+  const drones = new THREE.Group();
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2;
+    const d = new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 8), m.glowCyan);
+    d.position.set(Math.cos(a) * 4, 16 + (i % 2) * 2.5, Math.sin(a) * 4);
+    drones.add(d);
+  }
+  b.partGroup(drones, { kind: 'spin', axis: 'y', speed: 0.8 });
+  b.height = Math.max(b.height, 25.8);
+  return b;
+}
+
+export function isotopeRing(): ModelBuilder {
+  // Electromagnetic isotope separation: a racetrack of C-magnets bends an ion
+  // beam so U-235 and U-238 land in different collectors.
+  const b = new ModelBuilder();
+  const m = materials();
+  const beamMat = glow(m.glowPlasma);
+  const u = uraniumGlow();
+  const cy = glow(m.glowCyan);
+  slab(b, 20, 20, m.concrete);
+  const L = 8, R = 5.6, y = 2.6;
+  const track = new THREE.Shape();
+  track.moveTo(-L / 2, -R);
+  track.lineTo(L / 2, -R);
+  track.absarc(L / 2, 0, R, -Math.PI / 2, Math.PI / 2, false);
+  track.lineTo(-L / 2, R);
+  track.absarc(-L / 2, 0, R, Math.PI / 2, Math.PI * 1.5, false);
+  const pts = track.getSpacedPoints(160).map((p) => new THREE.Vector3(p.x, y, p.y));
+  const curve = new THREE.CatmullRomCurve3(pts, true);
+  b.add(new THREE.TubeGeometry(curve, 200, 0.7, 12, true), m.paintWhite);
+  b.part(new THREE.TubeGeometry(curve, 200, 0.2, 8, true), beamMat, [0, 0.75, 0], { kind: 'pulse', speed: 5, material: beamMat });
+  for (let i = 0; i < 20; i++) {
+    const p = curve.getPointAt(i / 20);
+    const t = curve.getTangentAt(i / 20);
+    const a = Math.atan2(t.z, t.x);
+    b.add(new THREE.BoxGeometry(1.0, 2.6, 2.4), i % 2 ? m.copper : m.steelDark, [p.x, 1.55, p.z], [0, -a, 0]);
+  }
+  for (const x of [-L / 2, L / 2]) for (const zz of [-R - 1.6, R + 1.6]) {
+    b.cyl(0.7, 0.7, 3.2, m.paintWhite, [x, 0.25, zz], 18);
+    b.part(new THREE.CylinderGeometry(0.72, 0.72, 0.25, 18, 1, true), u, [x, 2.4, zz], { kind: 'pulse', speed: 1.5, material: u });
+  }
+  taper(b, m.paintWhite, 6.0, 4.4, 4.8, 0.74, [0, 0.25, 0]);
+  seam(b, cy, 5, [0, 1.6, 2.1]);
+  beacon(b, m, 6);
+  return b;
+}
+
+export function quantumSorter(): ModelBuilder {
+  // Quantum isotope sorter: tuned beams from six emitters steer single atoms
+  // through a levitating crystal core inside three gyroscope rings.
+  const b = new ModelBuilder();
+  const m = materials();
+  const core = glow(m.glowPlasma);
+  core.flatShading = true;
+  const cy = glow(m.glowCyan);
+  const u = uraniumGlow();
+  slab(b, 24, 24, m.concrete);
+  podium(b, m, 8.5, 1.6, 6);
+  const cyC = 12;
+  b.part(new THREE.DodecahedronGeometry(2.6, 0), core, [0, cyC, 0], { kind: 'pulse', speed: 2, material: core });
+  const gyro = new THREE.Group();
+  for (let k = 0; k < 3; k++) {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(4.6 + k * 1.1, 0.22, 8, 64), k === 1 ? m.glowCyan : m.paintWhite);
+    ring.rotation.set(Math.PI / 2 + k * 0.6, k * 0.9, 0);
+    gyro.add(ring);
+  }
+  gyro.position.y = cyC;
+  b.partGroup(gyro, { kind: 'spin', axis: 'y', speed: 0.7 });
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    const x = Math.cos(a) * 9.4, z = Math.sin(a) * 9.4;
+    b.cyl(0.6, 0.9, 9 + (i % 2) * 4, m.paintWhite, [x, 0.25, z], 6);
+    const top = 9.25 + (i % 2) * 4;
+    b.part(new THREE.SphereGeometry(0.55, 14, 10), i % 2 ? u : cy, [x, top + 0.4, z], { kind: 'glow', material: i % 2 ? u : cy });
+    beam(b, i % 2 ? u : cy, [x, top + 0.4, z], [Math.cos(a) * 2.4, cyC, Math.sin(a) * 2.4], 0.08, 4 + i * 0.3);
+  }
+  b.height = Math.max(b.height, cyC + 6);
+  beacon(b, m, 3.0);
+  return b;
+}
+
+export function fuelPrinter(): ModelBuilder {
+  // Additive fuel printer: four big robot arms print fuel assemblies upright
+  // on a long bed, laser tips glowing, under a glass gallery roof.
+  const b = new ModelBuilder();
+  const m = materials();
+  const hot = glow(m.glowOrange);
+  const cy = glow(m.glowCyan);
+  slab(b, 20, 16, m.concrete);
+  b.box(18, 0.6, 7, m.concreteDark, [0, 0.25, 2.2]);
+  for (const x of [-8.8, 8.8]) for (const zz of [-1.2, 5.6]) b.box(0.4, 7.4, 0.4, m.paintWhite, [x, 0.85, zz]);
+  b.box(18.2, 0.35, 7.2, m.paintWhite, [0, 8.25, 2.2]);
+  b.box(17.4, 0.08, 6.4, clearGlass(), [0, 8.62, 2.2]);
+  seam(b, cy, 18, [0, 8.2, 5.85]);
+  for (let i = 0; i < 10; i++) {
+    const x = -7.2 + i * 1.6;
+    const h = 2.0 + ((i * 7) % 5) * 0.55;
+    b.box(0.5, h, 0.5, m.steel, [x, 0.85, 2.2]);
+    b.part(new THREE.BoxGeometry(0.55, 0.12, 0.55), hot, [x, 0.85 + h + 0.06, 2.2], { kind: 'pulse', speed: 3 + i * 0.2, material: hot });
+  }
+  for (let i = 0; i < 4; i++) {
+    const x = -6.6 + i * 4.4;
+    b.cyl(0.6, 0.8, 0.5, m.steelDark, [x, 0.85, i % 2 ? 4.8 : -0.4], 16);
+    const arm = new THREE.Group();
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.6, 16), m.paintWhite);
+    base.position.y = 0.3;
+    const l1 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 3.2, 0.5), m.paintWhite);
+    l1.position.set(0, 2.0, 0);
+    l1.rotation.x = i % 2 ? 0.35 : -0.35;
+    const l2 = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 3.0), m.paintWhite);
+    l2.position.set(0, 3.5, i % 2 ? -1.6 : 1.6);
+    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.25, 10, 8), m.glowOrange);
+    tip.position.set(0, 3.0, i % 2 ? -2.9 : 2.9);
+    arm.add(base, l1, l2, tip);
+    arm.position.set(x, 1.35, i % 2 ? 4.8 : -0.4);
+    b.partGroup(arm, { kind: 'rock', axis: 'y', speed: 0.8, phase: i });
+  }
+  taper(b, m.paintWhite, 12, 3.6, 4.0, 0.8, [0, 0.25, -5.6]);
+  beacon(b, m, 9.2, 8.8, 5.6);
+  return b;
+}
+
+export function fuelFoundry(): ModelBuilder {
+  // Autonomous fuel foundry: a stepped tower of open robotic bays around a
+  // glowing furnace core, with delivery drones circling the top.
+  const b = new ModelBuilder();
+  const m = materials();
+  const hot = glow(m.glowOrange);
+  const cy = glow(m.glowCyan);
+  slab(b, 24, 24, m.concrete);
+  const levels = [[9.0, 7], [7.4, 7], [5.8, 7], [4.2, 7]];
+  let y = 0.25;
+  for (const [r, h] of levels) {
+    b.cyl(r, r + 0.4, h, m.paintWhite, [0, y, 0], 8);
+    b.part(new THREE.CylinderGeometry(r + 0.05, r + 0.05, 0.3, 8, 1, true), cy, [0, y + h - 0.5, 0], { kind: 'pulse', speed: 1.3, material: cy });
+    y += h;
+  }
+  // Furnace slot showing the glowing core
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2 + Math.PI / 8;
+    b.part(new THREE.BoxGeometry(0.4, 20, 1.2), hot, [Math.cos(a) * (6.2 - i * 0), 14, Math.sin(a) * 6.2], { kind: 'pulse', speed: 2, material: hot }, [0, -a, 0]);
+  }
+  // Robot arms on the terraces
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    const lvl = i % 3;
+    const r = levels[lvl + 1][0] + 0.9;
+    const yy = 0.25 + (lvl + 1) * 7;
+    const arm = new THREE.Group();
+    const l1 = new THREE.Mesh(new THREE.BoxGeometry(0.4, 2.4, 0.4), m.paintWhite);
+    l1.position.y = 1.2;
+    const l2 = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.35, 0.35), m.paintWhite);
+    l2.position.set(1.0, 2.4, 0);
+    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), m.glowCyan);
+    tip.position.set(2.1, 2.2, 0);
+    arm.add(l1, l2, tip);
+    arm.position.set(Math.cos(a) * r, yy, Math.sin(a) * r);
+    b.partGroup(arm, { kind: 'rock', axis: 'y', speed: 1, phase: i });
+  }
+  const drones = new THREE.Group();
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2;
+    const d = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.25, 0.8), m.paintWhite);
+    d.position.set(Math.cos(a) * 7, 31, Math.sin(a) * 7);
+    const l = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 6), m.glowCyan);
+    l.position.set(Math.cos(a) * 7, 30.8, Math.sin(a) * 7);
+    drones.add(d, l);
+  }
+  b.partGroup(drones, { kind: 'spin', axis: 'y', speed: 0.5 });
+  b.cyl(1.0, 1.6, 4, m.paintWhite, [0, y, 0], 8);
+  beacon(b, m, y + 4.4);
+  return b;
+}
+
+export function muonArch(): ModelBuilder {
+  // Muon tomography: cosmic-ray muons pass through each cask; detector panels
+  // in a giant arch image the fuel inside without opening it.
+  const b = new ModelBuilder();
+  const m = materials();
+  const det = glow(m.ledGreen);
+  const cy = glow(m.glowCyan);
+  slab(b, 16, 16, m.concrete);
+  b.add(new THREE.TorusGeometry(6.0, 0.9, 12, 40, Math.PI), m.paintWhite, [0, 0.25, 0], [0, 0, 0]);
+  for (let i = 0; i < 9; i++) {
+    const a = (i / 8) * Math.PI;
+    b.part(new THREE.BoxGeometry(0.9, 1.4, 1.9), det, [Math.cos(a) * 5.0, 0.25 + Math.sin(a) * 5.0, 0], { kind: 'pulse', speed: 2 + i * 0.2, material: det }, [0, 0, a - Math.PI / 2]);
+  }
+  for (const dx of [-0.6, 0.6]) b.box(0.1, 0.12, 15, m.steel, [dx, 0.25, 0]);
+  b.cyl(1.0, 1.0, 3.2, m.paintWhite, [0, 1.3, -2.5], 20, [Math.PI / 2, 0, 0]);
+  b.part(new THREE.TorusGeometry(1.03, 0.07, 6, 24), cy, [0, 1.3, -2.5], { kind: 'pulse', speed: 2, material: cy }, [0, 0, 0]);
+  taper(b, m.paintWhite, 4.4, 3.6, 3.4, 0.8, [5.2, 0.25, 5.0]);
+  taper(b, m.glass, 4.4, 3.6, 3.4, 0.8, [5.2, 0.25, 5.0], 1.2, 2.5, 0.1);
+  beacon(b, m, 7.4);
+  return b;
+}
+
+export function aiSpire(): ModelBuilder {
+  // AI inspection spire: a twisting 40 m tower of compute; a scanning halo
+  // rides up and down it while inspection lanes run at its foot.
+  const b = new ModelBuilder();
+  const m = materials();
+  const cy = glow(m.glowCyan);
+  const scan = glow(m.ledGreen);
+  slab(b, 24, 24, m.concrete);
+  podium(b, m, 8, 1.0, 8);
+  for (let k = 0; k < 20; k++) {
+    const s = 7.0 - k * 0.22;
+    b.add(new THREE.BoxGeometry(s, 1.9, s), k % 4 === 3 ? m.glass : m.paintWhite, [0, 1.25 + 0.95 + k * 1.95, 0], [0, k * 0.09, 0]);
+  }
+  for (let k = 0; k < 5; k++) b.part(new THREE.BoxGeometry(7.1 - (k * 4 + 3) * 0.22, 0.14, 7.1 - (k * 4 + 3) * 0.22), cy, [0, 1.25 + (k * 4 + 3) * 1.95 + 1.9, 0], { kind: 'pulse', speed: 1.3, material: cy }, [0, (k * 4 + 3) * 0.09, 0]);
+  const halo = new THREE.Group();
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(5.8, 0.2, 8, 48), m.glowCyan);
+  ring.rotation.x = Math.PI / 2;
+  halo.add(ring);
+  halo.position.y = 20;
+  b.partGroup(halo, { kind: 'float', speed: 0.5 });
+  b.height = 42;
+  // Inspection lanes with assemblies and scan gates
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2;
+    const ex = Math.cos(a), ez = Math.sin(a);
+    beam(b, m.steelDark, [ex * 6, 1.4, ez * 6], [ex * 11.5, 0.5, ez * 11.5], 0.8);
+    const gx = ex * 9, gz = ez * 9;
+    b.add(new THREE.TorusGeometry(1.2, 0.18, 8, 24), m.paintWhite, [gx, 1.6, gz], [0, -a + Math.PI / 2, 0]);
+    b.part(new THREE.TorusGeometry(1.0, 0.05, 6, 24), scan, [gx, 1.6, gz], { kind: 'pulse', speed: 3, material: scan }, [0, -a + Math.PI / 2, 0]);
+  }
+  beacon(b, m, 42.4);
+  return b;
+}
+
 /** Preview list for the model viewer (?concept=key) while these are being designed. */
 export const CONCEPTS: Record<string, { name: string; size: [number, number]; build: () => ModelBuilder }> = {
   stellarator: { name: 'T5 Stellarator Fusion Plant', size: [5, 5], build: stellarator },
@@ -708,4 +1082,14 @@ export const CONCEPTS: Record<string, { name: string; size: [number, number]; bu
   fuel_citadel: { name: 'T6 Fuel Citadel', size: [6, 6], build: fuelCitadel },
   deep_borehole: { name: 'T5 Deep Borehole Disposal', size: [4, 4], build: deepBorehole },
   transmutation_ring: { name: 'T6 Transmutation Accelerator', size: [7, 7], build: transmutationRing },
+  robotic_bore: { name: 'T5 Robotic Deep Bore', size: [5, 5], build: roboticBore },
+  seawater_extractor: { name: 'T6 Seawater Uranium Extractor', size: [7, 7], build: seawaterExtractor },
+  plasma_separator: { name: 'T5 Plasma Ore Separator', size: [5, 4], build: plasmaSeparator },
+  molecular_mill: { name: 'T6 Molecular Assembler Mill', size: [6, 6], build: molecularMill },
+  isotope_ring: { name: 'T5 Isotope Separator Ring', size: [5, 5], build: isotopeRing },
+  quantum_sorter: { name: 'T6 Quantum Isotope Sorter', size: [6, 6], build: quantumSorter },
+  fuel_printer: { name: 'T5 Additive Fuel Printer', size: [5, 4], build: fuelPrinter },
+  fuel_foundry: { name: 'T6 Autonomous Fuel Foundry', size: [6, 6], build: fuelFoundry },
+  muon_arch: { name: 'T5 Muon Tomography Scanner', size: [4, 4], build: muonArch },
+  ai_spire: { name: 'T6 AI Inspection Spire', size: [6, 6], build: aiSpire },
 };
