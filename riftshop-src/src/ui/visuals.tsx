@@ -77,10 +77,10 @@ export function Slab({ s, small }: { s: Single & { slab: SlabT }; small?: boolea
         </div>
         {slab.sub && (
           <div className="bgs-subs">
-            <span>CENTERING <b>{grade(slab.sub.centering)}</b></span>
-            <span>CORNERS <b>{grade(slab.sub.corners)}</b></span>
-            <span>EDGES <b>{grade(slab.sub.edges)}</b></span>
-            <span>SURFACE <b>{grade(slab.sub.surface)}</b></span>
+            <span>{small ? 'CEN' : 'CENTERING'} <b>{grade(slab.sub.centering)}</b></span>
+            <span>{small ? 'COR' : 'CORNERS'} <b>{grade(slab.sub.corners)}</b></span>
+            <span>{small ? 'EDG' : 'EDGES'} <b>{grade(slab.sub.edges)}</b></span>
+            <span>{small ? 'SUR' : 'SURFACE'} <b>{grade(slab.sub.surface)}</b></span>
           </div>
         )}
         <div className="bgs-foot"><b>BECKETT</b><span>{slab.cert}</span><i className="barcode" /></div>

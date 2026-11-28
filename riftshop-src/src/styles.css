@@ -537,3 +537,18 @@ body.sheet-open .content { overflow: hidden; }
 .recover input { width: 96px; border-radius: 10px; border: 1px solid var(--line); background: rgba(0, 0, 0, 0.3); color: var(--text); padding: 8px; font-size: 16px; }
 
 .chips-note { padding-left: 44px; }
+
+/* Slabs must fit their cell: long card names are cut with "…" instead of widening the grid (and the page). */
+.case-grid, .slab-grid, .pick-cards { grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); }
+.slab-grid { --cols: 3; }
+.case-spot, .slab-grid > div, .pick-cards .pick { min-width: 0; }
+.slab, .slab-window, .psa-label, .bgs-label, .psa-left, .psa-right, .bgs-left { min-width: 0; max-width: 100%; }
+.slab { overflow: hidden; }
+.psa-label { grid-template-columns: minmax(0, 1fr) auto; }
+.psa-left span, .bgs-left span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bgs-subs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.bgs-subs span { min-width: 0; overflow: hidden; }
+.content { overflow-x: hidden; }
+.bgs-top { grid-template-columns: minmax(0, 1fr) auto; }
+.slab.small .bgs-foot span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.slab.small .bgs-foot span { display: none; }
