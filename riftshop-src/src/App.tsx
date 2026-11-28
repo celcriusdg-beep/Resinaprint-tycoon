@@ -12,6 +12,8 @@ import { GradingScreen, MarketScreen } from './ui/MarketScreen';
 import { Button, Modal, Toast } from './ui/common';
 import { GoalsScreen, LevelUp } from './ui/GoalsScreen';
 import { NoticePopup } from './ui/EventsSheet';
+import { BackupsSheet } from './ui/BackupsSheet';
+import { loadProblem } from './store';
 import { claimable, xpForLevel } from './game/progression';
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
@@ -28,6 +30,10 @@ export default function App() {
   const g = useStore((s) => s.g);
   useStore((s) => s.rev);
   const welcome = useStore((s) => s.welcome);
+  const [backups, setBackups] = useState(false);
+  useEffect(() => {
+    if (loadProblem) act((s) => { s.notices.push({ icon: '⚠️', title: 'Save problem', text: loadProblem! }); });
+  }, []);
   useEffect(() => {
     document.querySelector('.content')?.scrollTo(0, 0);
   }, [tab]);
@@ -55,9 +61,11 @@ export default function App() {
         {tab === 'goals' && <GoalsScreen />}
         <div className="footer-actions">
           <PictureCheck />
+          <button className="link" onClick={() => setBackups(true)}>Backups</button>
           <button className="link" onClick={() => { if (confirm('Start a brand new shop? Your current save will be deleted.')) resetGame(); }}>Start over</button>
         </div>
       </main>
+      {backups && <BackupsSheet onClose={() => setBackups(false)} />}
       <nav className="nav">
         {TABS.map((t) => (
           <button key={t.id} className={t.id === tab ? 'on' : ''} onClick={() => useStore.getState().setTab(t.id)}>
