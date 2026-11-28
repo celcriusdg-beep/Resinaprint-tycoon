@@ -10,6 +10,15 @@ import { CardImage, RARITY_COLOR } from './CardImage';
 import { Button, Modal, PriceInput } from './common';
 
 type Filter = 'all' | 'owned' | 'missing';
+type Printing = 'all' | 'std' | 'alt' | 'over' | 'sig';
+
+const PRINTINGS: { id: Printing; label: string }[] = [
+  { id: 'all', label: 'All printings' },
+  { id: 'std', label: 'Regular' },
+  { id: 'alt', label: 'Alt art' },
+  { id: 'over', label: 'Overnumbered' },
+  { id: 'sig', label: 'Signed' },
+];
 type Sort = 'number' | 'value-desc' | 'value-asc' | 'name' | 'rarity' | 'owned';
 
 const SORTS: { id: Sort; label: string }[] = [
@@ -33,7 +42,7 @@ export function BinderScreen() {
     return (Object.entries(n).sort((a, b) => b[1] - a[1])[0]?.[0] as SetId) ?? 'VEN';
   });
   const [filter, setFilter] = useState<Filter>('all');
-  const [showcase, setShowcase] = useState(false);
+  const [printing, setPrinting] = useState<Printing>('all');
   const [query, setQuery] = useState('');
   const [sort, setSortState] = useState<Sort>(() => {
     try { return (localStorage.getItem(SORT_KEY) as Sort) || 'number'; } catch { return 'number'; }
@@ -44,7 +53,7 @@ export function BinderScreen() {
   const value = (id: string) => rawValue(g, id, false);
   const q = query.trim().toLowerCase();
   const list = all
-    .filter((c) => (showcase ? c.kind !== 'std' : c.kind === 'std'))
+    .filter((c) => printing === 'all' || c.kind === printing)
     .filter((c) => filter === 'all' || (filter === 'owned' ? owned(c.id) > 0 : !g.seen[c.id]))
     .filter((c) => !q || c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q))
     .sort((a, b) => {
@@ -71,13 +80,17 @@ export function BinderScreen() {
       <div className="binder-head">
         <div>
           <b>{set === 'ALL' ? 'All sets' : SETS[set].name}</b>
-          <div className="muted small">{have}/{base.length} cards collected · {all.filter((c) => c.kind !== 'std' && g.seen[c.id]).length} showcase</div>
+          <div className="muted small">{have}/{base.length} regular cards · {all.filter((c) => c.kind === 'alt' && g.seen[c.id]).length}/{all.filter((c) => c.kind === 'alt').length} alt art · {all.filter((c) => (c.kind === 'over' || c.kind === 'sig') && g.seen[c.id]).length}/{all.filter((c) => c.kind === 'over' || c.kind === 'sig').length} overnumbered</div>
           <div className="bar"><div style={{ width: `${(have / Math.max(1, base.length)) * 100}%` }} /></div>
         </div>
         <div className="seg">
           {(['all', 'owned', 'missing'] as Filter[]).map((f) => <button key={f} className={f === filter ? 'on' : ''} onClick={() => setFilter(f)}>{f}</button>)}
-          <button className={showcase ? 'on gold' : ''} onClick={() => setShowcase((v) => !v)} aria-label="Showcase printings">✦</button>
         </div>
+      </div>
+      <div className="seg scroll">
+        {PRINTINGS.map((p) => (
+          <button key={p.id} className={p.id === printing ? (p.id === 'over' || p.id === 'sig' ? 'on gold' : 'on') : ''} onClick={() => setPrinting(p.id)}>{p.label}</button>
+        ))}
       </div>
       <div className="binder-tools">
         <input className="search" type="search" placeholder="Search name or code" value={query} onChange={(e) => setQuery(e.target.value)} />
@@ -95,6 +108,7 @@ export function BinderScreen() {
               <span className="tag">{fmt(value(c.id))}</span>
               {n > 0 && <span className="count">×{n}</span>}
               {!g.seen[c.id] && <span className="code">{c.code.split('/')[0]}</span>}
+              {c.kind !== 'std' && <span className={`kind-badge ${c.kind}`}>{c.kind === 'sig' ? 'SIGNED' : c.kind === 'over' ? 'OVERNUMBERED' : 'ALT ART'}</span>}
             </div>
           );
         })}

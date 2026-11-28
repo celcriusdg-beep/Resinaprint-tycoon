@@ -391,3 +391,9 @@ b { font-weight: 650; }
 .single-row { display: grid; grid-template-columns: 64px 1fr; gap: 10px; align-items: center; background: var(--panel-2); border-radius: 12px; padding: 7px; }
 .single-info { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; min-width: 0; }
 .single-info b { font-size: 14px; }
+
+.seg.scroll { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; }
+.seg.scroll button { flex: none; text-transform: none; }
+.kind-badge { position: absolute; top: 5px; left: 5px; font-size: 8.5px; font-weight: 800; letter-spacing: 0.3px; padding: 2px 5px; border-radius: 5px; background: #2a2140; color: #d8c8ff; }
+.kind-badge.over { background: linear-gradient(135deg, #f6cf6a, #d99a2b); color: #241500; }
+.kind-badge.sig { background: linear-gradient(135deg, #ffe9a8, #c47a12); color: #241500; box-shadow: 0 0 8px rgba(242, 193, 78, 0.7); }
