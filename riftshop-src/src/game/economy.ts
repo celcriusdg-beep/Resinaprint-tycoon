@@ -8,14 +8,17 @@ export const DAY_HOURS = 12; // shop open 09:00–21:00
 export const SECONDS_PER_HOUR = 20; // a shop day lasts 4 real minutes
 export const OPEN_HOUR = 9;
 
-/** display = single cards in the glass case; shelf = sealed stacks on the shelves. */
+/**
+ * floor = tiles for furniture; storage = back-room space (a pack is 1, a box 24); racks = max storage racks.
+ * display/shelf are the spots shops had before furniture (used to furnish old saves).
+ */
 export const SHOP_LEVELS = [
-  { name: 'Market Stall', cost: 0, display: 6, shelf: 3, traffic: 1, rent: 25 },
-  { name: 'Corner Shop', cost: 2_500, display: 12, shelf: 5, traffic: 1.5, rent: 60 },
-  { name: 'Game Store', cost: 9_000, display: 24, shelf: 8, traffic: 2.2, rent: 150 },
-  { name: 'Card Emporium', cost: 30_000, display: 40, shelf: 12, traffic: 3.1, rent: 380 },
-  { name: 'Flagship Store', cost: 90_000, display: 64, shelf: 16, traffic: 4.2, rent: 900 },
-  { name: 'Rift Megastore', cost: 260_000, display: 100, shelf: 24, traffic: 5.6, rent: 2_100 },
+  { name: 'Market Stall', cost: 0, floor: 4, storage: 240, racks: 1, display: 6, shelf: 3, traffic: 1, rent: 25 },
+  { name: 'Corner Shop', cost: 2_500, floor: 6, storage: 480, racks: 2, display: 12, shelf: 5, traffic: 1.5, rent: 60 },
+  { name: 'Game Store', cost: 9_000, floor: 9, storage: 960, racks: 4, display: 24, shelf: 8, traffic: 2.2, rent: 150 },
+  { name: 'Card Emporium', cost: 30_000, floor: 12, storage: 1_920, racks: 6, display: 40, shelf: 12, traffic: 3.1, rent: 380 },
+  { name: 'Flagship Store', cost: 90_000, floor: 16, storage: 3_840, racks: 8, display: 64, shelf: 16, traffic: 4.2, rent: 900 },
+  { name: 'Rift Megastore', cost: 260_000, floor: 20, storage: 7_200, racks: 12, display: 100, shelf: 24, traffic: 5.6, rent: 2_100 },
 ];
 
 export const CLERK_WAGE = 110; // per day

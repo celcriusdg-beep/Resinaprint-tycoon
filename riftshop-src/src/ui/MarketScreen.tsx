@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CARD_BY_ID, CARDS, META, SET_IDS, SETS, kindLabel, type SetId } from '../data/cards';
 import { DAY_HOURS, ONLINE_FEE, allocation, fmt, marketMult, rawValue, sealedValue, singleValue, wholesale } from '../game/economy';
 import { slabTitle } from '../game/grading';
+import { BackroomBar } from './StockScreen';
 import { canBuySealed, isUnlocked, unlockLevel } from '../game/progression';
 import type { SealedKind } from '../game/types';
 import { buyDeal, buySealed, buySingle, dealName, dealValue, rawCount, sealedName, setListingPrice, singleName, singlePrice, unlist } from '../game/sim';
@@ -52,6 +53,7 @@ export function MarketScreen() {
       <SinglesMarket />
 
       <Section title="Distributor" right={<span className="muted small">Allocation resets each day</span>}>
+        <BackroomBar />
         {SET_IDS.slice().reverse().map((set) => (
           <div className={`dist-set${isUnlocked(g, `set:${set}`) ? '' : ' locked'}`} key={set}>
             <b>{SETS[set].name}{!isUnlocked(g, `set:${set}`) && <span className="locked-note"> 🔒 distributor account at level {unlockLevel(`set:${set}`)} — look for it on the deals board</span>}</b>

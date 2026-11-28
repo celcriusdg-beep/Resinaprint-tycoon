@@ -3,6 +3,7 @@ import { CARD_BY_ID, SET_IDS, SETS, preloadCards, type SetId } from '../data/car
 import { BUYLIST_RATE, fmt, rawValue, sealedValue } from '../game/economy';
 import type { SealedKind } from '../game/types';
 import { openSealed, sealedCount, sealedName, sellBulk, shelfSlots } from '../game/sim';
+import { storageCap, storageUsed } from '../game/shop';
 import type { Pull } from '../game/packs';
 import { act, useStore } from '../store';
 import { CardImage } from './CardImage';
@@ -45,6 +46,7 @@ export function StockScreen() {
   return (
     <div className="screen">
       <Section title="Back room" right={<span className="muted small">Shelves {g.shelf.length}/{shelfSlots(g)}</span>}>
+        <BackroomBar />
         {owned.length === 0 && <p className="muted small">No sealed product. Buy from the distributor or the deals board on the Market tab.</p>}
         {owned.map((set) => (
           <div className="sealed-set" key={set}>
@@ -191,6 +193,18 @@ export function PackOpening() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/** How full the back room is (packs 1, boxes 24, cases 144). */
+export function BackroomBar() {
+  const g = useStore((s) => s.g);
+  const used = storageUsed(g), cap = storageCap(g);
+  return (
+    <div className="backroom-bar">
+      <div className="row between small"><span className="muted">Back room space</span><b className={used > cap * 0.9 ? 'down' : ''}>{used.toLocaleString('en-US')} / {cap.toLocaleString('en-US')}</b></div>
+      <div className="bar"><div style={{ width: `${Math.min(100, (used / cap) * 100)}%` }} /></div>
     </div>
   );
 }

@@ -4,9 +4,13 @@ import { COMPANIES, rollGrade, slabTitle } from './grading';
 import { openPack, type Pull } from './packs';
 import { addXp, bump, canBuySealed, closeDay, isUnlocked, lockedText, newDailyGoals, startDay, unlockLevel } from './progression';
 import { between, gauss, pick, random, weighted } from './rng';
-import type { Company, Deal, GameState, Listing, SealedKey, SealedKind, Single } from './types';
+import { CUSTOMERS, countFurniture, customerMix, roomFor, starterFurniture, vibe, vibeTraffic, type CustomerType } from './shop';
+import type { CardRequest, Company, Deal, GameState, Listing, SealedKey, SealedKind, SealedListing, Single } from './types';
+import { displaySlots, shelfSlots } from './shop';
 
-export const SAVE_VERSION = 3;
+export { displaySlots, shelfSlots } from './shop';
+
+export const SAVE_VERSION = 4;
 
 export function newGame(): GameState {
   const g: GameState = {
@@ -41,11 +45,15 @@ export function newGame(): GameState {
     milestones: {},
     history: [],
     bestWorth: 1_500,
+    furniture: [],
+    racks: 0,
+    requests: [],
     nextUid: 1,
     stats: { packsOpened: 0, revenue: 0, spent: 0, sales: 0, graded: 0, bestPull: null },
     today: { revenue: 0, costs: 0, sales: 0 },
     savedAt: Date.now(),
   };
+  g.furniture = starterFurniture(1, 3, 6, () => g.nextUid++);
   newDeals(g);
   g.goals = newDailyGoals(g);
   return g;
@@ -84,6 +92,16 @@ export function migrate(raw: Record<string, unknown>): GameState {
     g.levelUps = g.level > 1 ? [g.level] : [];
     g.goals = newDailyGoals(g);
     g.bestWorth = g.cash;
+    g.version = 3;
+  }
+  if (g.version < 4) {
+    // v4 adds furniture: furnish the shop with the shelf and case space it already had.
+    const lvl = SHOP_LEVELS[g.shopLevel - 1];
+    g.furniture = starterFurniture(g.shopLevel, Math.max(lvl.shelf, g.shelf.length), Math.max(lvl.display, g.display.length), () => g.nextUid++);
+    g.racks = 0;
+    g.requests = [];
+    newRequest(g, 'player');
+    newRequest(g, 'collector');
     g.version = SAVE_VERSION;
   }
   return g;
@@ -92,8 +110,8 @@ export function migrate(raw: Record<string, unknown>): GameState {
 // ── Helpers ─────────────────────────────────────────────────────────────
 
 let feedId = 1;
-export function log(g: GameState, kind: GameState['feed'][number]['kind'], text: string, amount?: number): void {
-  g.feed.unshift({ id: feedId++, t: g.hours, kind, text, amount });
+export function log(g: GameState, kind: GameState['feed'][number]['kind'], text: string, amount?: number, who?: CustomerType): void {
+  g.feed.unshift({ id: feedId++, t: g.hours, kind, text, amount, who });
   if (g.feed.length > 50) g.feed.length = 50;
 }
 
@@ -142,14 +160,6 @@ export function rawCount(g: GameState, cardId: string, foil: boolean): number {
   return g.cards[cardId]?.[foil ? 1 : 0] ?? 0;
 }
 
-export function displaySlots(g: GameState): number {
-  return SHOP_LEVELS[g.shopLevel - 1].display;
-}
-
-export function shelfSlots(g: GameState): number {
-  return SHOP_LEVELS[g.shopLevel - 1].shelf;
-}
-
 /** Take a raw copy (uid 0) or a slab (its uid) out of your collection. */
 function takeSingle(g: GameState, s: Single): Single | null {
   if (s.slab) {
@@ -182,6 +192,8 @@ export function buySealed(g: GameState, set: SetId, kind: SealedKind, qty: numbe
   if (qty > left) return left > 0 ? `The distributor only has ${left} left for you today.` : 'Sold out at the distributor today.';
   const cost = wholesale(g, set, kind) * qty;
   if (cost > g.cash) return 'Not enough cash.';
+  const room = roomFor(g, kind, qty);
+  if (room) return room;
   spend(g, cost);
   g.bought[key] = (g.bought[key] ?? 0) + qty;
   addSealed(g, key, qty);
@@ -193,6 +205,10 @@ export function buyDeal(g: GameState, id: number): string | null {
   const d = g[list].find((x) => x.id === id);
   if (!d) return 'That deal is gone.';
   if (g.cash < d.price) return 'Not enough cash.';
+  if (d.what.type === 'sealed') {
+    const room = roomFor(g, d.what.kind, d.what.qty);
+    if (room) return room;
+  }
   spend(g, d.price);
   if (d.what.type === 'sealed') addSealed(g, `${d.what.set}:${d.what.kind}`, d.what.qty);
   else addCard(g, d.what.cardId, d.what.foil);
@@ -304,7 +320,7 @@ export function shelveSealed(g: GameState, set: SetId, kind: SealedKind, qty: nu
   if (sealedCount(g, set, kind) < qty) return 'You don’t have that many in the back room.';
   let l = g.shelf.find((x) => x.set === set && x.kind === kind);
   if (!l) {
-    if (g.shelf.length >= shelfSlots(g)) return 'Your shelves are full. Upgrade the shop for more shelf space.';
+    if (g.shelf.length >= shelfSlots(g)) return 'Your shelves are full. Add or upgrade shelves in Build mode (Shop tab).';
     l = { uid: g.nextUid++, set, kind, qty: 0, price };
     g.shelf.push(l);
   }
@@ -328,7 +344,7 @@ export function setShelfPrice(g: GameState, uid: number, price: number): void {
 }
 
 export function listInDisplay(g: GameState, s: Single, price: number): string | null {
-  if (g.display.length >= displaySlots(g)) return 'The display case is full. Upgrade the shop for more space.';
+  if (g.display.length >= displaySlots(g)) return 'Your display cases are full. Add or upgrade cases in Build mode (Shop tab).';
   const t = takeSingle(g, s);
   if (!t) return 'You no longer have that card.';
   g.display.push({ ...t, price: Math.max(0.05, Math.round(price * 100) / 100) });
@@ -423,57 +439,122 @@ const NAMES = ['Alex', 'Sam', 'Jordan', 'Riley', 'Casey', 'Morgan', 'Jamie', 'Ta
 
 /** Customers per open hour. */
 export function trafficRate(g: GameState): number {
-  return 6 * SHOP_LEVELS[g.shopLevel - 1].traffic * (0.5 + g.rep / 100) * (g.adsUntil > g.hours ? 1.6 : 1);
+  return 6 * SHOP_LEVELS[g.shopLevel - 1].traffic * (0.5 + g.rep / 100) * (g.adsUntil > g.hours ? 1.6 : 1) * vibeTraffic(g);
 }
 
 function repDelta(g: GameState, d: number): void {
   g.rep = Math.max(0, Math.min(100, g.rep + d));
 }
 
-/** What a customer is willing to pay, relative to market. Good reputation buys a little goodwill. */
-function willingness(g: GameState): number {
-  return between(0.85, 1.35) * (0.94 + g.rep / 800);
+const BUDGET: Record<CustomerType, number> = { kid: 16, casual: 45, player: 80, collector: 280, investor: 700, seller: 0 };
+
+/** How much this customer has to spend today. Bigger shops attract richer customers; now and then a whale walks in. */
+export function customerBudget(g: GameState, type: CustomerType): number {
+  let b = BUDGET[type] * Math.exp(gauss() * 0.7);
+  if (type !== 'kid') b *= Math.sqrt(SHOP_LEVELS[g.shopLevel - 1].traffic);
+  if ((type === 'collector' || type === 'investor') && random() < 0.05) b *= between(8, 25);
+  return b;
 }
 
-function sealedShopper(g: GameState, who: string): void {
-  if (!g.shelf.length) {
-    if (random() < 0.4) log(g, 'leave', `${who} wanted packs, but your shelves are empty.`);
-    repDelta(g, -0.05);
-    return;
-  }
-  const l = pick(g.shelf);
-  const value = sealedValue(g, l.set, l.kind);
-  const pay = value * willingness(g);
-  if (l.price > pay) {
-    log(g, 'leave', `${who} skipped ${sealedName(l.set, l.kind)} at ${fmt(l.price)} — would have paid about ${fmt(pay)}.`);
-    if (l.price > value * 1.5) repDelta(g, -0.3);
-    return;
-  }
-  const want = l.kind === 'pack' ? weighted<number>([[1, 5], [2, 3], [3, 1.5], [6, 0.5], [12, 0.2]]) : 1;
-  const n = Math.min(want, l.qty);
-  l.qty -= n;
-  if (l.qty <= 0) g.shelf = g.shelf.filter((x) => x.uid !== l.uid);
-  earn(g, l.price * n);
-  bump(g, l.kind === 'pack' ? 'packsSold' : 'boxesSold', l.kind === 'case' ? 6 : n);
-  if (l.price <= value * 1.02) repDelta(g, 0.15);
-  log(g, 'sale', `${who} bought ${sealedName(l.set, l.kind, n)}.`, l.price * n);
+/** What a customer will pay, relative to market. Reputation and atmosphere buy a little goodwill. */
+function willingness(g: GameState, type: CustomerType): number {
+  const [lo, hi] = ({ kid: [0.75, 1.15], casual: [0.85, 1.3], player: [0.9, 1.3], collector: [0.95, 1.45], investor: [0.9, 1.08], seller: [1, 1] } as const)[type];
+  return between(lo, hi) * (0.94 + g.rep / 800) * (1 + Math.min(0.1, vibe(g) / 400));
 }
 
-function singlesHunter(g: GameState, who: string): void {
-  if (!g.display.length) return sealedShopper(g, who);
-  const l = pick(g.display);
-  const v = singleValue(g, l);
-  const pay = v * willingness(g) * (l.slab ? 1.05 : 1);
-  if (l.price > pay) {
-    log(g, 'leave', `${who} liked ${singleName(l)} but not at ${fmt(l.price)} — would pay about ${fmt(pay)}.`);
-    if (l.price > v * 1.5) repDelta(g, -0.25);
+type Pickable = { where: 'shelf'; l: SealedListing } | { where: 'case'; l: Listing };
+
+function interested(type: CustomerType, p: Pickable, g: GameState): boolean {
+  if (p.where === 'shelf') {
+    const k = p.l.kind;
+    if (type === 'kid') return k === 'pack';
+    if (type === 'casual') return k !== 'case';
+    if (type === 'player') return k === 'pack';
+    if (type === 'collector') return k !== 'pack' && SET_IDS.indexOf(p.l.set) < 2; // older sets, sealed
+    return k !== 'pack'; // investor
+  }
+  const c = CARD_BY_ID[p.l.cardId];
+  const v = singleValue(g, p.l);
+  if (type === 'kid') return !p.l.slab && v <= 5;
+  if (type === 'casual') return !p.l.slab && v <= 20;
+  if (type === 'player') return !p.l.slab && c.kind === 'std' && v >= 0.5;
+  if (type === 'collector') return !!p.l.slab || c.kind !== 'std' || p.l.foil;
+  return !!p.l.slab && v >= 200; // investors only care about big slabs
+}
+
+function value(g: GameState, p: Pickable): number {
+  return p.where === 'shelf' ? sealedValue(g, p.l.set, p.l.kind) : singleValue(g, p.l);
+}
+
+function itemName(p: Pickable): string {
+  return p.where === 'shelf' ? sealedName(p.l.set, p.l.kind) : singleName(p.l);
+}
+
+const WANTS: Record<CustomerType, string> = {
+  kid: 'cheap packs', casual: 'packs or cheap singles', player: 'singles for their deck', collector: 'alt arts, overnumbered cards or slabs',
+  investor: 'sealed boxes', seller: '',
+};
+
+function shopper(g: GameState, type: CustomerType, who: string): void {
+  const icon = CUSTOMERS[type].icon;
+  const budget = customerBudget(g, type);
+  const all: Pickable[] = [...g.shelf.map((l) => ({ where: 'shelf' as const, l })), ...g.display.map((l) => ({ where: 'case' as const, l }))];
+  const want = all.filter((p) => interested(type, p, g));
+  const affordable = want.filter((p) => p.l.price <= budget);
+  if (!affordable.length) {
+    if (!want.length) {
+      if (random() < 0.35) log(g, 'leave', `${icon} ${who} wanted ${WANTS[type]}, but you had none out.`, undefined, type);
+      repDelta(g, -0.04);
+    } else if (random() < 0.5) {
+      log(g, 'leave', `${icon} ${who} looked at ${itemName(want[0])} but only had ${fmt(budget)} to spend.`, undefined, type);
+    }
+    if ((type === 'player' || type === 'collector') && random() < 0.2) newRequest(g, type, who);
     return;
   }
-  g.display = g.display.filter((x) => x.uid !== l.uid);
-  earn(g, l.price);
-  bump(g, 'singlesSold');
-  repDelta(g, 0.1);
-  log(g, 'sale', `${who} bought ${singleName(l)}.`, l.price);
+  // Look at a few things, buy the first one that's priced right.
+  let last: { p: Pickable; pay: number } | null = null;
+  for (let tries = 0; tries < (type === 'collector' || type === 'player' ? 3 : 2) && affordable.length; tries++) {
+    const p = affordable.splice(Math.floor(random() * affordable.length), 1)[0];
+    const v = value(g, p);
+    let pay = v * willingness(g, type);
+    if (p.where === 'case' && p.l.slab) pay *= 1.05 + (countFurniture(g, 'slabcase') > 0 && type === 'collector' ? 0.08 : 0);
+    if (type === 'player' && p.where === 'case' && g.market.spike && CARD_BY_ID[p.l.cardId].name.includes(g.market.spike.champion)) pay *= 1.1;
+    if (p.l.price <= pay) return buy(g, type, who, p, v, budget);
+    last = { p, pay };
+    if (p.l.price > v * (type === 'kid' ? 1.3 : 1.5)) repDelta(g, type === 'kid' ? -0.4 : -0.25);
+  }
+  if (last) log(g, 'leave', `${icon} ${who} skipped ${itemName(last.p)} at ${fmt(last.p.l.price)} — would have paid about ${fmt(last.pay)}.`, undefined, type);
+  if ((type === 'player' || type === 'collector') && random() < 0.08) newRequest(g, type, who);
+}
+
+function buy(g: GameState, type: CustomerType, who: string, p: Pickable, v: number, budget: number): void {
+  const icon = CUSTOMERS[type].icon;
+  if (p.where === 'shelf') {
+    const l = p.l;
+    const wantN =
+      l.kind === 'pack'
+        ? type === 'kid' ? weighted<number>([[1, 6], [2, 3], [3, 1]]) : weighted<number>([[1, 5], [2, 3], [3, 1.5], [6, 0.5], [12, 0.2]])
+        : type === 'investor' ? weighted<number>([[1, 5], [2, 3], [3, 1.5], [6, 0.5]]) : 1;
+    const n = Math.max(1, Math.min(wantN, l.qty, Math.floor(budget / l.price)));
+    l.qty -= n;
+    if (l.qty <= 0) g.shelf = g.shelf.filter((x) => x.uid !== l.uid);
+    earn(g, l.price * n);
+    bump(g, l.kind === 'pack' ? 'packsSold' : 'boxesSold', l.kind === 'case' ? 6 * n : n);
+    if (type === 'investor') bump(g, 'investorSales');
+    if (type === 'collector') bump(g, 'collectorSales');
+    if (l.price <= v * 1.02) repDelta(g, 0.15);
+    log(g, 'sale', `${icon} ${who} bought ${sealedName(l.set, l.kind, n)}.`, l.price * n, type);
+  } else {
+    const l = p.l;
+    g.display = g.display.filter((x) => x.uid !== l.uid);
+    earn(g, l.price);
+    bump(g, 'singlesSold');
+    if (type === 'collector') bump(g, 'collectorSales');
+    if (type === 'investor') bump(g, 'investorSales');
+    repDelta(g, 0.1);
+    log(g, 'sale', `${icon} ${who} bought ${singleName(l)}.`, l.price, type);
+  }
+  if ((type === 'player' || type === 'collector') && random() < 0.04) newRequest(g, type, who);
 }
 
 function seller(g: GameState, who: string): void {
@@ -489,19 +570,80 @@ function seller(g: GameState, who: string): void {
   }
   d.price = Math.max(0.5, Math.round(dealValue(g, d) * between(0.45, 0.85) * 100) / 100);
   g.offers.push(d);
-  log(g, 'offer', `${who} wants to sell you ${dealName(d)} for ${fmt(d.price)}.`);
+  log(g, 'offer', `🤝 ${who} wants to sell you ${dealName(d)} for ${fmt(d.price)}.`, undefined, 'seller');
 }
 
 function customer(g: GameState, offline: boolean): void {
   const who = pick(NAMES);
-  const kind = weighted<string>([
-    ['sealed', g.shelf.length ? 55 : 20],
-    ['single', g.display.length ? 35 : 0],
-    ['seller', offline ? 0 : 14],
-  ]);
-  if (kind === 'sealed') sealedShopper(g, who);
-  else if (kind === 'single') singlesHunter(g, who);
-  else seller(g, who);
+  const mix = customerMix(g, offline);
+  const type = weighted<CustomerType>(Object.entries(mix) as [CustomerType, number][]);
+  if (type === 'seller') seller(g, who);
+  else shopper(g, type, who);
+}
+
+
+// ── Card requests ───────────────────────────────────────────────────────
+
+export function maxRequests(g: GameState): number {
+  return 2 + g.shopLevel;
+}
+
+/** A player or collector asks you to find a card for them. */
+export function newRequest(g: GameState, type: 'player' | 'collector', who = pick(NAMES)): CardRequest | null {
+  if (g.requests.length >= maxRequests(g)) return null;
+  const budget = Math.max(type === 'player' ? 8 : 40, customerBudget(g, type));
+  const pool =
+    type === 'player'
+      ? CARDS.filter((c) => c.kind === 'std' && (c.rarity === 'Rare' || c.rarity === 'Epic' || c.type === 'Legend' || c.type === 'Champion') && c.price >= 0.5)
+      : CARDS.filter((c) => c.kind === 'alt' || c.kind === 'over' || (c.kind === 'sig' && random() < 0.2) || (c.kind === 'std' && c.rarity === 'Epic'));
+  for (let i = 0; i < 12; i++) {
+    const card = pick(pool);
+    const foil = card.kind !== 'std' || (type === 'collector' ? true : random() < 0.12);
+    const v = rawValue(g, card.id, foil);
+    if (v > budget || g.requests.some((r) => r.cardId === card.id && r.foil === foil)) continue;
+    const r: CardRequest = {
+      id: feedId++, who, type, cardId: card.id, foil,
+      pay: Math.max(1, Math.round(v * between(1.15, 1.5) * 100) / 100),
+      expiresDay: g.day + 2 + Math.floor(random() * 2),
+    };
+    g.requests.push(r);
+    log(g, 'offer', `${CUSTOMERS[type].icon} ${who} is looking for ${singleName({ uid: 0, cardId: card.id, foil })} — will pay ${fmt(r.pay)}.`, undefined, type);
+    return r;
+  }
+  return null;
+}
+
+/** Hand over a raw copy from your binder (or from the display case) and get paid. */
+export function fillRequest(g: GameState, id: number): string | null {
+  const r = g.requests.find((x) => x.id === id);
+  if (!r) return 'That request is gone.';
+  if (rawCount(g, r.cardId, r.foil) > 0) addCard(g, r.cardId, r.foil, -1);
+  else {
+    const i = g.display.findIndex((l) => !l.slab && l.cardId === r.cardId && l.foil === r.foil);
+    if (i < 0) return 'You don’t have that card yet.';
+    g.display.splice(i, 1);
+  }
+  g.requests = g.requests.filter((x) => x.id !== id);
+  earn(g, r.pay);
+  bump(g, 'requestsFilled');
+  bump(g, 'singlesSold');
+  addXp(g, 50);
+  repDelta(g, 1);
+  log(g, 'sale', `${CUSTOMERS[r.type].icon} ${r.who} picked up the ${singleName({ uid: 0, cardId: r.cardId, foil: r.foil })} they asked for.`, r.pay, r.type);
+  return null;
+}
+
+/** Whether you could fill a request right now. */
+export function canFill(g: GameState, r: CardRequest): boolean {
+  return rawCount(g, r.cardId, r.foil) > 0 || g.display.some((l) => !l.slab && l.cardId === r.cardId && l.foil === r.foil);
+}
+
+function expireRequests(g: GameState): void {
+  for (const r of g.requests.filter((x) => x.expiresDay < g.day)) {
+    log(g, 'leave', `${CUSTOMERS[r.type].icon} ${r.who} gave up waiting for ${CARD_BY_ID[r.cardId].name}.`, undefined, r.type);
+    repDelta(g, -0.3);
+  }
+  g.requests = g.requests.filter((x) => x.expiresDay >= g.day);
 }
 
 // ── Time ────────────────────────────────────────────────────────────────
@@ -566,6 +708,11 @@ export function endOfDay(g: GameState): void {
   g.bought = {};
   driftMarket(g);
   newDeals(g);
+  // Play tables bring a regular crowd: a little reputation every day.
+  repDelta(g, 0.2 * countFurniture(g, 'table'));
+  expireRequests(g);
+  const fresh = 1 + (random() < 0.5 ? 1 : 0);
+  for (let i = 0; i < fresh; i++) newRequest(g, random() < 0.6 ? 'player' : 'collector');
 }
 
 /** Daily market movement: a random walk pulled back towards the real price, plus meta spikes. */

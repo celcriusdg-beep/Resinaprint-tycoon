@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { SET_IDS } from '../data/cards';
 import { ADS_COST, CLERK_WAGE, SHOP_LEVELS, fmt, rawValue, sealedValue, singleValue } from '../game/economy';
+import { CUSTOMERS, FURN } from '../game/shop';
 import type { SealedKind, Single } from '../game/types';
 import {
-  buyAds, buyDeal, dealName, dealValue, declineOffer, displaySlots, sealedCount, sealedName, setListingPrice, setShelfPrice,
-  shelfSlots, singleName, trafficRate, unlist, unshelve, upgradeShop,
+  buyAds, buyDeal, buySingle, canFill, dealName, dealValue, declineOffer, displaySlots, fillRequest, sealedCount, sealedName, setListingPrice, setShelfPrice,
+  shelfSlots, singleName, singlePrice, trafficRate, unlist, unshelve, upgradeShop,
 } from '../game/sim';
 import { act, tryAct, useStore } from '../store';
 import { isUnlocked, unlockLevel } from '../game/progression';
 import { CardImage } from './CardImage';
 import { Button, Modal, PriceInput } from './common';
 import { CaseSheet, ShelveSheet } from './ShelveSheet';
+import { BuildSheet } from './BuildSheet';
 import { ProductImage, Slab } from './visuals';
 
 const KINDS: SealedKind[] = ['case', 'box', 'pack'];
@@ -27,6 +29,7 @@ export function ShopScreen() {
   >(null);
   const [logOpen, setLogOpen] = useState(false);
   const [manage, setManage] = useState(false);
+  const [build, setBuild] = useState(false);
   const offer = g.offers[0];
   const close = () => setSheet(null);
 
@@ -42,12 +45,15 @@ export function ShopScreen() {
           <b>{lvl.name}</b>
           <span>{fmt(g.today.revenue)} today · {g.today.sales} sold · ★ {Math.round(g.rep)}</span>
         </div>
-        <span className="open-badge">OPEN</span>
+        <div className="sign-right">
+          <span className="open-badge">OPEN</span>
+          <button className="build-btn" onClick={() => setBuild(true)}>🛠 Build</button>
+        </div>
       </div>
 
       {offer && (
         <div className="counter">
-          <div className="counter-who">🧑 <b>{offer.who}</b> is at the counter{g.offers.length > 1 ? ` (+${g.offers.length - 1} waiting)` : ''}</div>
+          <div className="counter-who">🤝 <b>{offer.who}</b> is at the counter{g.offers.length > 1 ? ` (+${g.offers.length - 1} waiting)` : ''}</div>
           <div className="counter-body">
             <div className="counter-item" onClick={() => offer.what.type === 'single' && useStore.getState().showCard(offer.what.cardId)}>
               {offer.what.type === 'single' ? <CardImage id={offer.what.cardId} foil={offer.what.foil} thumb /> : <ProductImage set={offer.what.set} kind={offer.what.kind} qty={offer.what.qty} />}
@@ -83,6 +89,8 @@ export function ShopScreen() {
         ))}
       </div>
 
+      <FloorStrip onBuild={() => setBuild(true)} />
+
       <div className="glass-case">
         <div className="wall-title">Display case <span>{g.display.length}/{displaySlots(g)}</span></div>
         <div className="case-grid">
@@ -98,6 +106,8 @@ export function ShopScreen() {
           )}
         </div>
       </div>
+
+      <Requests />
 
       <div className="ticker" onClick={() => setLogOpen(true)}>
         {g.feed.slice(0, 3).map((f) => (
@@ -115,7 +125,7 @@ export function ShopScreen() {
         <div className="manage">
           {next && (
             <div className="manage-row">
-              <div><b>Move to a {next.name}</b><span className="muted small">{next.shelf} shelves · {next.display} case spots · {Math.round(next.traffic / lvl.traffic * 100 - 100)}% more customers · rent {fmt(next.rent)}/day</span></div>
+              <div><b>Move to a {next.name}</b><span className="muted small">{next.floor} floor tiles (now {lvl.floor}) · back room {next.storage.toLocaleString('en-US')} · {Math.round(next.traffic / lvl.traffic * 100 - 100)}% more customers · rent {fmt(next.rent)}/day</span></div>
               {isUnlocked(g, `shop:${g.shopLevel + 1}`)
                 ? <Button kind="gold" small disabled={g.cash < next.cost} onClick={() => tryAct(upgradeShop)}>{fmt(next.cost)}</Button>
                 : <span className="locked-note">🔒 Lv {unlockLevel(`shop:${g.shopLevel + 1}`)}</span>}
@@ -150,12 +160,64 @@ export function ShopScreen() {
         </Modal>
       )}
 
+      {build && <BuildSheet onClose={() => setBuild(false)} />}
       {sheet?.t === 'pickSealed' && <PickSealed onPick={(set, kind) => setSheet({ t: 'shelve', set, kind })} onClose={close} />}
       {sheet?.t === 'shelve' && <ShelveSheet set={sheet.set} kind={sheet.kind} onClose={close} />}
       {sheet?.t === 'pickCard' && <PickCard onPick={(s) => setSheet({ t: 'case', s })} onClose={close} />}
       {sheet?.t === 'case' && <CaseSheet s={sheet.s} onClose={close} />}
       {sheet?.t === 'editShelf' && <EditShelf uid={sheet.uid} onClose={close} />}
       {sheet?.t === 'editCase' && <EditCase uid={sheet.uid} onClose={close} />}
+    </div>
+  );
+}
+
+/** Tables, decor and showcases standing in the shop (shelves and cases are drawn above and below). */
+function FloorStrip({ onBuild }: { onBuild: () => void }) {
+  const g = useStore((s) => s.g);
+  const extras = g.furniture.filter((f) => f.type !== 'shelf' && f.type !== 'case');
+  return (
+    <button className="floor-strip" onClick={onBuild}>
+      {extras.length ? extras.map((f) => <span key={f.uid} title={FURN[f.type].name}>{FURN[f.type].icon}</span>)
+        : <i>Empty floor — tap to add play tables, decor and showcases</i>}
+    </button>
+  );
+}
+
+/** Customers asking for specific cards. Hand one over from your binder, or order it and flip it. */
+function Requests() {
+  const g = useStore((s) => s.g);
+  const [open, setOpen] = useState(false);
+  if (!g.requests.length) return null;
+  const ready = g.requests.filter((r) => canFill(g, r)).length;
+  return (
+    <div className="requests">
+      <button className="wall-title req-head" onClick={() => setOpen((v) => !v)}>
+        📋 Card requests {ready > 0 && <em className="ready">{ready} ready</em>}
+        <span>{g.requests.length} {open ? '▲' : '▼'}</span>
+      </button>
+      <div className={`req-list${open ? ' open' : ''}`}>
+        {g.requests.map((r) => {
+          const have = canFill(g, r);
+          const mkt = rawValue(g, r.cardId, r.foil);
+          const cost = singlePrice(g, r.cardId, r.foil);
+          const days = r.expiresDay - g.day;
+          return (
+            <div key={r.id} className={`req${have ? ' have' : ''}`}>
+              <div className="req-card" onClick={() => useStore.getState().showCard(r.cardId)}><CardImage id={r.cardId} foil={r.foil} thumb /></div>
+              <div className="req-info">
+                <span className="small">{CUSTOMERS[r.type].icon} <b>{r.who}</b> wants</span>
+                <b className="req-name">{singleName({ uid: 0, cardId: r.cardId, foil: r.foil })}</b>
+                <span className="small">Pays <b className="up">{fmt(r.pay)}</b> <i className="muted">· mkt {fmt(mkt)} · {days <= 0 ? 'last day' : `${days + 1} days`}</i></span>
+                {have ? (
+                  <Button kind="gold" small onClick={() => tryAct((s) => fillRequest(s, r.id), `+${fmt(r.pay)} — ${r.who} is happy!`)}>Hand it over</Button>
+                ) : isUnlocked(g, 'singles') ? (
+                  <Button small disabled={g.cash < cost} onClick={() => tryAct((s) => buySingle(s, r.cardId, r.foil), 'Ordered — now hand it over!')}>Order it {fmt(cost)}</Button>
+                ) : <span className="muted small">Pull it from a pack or find it on the deals board.</span>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -109,6 +109,30 @@ await page.waitForTimeout(500);
 await page.evaluate(() => document.querySelector('.content').scrollTo(0, 0));
 await shot('12-shop');
 check('customers bought', await page.evaluate(() => window.__store.getState().g.stats.sales > 0), String(await page.evaluate(() => window.__store.getState().g.stats.sales)));
+// Phase 2: build mode — buy a plant, see the floor and the customer mix
+await click('Shop', 'nav button');
+await page.waitForTimeout(300);
+check('build sheet', await click('🛠 Build'));
+await page.waitForTimeout(300);
+await shot('12b-build');
+await page.click('.tile.empty');
+await page.waitForTimeout(200);
+check('catalog', await page.evaluate(() => document.querySelectorAll('.cat-row').length >= 8));
+await shot('12c-catalog');
+const before = await page.evaluate(() => window.__store.getState().g.furniture.length);
+await page.evaluate(() => { const row = [...document.querySelectorAll('.cat-row')].find((r) => r.textContent.includes('Potted plant')); row.querySelector('button').click(); });
+await page.waitForTimeout(200);
+check('bought furniture', await page.evaluate((n) => window.__store.getState().g.furniture.length === n + 1, before));
+await page.click('.modal .x');
+// Card requests: give the player the requested card, hand it over
+await page.evaluate(() => { const s = window.__store; const g = s.getState().g; const r = g.requests[0]; if (r) { const e = g.cards[r.cardId] ?? [0, 0]; e[r.foil ? 1 : 0]++; g.cards[r.cardId] = e; } s.setState({ rev: s.getState().rev + 1 }); });
+await page.waitForTimeout(300);
+await page.evaluate(() => document.querySelector('.requests')?.scrollIntoView());
+await shot('12d-requests');
+check('requests board', await page.evaluate(() => !!document.querySelector('.req.have')));
+check('fill request', await click('Hand it over'));
+await page.waitForTimeout(200);
+check('request filled', await page.evaluate(() => (window.__store.getState().g.counts.requestsFilled ?? 0) >= 1));
 // Progression: Goals tab and a level-up popup
 await page.evaluate(() => { const s = window.__store; const g = s.getState().g; g.levelUps = []; s.setState({ rev: s.getState().rev + 1 }); });
 await click('Goals', 'nav button');

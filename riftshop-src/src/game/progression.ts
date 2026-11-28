@@ -21,7 +21,8 @@ export function levelReward(level: number): number {
 
 export type UnlockKey =
   | `set:${SetId}` | 'cases' | 'online' | 'singles' | 'ads' | 'clerk'
-  | `grade:${Company}` | `tier:${Company}:${string}` | `shop:${number}`;
+  | `grade:${Company}` | `tier:${Company}:${string}` | `shop:${number}`
+  | 'furn:table' | 'furn:slabcase' | 'furn:endcap' | 'furn:neon' | 'furn:sofa';
 
 export interface Unlock {
   key: UnlockKey;
@@ -34,18 +35,23 @@ export interface Unlock {
 export const UNLOCKS: Unlock[] = [
   { key: 'set:VEN', level: 1, title: 'Vendetta distributor account', text: 'Buy Vendetta packs and boxes wholesale.' },
   { key: 'set:RAD', level: 1, title: 'Radiance distributor account', text: 'Buy Radiance packs and boxes wholesale.' },
+  { key: 'furn:table', level: 2, title: 'Play tables', text: 'Put play tables in the shop: competitive players come in, buy singles and ask for cards.' },
   { key: 'online', level: 2, title: 'Online marketplace', text: 'List cards online: they sell in a day or two near market price (12.5% fees).' },
   { key: 'grade:PSA', level: 3, title: 'PSA grading', text: 'Send cards to PSA (Value tier). A PSA 10 is worth 3–4× raw.' },
   { key: 'shop:2', level: 3, title: 'Corner Shop', text: 'You can move into a Corner Shop: more shelves, more customers.' },
+  { key: 'furn:slabcase', level: 3, title: 'Slab showcase', text: 'A lit showcase for slabs: collectors pay 8% more for slabs.' },
+  { key: 'furn:endcap', level: 4, title: 'Pack endcap', text: 'An impulse-buy rack: more kids and casual players.' },
   { key: 'set:UNL', level: 4, title: 'Unleashed distributor account', text: 'Buy Unleashed packs and boxes wholesale.' },
   { key: 'singles', level: 4, title: 'Singles market', text: 'Buy any single card online at market + 10%.' },
   { key: 'tier:PSA:regular', level: 5, title: 'PSA Regular service', text: '3-day PSA turnaround.' },
   { key: 'ads', level: 5, title: 'Advertising', text: 'Run ads for 60% more customers for a shop day.' },
   { key: 'grade:BGS', level: 6, title: 'Beckett grading', text: 'Beckett (BGS) Base tier, with subgrades and the chance of a Black Label.' },
   { key: 'shop:3', level: 6, title: 'Game Store', text: 'You can move into a Game Store.' },
+  { key: 'furn:neon', level: 6, title: 'Neon sign', text: 'Lots of atmosphere: more people walk in.' },
   { key: 'set:SFD', level: 7, title: 'Spiritforged distributor account', text: 'Buy Spiritforged packs and boxes (limited allocation).' },
   { key: 'tier:BGS:standard', level: 8, title: 'Beckett Standard service', text: '4-day Beckett turnaround.' },
   { key: 'cases', level: 8, title: 'Booster cases', text: 'Buy sealed cases of 6 booster boxes from the distributor.' },
+  { key: 'furn:sofa', level: 9, title: 'Collector lounge', text: 'Collectors and investors with big budgets come in more.' },
   { key: 'set:OGN', level: 10, title: 'Origins distributor account', text: 'Buy Origins packs and boxes (limited allocation).' },
   { key: 'clerk', level: 10, title: 'Hire a clerk', text: 'A clerk keeps selling from your shelves while the app is closed.' },
   { key: 'shop:4', level: 10, title: 'Card Emporium', text: 'You can move into a Card Emporium.' },
@@ -96,7 +102,8 @@ export function addXp(g: GameState, xp: number): void {
 
 export type Counter =
   | 'packsSold' | 'boxesSold' | 'singlesSold' | 'packsOpened' | 'boxesOpened' | 'graded' | 'dealsBought'
-  | 'onlineSold' | 'altPulled' | 'overPulled' | 'sigPulled' | 'psa10' | 'bgs95' | 'blackLabel' | 'listed' | 'revenue';
+  | 'onlineSold' | 'altPulled' | 'overPulled' | 'sigPulled' | 'psa10' | 'bgs95' | 'blackLabel' | 'listed' | 'revenue'
+  | 'requestsFilled' | 'furnitureBought' | 'investorSales' | 'collectorSales';
 
 export function bump(g: GameState, key: Counter, n = 1): void {
   g.counts[key] = (g.counts[key] ?? 0) + n;
@@ -129,6 +136,8 @@ export function newDailyGoals(g: GameState): DailyGoal[] {
   ];
   if (L >= 3) templates.push(() => ({ counter: 'graded', target: 1, text: 'Get a card graded', cash: 100 * s, xp: 250 }));
   if (L >= 2) templates.push(() => { const n = Math.max(1, Math.round(s * 0.6)); return { counter: 'onlineSold', target: n, text: `Sell ${n} card${n > 1 ? 's' : ''} online`, cash: 50 * n, xp: 60 * n }; });
+  templates.push(() => ({ counter: 'requestsFilled', target: 1, text: 'Fill a card request', cash: 60 * s, xp: 150 }));
+  if (L >= 6) templates.push(() => { const n = Math.max(2, Math.round(s * 0.5)); return { counter: 'requestsFilled', target: n, text: `Fill ${n} card requests`, cash: 70 * n * s, xp: 160 * n }; });
   if (L >= 4) templates.push(() => ({ counter: 'boxesSold', target: 1, text: 'Sell a sealed booster box', cash: 120 * s, xp: 300 }));
   const chosen: DailyGoal[] = [];
   const pool = [...templates];
@@ -195,6 +204,13 @@ export const MILESTONES: Milestone[] = [
   count('bgs95', 'Gem Mint 9.5', 'Get a Beckett 9.5 or better.', 'bgs95', 1, 400, 800),
   count('black', 'Black Label!!', 'Get a Beckett Black Label.', 'blackLabel', 1, 10_000, 15_000),
   count('deals-25', 'Bargain hunter', 'Buy 25 deals.', 'dealsBought', 25, 600, 1_000),
+  count('req-1', 'At your service', 'Fill a customer\'s card request.', 'requestsFilled', 1, 100, 200),
+  count('req-25', 'The card finder', 'Fill 25 card requests.', 'requestsFilled', 25, 1_500, 2_500),
+  count('req-100', 'If we don\'t have it, nobody does', 'Fill 100 card requests.', 'requestsFilled', 100, 6_000, 9_000),
+  count('furn-5', 'Interior designer', 'Buy or upgrade 5 pieces of furniture.', 'furnitureBought', 5, 300, 500),
+  count('furn-25', 'Showroom', 'Buy or upgrade 25 pieces of furniture.', 'furnitureBought', 25, 3_000, 5_000),
+  count('collector-10', 'Collector\'s favourite', 'Sell 10 cards to collectors.', 'collectorSales', 10, 800, 1_200),
+  count('investor-5', 'Sealed supplier', 'Sell to investors 5 times.', 'investorSales', 5, 1_000, 1_500),
   { id: 'revenue-10k', title: 'Five figures', text: 'Make $10,000 in sales.', cash: 500, xp: 1_000, done: (g) => g.stats.revenue >= 10_000, progress: (g) => [Math.floor(g.stats.revenue), 10_000] },
   { id: 'revenue-100k', title: 'Six figures', text: 'Make $100,000 in sales.', cash: 5_000, xp: 6_000, done: (g) => g.stats.revenue >= 100_000, progress: (g) => [Math.floor(g.stats.revenue), 100_000] },
   { id: 'revenue-1m', title: 'Millionaire shop', text: 'Make $1,000,000 in sales.', cash: 50_000, xp: 40_000, done: (g) => g.stats.revenue >= 1_000_000, progress: (g) => [Math.floor(g.stats.revenue), 1_000_000] },

@@ -1,5 +1,6 @@
 import type { SetId } from '../data/cards';
 import type { Counter, DailyGoal } from './progression';
+import type { CustomerType, Furniture } from './shop';
 
 export type SealedKind = 'pack' | 'box' | 'case';
 export type SealedKey = `${SetId}:${SealedKind}`;
@@ -56,11 +57,25 @@ export interface Deal {
   expires: number;
 }
 
+/** A customer asking for one specific card. Fill it from your binder before it expires. */
+export interface CardRequest {
+  id: number;
+  who: string;
+  type: CustomerType;
+  cardId: string;
+  foil: boolean;
+  /** What they'll pay. */
+  pay: number;
+  expiresDay: number;
+}
+
 export interface FeedItem {
   id: number;
   t: number;
   kind: 'sale' | 'leave' | 'offer' | 'info' | 'bad' | 'hit';
   text: string;
+  /** Customer type, for the little face in the activity list. */
+  who?: CustomerType;
   amount?: number;
 }
 
@@ -110,6 +125,11 @@ export interface GameState {
   milestones: Record<string, 1>;
   history: { day: number; worth: number; revenue: number }[];
   bestWorth: number;
+  /** Furniture on the shop floor. */
+  furniture: Furniture[];
+  /** Storage racks in the back room. */
+  racks: number;
+  requests: CardRequest[];
   stats: { packsOpened: number; revenue: number; spent: number; sales: number; graded: number; bestPull: { cardId: string; foil: boolean; value: number } | null };
   today: { revenue: number; costs: number; sales: number };
   savedAt: number;

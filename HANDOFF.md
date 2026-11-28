@@ -37,7 +37,7 @@ The cloud sandbox cannot reach Riot's CDN, so screenshots show the drawn card fa
 - Sheets (`Modal` in `ui/common.tsx`) render through a React portal into <body> (inside the scrolling `.content` iOS trapped them under the tab bar and they couldn't scroll); `.modal-body` scrolls, optional `footer` prop pins the main button.
 - Packaging: TCGplayer product photos `tcgplayer-cdn.tcgplayer.com/product/{id}_in_1000x1000.jpg` (ids in `cards.json` `sets[].tcg`), drawn pack/box fallback.
 - Time: 1 game hour = 20 s, shop day 12 h. End of day: rent/clerk, market drift + meta spikes, new deals. Offline catch-up ≤ 5 days; only a hired clerk sells (from your shelves at your prices).
-- Save: localStorage `riftshop-save-v1`, `version` 3; `migrate()` upgrades v1 saves (RGC grades → PSA slabs) and v2 saves (XP from past revenue + packs opened).
+- Save: localStorage `riftshop-save-v1`, `version` 4; `migrate()` upgrades v1 saves (RGC grades → PSA slabs), v2 saves (XP from past revenue + packs opened) and v3 saves (furniture matching the old shelf/case space, via `starterFurniture`).
 - **Progression (`src/game/progression.ts`, `ui/GoalsScreen.tsx`, Goals tab)** — tycoon phase 1:
   - Levels 1–50, `xpForLevel(l) = 100·l^1.6`; XP from sales ($1 = 1 XP), packs (+5), boxes (+20), deals (+10), grading (+30 / +300 for a 10 / +3,000 Black Label), goals and milestones. Each level pays `levelReward` cash; `g.levelUps` queues the level-up popup (`LevelUp`).
   - `UNLOCKS` gate by level: Vendetta + Radiance at start, online selling 2, PSA + Corner Shop 3, Unleashed + singles market 4, PSA Regular + ads 5, Beckett + shop 3 at 6, Spiritforged 7, BGS Standard + cases 8, Origins + clerk + shop 4 at 10, express tiers 12, shop 5 at 15, shop 6 at 22. Sim functions return an error string when locked; the UI shows 🔒 Level N. Locked sets still appear on the deals board.
@@ -45,8 +45,14 @@ The cloud sandbox cannot reach Riot's CDN, so screenshots show the drawn card fa
   - Net worth = cash + sealed + raw cards + slabs at market; `closeDay` logs it to `g.history` (graph) and `bestWorth`.
 - Debug: `?debug` exposes `window.__store` and `window.__advance(hours)` (used by `tools/smoke.mjs`).
 
+- **Shop building (`src/game/shop.ts`, `ui/BuildSheet.tsx`)** — tycoon phase 2:
+  - Shelf and case spots now come from furniture on the floor (`g.furniture`): wall shelf (3/5/7 shelf spots), glass case (6/10/14 case spots), pack endcap, play table (2 tiles, +rep daily, more competitive players), slab showcase (case spots, collectors pay +8% for slabs), plant/poster/neon/collector lounge (atmosphere → `vibeTraffic` up to +100% visitors, small willingness boost). Floor tiles per shop level in `SHOP_LEVELS.floor`. Upgrades cost 2×/4× base; selling refunds half and is refused if the listings wouldn't fit.
+  - Back room: `SPACE` pack 1 / box 24 / case 144; cap = `SHOP_LEVELS.storage` + racks × 240 (max racks per shop level). Distributor and deals refuse purchases that don't fit (`roomFor`); shelved stock doesn't count.
+  - Customers (`sim.ts` `shopper`): types kid / casual / player / collector / investor / seller with mix from `customerMix` (furniture shifts it; investors from shop level 3). Each has a lognormal budget (bigger shops richer; 5% whales for collectors/investors), interests (`interested`), and willingness range. Feed lines carry the type icon.
+  - Card requests (`g.requests`, max 2 + shop level): players want playable Rares/Epics/Legends, collectors alt/overnumbered/foil Epics; pay 1.15–1.5× market; expire after 2–3 days (−rep). `fillRequest` takes a raw copy from the binder or the case. Shop tab shows the board with "Hand it over" / "Order it" (singles market).
+
 ## Roadmap (agreed with the user)
-- Phase 2: build the shop (furniture/shelves/case/play tables as items), back-room capacity, customer types (kids, collectors, competitive, investors) with card requests.
+- Phase 2: done (above).
 - Phase 3: weekly tournaments, release days (pre-orders, launch rush), optional staff (cashier, stocker — automation only if hired), random events.
 
 ## Ideas not done yet

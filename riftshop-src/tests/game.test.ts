@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { CARD_BY_ID, CARDS, SET_IDS, SETS } from '../src/data/cards';
 import { openPack } from '../src/game/packs';
 import { mulberry32, setRandom } from '../src/game/rng';
-import { SAVE_VERSION, advance, buySealed, endOfDay, listInDisplay, migrate, newGame, openSealed, sellBulk, sendToGrading, shelveSealed } from '../src/game/sim';
+import { SAVE_VERSION, addCard, advance, buySealed, endOfDay, fillRequest, newRequest, listInDisplay, migrate, newGame, openSealed, sellBulk, sendToGrading, shelveSealed } from '../src/game/sim';
 import { rollGrade, slabMult } from '../src/game/grading';
+import { buyFurniture, buyRack, displaySlots, floorSize, floorUsed, sellFurniture, shelfSlots, storageCap, storageUsed, upgradeFurniture } from '../src/game/shop';
 import { MILESTONES, addXp, claimGoal, claimMilestone, goalProgress, isUnlocked, milestoneState, netWorth, xpForLevel } from '../src/game/progression';
 import { rawValue, sealedValue, wholesale } from '../src/game/economy';
 
@@ -190,5 +191,84 @@ describe('progression', () => {
     expect(g.version).toBe(SAVE_VERSION);
     expect(g.level).toBeGreaterThan(3);
     expect(g.goals).toHaveLength(3);
+  });
+});
+
+describe('building the shop', () => {
+  it('starts with a shelf and a case, and furniture adds space', () => {
+    const g = newGame();
+    g.cash = 10_000;
+    expect(shelfSlots(g)).toBe(3);
+    expect(displaySlots(g)).toBe(6);
+    expect(floorUsed(g)).toBe(2);
+    expect(buyFurniture(g, 'shelf')).toBeNull();
+    expect(shelfSlots(g)).toBe(6);
+    expect(upgradeFurniture(g, g.furniture[2].uid)).toBeNull();
+    expect(shelfSlots(g)).toBe(8);
+    expect(buyFurniture(g, 'table')).toMatch(/level/i); // play tables at level 2
+    g.level = 2;
+    expect(buyFurniture(g, 'table')).toMatch(/floor/i); // 1 tile left, a table needs 2
+    expect(buyFurniture(g, 'plant')).toBeNull();
+    expect(floorUsed(g)).toBe(floorSize(g));
+    expect(buyFurniture(g, 'plant')).toMatch(/floor/i);
+  });
+
+  it('will not sell a shelf that still holds product', () => {
+    const g = newGame();
+    expect(shelveSealed(g, 'VEN', 'pack', 2, 5)).toBeNull();
+    expect(sellFurniture(g, g.furniture.find((f) => f.type === 'shelf')!.uid)).toMatch(/shelves/i);
+  });
+
+  it('limits the back room', () => {
+    const g = newGame();
+    g.cash = 1e6;
+    g.level = 50;
+    expect(storageCap(g)).toBe(240);
+    expect(storageUsed(g)).toBe(18);
+    expect(buySealed(g, 'VEN', 'box', 8)).toBeNull();
+    g.bought = {};
+    expect(buySealed(g, 'VEN', 'box', 1)).toBeNull(); // 18 + 9 × 24 = 234
+    expect(buySealed(g, 'VEN', 'box', 1)).toMatch(/back room is full/i);
+    expect(buyRack(g)).toBeNull();
+    expect(buySealed(g, 'VEN', 'box', 1)).toBeNull();
+    expect(buyRack(g)).toMatch(/bigger shop/i);
+  });
+
+  it('fills card requests from the binder', () => {
+    setRandom(mulberry32(21));
+    const g = newGame();
+    const r = newRequest(g, 'player')!;
+    expect(r).toBeTruthy();
+    expect(r.pay).toBeGreaterThan(0);
+    expect(fillRequest(g, r.id)).toMatch(/don/i);
+    addCard(g, r.cardId, r.foil);
+    const cash = g.cash;
+    expect(fillRequest(g, r.id)).toBeNull();
+    expect(g.cash).toBeCloseTo(cash + r.pay, 5);
+    expect(g.requests).toHaveLength(0);
+    expect(g.counts.requestsFilled).toBe(1);
+  });
+
+  it('customers of every type show up and buy', () => {
+    setRandom(mulberry32(8));
+    const g = newGame();
+    g.level = 20;
+    g.shopLevel = 4;
+    g.cash = 1e6;
+    g.sealed = { 'VEN:pack': 200, 'VEN:box': 10 };
+    shelveSealed(g, 'VEN', 'pack', 200, sealedValue(g, 'VEN', 'pack'));
+    shelveSealed(g, 'VEN', 'box', 10, sealedValue(g, 'VEN', 'box'));
+    advance(g, 24);
+    const who = new Set(g.feed.map((f) => f.who).filter(Boolean));
+    expect(g.counts.packsSold).toBeGreaterThan(20);
+    expect(who.size).toBeGreaterThanOrEqual(3);
+  });
+
+  it('furnishes an old save with the space it had', () => {
+    const g = migrate({ version: 3, shopLevel: 3, level: 8, xp: 0, shelf: [], display: [], cards: {}, slabs: [], stats: { revenue: 0, packsOpened: 0, sales: 0 } });
+    expect(g.version).toBe(4);
+    expect(shelfSlots(g)).toBeGreaterThanOrEqual(8);
+    expect(displaySlots(g)).toBeGreaterThanOrEqual(24);
+    expect(floorUsed(g)).toBeLessThanOrEqual(floorSize(g));
   });
 });
