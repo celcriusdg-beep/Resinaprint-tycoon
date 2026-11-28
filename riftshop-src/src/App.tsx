@@ -10,6 +10,8 @@ import { PackOpening, StockScreen } from './ui/StockScreen';
 import { BinderScreen, CardModal } from './ui/BinderScreen';
 import { GradingScreen, MarketScreen } from './ui/MarketScreen';
 import { Button, Modal, Toast } from './ui/common';
+import { GoalsScreen, LevelUp } from './ui/GoalsScreen';
+import { claimable, xpForLevel } from './game/progression';
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'shop', label: 'Shop', icon: '🏪' },
@@ -17,6 +19,7 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'binder', label: 'Binder', icon: '📖' },
   { id: 'market', label: 'Market', icon: '📈' },
   { id: 'grading', label: 'Grading', icon: '🏅' },
+  { id: 'goals', label: 'Goals', icon: '🎯' },
 ];
 
 export default function App() {
@@ -31,6 +34,10 @@ export default function App() {
   return (
     <div className="app">
       <header className="top">
+        <button className="lvl-badge" onClick={() => useStore.getState().setTab('goals')} aria-label={`Level ${g.level}`}>
+          <b>{g.level}</b>
+          <i style={{ ['--p' as string]: `${Math.min(1, g.xp / xpForLevel(g.level)) * 360}deg` }} />
+        </button>
         <div className="cash">{fmt(g.cash)}</div>
         <div className="clock">
           <span>Day {g.day} · {clockLabel(g.hours)}</span>
@@ -44,6 +51,7 @@ export default function App() {
         {tab === 'binder' && <BinderScreen />}
         {tab === 'market' && <MarketScreen />}
         {tab === 'grading' && <GradingScreen />}
+        {tab === 'goals' && <GoalsScreen />}
         <div className="footer-actions">
           <PictureCheck />
           <button className="link" onClick={() => { if (confirm('Start a brand new shop? Your current save will be deleted.')) resetGame(); }}>Start over</button>
@@ -56,6 +64,7 @@ export default function App() {
             <span>{t.label}</span>
             {t.id === 'shop' && g.offers.length > 0 && <i className="dot">{g.offers.length}</i>}
             {t.id === 'grading' && g.grading.length > 0 && <i className="dot blue">{g.grading.length}</i>}
+            {t.id === 'goals' && claimable(g) > 0 && <i className="dot gold">{claimable(g)}</i>}
           </button>
         ))}
       </nav>
@@ -70,6 +79,7 @@ export default function App() {
         </Modal>
       )}
       {g.reveals.length > 0 && !useStore.getState().opening && <GradeReveal />}
+      {g.levelUps.length > 0 && !g.reveals.length && !useStore.getState().opening && <LevelUp />}
       {g.stats.packsOpened === 0 && g.day === 1 && g.hours < 0.5 && !welcome && <FirstRun />}
     </div>
   );

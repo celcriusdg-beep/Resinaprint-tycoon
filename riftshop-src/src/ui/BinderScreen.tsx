@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { CARD_BY_ID, RARITY_ORDER, SET_IDS, SETS, kindLabel, setCards, type SetId } from '../data/cards';
 import { BUYLIST_RATE, ONLINE_FEE, fmt, marketMult, rawValue, singleValue } from '../game/economy';
 import { COMPANIES, slabTitle } from '../game/grading';
+import { isUnlocked, unlockLevel } from '../game/progression';
 import { displaySlots, listInDisplay, listOnline, rawCount, sellToBuylist, sendToGrading } from '../game/sim';
 import type { Company, Single } from '../game/types';
 import { Slab } from './visuals';
@@ -140,7 +141,8 @@ export function CardModal() {
     setAction({ s, mode });
     setPrice(Math.max(0.1, Math.round(singleValue(g, s) * (mode === 'display' ? 1.1 : 1) * 100) / 100));
   };
-  const pickCompany = (co: Company) => { setCompany(co); setTier(COMPANIES[co].tiers[1].id); };
+  const tierOpen = (co: Company, id: string) => isUnlocked(g, `grade:${co}`) && isUnlocked(g, `tier:${co}:${id}`);
+  const pickCompany = (co: Company) => { setCompany(co); setTier((COMPANIES[co].tiers.filter((x) => tierOpen(co, x.id)).pop() ?? COMPANIES[co].tiers[0]).id); };
   const t = COMPANIES[company].tiers.find((x) => x.id === tier) ?? COMPANIES[company].tiers[1];
   return (
     <Modal title={c.name} onClose={close}>
@@ -164,8 +166,8 @@ export function CardModal() {
           <div><b>{label}</b><div className="muted small">worth {fmt(singleValue(g, s))}</div></div>
           <div className="row wrap">
             <Button small kind="primary" onClick={() => begin(s, 'display')} disabled={g.display.length >= displaySlots(g)}>Put in display case</Button>
-            <Button small onClick={() => begin(s, 'online')}>Sell online</Button>
-            {!s.slab && <Button small kind="gold" onClick={() => begin(s, 'grade')}>Grade it</Button>}
+            <Button small disabled={!isUnlocked(g, 'online')} onClick={() => begin(s, 'online')}>{isUnlocked(g, 'online') ? 'Sell online' : `Sell online · Lv ${unlockLevel('online')}`}</Button>
+            {!s.slab && <Button small kind="gold" disabled={!isUnlocked(g, 'grade:PSA')} onClick={() => { pickCompany('PSA'); begin(s, 'grade'); }}>{isUnlocked(g, 'grade:PSA') ? 'Grade it' : `Grade · Lv ${unlockLevel('grade:PSA')}`}</Button>}
             <Button small kind="ghost" onClick={() => {
               const v = act((st) => sellToBuylist(st, s));
               if (v > 0) useStore.getState().say(`Sold to a buylist for ${fmt(v)}.`);
@@ -196,16 +198,16 @@ export function CardModal() {
           <b>Send for grading</b>
           <div className="companies">
             {(['PSA', 'BGS'] as Company[]).map((co) => (
-              <button key={co} className={`co ${co.toLowerCase()}${co === company ? ' on' : ''}`} onClick={() => pickCompany(co)}>
-                <b>{co === 'PSA' ? 'PSA' : 'BECKETT'}</b><span>{COMPANIES[co].full}</span>
+              <button key={co} className={`co ${co.toLowerCase()}${co === company ? ' on' : ''}`} disabled={!isUnlocked(g, `grade:${co}`)} onClick={() => pickCompany(co)}>
+                <b>{co === 'PSA' ? 'PSA' : 'BECKETT'}</b><span>{isUnlocked(g, `grade:${co}`) ? COMPANIES[co].full : `🔒 Level ${unlockLevel(`grade:${co}`)}`}</span>
               </button>
             ))}
           </div>
           <p className="muted small">{COMPANIES[company].blurb}</p>
           <div className="tiers">
             {COMPANIES[company].tiers.map((x) => (
-              <button key={x.id} className={x.id === t.id ? 'on' : ''} onClick={() => setTier(x.id)}>
-                <b>{x.name}</b><span>{fmt(x.fee)} · {x.days} day{x.days > 1 ? 's' : ''}</span>
+              <button key={x.id} className={x.id === t.id ? 'on' : ''} disabled={!tierOpen(company, x.id)} onClick={() => setTier(x.id)}>
+                <b>{x.name}</b><span>{tierOpen(company, x.id) ? `${fmt(x.fee)} · ${x.days} day${x.days > 1 ? 's' : ''}` : `🔒 Level ${unlockLevel(`tier:${company}:${x.id}`)}`}</span>
               </button>
             ))}
           </div>

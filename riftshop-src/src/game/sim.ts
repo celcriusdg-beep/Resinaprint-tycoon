@@ -2,10 +2,11 @@ import { BOXES_PER_CASE, CARD_BY_ID, CARDS, PACKS_PER_BOX, SET_IDS, SETS, type C
 import { ADS_COST, BUYLIST_RATE, CLERK_WAGE, DAY_HOURS, ONLINE_FEE, SHOP_LEVELS, SINGLES_MARKUP, allocation, fmt, rawValue, sealedValue, singleValue, wholesale } from './economy';
 import { COMPANIES, rollGrade, slabTitle } from './grading';
 import { openPack, type Pull } from './packs';
+import { addXp, bump, canBuySealed, closeDay, isUnlocked, lockedText, newDailyGoals, startDay, unlockLevel } from './progression';
 import { between, gauss, pick, random, weighted } from './rng';
 import type { Company, Deal, GameState, Listing, SealedKey, SealedKind, Single } from './types';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export function newGame(): GameState {
   const g: GameState = {
@@ -31,12 +32,22 @@ export function newGame(): GameState {
     market: { card: {}, sealed: {}, spike: null },
     feed: [],
     reveals: [],
+    level: 1,
+    xp: 0,
+    levelUps: [],
+    counts: {},
+    todayCounts: {},
+    goals: [],
+    milestones: {},
+    history: [],
+    bestWorth: 1_500,
     nextUid: 1,
     stats: { packsOpened: 0, revenue: 0, spent: 0, sales: 0, graded: 0, bestPull: null },
     today: { revenue: 0, costs: 0, sales: 0 },
     savedAt: Date.now(),
   };
   newDeals(g);
+  g.goals = newDailyGoals(g);
   return g;
 }
 
@@ -58,6 +69,21 @@ export function migrate(raw: Record<string, unknown>): GameState {
     delete g.graded;
     delete g.markup;
     newDeals(g);
+    g.version = 2;
+  }
+  if (g.version < 3) {
+    // v3 adds levels: earn the level your shop has already worked for (sales and packs opened).
+    g.level = 1;
+    g.xp = 0;
+    g.levelUps = [];
+    g.counts = { packsOpened: g.stats.packsOpened, graded: g.stats.graded ?? 0, revenue: g.stats.revenue };
+    g.todayCounts = {};
+    g.milestones = {};
+    g.history = [];
+    addXp(g, Math.round(g.stats.revenue + g.stats.packsOpened * 5));
+    g.levelUps = g.level > 1 ? [g.level] : [];
+    g.goals = newDailyGoals(g);
+    g.bestWorth = g.cash;
     g.version = SAVE_VERSION;
   }
   return g;
@@ -75,6 +101,8 @@ function earn(g: GameState, amount: number, sale = true): void {
   g.cash += amount;
   g.stats.revenue += amount;
   g.today.revenue += amount;
+  bump(g, 'revenue', amount);
+  addXp(g, amount);
   if (sale) {
     g.stats.sales++;
     g.today.sales++;
@@ -147,6 +175,8 @@ export function singleName(s: Single): string {
 // ── Buying ──────────────────────────────────────────────────────────────
 
 export function buySealed(g: GameState, set: SetId, kind: SealedKind, qty: number): string | null {
+  const locked = canBuySealed(g, set, kind);
+  if (locked) return locked;
   const key: SealedKey = `${set}:${kind}`;
   const left = allocation(set, kind) - (g.bought[key] ?? 0);
   if (qty > left) return left > 0 ? `The distributor only has ${left} left for you today.` : 'Sold out at the distributor today.';
@@ -167,6 +197,8 @@ export function buyDeal(g: GameState, id: number): string | null {
   if (d.what.type === 'sealed') addSealed(g, `${d.what.set}:${d.what.kind}`, d.what.qty);
   else addCard(g, d.what.cardId, d.what.foil);
   g[list] = g[list].filter((x) => x.id !== id);
+  bump(g, 'dealsBought');
+  addXp(g, 10);
   log(g, 'info', `Bought ${dealName(d)} from ${d.who} for ${fmt(d.price)}.`);
   return null;
 }
@@ -185,6 +217,7 @@ export function singlePrice(g: GameState, cardId: string, foil: boolean): number
 }
 
 export function buySingle(g: GameState, cardId: string, foil: boolean): string | null {
+  if (!isUnlocked(g, 'singles')) return `The singles market ${lockedText('singles').toLowerCase()}.`;
   const price = singlePrice(g, cardId, foil);
   if (g.cash < price) return 'Not enough cash.';
   spend(g, price);
@@ -242,11 +275,19 @@ export function openSealed(g: GameState, set: SetId, kind: SealedKind): Pull[] |
   }
   if (kind === 'box') {
     addSealed(g, `${set}:pack`, PACKS_PER_BOX);
+    bump(g, 'boxesOpened');
+    addXp(g, 20);
     return [];
   }
   const pulls = openPack(set);
   g.stats.packsOpened++;
+  bump(g, 'packsOpened');
+  addXp(g, 5);
   for (const p of pulls) {
+    const k = CARD_BY_ID[p.cardId].kind;
+    if (k === 'alt') bump(g, 'altPulled');
+    if (k === 'over') bump(g, 'overPulled');
+    if (k === 'sig') bump(g, 'sigPulled');
     addCard(g, p.cardId, p.foil);
     const v = rawValue(g, p.cardId, p.foil);
     if (!g.stats.bestPull || v > g.stats.bestPull.value) g.stats.bestPull = { cardId: p.cardId, foil: p.foil, value: v };
@@ -270,6 +311,7 @@ export function shelveSealed(g: GameState, set: SetId, kind: SealedKind, qty: nu
   l.qty += qty;
   l.price = Math.max(0.5, Math.round(price * 100) / 100);
   addSealed(g, `${set}:${kind}`, -qty);
+  bump(g, 'listed', qty);
   return null;
 }
 
@@ -290,13 +332,16 @@ export function listInDisplay(g: GameState, s: Single, price: number): string | 
   const t = takeSingle(g, s);
   if (!t) return 'You no longer have that card.';
   g.display.push({ ...t, price: Math.max(0.05, Math.round(price * 100) / 100) });
+  bump(g, 'listed');
   return null;
 }
 
 export function listOnline(g: GameState, s: Single, price: number): string | null {
+  if (!isUnlocked(g, 'online')) return `Online selling ${lockedText('online').toLowerCase()}.`;
   const t = takeSingle(g, s);
   if (!t) return 'You no longer have that card.';
   g.online.push({ ...t, price: Math.max(0.05, Math.round(price * 100) / 100) });
+  bump(g, 'listed');
   return null;
 }
 
@@ -341,6 +386,8 @@ export function sellBulk(g: GameState, maxValue: number, keepOne: boolean): { co
 
 export function sendToGrading(g: GameState, s: Single, company: Company, tierId: string): string | null {
   const tier = COMPANIES[company].tiers.find((t) => t.id === tierId)!;
+  if (!isUnlocked(g, `grade:${company}`)) return `${company} grading unlocks at level ${unlockLevel(`grade:${company}`)}.`;
+  if (!isUnlocked(g, `tier:${company}:${tierId}`)) return `${company} ${tier.name} unlocks at level ${unlockLevel(`tier:${company}:${tierId}`)}.`;
   if (s.slab) return 'That card is already slabbed.';
   if (g.cash < tier.fee) return 'Not enough cash for the grading fee.';
   const t = takeSingle(g, s);
@@ -353,6 +400,7 @@ export function sendToGrading(g: GameState, s: Single, company: Company, tierId:
 export function upgradeShop(g: GameState): string | null {
   const next = SHOP_LEVELS[g.shopLevel];
   if (!next) return 'Already the biggest shop.';
+  if (!isUnlocked(g, `shop:${g.shopLevel + 1}`)) return `A ${next.name} unlocks at level ${unlockLevel(`shop:${g.shopLevel + 1}`)}.`;
   if (g.cash < next.cost) return 'Not enough cash.';
   spend(g, next.cost);
   g.shopLevel++;
@@ -361,6 +409,7 @@ export function upgradeShop(g: GameState): string | null {
 }
 
 export function buyAds(g: GameState): string | null {
+  if (!isUnlocked(g, 'ads')) return `Advertising ${lockedText('ads').toLowerCase()}.`;
   if (g.cash < ADS_COST) return 'Not enough cash.';
   spend(g, ADS_COST);
   g.adsUntil = Math.max(g.adsUntil, g.hours) + DAY_HOURS;
@@ -405,6 +454,7 @@ function sealedShopper(g: GameState, who: string): void {
   l.qty -= n;
   if (l.qty <= 0) g.shelf = g.shelf.filter((x) => x.uid !== l.uid);
   earn(g, l.price * n);
+  bump(g, l.kind === 'pack' ? 'packsSold' : 'boxesSold', l.kind === 'case' ? 6 : n);
   if (l.price <= value * 1.02) repDelta(g, 0.15);
   log(g, 'sale', `${who} bought ${sealedName(l.set, l.kind, n)}.`, l.price * n);
 }
@@ -421,6 +471,7 @@ function singlesHunter(g: GameState, who: string): void {
   }
   g.display = g.display.filter((x) => x.uid !== l.uid);
   earn(g, l.price);
+  bump(g, 'singlesSold');
   repDelta(g, 0.1);
   log(g, 'sale', `${who} bought ${singleName(l)}.`, l.price);
 }
@@ -480,6 +531,7 @@ export function advance(g: GameState, dt: number, offline = false): void {
         g.online = g.online.filter((x) => x.uid !== l.uid);
         const net = l.price * (1 - ONLINE_FEE);
         earn(g, net);
+        bump(g, 'onlineSold');
         log(g, 'sale', `Online: ${singleName(l)} sold for ${fmt(l.price)} (${fmt(net)} after fees).`, net);
       }
     }
@@ -491,19 +543,26 @@ export function advance(g: GameState, dt: number, offline = false): void {
       g.slabs.push(s);
       g.reveals.push(s.uid);
       g.stats.graded++;
+      bump(g, 'graded');
+      if (slab.company === 'PSA' && slab.grade >= 10) bump(g, 'psa10');
+      if (slab.company === 'BGS' && slab.grade >= 9.5) bump(g, 'bgs95');
+      if (slab.black) bump(g, 'blackLabel');
+      addXp(g, slab.black ? 3000 : slab.grade >= 10 ? 300 : 30);
       log(g, slab.grade >= 10 || slab.black ? 'hit' : 'info', `${j.company} returned ${CARD_BY_ID[j.cardId].name}: ${slabTitle(slab)}!`, singleValue(g, s));
     }
     if (Math.floor(before / DAY_HOURS) !== Math.floor(g.hours / DAY_HOURS)) endOfDay(g);
   }
 }
 
-function endOfDay(g: GameState): void {
+export function endOfDay(g: GameState): void {
   const lvl = SHOP_LEVELS[g.shopLevel - 1];
   const bills = lvl.rent + (g.clerk ? CLERK_WAGE : 0);
   spend(g, bills);
   log(g, g.today.revenue >= g.today.costs ? 'info' : 'bad', `Day ${g.day} closed: sales ${fmt(g.today.revenue)}, spent ${fmt(g.today.costs)} (rent ${fmt(bills)}).`);
+  closeDay(g, g.today.revenue);
   g.day++;
   g.today = { revenue: 0, costs: 0, sales: 0 };
+  startDay(g);
   g.bought = {};
   driftMarket(g);
   newDeals(g);

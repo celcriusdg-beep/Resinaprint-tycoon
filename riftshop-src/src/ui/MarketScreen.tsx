@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CARD_BY_ID, CARDS, META, SET_IDS, SETS, kindLabel, type SetId } from '../data/cards';
 import { DAY_HOURS, ONLINE_FEE, allocation, fmt, marketMult, rawValue, sealedValue, singleValue, wholesale } from '../game/economy';
 import { slabTitle } from '../game/grading';
+import { canBuySealed, isUnlocked, unlockLevel } from '../game/progression';
 import type { SealedKind } from '../game/types';
 import { buyDeal, buySealed, buySingle, dealName, dealValue, rawCount, sealedName, setListingPrice, singleName, singlePrice, unlist } from '../game/sim';
 import { act, tryAct, useStore } from '../store';
@@ -52,8 +53,8 @@ export function MarketScreen() {
 
       <Section title="Distributor" right={<span className="muted small">Allocation resets each day</span>}>
         {SET_IDS.slice().reverse().map((set) => (
-          <div className="dist-set" key={set}>
-            <b>{SETS[set].name}</b>
+          <div className={`dist-set${isUnlocked(g, `set:${set}`) ? '' : ' locked'}`} key={set}>
+            <b>{SETS[set].name}{!isUnlocked(g, `set:${set}`) && <span className="locked-note"> 🔒 distributor account at level {unlockLevel(`set:${set}`)} — look for it on the deals board</span>}</b>
             <div className="dist-grid">
               {KINDS.map((k) => {
                 const alloc = allocation(set, k);
@@ -65,6 +66,8 @@ export function MarketScreen() {
                     <span className="small">{k === 'pack' ? 'Pack' : k === 'box' ? 'Box · 24 packs' : 'Case · 6 boxes'}</span>
                     {alloc === 0 ? (
                       <span className="muted small">Not available</span>
+                    ) : canBuySealed(g, set, k) ? (
+                      <span className="locked-note">🔒 Level {Math.max(unlockLevel(`set:${set}`), k === 'case' ? unlockLevel('cases') : 0)}</span>
                     ) : (
                       <>
                         <span className="cost">{fmt(cost)}</span>
@@ -169,6 +172,13 @@ function SinglesMarket() {
     .filter((c) => !missingOnly || !g.seen[c.id])
     .filter((c) => !query || c.name.toLowerCase().includes(query) || c.code.toLowerCase().includes(query))
     .sort((a, b) => rawValue(g, b.id, false) - rawValue(g, a.id, false));
+  if (!isUnlocked(g, 'singles')) {
+    return (
+      <Section title="Singles market" right={<span className="muted small">🔒 level {unlockLevel('singles')}</span>}>
+        <p className="muted small">At level {unlockLevel('singles')} you can buy any card you're missing online, at market price + 10%.</p>
+      </Section>
+    );
+  }
   return (
     <Section title="Singles market" right={<span className="muted small">market + 10%</span>}>
       <div className="binder-tools">

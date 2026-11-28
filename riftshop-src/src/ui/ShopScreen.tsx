@@ -7,6 +7,7 @@ import {
   shelfSlots, singleName, trafficRate, unlist, unshelve, upgradeShop,
 } from '../game/sim';
 import { act, tryAct, useStore } from '../store';
+import { isUnlocked, unlockLevel } from '../game/progression';
 import { CardImage } from './CardImage';
 import { Button, Modal, PriceInput } from './common';
 import { CaseSheet, ShelveSheet } from './ShelveSheet';
@@ -115,16 +116,22 @@ export function ShopScreen() {
           {next && (
             <div className="manage-row">
               <div><b>Move to a {next.name}</b><span className="muted small">{next.shelf} shelves · {next.display} case spots · {Math.round(next.traffic / lvl.traffic * 100 - 100)}% more customers · rent {fmt(next.rent)}/day</span></div>
-              <Button kind="gold" small disabled={g.cash < next.cost} onClick={() => tryAct(upgradeShop)}>{fmt(next.cost)}</Button>
+              {isUnlocked(g, `shop:${g.shopLevel + 1}`)
+                ? <Button kind="gold" small disabled={g.cash < next.cost} onClick={() => tryAct(upgradeShop)}>{fmt(next.cost)}</Button>
+                : <span className="locked-note">🔒 Lv {unlockLevel(`shop:${g.shopLevel + 1}`)}</span>}
             </div>
           )}
           <div className="manage-row">
             <div><b>Clerk</b><span className="muted small">Sells from your shelves at your prices while the app is closed · {fmt(CLERK_WAGE)}/day</span></div>
-            <Button kind={g.clerk ? 'primary' : 'default'} small onClick={() => act((s) => (s.clerk = !s.clerk))}>{g.clerk ? 'Hired ✓' : 'Hire'}</Button>
+            {isUnlocked(g, 'clerk')
+              ? <Button kind={g.clerk ? 'primary' : 'default'} small onClick={() => act((s) => (s.clerk = !s.clerk))}>{g.clerk ? 'Hired ✓' : 'Hire'}</Button>
+              : <span className="locked-note">🔒 Lv {unlockLevel('clerk')}</span>}
           </div>
           <div className="manage-row">
             <div><b>Advertising</b><span className="muted small">60% more customers for a shop day</span></div>
-            <Button small disabled={g.cash < ADS_COST} onClick={() => tryAct(buyAds)}>{g.adsUntil > g.hours ? 'Running · +1 day' : fmt(ADS_COST)}</Button>
+            {isUnlocked(g, 'ads')
+              ? <Button small disabled={g.cash < ADS_COST} onClick={() => tryAct(buyAds)}>{g.adsUntil > g.hours ? 'Running · +1 day' : fmt(ADS_COST)}</Button>
+              : <span className="locked-note">🔒 Lv {unlockLevel('ads')}</span>}
           </div>
           <p className="muted small">Rent {fmt(lvl.rent)} a day is paid at closing.</p>
         </div>

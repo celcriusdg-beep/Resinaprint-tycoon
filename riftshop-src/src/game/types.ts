@@ -1,4 +1,5 @@
 import type { SetId } from '../data/cards';
+import type { Counter, DailyGoal } from './progression';
 
 export type SealedKind = 'pack' | 'box' | 'case';
 export type SealedKey = `${SetId}:${SealedKind}`;
@@ -98,6 +99,17 @@ export interface GameState {
   /** Grades that came back and have not been revealed yet. */
   reveals: number[];
   nextUid: number;
+  /** Shop level 1–50 and XP towards the next level. */
+  level: number;
+  xp: number;
+  /** Levels reached that haven't been celebrated yet (level-up popup). */
+  levelUps: number[];
+  counts: Partial<Record<Counter, number>>;
+  todayCounts: Partial<Record<Counter, number>>;
+  goals: DailyGoal[];
+  milestones: Record<string, 1>;
+  history: { day: number; worth: number; revenue: number }[];
+  bestWorth: number;
   stats: { packsOpened: number; revenue: number; spent: number; sales: number; graded: number; bestPull: { cardId: string; foil: boolean; value: number } | null };
   today: { revenue: number; costs: number; sales: number };
   savedAt: number;

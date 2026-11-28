@@ -410,3 +410,50 @@ body.sheet-open .content { overflow: hidden; }
 .sheet-hero .product.big.box, .sheet-hero .product.big.case { width: 50%; }
 .sheet-hero.card > * { width: 40%; }
 .opening { z-index: 90; }
+
+/* ── Progression ── */
+.lvl-badge { position: relative; width: 38px; height: 38px; border-radius: 50%; border: 0; padding: 0; background: conic-gradient(var(--gold) var(--p, 0deg), rgba(255, 255, 255, 0.12) 0); display: grid; place-items: center; flex: none; }
+.lvl-badge b { position: relative; z-index: 1; width: 31px; height: 31px; border-radius: 50%; background: #241a3d; display: grid; place-items: center; font-size: 14px; font-weight: 850; color: var(--gold); }
+.lvl-badge i { display: none; }
+.nav .dot.gold { background: var(--gold); color: #241500; }
+.nav button { font-size: 10.5px; }
+.nav button .ic { font-size: 19px; }
+.level-card { display: flex; gap: 14px; align-items: center; padding: 14px; border-radius: 18px; background: linear-gradient(135deg, #3b2378, #1c1336); border: 1px solid rgba(255, 255, 255, 0.12); }
+.level-ring { width: 68px; height: 68px; border-radius: 50%; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #2c1f4d 60%, transparent 61%), conic-gradient(var(--gold), #f6cf6a, var(--accent), var(--gold)); }
+.level-ring b { font-size: 26px; line-height: 1; color: var(--gold); }
+.level-ring span { font-size: 9px; letter-spacing: 1.5px; color: var(--muted); font-weight: 800; }
+.level-ring.big { width: 110px; height: 110px; }
+.level-ring.big b { font-size: 44px; }
+.level-info { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.bar.big { height: 9px; }
+.next-unlocks { display: flex; flex-direction: column; gap: 4px; padding: 0 4px; }
+.unlock-row { display: grid; grid-template-columns: 46px 1fr auto; gap: 8px; align-items: center; font-size: 13.5px; padding: 5px 0; }
+.unlock-row > div { display: flex; flex-direction: column; }
+.unlock-row .lvl { background: var(--panel-2); border-radius: 8px; text-align: center; font-size: 11.5px; font-weight: 800; padding: 3px 0; color: var(--gold); }
+.unlock-row.done { opacity: 0.55; }
+.worth-big { font-size: 30px; font-weight: 850; color: var(--good); }
+.worth-split { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; font-size: 11.5px; color: var(--muted); }
+.worth-split span { display: flex; flex-direction: column; }
+.worth-split b { color: var(--text); font-size: 13.5px; }
+.chart svg { width: 100%; height: 110px; display: block; }
+.chart .line { fill: none; stroke: var(--good); stroke-width: 2.2; vector-effect: non-scaling-stroke; }
+.chart .area { fill: rgba(79, 209, 139, 0.14); }
+.chart .line.down { stroke: var(--bad); }
+.chart .area.down { fill: rgba(255, 93, 108, 0.12); }
+.chart-axis { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); }
+.goal { display: flex; align-items: center; gap: 10px; padding: 9px; border-radius: 12px; background: var(--panel-2); }
+.goal-text { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.goal.ready { box-shadow: inset 0 0 0 1.5px var(--gold); }
+.goal.claimed { opacity: 0.5; }
+.claimed-tag { color: var(--good); font-weight: 900; font-size: 18px; }
+.levelup { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding-top: 4px; }
+.levelup .level-ring { animation: slabIn .6s cubic-bezier(.2, 1.4, .4, 1); }
+.levelup-title { font-size: 24px; }
+.levelup-reward { font-size: 20px; font-weight: 800; color: var(--good); }
+.levelup-unlocks { display: flex; flex-direction: column; gap: 8px; width: 100%; text-align: left; }
+.levelup-unlocks > div { display: flex; flex-direction: column; gap: 2px; background: var(--panel-2); border-radius: 12px; padding: 9px 11px; font-size: 13px; }
+.locked-note { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+
+.dist-set.locked .dist-grid { opacity: 0.45; }
+.co:disabled { opacity: 0.35; }
+.tiers button:disabled { opacity: 0.4; }

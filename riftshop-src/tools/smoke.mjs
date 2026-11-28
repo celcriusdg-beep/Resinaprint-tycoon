@@ -46,6 +46,13 @@ await click('Done');
 // Grade the best card with PSA, the next with Beckett
 await page.click('.grid4 .slot');
 await page.waitForTimeout(300);
+check('grading locked at level 1', await page.evaluate(() => [...document.querySelectorAll('.modal button')].some((b) => b.disabled && b.textContent.includes('Lv 3'))));
+await page.click('.modal .x');
+// Skip ahead to level 12 so every grading tier is open.
+await page.evaluate(() => { const s = window.__store; const g = s.getState().g; g.level = 12; g.levelUps = []; s.setState({ rev: s.getState().rev + 1 }); });
+await page.waitForTimeout(200);
+await page.click('.grid4 .slot');
+await page.waitForTimeout(300);
 check('grade it', await click('Grade it'));
 await page.waitForTimeout(200);
 await click('Express');
@@ -102,6 +109,22 @@ await page.waitForTimeout(500);
 await page.evaluate(() => document.querySelector('.content').scrollTo(0, 0));
 await shot('12-shop');
 check('customers bought', await page.evaluate(() => window.__store.getState().g.stats.sales > 0), String(await page.evaluate(() => window.__store.getState().g.stats.sales)));
+// Progression: Goals tab and a level-up popup
+await page.evaluate(() => { const s = window.__store; const g = s.getState().g; g.levelUps = []; s.setState({ rev: s.getState().rev + 1 }); });
+await click('Goals', 'nav button');
+await page.waitForTimeout(400);
+check('goals tab', await page.evaluate(() => !!document.querySelector('.level-card') && document.querySelectorAll('.goal').length >= 3));
+await shot('13-goals');
+await page.evaluate(() => { const s = window.__store; const g = s.getState().g; g.xp = 0; g.level = 2; g.levelUps = [3]; s.setState({ rev: s.getState().rev + 1 }); });
+await page.waitForTimeout(400);
+check('level-up popup', await page.evaluate(() => !!document.querySelector('.levelup')));
+await shot('14-levelup');
+await click('Nice');
+await page.waitForTimeout(200);
+await click('Market', 'nav button');
+await page.waitForTimeout(400);
+check('locked sets shown', await page.evaluate(() => document.querySelectorAll('.dist-set.locked').length > 0));
+await shot('15-market-locked');
 await browser.close();
 console.log(results.join('\n'));
 console.log(errors.length ? 'ERRORS\n' + errors.join('\n') : 'No console errors');

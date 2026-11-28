@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { CARD_BY_ID, CARDS, SET_IDS, SETS } from '../src/data/cards';
 import { openPack } from '../src/game/packs';
 import { mulberry32, setRandom } from '../src/game/rng';
-import { advance, buySealed, listInDisplay, migrate, newGame, openSealed, sellBulk, sendToGrading, shelveSealed } from '../src/game/sim';
+import { SAVE_VERSION, advance, buySealed, endOfDay, listInDisplay, migrate, newGame, openSealed, sellBulk, sendToGrading, shelveSealed } from '../src/game/sim';
 import { rollGrade, slabMult } from '../src/game/grading';
+import { MILESTONES, addXp, claimGoal, claimMilestone, goalProgress, isUnlocked, milestoneState, netWorth, xpForLevel } from '../src/game/progression';
 import { rawValue, sealedValue, wholesale } from '../src/game/economy';
 
 describe('booster packs', () => {
@@ -70,6 +71,8 @@ describe('the shop', () => {
     setRandom(mulberry32(11));
     const g = newGame();
     g.cash = 1_000;
+    expect(sendToGrading(g, { uid: 0, cardId: CARDS[0].id, foil: false }, 'PSA', 'value')).toMatch(/level/i);
+    g.level = 12;
     openSealed(g, 'VEN', 'pack');
     const ids = Object.keys(g.cards);
     const one = (i: number) => ({ uid: 0, cardId: ids[i], foil: g.cards[ids[i]][0] === 0 });
@@ -110,7 +113,7 @@ describe('the shop', () => {
 
   it('migrates a version 1 save', () => {
     const g = migrate({ version: 1, cash: 42, cards: { [CARDS[0].id]: [2, 0] }, graded: [{ uid: 5, cardId: CARDS[0].id, foil: false, grade: 9 }], markup: { pack: 1.1 } });
-    expect(g.version).toBe(2);
+    expect(g.version).toBe(SAVE_VERSION);
     expect(g.cash).toBe(42);
     expect(g.slabs[0].slab).toMatchObject({ company: 'PSA', grade: 9 });
   });
@@ -122,5 +125,70 @@ describe('the shop', () => {
     const r = sellBulk(g, 1, true);
     expect(r.count).toBeGreaterThan(20);
     expect(r.total).toBeGreaterThan(0);
+  });
+});
+
+describe('progression', () => {
+  it('levels up with XP and pays a reward', () => {
+    const g = newGame();
+    const cash = g.cash;
+    addXp(g, xpForLevel(1) + xpForLevel(2) + 5);
+    expect(g.level).toBe(3);
+    expect(g.xp).toBe(5);
+    expect(g.levelUps).toEqual([2, 3]);
+    expect(g.cash).toBeGreaterThan(cash);
+  });
+
+  it('gates sets, cases and grading by level', () => {
+    const g = newGame();
+    g.cash = 1e6;
+    expect(isUnlocked(g, 'set:VEN')).toBe(true);
+    expect(buySealed(g, 'OGN', 'box', 1)).toMatch(/level/i);
+    expect(buySealed(g, 'VEN', 'case', 1)).toMatch(/level/i);
+    g.level = 10;
+    expect(buySealed(g, 'OGN', 'box', 1)).toBeNull();
+    expect(buySealed(g, 'VEN', 'case', 1)).toBeNull();
+  });
+
+  it('has daily goals that can be claimed once', () => {
+    setRandom(mulberry32(9));
+    const g = newGame();
+    expect(g.goals).toHaveLength(3);
+    const goal = g.goals[0];
+    expect(claimGoal(g, goal.id)).not.toBeNull();
+    g.todayCounts[goal.counter] = goal.target;
+    expect(goalProgress(g, goal)).toBe(goal.target);
+    const cash = g.cash;
+    expect(claimGoal(g, goal.id)).toBeNull();
+    expect(g.cash).toBe(cash + goal.cash);
+    expect(claimGoal(g, goal.id)).not.toBeNull();
+  });
+
+  it('closes the day into the net-worth history and rolls new goals', () => {
+    setRandom(mulberry32(4));
+    const g = newGame();
+    const day = g.day;
+    endOfDay(g);
+    expect(g.day).toBe(day + 1);
+    expect(g.history).toHaveLength(1);
+    expect(g.history[0].worth).toBeCloseTo(netWorth(g).total, -2);
+    expect(g.goals.every((x) => !x.claimed)).toBe(true);
+  });
+
+  it('milestones become ready, then claimed', () => {
+    const g = newGame();
+    const m = MILESTONES.find((x) => x.id.startsWith('packs-opened'))!;
+    expect(milestoneState(g, m)).toBe('locked');
+    g.counts.packsOpened = 1e6;
+    expect(milestoneState(g, m)).toBe('ready');
+    expect(claimMilestone(g, m.id)).toBeNull();
+    expect(milestoneState(g, m)).toBe('claimed');
+  });
+
+  it('migrates a version 2 save with earned XP', () => {
+    const g = migrate({ version: 2, cash: 500, stats: { revenue: 20_000, packsOpened: 40, sales: 3 }, cards: {}, slabs: [] });
+    expect(g.version).toBe(SAVE_VERSION);
+    expect(g.level).toBeGreaterThan(3);
+    expect(g.goals).toHaveLength(3);
   });
 });

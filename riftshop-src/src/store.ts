@@ -7,7 +7,7 @@ import type { SetId } from './data/cards';
 
 const KEY = 'riftshop-save-v1';
 
-export type Tab = 'shop' | 'stock' | 'binder' | 'market' | 'grading';
+export type Tab = 'shop' | 'stock' | 'binder' | 'market' | 'grading' | 'goals';
 
 export interface Opening {
   set: SetId;
