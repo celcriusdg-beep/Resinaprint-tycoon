@@ -18,7 +18,11 @@ export function ShelveSheet({ set, kind, onClose }: { set: SetId; kind: SealedKi
   const cost = wholesale(g, set, kind);
   const mkt = sealedValue(g, set, kind);
   return (
-    <Modal title={`Sell ${sealedName(set, kind)}`} onClose={onClose}>
+    <Modal title={`Sell ${sealedName(set, kind)}`} onClose={onClose} footer={
+      <Button kind="primary" wide disabled={have <= 0} onClick={() => {
+        if (tryAct((s) => shelveSealed(s, set, kind, qty, price), `On the shelf at ${fmt(price)}.`)) onClose();
+      }}>Put {qty} on the shelf · {fmt(price)} each</Button>
+    }>
       <div className="sheet-hero">
         <ProductImage set={set} kind={kind} big />
       </div>
@@ -38,9 +42,6 @@ export function ShelveSheet({ set, kind, onClose }: { set: SetId; kind: SealedKi
         <input type="range" min={1} max={Math.max(1, have)} value={qty} onChange={(e) => setQty(parseInt(e.target.value))} />
       </label>
       <p className="muted small center">{price > mkt * 1.35 ? 'Too expensive: almost nobody will buy.' : price > mkt * 1.15 ? 'Pricey: only some customers will pay this.' : 'Most customers will happily pay this.'}</p>
-      <Button kind="primary" wide disabled={have <= 0} onClick={() => {
-        if (tryAct((s) => shelveSealed(s, set, kind, qty, price), `On the shelf at ${fmt(price)}.`)) onClose();
-      }}>Put {qty} on the shelf</Button>
     </Modal>
   );
 }
@@ -51,7 +52,9 @@ export function CaseSheet({ s, onClose }: { s: Single; onClose: () => void }) {
   const v = singleValue(g, s);
   const [price, setPrice] = useState(Math.max(0.1, Math.round(v * 1.1 * 100) / 100));
   return (
-    <Modal title={singleName(s)} onClose={onClose}>
+    <Modal title={singleName(s)} onClose={onClose} footer={
+      <Button kind="primary" wide onClick={() => { if (tryAct((st) => listInDisplay(st, s, price), 'In the display case.')) onClose(); }}>Put in the display case · {fmt(price)}</Button>
+    }>
       <div className="sheet-hero card">{s.slab ? <Slab s={{ ...s, slab: s.slab }} /> : <CardImage id={s.cardId} foil={s.foil} />}</div>
       <div className="price-help">
         <div><span>Market</span><b>{fmt(v)}</b></div>
@@ -63,7 +66,6 @@ export function CaseSheet({ s, onClose }: { s: Single; onClose: () => void }) {
           <button key={m} onClick={() => setPrice(Math.max(0.05, Math.round(v * m * 100) / 100))}>{m === 1 ? 'Market' : `${m > 1 ? '+' : ''}${Math.round((m - 1) * 100)}%`}</button>
         ))}
       </div>
-      <Button kind="primary" wide onClick={() => { if (tryAct((st) => listInDisplay(st, s, price), 'In the display case.')) onClose(); }}>Put in the display case</Button>
     </Modal>
   );
 }

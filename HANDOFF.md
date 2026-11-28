@@ -34,6 +34,7 @@ The cloud sandbox cannot reach Riot's CDN, so screenshots show the drawn card fa
 - `tools/smoke-images.mjs` serves stand-in images for both CDNs to check image layering (the sandbox can't reach them).
 - Data completeness: the gallery snapshot lacked Radiance's 14 signed overnumbered cards and 13 regular Radiance cards; the build script adds cards from riftbound-api (booster sets, no tokens/Korea-exclusives) and creates signed printings for any `XXX-NNN-SIG` TCGplayer price whose overnumbered card exists (same art). 1,396 cards: 168 overnumbered/signed.
 - Singles market (Market tab): search/filter any card, buy at market × `SINGLES_MARKUP` (1.1) via `buySingle`.
+- Sheets (`Modal` in `ui/common.tsx`) render through a React portal into <body> (inside the scrolling `.content` iOS trapped them under the tab bar and they couldn't scroll); `.modal-body` scrolls, optional `footer` prop pins the main button.
 - Packaging: TCGplayer product photos `tcgplayer-cdn.tcgplayer.com/product/{id}_in_1000x1000.jpg` (ids in `cards.json` `sets[].tcg`), drawn pack/box fallback.
 - Time: 1 game hour = 20 s, shop day 12 h. End of day: rent/clerk, market drift + meta spikes, new deals. Offline catch-up ≤ 5 days; only a hired clerk sells (from your shelves at your prices).
 - Save: localStorage `riftshop-save-v1`, `version` 2; `migrate()` upgrades v1 saves (RGC grades → PSA slabs).

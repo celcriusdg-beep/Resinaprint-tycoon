@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { useStore } from '../store';
 
 export function Button({ children, onClick, kind = 'default', disabled, small, wide }: {
@@ -36,17 +37,28 @@ export function Toast() {
   return <div className={`toast${shown.bad ? ' bad' : ''}`}>{shown.text}</div>;
 }
 
-export function Modal({ children, onClose, title }: { children: ReactNode; onClose: () => void; title?: string }) {
-  return (
+/**
+ * Bottom sheet. Rendered straight into <body> so it always sits above the tab bar and scrolls on its
+ * own (on iPhone a sheet inside the scrolling page gets trapped under the tabs). `footer` stays pinned
+ * at the bottom of the sheet.
+ */
+export function Modal({ children, onClose, title, footer }: { children: ReactNode; onClose: () => void; title?: string; footer?: ReactNode }) {
+  useEffect(() => {
+    document.body.classList.add('sheet-open');
+    return () => document.body.classList.remove('sheet-open');
+  }, []);
+  return createPortal(
     <div className="modal-back" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
           <b>{title}</b>
           <button className="x" onClick={onClose} aria-label="Close">✕</button>
         </div>
-        {children}
+        <div className="modal-body">{children}</div>
+        {footer && <div className="modal-foot">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
