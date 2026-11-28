@@ -5,15 +5,22 @@
   - TCGplayer market prices in USD, keyed by printed card code:
       git clone --depth 1 https://github.com/rleutz/riftbound-prices
 
-  - Sealed product market prices by TCGplayer product id:
+  - Sealed product (and Normal/Foil card) market prices by TCGplayer product id:
       git clone --depth 1 https://github.com/ehreese/riftdex-data
+  - Card -> TCGplayer product id mapping (for TCGplayer card photos and foil prices):
+      git clone --depth 1 https://github.com/KalimbaPro/riftbound-api
 
-Usage: python3 tools/build-data.py <riftbound-card-data dir> <riftbound-prices dir> <riftdex-data dir>
+Usage: python3 tools/build-data.py <riftbound-card-data dir> <riftbound-prices dir> <riftdex-data dir> <riftbound-api dir>
 Card images are not downloaded; the game loads them from Riot's CDN.
 """
 import json, re, sys, statistics, collections
 
-cards_dir, prices_dir, rdx_dir = sys.argv[1], sys.argv[2], sys.argv[3]
+cards_dir, prices_dir, rdx_dir, api_dir = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+tcg_id = {}
+for x in json.load(open(f'{api_dir}/public/data/cards.json')):
+    if x.get('tcgplayer_id') and x.get('riftbound_id'):
+        tcg_id[x['riftbound_id'].lower()] = int(x['tcgplayer_id'])
+rdx_rows = {r[0]: r for r in json.load(open(f'{rdx_dir}/prices.json'))['prices']}
 gallery = json.load(open(f'{cards_dir}/data/cards.json'))
 pfile = json.load(open(f'{prices_dir}/prices/riftbound_prices_updated.json'))
 prices = pfile['prices']
@@ -47,6 +54,12 @@ for c in gallery['cards']:
         'kind': k, 'img': c['image']['url'], 'w': c['image']['width'], 'h': c['image']['height'],
         'price': price, 'est': price is None,
     })
+    tid = tcg_id.get(c['id'])
+    if tid:
+        out[-1]['tcg'] = tid
+        row = rdx_rows.get(tid)
+        if row and row[2] is not None and k == 'std':
+            out[-1]['foil'] = row[2]  # real TCGplayer foil price
 
 # Fill missing prices with the median of the same set, rarity and printing kind.
 groups = collections.defaultdict(list)
@@ -57,6 +70,7 @@ for c in out:
         g = groups.get((c['set'], c['rarity'], c['kind'])) or groups.get((c['set'], c['rarity'], 'std')) or [0.25]
         c['price'] = round(statistics.median(g), 2)
     c['price'] = max(0.05, c['price'])
+    if 'foil' in c: c['foil'] = max(c['foil'], c['price'])
 
 # Sealed products: TCGplayer product ids (pack, box = booster display, case = 6 displays).
 # Market prices for those ids come from the riftdex-data daily TCGplayer snapshot; images are
@@ -83,4 +97,4 @@ meta = {
     'source': 'Card data: Riot Games official card gallery. Prices: TCGplayer market (USD).',
 }
 json.dump({'meta': meta, 'sets': SETS, 'cards': out}, open('src/data/cards.json', 'w'), separators=(',', ':'))
-print(len(out), 'cards;', sum(c['est'] for c in out), 'estimated prices;', collections.Counter(c['set'] for c in out))
+print(len(out), 'cards;', sum('tcg' in c for c in out), 'with TCGplayer ids;', sum('foil' in c for c in out), 'foil prices;', sum(c['est'] for c in out), 'estimated prices;', collections.Counter(c['set'] for c in out))

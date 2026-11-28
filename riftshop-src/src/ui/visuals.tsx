@@ -4,17 +4,22 @@ import type { SealedKind, Single, Slab as SlabT } from '../game/types';
 import { PSA_LABEL, bgsLabel } from '../game/grading';
 import { CardImage } from './CardImage';
 
-/** Official product photo (TCGplayer); a drawn wrapper if it can't load. */
+/** Official product photo (TCGplayer). Packs are cropped to the pack; a drawn wrapper shows only until it loads. */
 export function ProductImage({ set, kind, big, qty }: { set: SetId; kind: SealedKind; big?: boolean; qty?: number }) {
+  // Try the large photo, then the small one; the drawn wrapper stays until one has actually loaded.
   const [stage, setStage] = useState(0);
+  const [loaded, setLoaded] = useState(false);
   return (
-    <div className={`product ${kind}${big ? ' big' : ''}`}>
-      <div className="pack-art" data-set={set} data-kind={kind}>
-        <span>{SETS[set].name}</span>
-        <small>{kind === 'pack' ? 'Booster' : kind === 'box' ? 'Booster Display' : 'Display Case'}</small>
-      </div>
+    <div className={`product ${kind}${big ? ' big' : ''}${loaded ? ' loaded' : ''}`}>
+      {!loaded && (
+        <div className="pack-art" data-set={set} data-kind={kind}>
+          <span>{SETS[set].name}</span>
+          <small>{kind === 'pack' ? 'Booster' : kind === 'box' ? 'Booster Display' : 'Display Case'}</small>
+        </div>
+      )}
       {stage < 2 && (
-        <img src={productImage(set, kind, stage === 1)} alt={`${SETS[set].name} ${kind}`} loading="lazy" draggable={false} onError={() => setStage((s) => s + 1)} />
+        <img key={stage} className={loaded ? 'in' : ''} src={productImage(set, kind, stage === 1)} alt={`${SETS[set].name} ${kind}`} draggable={false}
+          onLoad={() => setLoaded(true)} onError={() => setStage((s) => s + 1)} />
       )}
       {qty !== undefined && qty > 1 && <span className="qty">×{qty}</span>}
     </div>

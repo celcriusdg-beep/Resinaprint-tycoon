@@ -1,0 +1,43 @@
+// Checks image layering with stand-in images served in place of TCGplayer's and Riot's CDNs
+// (this sandbox cannot reach them). Usage: PLAYWRIGHT_PATH=... node tools/smoke-images.mjs baseUrl outDir mockDir
+import { createRequire } from 'node:module';
+import { mkdirSync, readFileSync } from 'node:fs';
+const require = createRequire(import.meta.url);
+const { chromium, devices } = require(process.env.PLAYWRIGHT_PATH || 'playwright');
+const [base, out, mock] = process.argv.slice(2);
+mkdirSync(out, { recursive: true });
+const browser = await chromium.launch();
+const ctx = await browser.newContext({ ...devices['iPhone 13'] });
+await ctx.route('https://tcgplayer-cdn.tcgplayer.com/**', (r) => {
+  const id = Number(r.request().url().match(/product\/(\d+)/)[1]);
+  const sealed = [635366, 661954, 678149, 693377, 711362].includes(id) ? 'pack.jpg' : [635368, 661934, 678150, 693380, 711365, 635369, 661937, 678152, 693382, 711366].includes(id) ? 'box.jpg' : null;
+  r.fulfill({ contentType: 'image/jpeg', body: readFileSync(`${mock}/${sealed ?? 'card.png'}`) });
+});
+await ctx.route('https://cmsassets.rgpub.io/**', (r) => r.fulfill({ contentType: 'image/png', body: readFileSync(`${mock}/card.png`) }));
+const page = await ctx.newPage();
+const errors = [];
+page.on('pageerror', (e) => errors.push(e.message));
+const click = (text, sel = 'button') => page.evaluate(([t, s]) => { const el = [...document.querySelectorAll(s)].find((x) => x.textContent.trim().includes(t)); if (!el) return false; el.click(); return true; }, [text, sel]);
+await page.goto(base + '?debug');
+await page.waitForSelector('.top');
+await click('Open my first pack');
+await page.waitForTimeout(800);
+await page.screenshot({ path: `${out}/i1-stock.png` });
+await click('Put on shelf');
+await page.waitForTimeout(800);
+await page.screenshot({ path: `${out}/i2-sheet.png` });
+await click('on the shelf');
+await click('Open', '.sealed-row button.primary');
+await page.waitForTimeout(800);
+await page.screenshot({ path: `${out}/i3-tear.png` });
+await page.click('.tear-pack', { force: true });
+await page.waitForTimeout(800);
+await page.screenshot({ path: `${out}/i4-card.png` });
+const fallbackShown = await page.evaluate(() => !!document.querySelector('.reveal-card .card-face'));
+await page.click('.opening .x');
+await click('Shop', 'nav button');
+await page.waitForTimeout(800);
+await page.screenshot({ path: `${out}/i5-shop.png` });
+await browser.close();
+console.log('card fallback still shown after load:', fallbackShown);
+console.log(errors.length ? 'ERRORS\n' + errors.join('\n') : 'No page errors');

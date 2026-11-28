@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { CARD_BY_ID, SET_IDS, SETS, type SetId } from '../data/cards';
-import { BUYLIST_RATE, fmt, rawValue, sealedValue, wholesale } from '../game/economy';
+import { CARD_BY_ID, SET_IDS, SETS, preloadCards, type SetId } from '../data/cards';
+import { BUYLIST_RATE, fmt, rawValue, sealedValue } from '../game/economy';
 import type { SealedKind } from '../game/types';
-import { openSealed, sealedCount, sealedName, sellBulk, shelfSlots, shelveSealed } from '../game/sim';
+import { openSealed, sealedCount, sealedName, sellBulk, shelfSlots } from '../game/sim';
 import type { Pull } from '../game/packs';
-import { act, tryAct, useStore } from '../store';
+import { act, useStore } from '../store';
 import { CardImage } from './CardImage';
-import { Button, Modal, PriceInput, Section } from './common';
+import { Button, Section } from './common';
+import { ShelveSheet } from './ShelveSheet';
 import { ProductImage } from './visuals';
 
 const KINDS: SealedKind[] = ['case', 'box', 'pack'];
@@ -16,8 +17,6 @@ export function StockScreen() {
   useStore((s) => s.rev);
   const [bulkMax, setBulkMax] = useState(0.5);
   const [shelving, setShelving] = useState<{ set: SetId; kind: SealedKind } | null>(null);
-  const [qty, setQty] = useState(1);
-  const [price, setPrice] = useState(0);
   const owned = SET_IDS.filter((s) => KINDS.some((k) => sealedCount(g, s, k) > 0));
 
   const open = (set: SetId, n: number) => {
@@ -28,14 +27,13 @@ export function StockScreen() {
         if (p) packs.push(p);
       }
     });
-    if (packs.length) useStore.getState().setOpening({ set, packs });
+    if (packs.length) {
+      // Start downloading the first packs' pictures now, so cards flip in instantly.
+      preloadCards(packs.slice(0, 3).flat().map((p) => p.cardId));
+      useStore.getState().setOpening({ set, packs });
+    }
   };
-  const startShelf = (set: SetId, kind: SealedKind) => {
-    setShelving({ set, kind });
-    setQty(sealedCount(g, set, kind));
-    const onShelf = g.shelf.find((l) => l.set === set && l.kind === kind);
-    setPrice(onShelf?.price ?? Math.round(sealedValue(g, set, kind) * 1.1 * 100) / 100);
-  };
+  const startShelf = (set: SetId, kind: SealedKind) => setShelving({ set, kind });
 
   const top = Object.entries(g.cards)
     .flatMap(([id, [n, f]]) => [n > 0 ? { id, foil: false, n } : null, f > 0 ? { id, foil: true, n: f } : null])
@@ -99,27 +97,7 @@ export function StockScreen() {
         }}>Sell bulk for about {fmt(bulkPreview)}</Button>
       </Section>
 
-      {shelving && (
-        <Modal title={`Shelve ${sealedName(shelving.set, shelving.kind)}`} onClose={() => setShelving(null)}>
-          <div className="edit-listing">
-            <ProductImage set={shelving.set} kind={shelving.kind} big />
-            <div>
-              <label className="markup">
-                <span>How many: <b>{qty}</b> of {sealedCount(g, shelving.set, shelving.kind)}</span>
-                <input type="range" min={1} max={Math.max(1, sealedCount(g, shelving.set, shelving.kind))} value={qty} onChange={(e) => setQty(parseInt(e.target.value))} />
-              </label>
-              <span>Price each</span>
-              <PriceInput value={price} onChange={setPrice} />
-              <p className="muted small">
-                Market {fmt(sealedValue(g, shelving.set, shelving.kind))} · distributor {fmt(wholesale(g, shelving.set, shelving.kind))} · profit at this price {fmt(price - wholesale(g, shelving.set, shelving.kind))} each
-              </p>
-              <Button kind="primary" wide onClick={() => {
-                if (tryAct((s) => shelveSealed(s, shelving.set, shelving.kind, qty, price), `On the shelf at ${fmt(price)}.`)) setShelving(null);
-              }}>Put {qty} on the shelf</Button>
-            </div>
-          </div>
-        </Modal>
-      )}
+      {shelving && <ShelveSheet set={shelving.set} kind={shelving.kind} onClose={() => setShelving(null)} />}
     </div>
   );
 }
@@ -147,6 +125,7 @@ export function PackOpening() {
     setAll(false);
   };
   const nextPack = () => {
+    preloadCards((opening.packs[packIdx + 2] ?? []).map((p) => p.cardId));
     setPackIdx((i) => i + 1);
     setShown(0);
     setTorn(false);

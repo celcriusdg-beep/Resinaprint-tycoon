@@ -88,8 +88,18 @@ await page.waitForTimeout(400);
 await shot('11-market');
 check('buy deal', await page.evaluate(() => { const b = document.querySelector('.deal button:not([disabled])'); if (!b) return false; b.click(); return true; }));
 await click('Shop', 'nav button');
+await page.waitForTimeout(300);
+// Fill the display case from the store: tap an empty spot, pick a card, price it.
+check('case picker', await page.evaluate(() => { const b = document.querySelector('.case-spot.empty'); if (!b) return false; b.click(); return true; }));
+await page.waitForTimeout(300);
+await page.click('.pick-cards .pick');
+await page.waitForTimeout(300);
+await shot('12a-case-sheet');
+check('put in case', await click('Put in the display case'));
+await page.waitForTimeout(300);
 await page.evaluate(() => window.__advance(3));
 await page.waitForTimeout(500);
+await page.evaluate(() => document.querySelector('.content').scrollTo(0, 0));
 await shot('12-shop');
 check('customers bought', await page.evaluate(() => [...document.querySelectorAll('.feed-row.sale')].length > 0));
 await browser.close();

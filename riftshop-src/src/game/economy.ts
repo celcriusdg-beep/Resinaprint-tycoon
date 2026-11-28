@@ -23,10 +23,11 @@ export const ADS_COST = 250; // one day of extra customers
 export const ONLINE_FEE = 0.125; // marketplace + payment fees
 export const BUYLIST_RATE = 0.55; // what a store-to-store buylist pays for raw singles
 
-/** Foil copies of plain cards sell for more; showcase printings are already special. */
-export function foilMult(card: Card, foil: boolean): number {
-  if (!foil || card.kind !== 'std') return 1;
-  return card.rarity === 'Common' || card.rarity === 'Uncommon' ? 4 : 1.6;
+/** Price of the foil finish: TCGplayer's foil price when known, otherwise an estimate. */
+export function foilPrice(card: Card): number {
+  if (card.kind !== 'std') return card.price;
+  if (card.foil) return card.foil;
+  return card.price * (card.rarity === 'Common' || card.rarity === 'Uncommon' ? 2.5 : 1.6);
 }
 
 export function marketMult(g: GameState, card: Card): number {
@@ -39,7 +40,7 @@ export function marketMult(g: GameState, card: Card): number {
 /** Market value of one raw copy, USD. */
 export function rawValue(g: GameState, cardId: string, foil: boolean): number {
   const c = CARD_BY_ID[cardId];
-  return c.price * foilMult(c, foil) * marketMult(g, c);
+  return (foil ? foilPrice(c) : c.price) * marketMult(g, c);
 }
 
 export function singleValue(g: GameState, s: Pick<Single, 'cardId' | 'foil' | 'slab'>): number {

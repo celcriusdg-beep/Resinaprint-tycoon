@@ -51,10 +51,10 @@ export function Modal({ children, onClose, title }: { children: ReactNode; onClo
 }
 
 /** Price input with − / + steps. */
-export function PriceInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+export function PriceInput({ value, onChange, big }: { value: number; onChange: (v: number) => void; big?: boolean }) {
   const step = value >= 100 ? 5 : value >= 10 ? 1 : value >= 1 ? 0.25 : 0.05;
   return (
-    <div className="price-input">
+    <div className={`price-input${big ? ' big' : ''}`}>
       <button onClick={() => onChange(Math.max(0.05, +(value - step).toFixed(2)))}>−</button>
       <input inputMode="decimal" value={value} onChange={(e) => { const v = parseFloat(e.target.value); if (!isNaN(v)) onChange(v); }} />
       <button onClick={() => onChange(+(value + step).toFixed(2))}>+</button>

@@ -25,6 +25,10 @@ export interface Card {
   price: number;
   /** Price estimated from similar cards (no market price found). */
   est: boolean;
+  /** TCGplayer product id (photo + prices), when known. */
+  tcg?: number;
+  /** TCGplayer market price of the foil finish, when known. */
+  foil?: number;
 }
 
 export interface SetInfo {
@@ -66,4 +70,30 @@ export function setCards(set: SetId): Card[] {
 /** Official product photo (TCGplayer), loaded at runtime. */
 export function productImage(set: SetId, kind: 'pack' | 'box' | 'case', small = false): string {
   return `https://tcgplayer-cdn.tcgplayer.com/product/${SETS[set].tcg[kind]}_${small ? '200w' : 'in_1000x1000'}.jpg`;
+}
+
+const TCG_CDN = 'https://tcgplayer-cdn.tcgplayer.com/product/';
+
+/** Image sources for a card, fastest first: TCGplayer's photo (small, reliable), then Riot's official full-size art. */
+export function cardSources(c: Card, thumb: boolean): { base?: string; top?: string } {
+  const tcg = c.tcg ? `${TCG_CDN}${c.tcg}_${thumb ? '200w' : 'in_1000x1000'}.jpg` : undefined;
+  if (thumb) return tcg ? { base: tcg } : { top: c.img };
+  return { base: tcg, top: c.img };
+}
+
+const preloaded = new Set<string>();
+/** Start downloading card pictures before they are shown (pack openings). */
+export function preloadCards(ids: string[]): void {
+  for (const id of ids) {
+    const c = CARD_BY_ID[id];
+    if (!c) continue;
+    const { base, top } = cardSources(c, false);
+    for (const src of [base, top]) {
+      if (!src || preloaded.has(src)) continue;
+      preloaded.add(src);
+      const im = new Image();
+      im.decoding = 'async';
+      im.src = src;
+    }
+  }
 }

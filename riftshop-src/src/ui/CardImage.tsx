@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CARD_BY_ID, type Card } from '../data/cards';
+import { CARD_BY_ID, cardSources, type Card } from '../data/cards';
 
 export const RARITY_COLOR: Record<string, string> = {
   Common: '#9aa3ad', Uncommon: '#4fd18b', Rare: '#4fa3ff', Epic: '#b46cff', Showcase: '#ffc94d',
@@ -15,25 +15,36 @@ export function cardColor(c: Card): string {
 }
 
 /**
- * Official card picture from Riot's CDN. Thumbnails ask the CDN for a smaller
- * width first and fall back to the full image, then to a drawn card face (offline).
+ * Official card picture. TCGplayer's photo (small, fast) shows first where the card has one;
+ * Riot's full-size official art fades in on top as soon as it has loaded. While nothing has
+ * loaded yet a shimmering placeholder with the card's name shows.
  */
 export function CardImage({ id, foil, thumb, className, dim }: { id: string; foil?: boolean; thumb?: boolean; className?: string; dim?: boolean }) {
   const c = CARD_BY_ID[id];
-  const [stage, setStage] = useState(thumb ? 0 : 1);
-  const src = stage === 0 ? `${c.img}&w=320&fm=webp` : c.img;
+  const { base, top } = cardSources(c, !!thumb);
+  const [baseState, setBase] = useState<'loading' | 'ok' | 'fail'>(base ? 'loading' : 'fail');
+  const [topState, setTop] = useState<'loading' | 'ok' | 'fail'>(top ? 'loading' : 'fail');
+  const anyOk = baseState === 'ok' || topState === 'ok';
+  const allFailed = baseState === 'fail' && topState === 'fail';
   const landscape = c.w > c.h;
-  const shine = foil || c.kind !== 'std';
+  const shine = (foil || c.kind !== 'std') && !dim;
   return (
     <div className={`card-img${className ? ' ' + className : ''}${dim ? ' dim' : ''}${landscape ? ' landscape' : ''}`} style={{ ['--rc' as string]: cardColor(c) }}>
-      {/* Drawn face underneath: shows while the picture loads, or if it can't load (offline). */}
-      <div className="card-face" style={{ background: `linear-gradient(160deg, ${DOMAIN_COLOR[c.domains[0]] ?? '#555'}, #14101f)` }}>
-        <div className="cf-name">{c.name}</div>
-        <div className="cf-type">{c.type}</div>
-        <div className="cf-code">{c.code}</div>
-      </div>
-      {stage < 2 && <img src={src} alt={c.name} loading="lazy" decoding="async" draggable={false} onError={() => setStage((s) => s + 1)} />}
-      {shine && !dim && <div className="foil" />}
+      {!anyOk && (
+        <div className={`card-face${allFailed ? '' : ' loading'}`} style={{ background: `linear-gradient(160deg, ${DOMAIN_COLOR[c.domains[0]] ?? '#555'}, #14101f)` }}>
+          <div className="cf-name">{c.name}</div>
+          <div className="cf-code">{c.code}</div>
+        </div>
+      )}
+      {base && baseState !== 'fail' && (
+        <img className={`base${baseState === 'ok' ? ' in' : ''}`} src={base} alt={c.name} loading={thumb ? 'lazy' : 'eager'} decoding="async" draggable={false}
+          onLoad={() => setBase('ok')} onError={() => setBase('fail')} />
+      )}
+      {top && topState !== 'fail' && (
+        <img className={`top${topState === 'ok' ? ' in' : ''}`} src={top} alt={c.name} loading={thumb ? 'lazy' : 'eager'} decoding="async" draggable={false}
+          onLoad={() => setTop('ok')} onError={() => setTop('fail')} />
+      )}
+      {shine && <div className="foil" />}
     </div>
   );
 }
