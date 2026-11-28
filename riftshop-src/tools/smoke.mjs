@@ -101,7 +101,7 @@ await page.evaluate(() => window.__advance(3));
 await page.waitForTimeout(500);
 await page.evaluate(() => document.querySelector('.content').scrollTo(0, 0));
 await shot('12-shop');
-check('customers bought', await page.evaluate(() => [...document.querySelectorAll('.feed-row.sale')].length > 0));
+check('customers bought', await page.evaluate(() => window.__store.getState().g.stats.sales > 0), String(await page.evaluate(() => window.__store.getState().g.stats.sales)));
 await browser.close();
 console.log(results.join('\n'));
 console.log(errors.length ? 'ERRORS\n' + errors.join('\n') : 'No console errors');
