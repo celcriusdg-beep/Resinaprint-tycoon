@@ -1,10 +1,10 @@
 import { CARDS, SET_IDS, SETS, type SetId } from '../data/cards';
-import { SHOP_LEVELS, fmt, sealedValue, singleValue } from './economy';
+import { SHOP_LEVELS, fmt, rawValue, sealedValue, singleValue } from './economy';
 import { addXp, bump, isUnlocked, unlockLevel, type UnlockKey } from './progression';
 import { between, pick, random, weighted } from './rng';
-import { countFurniture, roomFor, type CustomerType } from './shop';
+import { countFurniture, displaySlots, roomFor, type CustomerType } from './shop';
 import type { GameState, SealedKind, SealedListing } from './types';
-import { buyDeal, dealValue, earn, log, sealedCount, sealedName, spend } from './sim';
+import { buyDeal, dealValue, earn, listInDisplay, listOnline, log, sealedCount, sealedName, spend } from './sim';
 
 // Phase 3: tournaments, release days, staff and random events.
 
@@ -249,10 +249,11 @@ export function launchToday(g: GameState): SetId | null {
 
 // ── Staff ───────────────────────────────────────────────────────────────
 
-export type StaffId = 'cashier' | 'stocker' | 'buyer' | 'pricer';
+export type StaffId = 'cashier' | 'lister' | 'stocker' | 'buyer' | 'pricer';
 
 export const STAFF: Record<StaffId, { name: string; icon: string; wage: number; unlock: UnlockKey; text: string }> = {
   cashier: { name: 'Cashier', icon: '💁', wage: 80, unlock: 'staff:cashier', text: 'Serves the queue faster: 20% more customers per hour.' },
+  lister: { name: 'Singles seller', icon: '🗂️', wage: 100, unlock: 'staff:lister', text: 'Puts cards from your binder up for sale: everything worth up to your limit, at market + your markup. Fills empty display case spots (and online listings if you want).' },
   stocker: { name: 'Stocker', icon: '📦', wage: 90, unlock: 'staff:stocker', text: 'Refills the products on your shelves from the back room when they run low, at your price.' },
   buyer: { name: 'Buyer', icon: '🧾', wage: 120, unlock: 'staff:buyer', text: 'Buys walk-in sellers’ offers when they ask no more than your limit (keeps $500 in the till).' },
   pricer: { name: 'Price manager', icon: '🏷️', wage: 150, unlock: 'staff:pricer', text: 'Every morning, reprices your shelves and display cases to market + your markup.' },
@@ -266,7 +267,53 @@ export function hire(g: GameState, id: StaffId, on: boolean): string | null {
   if (on && !isUnlocked(g, STAFF[id].unlock)) return `${STAFF[id].name} unlocks at level ${unlockLevel(STAFF[id].unlock)}.`;
   g.staff[id] = on || undefined;
   if (!on) delete g.staff[id];
+  if (on && id === 'lister') autoList(g);
   return null;
+}
+
+/** Most online listings the singles seller keeps up at once. */
+export const LISTER_ONLINE_CAP = 30;
+
+/**
+ * Singles seller: list raw cards worth up to `listMax` at market x `listMarkup`. Most valuable first, skips
+ * cards a customer has asked for, keeps one copy of each printing if `listKeepOne`. Case spots first, then online.
+ */
+export function autoList(g: GameState): number {
+  if (!g.staff.lister) return 0;
+  const c = g.staffCfg;
+  let caseFree = displaySlots(g) - g.display.length;
+  let onlineFree = c.listOnline && isUnlocked(g, 'online') ? Math.max(0, LISTER_ONLINE_CAP - g.online.length) : 0;
+  if (caseFree <= 0 && onlineFree <= 0) return 0;
+  const wanted = new Set(g.requests.map((r) => `${r.cardId}:${r.foil}`));
+  const cands: { cardId: string; foil: boolean; v: number; spare: number }[] = [];
+  for (const [cardId, counts] of Object.entries(g.cards)) {
+    for (const foil of [false, true]) {
+      const spare = counts[foil ? 1 : 0] - (c.listKeepOne ? 1 : 0);
+      if (spare <= 0 || wanted.has(`${cardId}:${foil}`)) continue;
+      const v = rawValue(g, cardId, foil);
+      if (v < 0.5 || v > c.listMax) continue;
+      cands.push({ cardId, foil, v, spare });
+    }
+  }
+  cands.sort((a, b) => b.v - a.v);
+  let listed = 0;
+  for (const x of cands) {
+    for (let k = 0; k < x.spare; k++) {
+      const price = Math.max(0.05, Math.round(x.v * c.listMarkup * 100) / 100);
+      const s = { uid: 0, cardId: x.cardId, foil: x.foil };
+      if (caseFree > 0) {
+        if (listInDisplay(g, s, price)) break;
+        caseFree--;
+      } else if (onlineFree > 0 && x.v >= 1) {
+        if (listOnline(g, s, price)) break;
+        onlineFree--;
+      } else break;
+      listed++;
+    }
+    if (caseFree <= 0 && onlineFree <= 0) break;
+  }
+  if (listed) log(g, 'info', `🗂️ Your singles seller put ${listed} card${listed > 1 ? 's' : ''} up for sale.`);
+  return listed;
 }
 
 const STOCK_TARGET: Record<SealedKind, [number, number]> = { pack: [6, 24], box: [1, 4], case: [0, 1] };

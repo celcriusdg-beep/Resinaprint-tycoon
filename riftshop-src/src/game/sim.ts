@@ -7,7 +7,7 @@ import { between, gauss, pick, random, weighted } from './rng';
 import { CUSTOMERS, countFurniture, customerMix, roomFor, starterFurniture, vibe, vibeTraffic, type CustomerType } from './shop';
 import type { CardRequest, Company, Deal, GameState, Listing, SealedKey, SealedKind, SealedListing, Single } from './types';
 import { displaySlots, shelfSlots } from './shop';
-import { buyerCheck, closeEvents, eventBudget, eventMix, eventTraffic, launchToday, openEvents, restock, wages } from './events';
+import { autoList, buyerCheck, closeEvents, eventBudget, eventMix, eventTraffic, launchToday, openEvents, restock, wages } from './events';
 
 export { displaySlots, shelfSlots } from './shop';
 
@@ -50,7 +50,7 @@ export function newGame(): GameState {
     racks: 0,
     requests: [],
     staff: {},
-    staffCfg: { buyerMax: 0.65, markup: 1.1 },
+    staffCfg: { buyerMax: 0.65, markup: 1.1, listMax: 20, listMarkup: 1.05, listKeepOne: true, listOnline: false },
     event: null,
     tournament: null,
     release: null,
@@ -113,6 +113,8 @@ export function migrate(raw: Record<string, unknown>): GameState {
     newRequest(g, 'collector');
     g.version = 4;
   }
+  // Settings objects added to over time: fill in any new keys.
+  g.staffCfg = { ...newGame().staffCfg, ...((raw.staffCfg as object) ?? {}) };
   if (g.version < 5) {
     // v5: staff, events, tournaments, releases (fields come from newGame()).
     g.version = SAVE_VERSION;
@@ -714,6 +716,7 @@ export function advance(g: GameState, dt: number, offline = false): void {
       addXp(g, slab.black ? 3000 : slab.grade >= 10 ? 300 : 30);
       log(g, slab.grade >= 10 || slab.black ? 'hit' : 'info', `${j.company} returned ${CARD_BY_ID[j.cardId].name}: ${slabTitle(slab)}!`, singleValue(g, s));
     }
+    if (g.staff.lister && Math.floor(before) !== Math.floor(g.hours)) autoList(g);
     if (Math.floor(before / DAY_HOURS) !== Math.floor(g.hours / DAY_HOURS)) endOfDay(g);
   }
 }

@@ -133,7 +133,7 @@ export interface GameState {
   requests: CardRequest[];
   /** Hired staff (the clerk is `clerk`). */
   staff: Partial<Record<StaffId, true>>;
-  staffCfg: { buyerMax: number; markup: number };
+  staffCfg: { buyerMax: number; markup: number; listMax: number; listMarkup: number; listKeepOne: boolean; listOnline: boolean };
   /** Today's random event. */
   event: { id: string; until: number; text: string } | null;
   tournament: Tournament | null;

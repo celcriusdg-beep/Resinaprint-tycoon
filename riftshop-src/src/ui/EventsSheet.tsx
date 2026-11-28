@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { SET_IDS, SETS, type SetId } from '../data/cards';
 import { CLERK_WAGE, fmt, sealedValue } from '../game/economy';
 import {
-  STAFF, TOURNEYS, activeEvent, canHost, cancelTournament, expectedPlayers, hire, hostTournament, launchToday, nextReleaseIn,
+  LISTER_ONLINE_CAP, STAFF, TOURNEYS, activeEvent, autoList, canHost, cancelTournament, expectedPlayers, hire, hostTournament, launchToday, nextReleaseIn,
   preorder, preorderLimit, preorderPrice, preordered, prizeValue, seats, tourneyToday, type StaffId, type TourneyKind,
 } from '../game/events';
 import { isUnlocked, unlockLevel } from '../game/progression';
@@ -58,6 +58,17 @@ export function StaffSheet({ onClose }: { onClose: () => void }) {
                 ? <Button kind={on ? 'primary' : 'default'} small onClick={() => tryAct((s) => hire(s, id, !on), on ? `${d.name} let go.` : `${d.name} hired!`)}>{on ? 'Hired ✓' : 'Hire'}</Button>
                 : <span className="locked-note">🔒 Lv {unlockLevel(d.unlock)}</span>}
             </div>
+            {on && id === 'lister' && (
+              <>
+                <Chips label="List cards worth up to" value={g.staffCfg.listMax} options={[2, 5, 10, 20, 50, 100, 250]} fmt={(v) => `$${v}`} onPick={(v) => act((s) => { s.staffCfg.listMax = v; autoList(s); })} />
+                <Chips label="Asking price" value={g.staffCfg.listMarkup} options={[0.9, 0.95, 1, 1.05, 1.1, 1.2]} fmt={(v) => (v === 1 ? 'market' : `${v > 1 ? '+' : '−'}${Math.round(Math.abs(v - 1) * 100)}%`)} onPick={(v) => act((s) => (s.staffCfg.listMarkup = v))} />
+                <Chips label="Keep one of each card for your binder" value={g.staffCfg.listKeepOne ? 1 : 0} options={[1, 0]} fmt={(v) => (v ? 'Yes' : 'No, sell all')} onPick={(v) => act((s) => { s.staffCfg.listKeepOne = !!v; autoList(s); })} />
+                {isUnlocked(g, 'online') && (
+                  <Chips label={`Also list online when the case is full (up to ${LISTER_ONLINE_CAP}, cards $1+)`} value={g.staffCfg.listOnline ? 1 : 0} options={[1, 0]} fmt={(v) => (v ? 'Yes' : 'No')} onPick={(v) => act((s) => { s.staffCfg.listOnline = !!v; autoList(s); })} />
+                )}
+                <span className="muted small chips-note">Checks every shop hour. Slabs and anything worth more than your limit stay with you. Cards customers asked for are kept for their requests.</span>
+              </>
+            )}
             {on && id === 'buyer' && (
               <Chips label="Buy offers asking at most" value={g.staffCfg.buyerMax} options={[0.5, 0.6, 0.65, 0.7, 0.8]} fmt={(v) => `${Math.round(v * 100)}%`} onPick={(v) => act((s) => (s.staffCfg.buyerMax = v))} />
             )}

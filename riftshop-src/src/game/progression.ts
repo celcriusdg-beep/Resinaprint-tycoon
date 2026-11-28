@@ -23,7 +23,7 @@ export type UnlockKey =
   | `set:${SetId}` | 'cases' | 'online' | 'singles' | 'ads' | 'clerk'
   | `grade:${Company}` | `tier:${Company}:${string}` | `shop:${number}`
   | 'furn:table' | 'furn:slabcase' | 'furn:endcap' | 'furn:neon' | 'furn:sofa'
-  | 'staff:cashier' | 'staff:stocker' | 'staff:buyer' | 'staff:pricer'
+  | 'staff:cashier' | 'staff:lister' | 'staff:stocker' | 'staff:buyer' | 'staff:pricer'
   | 'tourney:casual' | 'tourney:weekly' | 'tourney:regional';
 
 export interface Unlock {
@@ -53,6 +53,7 @@ export const UNLOCKS: Unlock[] = [
   { key: 'grade:BGS', level: 6, title: 'Beckett grading', text: 'Beckett (BGS) Base tier, with subgrades and the chance of a Black Label.' },
   { key: 'shop:3', level: 6, title: 'Game Store', text: 'You can move into a Game Store.' },
   { key: 'furn:neon', level: 6, title: 'Neon sign', text: 'Lots of atmosphere: more people walk in.' },
+  { key: 'staff:lister', level: 6, title: 'Hire a singles seller', text: 'Puts your cards up for sale for you, up to the value you choose, at your markup.' },
   { key: 'staff:stocker', level: 7, title: 'Hire a stocker', text: 'Keeps your shelves topped up from the back room.' },
   { key: 'set:SFD', level: 7, title: 'Spiritforged distributor account', text: 'Buy Spiritforged packs and boxes (limited allocation).' },
   { key: 'tier:BGS:standard', level: 8, title: 'Beckett Standard service', text: '4-day Beckett turnaround.' },

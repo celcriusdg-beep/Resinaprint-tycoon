@@ -340,3 +340,25 @@ describe('events, tournaments, releases and staff', () => {
     expect(EVENTS.length).toBeGreaterThan(8);
   });
 });
+
+describe('singles seller', () => {
+  it('lists cards up to your limit at your markup, keeping one of each', () => {
+    const g = newGame();
+    g.level = 6;
+    const byPrice = (lo: number, hi: number) => CARDS.find((c) => c.kind === 'std' && c.price >= lo && c.price <= hi)!;
+    const cheap = byPrice(2, 4), mid = byPrice(8, 15), pricey = byPrice(25, 1e6);
+    addCard(g, cheap.id, false, 3);
+    addCard(g, mid.id, false, 2);
+    addCard(g, pricey.id, false, 2);
+    g.staffCfg.listMax = 20;
+    g.staffCfg.listMarkup = 0.95;
+    expect(hire(g, 'lister', true)).toBeNull(); // lists right away
+    const listed = g.display.map((l) => l.cardId);
+    expect(listed.filter((id) => id === cheap.id)).toHaveLength(2); // kept one
+    expect(listed.filter((id) => id === mid.id)).toHaveLength(1);
+    expect(listed).not.toContain(pricey.id); // over the limit
+    expect(g.display[0].cardId).toBe(mid.id); // most valuable first
+    expect(g.display[0].price).toBeCloseTo(rawValue(g, mid.id, false) * 0.95, 1);
+    expect(g.cards[cheap.id][0]).toBe(1);
+  });
+});
