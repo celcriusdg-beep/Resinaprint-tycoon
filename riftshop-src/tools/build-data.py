@@ -61,6 +61,43 @@ for c in gallery['cards']:
         if row and row[2] is not None and k == 'std':
             out[-1]['foil'] = row[2]  # real TCGplayer foil price
 
+# Cards the gallery snapshot lacks but the riftbound-api mirror has (booster sets only).
+have_ids = {c['id'] for c in out}
+for x in json.load(open(f'{api_dir}/public/data/cards.json')):
+    rid = (x.get('riftbound_id') or '').lower()
+    sid = x['set']['set_id']
+    cl = x['classification']
+    if sid not in BOOSTER_SETS or not rid or rid in have_ids or not cl.get('type') or cl['type'] == 'Token' or rid.split('-')[1].startswith('t') or 'Exclusive' in x['name']:
+        continue
+    md = x['metadata']
+    k = 'sig' if md.get('signature') else 'over' if md.get('overnumbered') else 'alt' if md.get('alternate_art') else 'std'
+    parts = rid.split('-')
+    code = f"{parts[0].upper()}-{parts[1]}/{parts[2]}" if len(parts) == 3 else rid.upper()
+    price = prices.get(price_key(code))
+    out.append({
+        'id': rid, 'code': code, 'n': x['collector_number'], 'name': x['name'], 'set': sid, 'rarity': cl['rarity'],
+        'type': cl['type'], 'domains': cl.get('domain') or [], 'kind': k, 'img': x['media']['image_url'], 'w': 744, 'h': 1039,
+        'price': price, 'est': price is None,
+    })
+    if x.get('tcgplayer_id'): out[-1]['tcg'] = int(x['tcgplayer_id'])
+    have_ids.add(rid)
+
+# Signed overnumbered printings TCGplayer lists but the gallery doesn't (e.g. Radiance): same card and art
+# as the overnumbered printing, signed by the artist.
+by_code = {c['code'].split('/')[0]: c for c in out}
+for key, p in prices.items():
+    m = re.match(r'^(OGN|SFD|UNL|VEN|RAD)-(\d+)-SIG$', key)
+    if not m: continue
+    s_, n_ = m.group(1), m.group(2)
+    if f'{s_}-{n_}*' in by_code: continue
+    over = by_code.get(f'{s_}-{n_}')
+    if not over: continue
+    sig = dict(over)
+    sig.update({'id': over['id'].replace(f'-{n_}-', f'-{n_}*-'), 'code': over['code'].replace(f'-{n_}/', f'-{n_}*/'), 'kind': 'sig', 'rarity': 'Showcase', 'price': p, 'est': False})
+    sig.pop('tcg', None); sig.pop('foil', None)
+    out.append(sig)
+    by_code[f'{s_}-{n_}*'] = sig
+
 # Fill missing prices with the median of the same set, rarity and printing kind.
 groups = collections.defaultdict(list)
 for c in out:

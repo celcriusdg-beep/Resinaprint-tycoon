@@ -81,3 +81,6 @@ export function clockLabel(hours: number): string {
   const mm = Math.floor((h - hh) * 60);
   return `${String(hh).padStart(2, '0')}:${String(mm - (mm % 5)).padStart(2, '0')}`;
 }
+
+/** Buying a single from the online market costs the market price plus seller markup and shipping. */
+export const SINGLES_MARKUP = 1.1;

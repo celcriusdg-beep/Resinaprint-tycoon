@@ -1,8 +1,9 @@
-import { CARD_BY_ID, CARDS, META, SET_IDS, SETS } from '../data/cards';
+import { useState } from 'react';
+import { CARD_BY_ID, CARDS, META, SET_IDS, SETS, kindLabel, type SetId } from '../data/cards';
 import { DAY_HOURS, ONLINE_FEE, allocation, fmt, marketMult, rawValue, sealedValue, singleValue, wholesale } from '../game/economy';
 import { slabTitle } from '../game/grading';
 import type { SealedKind } from '../game/types';
-import { buyDeal, buySealed, dealName, dealValue, sealedName, setListingPrice, singleName, unlist } from '../game/sim';
+import { buyDeal, buySealed, buySingle, dealName, dealValue, rawCount, sealedName, setListingPrice, singleName, singlePrice, unlist } from '../game/sim';
 import { act, tryAct, useStore } from '../store';
 import { CardImage } from './CardImage';
 import { Button, PriceInput, Section } from './common';
@@ -46,6 +47,8 @@ export function MarketScreen() {
         </div>
         <p className="muted small">Not every deal is a bargain — check the market price before you buy.</p>
       </Section>
+
+      <SinglesMarket />
 
       <Section title="Distributor" right={<span className="muted small">Allocation resets each day</span>}>
         {SET_IDS.slice().reverse().map((set) => (
@@ -148,5 +151,59 @@ export function GradingScreen() {
         </div>
       </Section>
     </div>
+  );
+}
+
+type Show = 'chase' | 'over' | 'all';
+
+/** Buy any card you're missing, at market price + 10% (seller markup and shipping). */
+function SinglesMarket() {
+  const g = useStore((s) => s.g);
+  const [q, setQ] = useState('');
+  const [set, setSet] = useState<SetId | 'ALL'>('ALL');
+  const [show, setShow] = useState<Show>('over');
+  const [missingOnly, setMissingOnly] = useState(true);
+  const query = q.trim().toLowerCase();
+  const list = CARDS.filter((c) => set === 'ALL' || c.set === set)
+    .filter((c) => (show === 'over' ? c.kind === 'over' || c.kind === 'sig' : show === 'chase' ? c.kind !== 'std' || c.rarity === 'Epic' : true))
+    .filter((c) => !missingOnly || !g.seen[c.id])
+    .filter((c) => !query || c.name.toLowerCase().includes(query) || c.code.toLowerCase().includes(query))
+    .sort((a, b) => rawValue(g, b.id, false) - rawValue(g, a.id, false));
+  return (
+    <Section title="Singles market" right={<span className="muted small">market + 10%</span>}>
+      <div className="binder-tools">
+        <input className="search" type="search" placeholder="Search any card" value={q} onChange={(e) => setQ(e.target.value)} />
+        <select className="sort" value={set} onChange={(e) => setSet(e.target.value as SetId | 'ALL')} aria-label="Set">
+          <option value="ALL">All sets</option>
+          {SET_IDS.map((s) => <option key={s} value={s}>{SETS[s].name}</option>)}
+        </select>
+      </div>
+      <div className="seg">
+        {([['over', 'Overnumbered'], ['chase', 'Chase'], ['all', 'All']] as [Show, string][]).map(([id, label]) => (
+          <button key={id} className={show === id ? 'on' : ''} onClick={() => setShow(id)}>{label}</button>
+        ))}
+        <button className={missingOnly ? 'on' : ''} onClick={() => setMissingOnly((v) => !v)}>Missing only</button>
+      </div>
+      <div className="muted small">{list.length} cards</div>
+      <div className="singles">
+        {list.slice(0, 40).map((c) => {
+          const foil = c.kind !== 'std';
+          const price = singlePrice(g, c.id, foil);
+          const n = rawCount(g, c.id, false) + rawCount(g, c.id, true);
+          return (
+            <div className="single-row" key={c.id}>
+              <div onClick={() => useStore.getState().showCard(c.id)}><CardImage id={c.id} foil={foil} thumb /></div>
+              <div className="single-info">
+                <b>{c.name}</b>
+                <span className="muted small">{SETS[c.set].name} · {c.code}{c.kind !== 'std' ? ` · ${kindLabel(c.kind)}` : ` · ${c.rarity}`}{n ? ` · you have ${n}` : ''}</span>
+                <Button small kind="primary" disabled={g.cash < price} onClick={() => tryAct((s) => buySingle(s, c.id, foil), `Bought ${c.name}.`)}>Buy {fmt(price)}</Button>
+              </div>
+            </div>
+          );
+        })}
+        {list.length > 40 && <p className="muted small">Showing the 40 most valuable — search to find others.</p>}
+        {list.length === 0 && <p className="muted small">Nothing matches — you might have them all!</p>}
+      </div>
+    </Section>
   );
 }

@@ -1,5 +1,5 @@
 import { BOXES_PER_CASE, CARD_BY_ID, CARDS, PACKS_PER_BOX, SET_IDS, SETS, type Card, type SetId } from '../data/cards';
-import { ADS_COST, BUYLIST_RATE, CLERK_WAGE, DAY_HOURS, ONLINE_FEE, SHOP_LEVELS, allocation, fmt, rawValue, sealedValue, singleValue, wholesale } from './economy';
+import { ADS_COST, BUYLIST_RATE, CLERK_WAGE, DAY_HOURS, ONLINE_FEE, SHOP_LEVELS, SINGLES_MARKUP, allocation, fmt, rawValue, sealedValue, singleValue, wholesale } from './economy';
 import { COMPANIES, rollGrade, slabTitle } from './grading';
 import { openPack, type Pull } from './packs';
 import { between, gauss, pick, random, weighted } from './rng';
@@ -177,6 +177,20 @@ export function dealName(d: Deal): string {
 
 export function dealValue(g: GameState, d: Deal): number {
   return d.what.type === 'sealed' ? sealedValue(g, d.what.set, d.what.kind) * d.what.qty : rawValue(g, d.what.cardId, d.what.foil);
+}
+
+/** Price to buy one copy from the online singles market. */
+export function singlePrice(g: GameState, cardId: string, foil: boolean): number {
+  return Math.max(0.25, Math.round(rawValue(g, cardId, foil) * SINGLES_MARKUP * 100) / 100);
+}
+
+export function buySingle(g: GameState, cardId: string, foil: boolean): string | null {
+  const price = singlePrice(g, cardId, foil);
+  if (g.cash < price) return 'Not enough cash.';
+  spend(g, price);
+  addCard(g, cardId, foil);
+  log(g, 'info', `Ordered ${singleName({ uid: 0, cardId, foil })} online for ${fmt(price)}.`);
+  return null;
 }
 
 export function declineOffer(g: GameState, id: number): void {

@@ -386,3 +386,8 @@ b { font-weight: 650; }
 .binder-tools { display: flex; gap: 8px; }
 .binder-tools .search { flex: 1; min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 11px; padding: 9px 11px; color: var(--text); font: inherit; font-size: 14px; }
 .binder-tools .sort { background: var(--panel); border: 1px solid var(--line); border-radius: 11px; padding: 9px 8px; color: var(--text); font: inherit; font-size: 14px; max-width: 46%; }
+
+.singles { display: flex; flex-direction: column; gap: 8px; }
+.single-row { display: grid; grid-template-columns: 64px 1fr; gap: 10px; align-items: center; background: var(--panel-2); border-radius: 12px; padding: 7px; }
+.single-info { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; min-width: 0; }
+.single-info b { font-size: 14px; }
