@@ -608,6 +608,43 @@ function buy(g: GameState, type: CustomerType, who: string, p: Pickable, v: numb
   if ((type === 'player' || type === 'collector') && random() < 0.04) newRequest(g, type, who);
 }
 
+/** Listings at least this valuable attract serious collectors who come in for that one item. */
+export const HUNT_MIN = 150;
+
+/**
+ * Chance per shop hour that a serious collector comes in for one specific item. About once a day for a slab on
+ * the desk; more with reputation and a bigger shop, a little less for very pricey items.
+ */
+export function huntRate(g: GameState, value: number, onDesk: boolean): number {
+  if (value < HUNT_MIN) return 0;
+  return 0.06 * (onDesk ? 1.6 : 1) * (0.6 + g.rep / 100) * (0.8 + 0.2 * g.shopLevel) * eventBudget(g) * Math.min(1, Math.pow(3000 / value, 0.25));
+}
+
+/** Serious collectors: each pricey slab or card on show can bring in someone who wants exactly that. */
+function seriousCollectors(g: GameState, offline: boolean, step: number): void {
+  const presence = offline ? (g.clerk ? 0.5 : 0) : 1;
+  if (!presence) return;
+  const items: { where: 'case' | 'desk'; l: Listing }[] = [
+    ...g.slabDesk.map((l) => ({ where: 'desk' as const, l })),
+    ...g.display.map((l) => ({ where: 'case' as const, l })),
+  ];
+  for (const p of items) {
+    const v = value(g, p);
+    if (random() >= huntRate(g, v, p.where === 'desk') * presence * step) continue;
+    if (!g.slabDesk.includes(p.l) && !g.display.includes(p.l)) continue; // sold this step
+    const who = pick(NAMES);
+    // They know exactly what it's worth: a fair price sells, a big markup doesn't.
+    let pay = v * between(0.92, 1.25) * (0.94 + g.rep / 800);
+    if (p.l.slab) pay *= 1.05 + (p.where === 'desk' ? 0.08 : 0);
+    if (p.l.price <= pay) {
+      buy(g, 'collector', who, p, v, Infinity);
+      g.feed[0].text = `🧐 ${who} came in just for ${itemName(p)} and bought it!`;
+    } else {
+      log(g, 'leave', `🧐 ${who} came in just for ${itemName(p)}, but ${fmt(p.l.price)} was too much — would have paid about ${fmt(pay)}.`, undefined, 'collector');
+    }
+  }
+}
+
 function seller(g: GameState, who: string): void {
   if (g.offers.length >= 3) return;
   let d: Deal;
@@ -717,6 +754,7 @@ export function advance(g: GameState, dt: number, offline = false): void {
       spawnAcc -= 1;
       customer(g, offline);
     }
+    seriousCollectors(g, offline, step);
     g.offers = g.offers.filter((o) => o.expires > g.hours);
     if (g.staff.stocker) for (const l of g.shelf) restock(g, l);
     // Online marketplace: listings near market price sell within a day or two.

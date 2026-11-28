@@ -386,6 +386,34 @@ describe('slab desk', () => {
     expect(g.feed.some((f) => f.kind === 'sale' && f.text.includes(card.name))).toBe(true);
   });
 
+  it('serious collectors come in for expensive slabs, and a fair price sells within a few days', () => {
+    for (const seed of [1, 2, 3]) {
+      setRandom(mulberry32(seed));
+      const g = newGame();
+      g.level = 11;
+      g.furniture = [{ uid: 1, type: 'case', tier: 1 }, { uid: 2, type: 'slabcase', tier: 1 }];
+      const sig = CARDS.filter((c) => c.kind === 'sig').sort((a, b) => b.price - a.price)[3];
+      const l = { uid: 9, cardId: sig.id, foil: true, slab: { company: 'BGS' as const, grade: 8.5, cert: 1 } };
+      expect(singleValue(g, l)).toBeGreaterThan(1000);
+      g.slabDesk.push({ ...l, price: Math.round(singleValue(g, l)) });
+      for (let d = 0; d < 4 && g.slabDesk.length; d++) advance(g, 12);
+      expect(g.slabDesk).toHaveLength(0);
+      expect(g.feed.some((f) => f.text.includes('came in just for'))).toBe(true);
+    }
+  });
+
+  it('serious collectors walk away from a big markup', () => {
+    setRandom(mulberry32(9));
+    const g = newGame();
+    g.furniture = [{ uid: 1, type: 'case', tier: 1 }, { uid: 2, type: 'slabcase', tier: 1 }];
+    const sig = CARDS.filter((c) => c.kind === 'sig').sort((a, b) => b.price - a.price)[3];
+    const l = { uid: 9, cardId: sig.id, foil: true, slab: { company: 'BGS' as const, grade: 8.5, cert: 1 } };
+    g.slabDesk.push({ ...l, price: Math.round(singleValue(g, l) * 2) });
+    advance(g, 36);
+    expect(g.slabDesk).toHaveLength(1);
+    expect(g.feed.some((f) => f.text.includes('was too much'))).toBe(true);
+  });
+
   it('moves slabs from the display case onto an existing desk in old saves', () => {
     const card = CARDS.find((c) => c.kind === 'alt')!;
     const g = migrate({
