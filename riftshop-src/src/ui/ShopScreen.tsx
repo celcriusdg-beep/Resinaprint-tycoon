@@ -10,7 +10,7 @@ import {
 import { act, tryAct, useStore } from '../store';
 import { isUnlocked, unlockLevel } from '../game/progression';
 import { CardImage } from './CardImage';
-import { Button, Modal, PriceInput } from './common';
+import { Button, Modal, Pct, PriceInput, PriceTag } from './common';
 import { CaseSheet, ShelveSheet } from './ShelveSheet';
 import { BuildSheet } from './BuildSheet';
 import { EventBanner, EventsSheet, StaffSheet } from './EventsSheet';
@@ -86,7 +86,7 @@ export function ShopScreen() {
               l ? (
                 <button className="shelf-spot" key={l.uid} onClick={() => setSheet({ t: 'editShelf', uid: l.uid })}>
                   <ProductImage set={l.set} kind={l.kind} qty={l.qty} />
-                  <span className={`price-tag${l.price > sealedValue(g, l.set, l.kind) * 1.3 ? ' hi' : ''}`}>{fmt(l.price)}</span>
+                  <PriceTag price={l.price} value={sealedValue(g, l.set, l.kind)} />
                 </button>
               ) : (
                 <button className="shelf-spot empty" key={`e${i}`} onClick={() => setSheet({ t: 'pickSealed' })}>＋<span>Stock</span></button>
@@ -108,7 +108,7 @@ export function ShopScreen() {
             l ? (
               <button className="case-spot" key={l.uid} onClick={() => setSheet({ t: 'editCase', uid: l.uid })}>
                 {l.slab ? <Slab s={{ ...l, slab: l.slab }} small /> : <CardImage id={l.cardId} foil={l.foil} thumb />}
-                <span className={`price-tag${l.price > singleValue(g, l) * 1.3 ? ' hi' : ''}`}>{fmt(l.price)}</span>
+                <PriceTag price={l.price} value={singleValue(g, l)} />
               </button>
             ) : (
               <button className="case-spot empty" key={`e${i}`} onClick={() => setSheet({ t: 'pickCard' })}>＋</button>
@@ -252,7 +252,7 @@ function SlabDesk({ onPick, onEdit, onBuild }: { onPick: () => void; onEdit: (ui
           l ? (
             <button className="case-spot" key={l.uid} onClick={() => onEdit(l.uid)}>
               <Slab s={{ ...l, slab: l.slab! }} small />
-              <span className={`price-tag${l.price > singleValue(g, l) * 1.3 ? ' hi' : ''}`}>{fmt(l.price)}</span>
+              <PriceTag price={l.price} value={singleValue(g, l)} />
             </button>
           ) : (
             <button className="case-spot empty desk-empty" key={`e${i}`} onClick={onPick}>＋<span>Slab</span></button>
@@ -342,7 +342,7 @@ function EditShelf({ uid, onClose }: { uid: number; onClose: () => void }) {
       <div className="price-help">
         <div><span>On shelf</span><b>{l.qty}</b></div>
         <div><span>Market</span><b>{fmt(v)}</b></div>
-        <div><span>Your price</span><b className={l.price > v * 1.3 ? 'down' : 'up'}>{fmt(l.price)}</b></div>
+        <div><span>Your price</span><b className={l.price > v * 1.3 ? 'down' : 'up'}>{fmt(l.price)} <Pct price={l.price} value={v} /></b></div>
       </div>
       <PriceInput value={l.price} onChange={(p) => act((s) => setShelfPrice(s, uid, p))} big />
       {sealedCount(g, l.set, l.kind) > 0 && <p className="muted small center">{sealedCount(g, l.set, l.kind)} more in the back room — add them from the Stock tab.</p>}
@@ -362,7 +362,7 @@ function EditCase({ uid, onClose, where = 'display' }: { uid: number; onClose: (
       <div className="sheet-hero card">{l.slab ? <Slab s={{ ...l, slab: l.slab }} /> : <CardImage id={l.cardId} foil={l.foil} />}</div>
       <div className="price-help">
         <div><span>Market</span><b>{fmt(v)}</b></div>
-        <div><span>Your price</span><b className={l.price > v * 1.3 ? 'down' : 'up'}>{fmt(l.price)}</b></div>
+        <div><span>Your price</span><b className={l.price > v * 1.3 ? 'down' : 'up'}>{fmt(l.price)} <Pct price={l.price} value={v} /></b></div>
       </div>
       <PriceInput value={l.price} onChange={(p) => act((s) => setListingPrice(s, where, uid, p))} big />
       <Button kind="ghost" wide onClick={() => { act((s) => unlist(s, where, uid)); onClose(); }}>{where === 'slabDesk' ? 'Take it off the slab desk' : 'Take it out of the case'}</Button>

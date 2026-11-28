@@ -5,7 +5,7 @@ import type { SealedKind, Single } from '../game/types';
 import { listInDisplay, listOnDesk, sealedCount, sealedName, shelveSealed, singleName } from '../game/sim';
 import { tryAct, useStore } from '../store';
 import { CardImage } from './CardImage';
-import { Button, Modal, PriceInput } from './common';
+import { Button, Modal, PriceInput, Pct } from './common';
 import { ProductImage, Slab } from './visuals';
 
 /** Put sealed product from the back room on the shelf: how many and at what price. */
@@ -29,7 +29,7 @@ export function ShelveSheet({ set, kind, onClose }: { set: SetId; kind: SealedKi
       <div className="price-help">
         <div><span>Market</span><b>{fmt(mkt)}</b></div>
         <div><span>Distributor</span><b>{fmt(cost)}</b></div>
-        <div><span>Your price</span><b className={price > mkt * 1.3 ? 'down' : 'up'}>{fmt(price)}</b></div>
+        <div><span>Your price</span><b className={price > mkt * 1.3 ? 'down' : 'up'}>{fmt(price)} <Pct price={price} value={mkt} /></b></div>
       </div>
       <PriceInput value={price} onChange={setPrice} big />
       <div className="quick-prices">
@@ -58,7 +58,7 @@ export function CaseSheet({ s, onClose, desk }: { s: Single; onClose: () => void
       <div className="sheet-hero card">{s.slab ? <Slab s={{ ...s, slab: s.slab }} /> : <CardImage id={s.cardId} foil={s.foil} />}</div>
       <div className="price-help">
         <div><span>Market</span><b>{fmt(v)}</b></div>
-        <div><span>Your price</span><b className={price > v * 1.3 ? 'down' : 'up'}>{fmt(price)}</b></div>
+        <div><span>Your price</span><b className={price > v * 1.3 ? 'down' : 'up'}>{fmt(price)} <Pct price={price} value={v} /></b></div>
       </div>
       <PriceInput value={price} onChange={setPrice} big />
       <div className="quick-prices">

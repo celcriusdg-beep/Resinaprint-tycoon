@@ -24,7 +24,8 @@ export type UnlockKey =
   | `grade:${Company}` | `tier:${Company}:${string}` | `shop:${number}`
   | 'furn:table' | 'furn:slabcase' | 'furn:endcap' | 'furn:neon' | 'furn:sofa'
   | 'staff:cashier' | 'staff:lister' | 'staff:stocker' | 'staff:buyer' | 'staff:pricer'
-  | 'tourney:casual' | 'tourney:weekly' | 'tourney:regional';
+  | 'tourney:casual' | 'tourney:weekly' | 'tourney:regional'
+  | 'battles' | 'raffles' | 'vault:starter' | 'vault:collector' | 'vault:grail';
 
 export interface Unlock {
   key: UnlockKey;
@@ -44,6 +45,9 @@ export const UNLOCKS: Unlock[] = [
   { key: 'shop:2', level: 3, title: 'Corner Shop', text: 'You can move into a Corner Shop: more shelves, more customers.' },
   { key: 'furn:slabcase', level: 3, title: 'Slab desk', text: 'A glass desk just for slabs: collectors pay 8% more for slabs sold there.' },
   { key: 'furn:endcap', level: 4, title: 'Pack endcap', text: 'An impulse-buy rack: more kids and casual players.' },
+  { key: 'battles', level: 3, title: 'Pack battles', text: 'Open packs against a challenger: the higher total takes every card.' },
+  { key: 'vault:starter', level: 3, title: 'Starter Vaults', text: '$50 online mystery boxes: one card or slab, sometimes worth far more.' },
+  { key: 'raffles', level: 4, title: 'Raffles and giveaways', text: 'Raffle off slabs, cards or packs with tickets, or run a free giveaway for reputation.' },
   { key: 'set:UNL', level: 4, title: 'Unleashed distributor account', text: 'Buy Unleashed packs and boxes wholesale.' },
   { key: 'singles', level: 4, title: 'Singles market', text: 'Buy any single card online at market + 10%.' },
   { key: 'staff:cashier', level: 5, title: 'Hire a cashier', text: 'Serves the queue faster: 20% more customers.' },
@@ -55,11 +59,13 @@ export const UNLOCKS: Unlock[] = [
   { key: 'furn:neon', level: 6, title: 'Neon sign', text: 'Lots of atmosphere: more people walk in.' },
   { key: 'staff:lister', level: 6, title: 'Hire a singles seller', text: 'Puts your cards up for sale for you, up to the value you choose, at your markup.' },
   { key: 'staff:stocker', level: 7, title: 'Hire a stocker', text: 'Keeps your shelves topped up from the back room.' },
+  { key: 'vault:collector', level: 6, title: 'Collector Vaults', text: '$250 mystery boxes with better slabs.' },
   { key: 'set:SFD', level: 7, title: 'Spiritforged distributor account', text: 'Buy Spiritforged packs and boxes (limited allocation).' },
   { key: 'tier:BGS:standard', level: 8, title: 'Beckett Standard service', text: '4-day Beckett turnaround.' },
   { key: 'cases', level: 8, title: 'Booster cases', text: 'Buy sealed cases of 6 booster boxes from the distributor.' },
   { key: 'staff:buyer', level: 9, title: 'Hire a buyer', text: 'Snaps up cheap offers from walk-in sellers for you.' },
   { key: 'furn:sofa', level: 9, title: 'Collector lounge', text: 'Collectors and investors with big budgets come in more.' },
+  { key: 'vault:grail', level: 9, title: 'Grail Vaults', text: '$1,000 mystery boxes: at least $100 back, a shot at a Black Label worth 10×.' },
   { key: 'set:OGN', level: 10, title: 'Origins distributor account', text: 'Buy Origins packs and boxes (limited allocation).' },
   { key: 'clerk', level: 10, title: 'Hire a clerk', text: 'A clerk keeps selling from your shelves while the app is closed.' },
   { key: 'shop:4', level: 10, title: 'Card Emporium', text: 'You can move into a Card Emporium.' },
@@ -114,7 +120,8 @@ export type Counter =
   | 'packsSold' | 'boxesSold' | 'singlesSold' | 'packsOpened' | 'boxesOpened' | 'graded' | 'dealsBought'
   | 'onlineSold' | 'altPulled' | 'overPulled' | 'sigPulled' | 'psa10' | 'bgs95' | 'blackLabel' | 'listed' | 'revenue'
   | 'requestsFilled' | 'furnitureBought' | 'investorSales' | 'collectorSales'
-  | 'tournaments' | 'tournamentPlayers' | 'preorders';
+  | 'tournaments' | 'tournamentPlayers' | 'preorders'
+  | 'ticketsSold' | 'raffles' | 'battles' | 'battlesWon' | 'vaultsOpened' | 'vaultGrails';
 
 export function bump(g: GameState, key: Counter, n = 1): void {
   g.counts[key] = (g.counts[key] ?? 0) + n;
@@ -222,6 +229,12 @@ export const MILESTONES: Milestone[] = [
   count('tourney-10', 'Local scene', 'Host 10 tournaments.', 'tournaments', 10, 2_000, 3_000),
   count('players-500', 'The place to play', '500 tournament players in total.', 'tournamentPlayers', 500, 6_000, 8_000),
   count('preorder', 'Ready for launch', 'Pre-order sealed product for a launch.', 'preorders', 1, 150, 300),
+  count('raffle-1', 'Winner winner', 'Hold your first raffle or giveaway.', 'raffles', 1, 150, 300),
+  count('tickets-500', 'Ticket booth', 'Sell 500 raffle tickets.', 'ticketsSold', 500, 2_000, 3_000),
+  count('battle-win', 'Battle tested', 'Win a pack battle.', 'battlesWon', 1, 150, 300),
+  count('battle-25', 'Pack battle champion', 'Win 25 pack battles.', 'battlesWon', 25, 3_000, 4_000),
+  count('vault-1', 'Mystery hunter', 'Open a mystery vault.', 'vaultsOpened', 1, 50, 150),
+  count('vault-grail', 'Hit of the year', 'Pull 4× the vault price or more from a mystery vault.', 'vaultGrails', 1, 1_000, 2_000),
   count('furn-5', 'Interior designer', 'Buy or upgrade 5 pieces of furniture.', 'furnitureBought', 5, 300, 500),
   count('furn-25', 'Showroom', 'Buy or upgrade 25 pieces of furniture.', 'furnitureBought', 25, 3_000, 5_000),
   count('collector-10', 'Collector\'s favourite', 'Sell 10 cards to collectors.', 'collectorSales', 10, 800, 1_200),

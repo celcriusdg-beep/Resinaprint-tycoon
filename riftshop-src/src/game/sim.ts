@@ -7,6 +7,7 @@ import { between, gauss, pick, random, weighted } from './rng';
 import { CUSTOMERS, countFurniture, customerMix, roomFor, starterFurniture, vibe, vibeTraffic, type CustomerType } from './shop';
 import type { CardRequest, Company, Deal, GameState, Listing, SealedKey, SealedKind, SealedListing, Single } from './types';
 import { displaySlots, shelfSlots, slabDeskSlots } from './shop';
+import { drawRaffle, raffleTick, raffleTraffic } from './extras';
 import { autoList, buyerCheck, closeEvents, eventBudget, eventMix, eventTraffic, launchToday, openEvents, restock, wages } from './events';
 
 export { displaySlots, shelfSlots } from './shop';
@@ -58,6 +59,7 @@ export function newGame(): GameState {
     preorders: [],
     hype: {},
     notices: [],
+    raffle: null,
     nextUid: 1,
     stats: { packsOpened: 0, revenue: 0, spent: 0, sales: 0, graded: 0, bestPull: null },
     today: { revenue: 0, costs: 0, sales: 0 },
@@ -187,7 +189,7 @@ export function rawCount(g: GameState, cardId: string, foil: boolean): number {
 }
 
 /** Take a raw copy (uid 0) or a slab (its uid) out of your collection. */
-function takeSingle(g: GameState, s: Single): Single | null {
+export function takeSingle(g: GameState, s: Single): Single | null {
   if (s.slab) {
     const i = g.slabs.findIndex((x) => x.uid === s.uid);
     if (i < 0) return null;
@@ -198,7 +200,7 @@ function takeSingle(g: GameState, s: Single): Single | null {
   return { uid: g.nextUid++, cardId: s.cardId, foil: s.foil };
 }
 
-function returnSingle(g: GameState, s: Single): void {
+export function returnSingle(g: GameState, s: Single): void {
   if (s.slab) g.slabs.push({ uid: s.uid, cardId: s.cardId, foil: s.foil, slab: s.slab });
   else addCard(g, s.cardId, s.foil, 1);
 }
@@ -479,7 +481,7 @@ const NAMES = ['Alex', 'Sam', 'Jordan', 'Riley', 'Casey', 'Morgan', 'Jamie', 'Ta
 
 /** Customers per open hour. */
 export function trafficRate(g: GameState): number {
-  return 6 * SHOP_LEVELS[g.shopLevel - 1].traffic * (0.5 + g.rep / 100) * (g.adsUntil > g.hours ? 1.6 : 1) * vibeTraffic(g) * eventTraffic(g);
+  return 6 * SHOP_LEVELS[g.shopLevel - 1].traffic * (0.5 + g.rep / 100) * (g.adsUntil > g.hours ? 1.6 : 1) * vibeTraffic(g) * eventTraffic(g) * raffleTraffic(g);
 }
 
 function repDelta(g: GameState, d: number): void {
@@ -755,6 +757,7 @@ export function advance(g: GameState, dt: number, offline = false): void {
       customer(g, offline);
     }
     seriousCollectors(g, offline, step);
+    raffleTick(g, offline, step);
     g.offers = g.offers.filter((o) => o.expires > g.hours);
     if (g.staff.stocker) for (const l of g.shelf) restock(g, l);
     // Online marketplace: listings near market price sell within a day or two.
@@ -792,6 +795,7 @@ export function advance(g: GameState, dt: number, offline = false): void {
 export function endOfDay(g: GameState): void {
   const lvl = SHOP_LEVELS[g.shopLevel - 1];
   closeEvents(g);
+  if (g.raffle && g.raffle.endsDay <= g.day) drawRaffle(g);
   const bills = lvl.rent + (g.clerk ? CLERK_WAGE : 0) + wages(g);
   spend(g, bills);
   log(g, g.today.revenue >= g.today.costs ? 'info' : 'bad', `Day ${g.day} closed: sales ${fmt(g.today.revenue)}, spent ${fmt(g.today.costs)} (rent and wages ${fmt(bills)}).`);

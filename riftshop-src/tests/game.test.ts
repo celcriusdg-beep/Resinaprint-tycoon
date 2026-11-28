@@ -5,6 +5,7 @@ import { mulberry32, setRandom } from '../src/game/rng';
 import { SAVE_VERSION, addCard, advance, listOnDesk, buySealed, endOfDay, fillRequest, newRequest, listInDisplay, migrate, newGame, openSealed, sellBulk, sendToGrading, shelveSealed } from '../src/game/sim';
 import { rollGrade, slabMult } from '../src/game/grading';
 import { buyFurniture, buyRack, displaySlots, slabDeskSlots, floorSize, floorUsed, sellFurniture, shelfSlots, storageCap, storageUsed, upgradeFurniture } from '../src/game/shop';
+import { openVault, packBattle, startRaffle, vsMarket } from '../src/game/extras';
 import { EVENTS, hire, hostTournament, preorder, preorderLimit, seats } from '../src/game/events';
 import { MILESTONES, addXp, claimGoal, claimMilestone, goalProgress, isUnlocked, milestoneState, netWorth, xpForLevel } from '../src/game/progression';
 import { rawValue, sealedValue, singleValue, wholesale } from '../src/game/economy';
@@ -424,5 +425,91 @@ describe('slab desk', () => {
     });
     expect(g.slabDesk.map((l) => l.uid)).toEqual([5]);
     expect(g.display.map((l) => l.uid)).toEqual([6]);
+  });
+});
+
+describe('vaults, raffles and pack battles', () => {
+  it('mystery vaults pay back ~85% on average, never under 10%, sometimes 4×+', () => {
+    setRandom(mulberry32(77));
+    const g = newGame();
+    g.level = 20;
+    g.cash = 1e9;
+    const ratios: number[] = [];
+    let blacks = 0;
+    for (let i = 0; i < 1500; i++) {
+      const r = openVault(g, 'grail');
+      if (typeof r === 'string') throw new Error(r);
+      ratios.push(r.value / 1000);
+      if (r.item.slab?.black) blacks++;
+    }
+    const avg = ratios.reduce((a, b) => a + b, 0) / ratios.length;
+    console.log('grail vault avg return', avg.toFixed(2), 'min', Math.min(...ratios).toFixed(2), 'max', Math.max(...ratios).toFixed(1), 'black labels', blacks);
+    expect(avg).toBeGreaterThan(0.7);
+    expect(avg).toBeLessThan(1);
+    expect(Math.min(...ratios)).toBeGreaterThan(0.08);
+    expect(ratios.filter((x) => x >= 4).length).toBeGreaterThan(10);
+    expect(blacks).toBeGreaterThan(0);
+    expect(openVault(newGame(), 'grail')).toMatch(/level/i);
+  });
+
+  it('a fairly priced raffle sells out and makes a profit; a greedy one does not', () => {
+    for (const [mult, sells] of [[1.2, true], [3, false]] as const) {
+      setRandom(mulberry32(5));
+      const g = newGame();
+      g.level = 10;
+      g.shopLevel = 2;
+      g.sealed = { 'VEN:box': 1 };
+      const worth = sealedValue(g, 'VEN', 'box');
+      const tickets = 25;
+      expect(startRaffle(g, { type: 'sealed', set: 'VEN', kind: 'box', qty: 1 }, (worth * mult) / tickets, tickets, 1)).toBeNull();
+      expect(g.sealed['VEN:box']).toBeUndefined();
+      const sold = () => g.raffle?.sold ?? tickets;
+      advance(g, 6);
+      const half = sold();
+      advance(g, 6.1); // through closing: the draw happens
+      expect(g.raffle).toBeNull();
+      expect(g.counts.raffles).toBe(1);
+      if (sells) expect(half).toBeGreaterThan(12);
+      else expect(g.counts.ticketsSold!).toBeLessThan(tickets);
+      if (sells) expect(g.counts.ticketsSold! * ((worth * mult) / tickets)).toBeGreaterThan(worth); // made more than the prize is worth
+    }
+  });
+
+  it('a free giveaway raises reputation', () => {
+    const run = (giveaway: boolean) => {
+      setRandom(mulberry32(6));
+      const g = newGame();
+      g.level = 10;
+      if (giveaway) expect(startRaffle(g, { type: 'sealed', set: 'VEN', kind: 'pack', qty: 3 }, 0, 40, 1)).toBeNull();
+      advance(g, 12.1);
+      return g.rep;
+    };
+    expect(run(true)).toBeGreaterThan(run(false));
+  });
+
+  it('pack battles: the winner takes every card', () => {
+    setRandom(mulberry32(15));
+    const g = newGame();
+    g.level = 5;
+    g.sealed['VEN:pack'] = 10;
+    const count = () => Object.values(g.cards).reduce((n, [a, b]) => n + a + b, 0);
+    let wins = 0, losses = 0;
+    for (let i = 0; i < 6; i++) {
+      const before = count();
+      const b = packBattle(g, 'VEN', 1);
+      if (typeof b === 'string') throw new Error(b);
+      expect(b.mine).toHaveLength(14);
+      if (b.won === true) { wins++; expect(count()).toBe(before + 28); }
+      if (b.won === false) { losses++; expect(count()).toBe(before); }
+    }
+    expect(wins + losses).toBeGreaterThan(3);
+    expect(packBattle(g, 'VEN', 5)).toMatch(/need/i);
+  });
+
+  it('shows how far a price is from market', () => {
+    expect(vsMarket(112, 100)).toEqual({ text: '+12%', tone: 'good' });
+    expect(vsMarket(95, 100).text).toBe('−5%');
+    expect(vsMarket(100, 100).text).toBe('market');
+    expect(vsMarket(140, 100).tone).toBe('bad');
   });
 });

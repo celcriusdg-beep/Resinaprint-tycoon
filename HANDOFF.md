@@ -59,6 +59,12 @@ The cloud sandbox cannot reach Riot's CDN, so screenshots show the drawn card fa
   - Random events (`EVENTS`, ~40% of days from day 3): rain, sunny, school holiday, payday, card show, streamer, viral pull video, spoiler season, power cut, shoplifter, leaky roof. Popups queue in `g.notices` (`NoticePopup` in App, after level-ups).
   - Staff (`g.staff`, optional, wages at closing): cashier (Lv 5, +20% customers), singles seller (Lv 6, `autoList` each shop hour: raw cards worth ≥ $0.50 and ≤ `staffCfg.listMax`, most valuable first, at market × `listMarkup`, keeps one per printing if `listKeepOne`, skips requested cards; case spots first, then online up to 30 if `listOnline`), stocker (Lv 7, refills shelf stacks from the back room at your price via `restock`), buyer (Lv 9, auto-buys walk-in offers ≤ `staffCfg.buyerMax` of value, keeps $500), price manager (Lv 11, reprices everything to market × `staffCfg.markup` each morning). The clerk moved into the Staff sheet.
 
+- **Extras (`src/game/extras.ts`, `ui/ExtrasUI.tsx`)**:
+  - `vsMarket(price, value)` → "+12%" / "−5%" / "market" with a tone (≤12% good, ≤30% warn, else bad); `PriceTag` and `Pct` in `ui/common.tsx` show it on every shelf/case/desk tag, edit sheet, binder listing and online listing (`moreIsBetter` for raffle takings).
+  - Raffles & giveaways (`g.raffle`, Lv 4, Events sheet): prize (slab, card or sealed) leaves the inventory when started; ticket buyers per hour = traffic × 0.25 × `ticketDemand` (total ticket money vs. prize value: ≤1× sells fast, 2×+ barely); drawn when sold out or at closing on `endsDay`. Nobody bought → prize returned. Free giveaway (ticket 0): +30% traffic and up to +8 rep. The UI suggests the most tickets that sell out in time at ~1.25× the prize.
+  - Pack battles (Lv 3): `packBattle` opens your packs (`openSealed`) and the rival's (`openPack`); the higher total value takes all cards (loser's own pulls are removed).
+  - Mystery vaults (Market tab): Starter $50 (Lv 3), Collector $250 (Lv 6), Grail $1,000 (Lv 9). `VAULT_ODDS` multiples of the price (0.1×–12×, ~89% average payback); the item is picked from every card × {raw, PSA 9, PSA 10, BGS 9.5, BGS 10, Black Label} near the target value; Black Labels only in the ≥4× tiers.
+
 ## Roadmap (agreed with the user)
 - Phase 2: done (above).
 - Phase 3: done (above).

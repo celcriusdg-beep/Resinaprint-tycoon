@@ -9,7 +9,7 @@ import type { Company, Single } from '../game/types';
 import { Slab } from './visuals';
 import { act, tryAct, useStore } from '../store';
 import { CardImage, RARITY_COLOR } from './CardImage';
-import { Button, Modal, PriceInput } from './common';
+import { Button, Modal, PriceInput, Pct } from './common';
 
 type Filter = 'all' | 'owned' | 'missing';
 type Printing = 'all' | 'std' | 'alt' | 'over' | 'sig';
@@ -180,7 +180,7 @@ export function CardModal() {
       {action && action.mode !== 'grade' && (
         <div className="action-box">
           <b>{action.mode === 'desk' ? 'Put it on your slab desk' : action.mode === 'display' ? 'Put it in your display case' : 'List it on the online marketplace'}</b>
-          <span>Your price</span>
+          <span>Your price <Pct price={price} value={singleValue(g, action.s)} /></span>
           <PriceInput value={price} onChange={setPrice} />
           <p className="muted small">
             Market {fmt(singleValue(g, action.s))}.{' '}

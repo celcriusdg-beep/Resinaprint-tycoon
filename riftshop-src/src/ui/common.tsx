@@ -1,6 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useStore } from '../store';
+import { fmt } from '../game/economy';
+import { vsMarket } from '../game/extras';
 
 export function Button({ children, onClick, kind = 'default', disabled, small, wide }: {
   children: ReactNode; onClick?: () => void; kind?: 'default' | 'primary' | 'danger' | 'ghost' | 'gold'; disabled?: boolean; small?: boolean; wide?: boolean;
@@ -71,5 +73,24 @@ export function PriceInput({ value, onChange, big }: { value: number; onChange: 
       <input inputMode="decimal" value={value} onChange={(e) => { const v = parseFloat(e.target.value); if (!isNaN(v)) onChange(v); }} />
       <button onClick={() => onChange(+(value + step).toFixed(2))}>+</button>
     </div>
+  );
+}
+
+/** "+12%" vs market, green / yellow / red. */
+export function Pct({ price, value, moreIsBetter }: { price: number; value: number; moreIsBetter?: boolean }) {
+  const m = vsMarket(price, value);
+  if (!m.text) return null;
+  const tone = moreIsBetter ? (price >= value ? 'good' : 'bad') : m.tone;
+  return <span className={`pct ${tone}`}>{m.text}</span>;
+}
+
+/** The price sticker on a shelf, case or desk spot, with how far it is from market. */
+export function PriceTag({ price, value }: { price: number; value: number }) {
+  const m = vsMarket(price, value);
+  return (
+    <span className={`price-tag ${m.tone}`}>
+      {fmt(price)}
+      {m.text && <i>{m.text}</i>}
+    </span>
   );
 }

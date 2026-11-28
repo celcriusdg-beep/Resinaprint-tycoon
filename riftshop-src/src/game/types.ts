@@ -2,6 +2,7 @@ import type { SetId } from '../data/cards';
 import type { Counter, DailyGoal } from './progression';
 import type { CustomerType, Furniture } from './shop';
 import type { Notice, Preorder, Release, StaffId, Tournament } from './events';
+import type { Raffle } from './extras';
 
 export type SealedKind = 'pack' | 'box' | 'case';
 export type SealedKey = `${SetId}:${SealedKind}`;
@@ -145,6 +146,8 @@ export interface GameState {
   hype: Partial<Record<SetId, number>>;
   /** Popups waiting to be shown. */
   notices: Notice[];
+  /** Raffle or free giveaway running now. */
+  raffle: Raffle | null;
   stats: { packsOpened: number; revenue: number; spent: number; sales: number; graded: number; bestPull: { cardId: string; foil: boolean; value: number } | null };
   today: { revenue: number; costs: number; sales: number };
   savedAt: number;

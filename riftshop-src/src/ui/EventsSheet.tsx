@@ -9,6 +9,7 @@ import { isUnlocked, unlockLevel } from '../game/progression';
 import { sealedCount } from '../game/sim';
 import { act, tryAct, useStore } from '../store';
 import { Button, Modal, PriceInput } from './common';
+import { BattlePanel, RafflePanel } from './ExtrasUI';
 import { ProductImage } from './visuals';
 
 /** Strip at the top of the shop: today's event, tournament and launch. */
@@ -22,6 +23,7 @@ export function EventBanner({ onOpen }: { onOpen: () => void }) {
   if (t) items.push(`${TOURNEYS[t.kind].icon} ${TOURNEYS[t.kind].name} today`);
   else if (g.tournament) items.push(`${TOURNEYS[g.tournament.kind].icon} ${TOURNEYS[g.tournament.kind].name} tomorrow`);
   if (ev) items.push(`${ev.icon} ${ev.title}`);
+  if (g.raffle) items.push(`${g.raffle.ticket > 0 ? '🎟️ Raffle' : '🎁 Giveaway'}: ${g.raffle.sold}/${g.raffle.tickets} ${g.raffle.ticket > 0 ? 'tickets sold' : 'entries'}`);
   if (g.release && !launch) items.push(`📦 ${SETS[g.release.set].name} launch in ${g.release.day - g.day} day${g.release.day - g.day > 1 ? 's' : ''} · pre-order`);
   if (!items.length) return null;
   return (
@@ -82,7 +84,7 @@ export function StaffSheet({ onClose }: { onClose: () => void }) {
   );
 }
 
-function Chips({ label, value, options, fmt: f, onPick }: { label: string; value: number; options: number[]; fmt: (v: number) => string; onPick: (v: number) => void }) {
+export function Chips({ label, value, options, fmt: f, onPick }: { label: string; value: number; options: number[]; fmt: (v: number) => string; onPick: (v: number) => void }) {
   return (
     <div className="chips-row">
       <span className="muted small">{label}</span>
@@ -106,6 +108,10 @@ export function EventsSheet({ onClose }: { onClose: () => void }) {
       )}
       <h3 className="build-h">🏆 Tournaments</h3>
       <TournamentPanel />
+      <h3 className="build-h">🎟️ Raffles & giveaways</h3>
+      <RafflePanel />
+      <h3 className="build-h">⚔️ Pack battles</h3>
+      <BattlePanel />
       <h3 className="build-h">📦 Launches</h3>
       <PreorderCard />
     </Modal>

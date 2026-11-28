@@ -4,12 +4,13 @@ import { DAY_HOURS, ONLINE_FEE, allocation, fmt, marketMult, rawValue, sealedVal
 import { slabTitle } from '../game/grading';
 import { BackroomBar } from './StockScreen';
 import { PreorderCard } from './EventsSheet';
+import { VaultsSection } from './ExtrasUI';
 import { canBuySealed, isUnlocked, unlockLevel } from '../game/progression';
 import type { SealedKind } from '../game/types';
 import { buyDeal, buySealed, buySingle, dealName, dealValue, rawCount, sealedName, setListingPrice, singleName, singlePrice, unlist } from '../game/sim';
 import { act, tryAct, useStore } from '../store';
 import { CardImage } from './CardImage';
-import { Button, PriceInput, Section } from './common';
+import { Button, PriceInput, Section, Pct } from './common';
 import { ProductImage, Slab } from './visuals';
 
 const KINDS: SealedKind[] = ['pack', 'box', 'case'];
@@ -51,6 +52,7 @@ export function MarketScreen() {
         <p className="muted small">Not every deal is a bargain — check the market price before you buy.</p>
       </Section>
 
+      <VaultsSection />
       <SinglesMarket />
 
       <Section title="Distributor" right={<span className="muted small">Allocation resets each day</span>}>
@@ -98,7 +100,7 @@ export function MarketScreen() {
             <div onClick={() => useStore.getState().showCard(l.cardId)}>{l.slab ? <Slab s={{ ...l, slab: l.slab }} small /> : <CardImage id={l.cardId} foil={l.foil} thumb />}</div>
             <div className="listing-info">
               <b>{singleName(l)}</b>
-              <span className="muted small">market {fmt(singleValue(g, l))} · you get {fmt(l.price * (1 - ONLINE_FEE))}</span>
+              <span className="muted small">market {fmt(singleValue(g, l))} <Pct price={l.price} value={singleValue(g, l)} /> · you get {fmt(l.price * (1 - ONLINE_FEE))}</span>
               <div className="row">
                 <PriceInput value={l.price} onChange={(p) => act((s) => setListingPrice(s, 'online', l.uid, p))} />
                 <Button small kind="ghost" onClick={() => act((s) => unlist(s, 'online', l.uid))}>Cancel</Button>
