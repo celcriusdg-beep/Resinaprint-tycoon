@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { CARD_BY_ID, SET_IDS, SETS, kindLabel, setCards, type SetId } from '../data/cards';
+import { CARD_BY_ID, RARITY_ORDER, SET_IDS, SETS, kindLabel, setCards, type SetId } from '../data/cards';
 import { BUYLIST_RATE, ONLINE_FEE, fmt, marketMult, rawValue, singleValue } from '../game/economy';
 import { COMPANIES, slabTitle } from '../game/grading';
 import { displaySlots, listInDisplay, listOnline, rawCount, sellToBuylist, sendToGrading } from '../game/sim';
@@ -10,53 +10,95 @@ import { CardImage, RARITY_COLOR } from './CardImage';
 import { Button, Modal, PriceInput } from './common';
 
 type Filter = 'all' | 'owned' | 'missing';
+type Sort = 'number' | 'value-desc' | 'value-asc' | 'name' | 'rarity' | 'owned';
+
+const SORTS: { id: Sort; label: string }[] = [
+  { id: 'number', label: 'Card number' },
+  { id: 'value-desc', label: 'Value: high → low' },
+  { id: 'value-asc', label: 'Value: low → high' },
+  { id: 'name', label: 'Name A–Z' },
+  { id: 'rarity', label: 'Rarity' },
+  { id: 'owned', label: 'Most owned' },
+];
+
+const SORT_KEY = 'riftshop-binder-sort';
 
 export function BinderScreen() {
   const g = useStore((s) => s.g);
   useStore((s) => s.rev);
   // Open on the set you own the most of.
-  const [set, setSet] = useState<SetId>(() => {
+  const [set, setSet] = useState<SetId | 'ALL'>(() => {
     const n: Record<string, number> = {};
     for (const id of Object.keys(g.seen)) n[CARD_BY_ID[id].set] = (n[CARD_BY_ID[id].set] ?? 0) + 1;
     return (Object.entries(n).sort((a, b) => b[1] - a[1])[0]?.[0] as SetId) ?? 'VEN';
   });
   const [filter, setFilter] = useState<Filter>('all');
   const [showcase, setShowcase] = useState(false);
-  const all = useMemo(() => setCards(set), [set]);
-  const list = all.filter((c) => (showcase ? c.kind !== 'std' : c.kind === 'std'))
-    .filter((c) => filter === 'all' || (filter === 'owned' ? !!g.seen[c.id] : !g.seen[c.id]));
+  const [query, setQuery] = useState('');
+  const [sort, setSortState] = useState<Sort>(() => {
+    try { return (localStorage.getItem(SORT_KEY) as Sort) || 'number'; } catch { return 'number'; }
+  });
+  const setSort = (v: Sort) => { setSortState(v); try { localStorage.setItem(SORT_KEY, v); } catch { /* ignore */ } };
+  const all = useMemo(() => (set === 'ALL' ? SET_IDS.flatMap((s) => setCards(s)) : setCards(set)), [set]);
+  const owned = (id: string) => (g.cards[id]?.[0] ?? 0) + (g.cards[id]?.[1] ?? 0);
+  const value = (id: string) => rawValue(g, id, false);
+  const q = query.trim().toLowerCase();
+  const list = all
+    .filter((c) => (showcase ? c.kind !== 'std' : c.kind === 'std'))
+    .filter((c) => filter === 'all' || (filter === 'owned' ? owned(c.id) > 0 : !g.seen[c.id]))
+    .filter((c) => !q || c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q))
+    .sort((a, b) => {
+      switch (sort) {
+        case 'value-desc': return value(b.id) - value(a.id);
+        case 'value-asc': return value(a.id) - value(b.id);
+        case 'name': return a.name.localeCompare(b.name);
+        case 'rarity': return RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity] || value(b.id) - value(a.id);
+        case 'owned': return owned(b.id) - owned(a.id) || value(b.id) - value(a.id);
+        default: return SET_IDS.indexOf(a.set) - SET_IDS.indexOf(b.set) || a.n - b.n || a.code.localeCompare(b.code);
+      }
+    });
   const base = all.filter((c) => c.kind === 'std');
   const have = base.filter((c) => g.seen[c.id]).length;
+  const ownedValue = list.reduce((t, c) => t + (g.cards[c.id]?.[0] ?? 0) * rawValue(g, c.id, false) + (g.cards[c.id]?.[1] ?? 0) * rawValue(g, c.id, true), 0);
   return (
     <div className="screen">
       <div className="set-tabs">
+        <button className={set === 'ALL' ? 'on' : ''} onClick={() => setSet('ALL')}>All sets</button>
         {SET_IDS.map((s) => (
           <button key={s} className={s === set ? 'on' : ''} onClick={() => setSet(s)}>{SETS[s].name}</button>
         ))}
       </div>
       <div className="binder-head">
         <div>
-          <b>{SETS[set].name}</b>
+          <b>{set === 'ALL' ? 'All sets' : SETS[set].name}</b>
           <div className="muted small">{have}/{base.length} cards collected · {all.filter((c) => c.kind !== 'std' && g.seen[c.id]).length} showcase</div>
           <div className="bar"><div style={{ width: `${(have / Math.max(1, base.length)) * 100}%` }} /></div>
         </div>
         <div className="seg">
           {(['all', 'owned', 'missing'] as Filter[]).map((f) => <button key={f} className={f === filter ? 'on' : ''} onClick={() => setFilter(f)}>{f}</button>)}
-          <button className={showcase ? 'on gold' : ''} onClick={() => setShowcase((v) => !v)}>✦</button>
+          <button className={showcase ? 'on gold' : ''} onClick={() => setShowcase((v) => !v)} aria-label="Showcase printings">✦</button>
         </div>
       </div>
+      <div className="binder-tools">
+        <input className="search" type="search" placeholder="Search name or code" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <select className="sort" value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Sort">
+          {SORTS.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+        </select>
+      </div>
+      <div className="muted small">{list.length} cards{ownedValue > 0 ? ` · your copies worth ${fmt(ownedValue)}` : ''}</div>
       <div className="grid3">
         {list.map((c) => {
-          const n = (g.cards[c.id]?.[0] ?? 0) + (g.cards[c.id]?.[1] ?? 0);
+          const n = owned(c.id);
           return (
             <div className="slot" key={c.id} onClick={() => useStore.getState().showCard(c.id)}>
               <CardImage id={c.id} thumb dim={!g.seen[c.id]} />
-              <span className="tag">{fmt(rawValue(g, c.id, false))}</span>
+              <span className="tag">{fmt(value(c.id))}</span>
               {n > 0 && <span className="count">×{n}</span>}
               {!g.seen[c.id] && <span className="code">{c.code.split('/')[0]}</span>}
             </div>
           );
         })}
+        {list.length === 0 && <p className="muted small">No cards match.</p>}
       </div>
     </div>
   );

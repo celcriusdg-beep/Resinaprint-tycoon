@@ -382,3 +382,7 @@ b { font-weight: 650; }
 .pic-test { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
 .pic-test img { width: 28px; height: 39px; object-fit: cover; border-radius: 3px; background: #222; }
 .card-img img.ci-base { filter: blur(0.5px); }
+
+.binder-tools { display: flex; gap: 8px; }
+.binder-tools .search { flex: 1; min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 11px; padding: 9px 11px; color: var(--text); font: inherit; font-size: 14px; }
+.binder-tools .sort { background: var(--panel); border: 1px solid var(--line); border-radius: 11px; padding: 9px 8px; color: var(--text); font: inherit; font-size: 14px; max-width: 46%; }
