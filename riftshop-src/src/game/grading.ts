@@ -25,7 +25,7 @@ export const COMPANIES: Record<Company, { name: string; full: string; tiers: Tie
   BGS: {
     name: 'BGS',
     full: 'Beckett Grading Services',
-    blurb: 'Half grades with four subgrades. Gem Mint 9.5 is the usual top; a Pristine 10 is rare and a Black Label 10 (all four subgrades 10) is the holy grail.',
+    blurb: 'Half grades with four subgrades. Gem Mint 9.5 is the usual top. A Pristine 10 is worth about 5% less than a PSA 10, but a Black Label 10 (all four subgrades 10) is the holy grail: about 12× raw on chase cards.',
     tiers: [
       { id: 'base', name: 'Base', fee: 17.95, days: 7 },
       { id: 'standard', name: 'Standard', fee: 34.95, days: 4 },
@@ -69,15 +69,22 @@ export function slabTitle(s: Slab): string {
   return s.company === 'PSA' ? `PSA ${s.grade} ${PSA_LABEL[s.grade]}` : `BGS ${s.grade % 1 ? s.grade.toFixed(1) : s.grade} ${bgsLabel(s)}`;
 }
 
-/** Value of a slabbed copy relative to raw. Chase cards (raw ≥ $20) carry bigger premiums at the top. */
+/** PSA 10 premium over raw; chase cards (raw ≥ $20) carry a bigger one. */
+function psa10(chase: boolean): number {
+  return chase ? 4 : 3;
+}
+
+/** Value of a slabbed copy relative to raw. */
 export function slabMult(s: Slab | undefined, raw: number): number {
   if (!s) return 1;
   const chase = raw >= 20;
   if (s.company === 'PSA') {
-    return ({ 10: chase ? 4 : 3, 9: 1.6, 8: 1.1, 7: 0.85, 6: 0.7 } as Record<number, number>)[s.grade] ?? 0.55;
+    return ({ 10: psa10(chase), 9: 1.6, 8: 1.1, 7: 0.85, 6: 0.7 } as Record<number, number>)[s.grade] ?? 0.55;
   }
-  if (s.black) return chase ? 12 : 8;
-  if (s.grade >= 10) return chase ? 5 : 3.6;
+  // Black Label (four 10 subgrades) is the grail: a $3,000 card is worth $30–40k.
+  if (s.black) return chase ? 12 : 10;
+  // A BGS Pristine 10 trades about 5% below a PSA 10.
+  if (s.grade >= 10) return psa10(chase) * 0.95;
   if (s.grade >= 9.5) return chase ? 2.8 : 2.2;
   if (s.grade >= 9) return 1.35;
   if (s.grade >= 8.5) return 1.1;

@@ -3,7 +3,7 @@ import { CARD_BY_ID, CARDS, SET_IDS, SETS } from '../src/data/cards';
 import { openPack } from '../src/game/packs';
 import { mulberry32, setRandom } from '../src/game/rng';
 import { advance, buySealed, listInDisplay, migrate, newGame, openSealed, sellBulk, sendToGrading, shelveSealed } from '../src/game/sim';
-import { rollGrade } from '../src/game/grading';
+import { rollGrade, slabMult } from '../src/game/grading';
 import { rawValue, sealedValue, wholesale } from '../src/game/economy';
 
 describe('booster packs', () => {
@@ -97,6 +97,15 @@ describe('the shop', () => {
     }
     expect(black).toBeGreaterThan(0);
     expect(black).toBeLessThan(60);
+  });
+
+  it('values slabs: BGS 10 is 5% under PSA 10, Black Label is ~12x on chase cards', () => {
+    const psa10 = slabMult({ company: 'PSA', grade: 10, cert: 1 }, 3000);
+    const bgs10 = slabMult({ company: 'BGS', grade: 10, cert: 1 }, 3000);
+    expect(bgs10 / psa10).toBeCloseTo(0.95, 5);
+    const black = 3000 * slabMult({ company: 'BGS', grade: 10, black: true, cert: 1 }, 3000);
+    expect(black).toBeGreaterThanOrEqual(30_000);
+    expect(black).toBeLessThanOrEqual(40_000);
   });
 
   it('migrates a version 1 save', () => {
