@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { CARD_BY_ID } from './data/cards';
+import { useEffect, useState } from 'react';
+import { CARD_BY_ID, CARDS, productImage, sanityUrl, tcgUrl } from './data/cards';
 import { DAY_HOURS, SHOP_LEVELS, clockLabel, fmt, rawValue, singleValue } from './game/economy';
 import { slabTitle } from './game/grading';
 import { act } from './store';
@@ -45,6 +45,7 @@ export default function App() {
         {tab === 'market' && <MarketScreen />}
         {tab === 'grading' && <GradingScreen />}
         <div className="footer-actions">
+          <PictureCheck />
           <button className="link" onClick={() => { if (confirm('Start a brand new shop? Your current save will be deleted.')) resetGame(); }}>Start over</button>
         </div>
       </main>
@@ -87,6 +88,36 @@ function FirstRun() {
       </ul>
       <Button kind="primary" wide onClick={() => { close(); useStore.getState().setTab('stock'); }}>Open my first pack</Button>
     </Modal>
+  );
+}
+
+/** Shows which picture servers this phone can load from (to report problems). */
+function PictureCheck() {
+  const [open, setOpen] = useState(false);
+  const c = CARDS.find((x) => x.tcg && x.set === 'OGN')!;
+  const tests: [string, string | undefined][] = [
+    ['Riot art via Sanity', sanityUrl(c, 300)],
+    ['Riot art (original server)', c.img],
+    ['TCGplayer card photo', tcgUrl(c, true)],
+    ['TCGplayer product photo', productImage('OGN', 'pack', true)],
+  ];
+  return (
+    <div className="pic-check">
+      <button className="link" onClick={() => setOpen((v) => !v)}>Picture check</button>
+      {open && tests.map(([label, src]) => <PicTest key={label} label={label} src={src} />)}
+    </div>
+  );
+}
+
+function PicTest({ label, src }: { label: string; src?: string }) {
+  const [st, setSt] = useState<'…' | '✓' | '✗'>(src ? '…' : '✗');
+  const [t0] = useState(() => performance.now());
+  const [ms, setMs] = useState(0);
+  return (
+    <div className="pic-test">
+      {src && <img src={`${src}${src.includes('?') ? '&' : '?'}check=${t0.toFixed(0)}`} alt="" onLoad={() => { setSt('✓'); setMs(performance.now() - t0); }} onError={() => setSt('✗')} />}
+      <span>{st} {label}{st === '✓' ? ` (${(ms / 1000).toFixed(1)} s)` : ''}</span>
+    </div>
   );
 }
 

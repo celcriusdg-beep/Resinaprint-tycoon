@@ -15,17 +15,19 @@ export function cardColor(c: Card): string {
 }
 
 /**
- * Official card picture. TCGplayer's photo (small, fast) shows first where the card has one;
- * Riot's full-size official art fades in on top as soon as it has loaded. While nothing has
- * loaded yet a shimmering placeholder with the card's name shows.
+ * Official card picture: Riot's art (resized by Sanity's CDN, falling back to Riot's own server).
+ * TCGplayer's small photo sits underneath as a quick placeholder while it loads. A shimmer with the
+ * card's name shows until anything has loaded.
  */
 export function CardImage({ id, foil, thumb, className, dim }: { id: string; foil?: boolean; thumb?: boolean; className?: string; dim?: boolean }) {
   const c = CARD_BY_ID[id];
-  const { base, top } = cardSources(c, !!thumb);
+  const { base, chain } = cardSources(c, !!thumb);
   const [baseState, setBase] = useState<'loading' | 'ok' | 'fail'>(base ? 'loading' : 'fail');
-  const [topState, setTop] = useState<'loading' | 'ok' | 'fail'>(top ? 'loading' : 'fail');
-  const anyOk = baseState === 'ok' || topState === 'ok';
-  const allFailed = baseState === 'fail' && topState === 'fail';
+  const [step, setStep] = useState(0);
+  const [topOk, setTopOk] = useState(false);
+  const top = chain[step];
+  const anyOk = baseState === 'ok' || topOk;
+  const allFailed = baseState === 'fail' && !top;
   const landscape = c.w > c.h;
   const shine = (foil || c.kind !== 'std') && !dim;
   return (
@@ -36,13 +38,13 @@ export function CardImage({ id, foil, thumb, className, dim }: { id: string; foi
           <div className="cf-code">{c.code}</div>
         </div>
       )}
-      {base && baseState !== 'fail' && (
-        <img className={`base${baseState === 'ok' ? ' in' : ''}`} src={base} alt={c.name} loading={thumb ? 'lazy' : 'eager'} decoding="async" draggable={false}
+      {base && baseState !== 'fail' && !topOk && (
+        <img className={`ci-base${baseState === 'ok' ? ' in' : ''}`} src={base} alt="" loading={thumb ? 'lazy' : 'eager'} decoding="async" draggable={false}
           onLoad={() => setBase('ok')} onError={() => setBase('fail')} />
       )}
-      {top && topState !== 'fail' && (
-        <img className={`top${topState === 'ok' ? ' in' : ''}`} src={top} alt={c.name} loading={thumb ? 'lazy' : 'eager'} decoding="async" draggable={false}
-          onLoad={() => setTop('ok')} onError={() => setTop('fail')} />
+      {top && (
+        <img key={top} className={`ci-top${topOk ? ' in' : ''}`} src={top} alt={c.name} loading={thumb ? 'lazy' : 'eager'} decoding="async" draggable={false}
+          onLoad={() => setTopOk(true)} onError={() => { setTopOk(false); setStep((s) => s + 1); }} />
       )}
       {shine && <div className="foil" />}
     </div>

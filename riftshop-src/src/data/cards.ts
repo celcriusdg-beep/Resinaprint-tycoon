@@ -74,11 +74,24 @@ export function productImage(set: SetId, kind: 'pack' | 'box' | 'case', small = 
 
 const TCG_CDN = 'https://tcgplayer-cdn.tcgplayer.com/product/';
 
-/** Image sources for a card, fastest first: TCGplayer's photo (small, reliable), then Riot's official full-size art. */
-export function cardSources(c: Card, thumb: boolean): { base?: string; top?: string } {
-  const tcg = c.tcg ? `${TCG_CDN}${c.tcg}_${thumb ? '200w' : 'in_1000x1000'}.jpg` : undefined;
-  if (thumb) return tcg ? { base: tcg } : { top: c.img };
-  return { base: tcg, top: c.img };
+/** Riot's card art lives in a Sanity project; Sanity's public CDN can resize and compress it. */
+export function sanityUrl(c: Card, width: number): string | undefined {
+  const m = c.img.match(/^https:\/\/cmsassets\.rgpub\.io\/sanity\/images\/([^?]+)/);
+  return m ? `https://cdn.sanity.io/images/${m[1]}?w=${width}&fm=webp&q=82` : undefined;
+}
+
+export function tcgUrl(c: Card, thumb: boolean): string | undefined {
+  return c.tcg ? `${TCG_CDN}${c.tcg}_${thumb ? '200w' : 'in_1000x1000'}.jpg` : undefined;
+}
+
+/**
+ * Picture sources for a card. `base` is a quick placeholder (TCGplayer's small photo, whose framing
+ * varies); `chain` is Riot's official art, best first, each tried only if the one before fails.
+ */
+export function cardSources(c: Card, thumb: boolean): { base?: string; chain: string[] } {
+  const chain = [sanityUrl(c, thumb ? 300 : 744), thumb ? undefined : c.img].filter((x): x is string => !!x);
+  if (thumb && !chain.length) chain.push(c.img);
+  return { base: tcgUrl(c, true), chain };
 }
 
 const preloaded = new Set<string>();
@@ -87,8 +100,8 @@ export function preloadCards(ids: string[]): void {
   for (const id of ids) {
     const c = CARD_BY_ID[id];
     if (!c) continue;
-    const { base, top } = cardSources(c, false);
-    for (const src of [base, top]) {
+    const { base, chain } = cardSources(c, false);
+    for (const src of [base, chain[0]]) {
       if (!src || preloaded.has(src)) continue;
       preloaded.add(src);
       const im = new Image();

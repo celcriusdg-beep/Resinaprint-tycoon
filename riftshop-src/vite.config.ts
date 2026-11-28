@@ -36,9 +36,9 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         // Card pictures come from Riot's CDN; keep the ones you've seen for offline play.
         runtimeCaching: [{
-          urlPattern: ({ url }) => url.hostname === 'cmsassets.rgpub.io',
+          urlPattern: ({ url }) => ['cmsassets.rgpub.io', 'cdn.sanity.io', 'tcgplayer-cdn.tcgplayer.com'].includes(url.hostname),
           handler: 'CacheFirst',
-          options: { cacheName: 'card-art', expiration: { maxEntries: 1500, maxAgeSeconds: 60 * 60 * 24 * 120 }, cacheableResponse: { statuses: [0, 200] } },
+          options: { cacheName: 'card-art', expiration: { maxEntries: 3000, maxAgeSeconds: 60 * 60 * 24 * 120 }, cacheableResponse: { statuses: [0, 200] } },
         }],
       },
       devOptions: { enabled: false },
