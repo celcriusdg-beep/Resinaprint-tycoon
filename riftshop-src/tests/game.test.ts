@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { CARD_BY_ID, CARDS, SET_IDS, SETS } from '../src/data/cards';
 import { openPack } from '../src/game/packs';
 import { mulberry32, setRandom } from '../src/game/rng';
-import { SAVE_VERSION, addCard, advance, buySealed, endOfDay, fillRequest, newRequest, listInDisplay, migrate, newGame, openSealed, sellBulk, sendToGrading, shelveSealed } from '../src/game/sim';
+import { SAVE_VERSION, addCard, advance, listOnDesk, buySealed, endOfDay, fillRequest, newRequest, listInDisplay, migrate, newGame, openSealed, sellBulk, sendToGrading, shelveSealed } from '../src/game/sim';
 import { rollGrade, slabMult } from '../src/game/grading';
-import { buyFurniture, buyRack, displaySlots, floorSize, floorUsed, sellFurniture, shelfSlots, storageCap, storageUsed, upgradeFurniture } from '../src/game/shop';
+import { buyFurniture, buyRack, displaySlots, slabDeskSlots, floorSize, floorUsed, sellFurniture, shelfSlots, storageCap, storageUsed, upgradeFurniture } from '../src/game/shop';
 import { EVENTS, hire, hostTournament, preorder, preorderLimit, seats } from '../src/game/events';
 import { MILESTONES, addXp, claimGoal, claimMilestone, goalProgress, isUnlocked, milestoneState, netWorth, xpForLevel } from '../src/game/progression';
-import { rawValue, sealedValue, wholesale } from '../src/game/economy';
+import { rawValue, sealedValue, singleValue, wholesale } from '../src/game/economy';
 
 describe('booster packs', () => {
   it('follow the published structure and odds', () => {
@@ -360,5 +360,41 @@ describe('singles seller', () => {
     expect(g.display[0].cardId).toBe(mid.id); // most valuable first
     expect(g.display[0].price).toBeCloseTo(rawValue(g, mid.id, false) * 0.95, 1);
     expect(g.cards[cheap.id][0]).toBe(1);
+  });
+});
+
+describe('slab desk', () => {
+  it('holds only slabs, and collectors buy from it', () => {
+    setRandom(mulberry32(44));
+    const g = newGame();
+    g.level = 10;
+    g.shopLevel = 3;
+    g.cash = 10_000;
+    const card = CARDS.find((c) => c.kind === 'alt' && c.price > 10)!;
+    const slab = { uid: 777, cardId: card.id, foil: true, slab: { company: 'PSA' as const, grade: 9, cert: 1 } };
+    g.slabs.push(slab);
+    expect(listOnDesk(g, slab, 10)).toMatch(/slab desk first/i);
+    expect(buyFurniture(g, 'slabcase')).toBeNull();
+    expect(slabDeskSlots(g)).toBe(4);
+    addCard(g, card.id, true);
+    expect(listOnDesk(g, { uid: 0, cardId: card.id, foil: true }, 10)).toMatch(/only graded/i);
+    expect(listOnDesk(g, slab, singleValue(g, slab))).toBeNull();
+    expect(g.slabDesk).toHaveLength(1);
+    expect(g.slabs).toHaveLength(0);
+    for (let i = 0; i < 40 && g.slabDesk.length; i++) advance(g, 6);
+    expect(g.slabDesk).toHaveLength(0);
+    expect(g.feed.some((f) => f.kind === 'sale' && f.text.includes(card.name))).toBe(true);
+  });
+
+  it('moves slabs from the display case onto an existing desk in old saves', () => {
+    const card = CARDS.find((c) => c.kind === 'alt')!;
+    const g = migrate({
+      version: 5, level: 10, shopLevel: 3, cash: 100, cards: {}, slabs: [], shelf: [], online: [],
+      furniture: [{ uid: 1, type: 'case', tier: 1 }, { uid: 2, type: 'slabcase', tier: 1 }],
+      display: [{ uid: 5, cardId: card.id, foil: true, price: 50, slab: { company: 'BGS', grade: 9.5, cert: 2 } }, { uid: 6, cardId: card.id, foil: true, price: 5 }],
+      stats: { revenue: 0, packsOpened: 0, sales: 0 },
+    });
+    expect(g.slabDesk.map((l) => l.uid)).toEqual([5]);
+    expect(g.display.map((l) => l.uid)).toEqual([6]);
   });
 });

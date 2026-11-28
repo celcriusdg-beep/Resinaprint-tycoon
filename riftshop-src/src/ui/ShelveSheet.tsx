@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { SetId } from '../data/cards';
 import { fmt, sealedValue, singleValue, wholesale } from '../game/economy';
 import type { SealedKind, Single } from '../game/types';
-import { listInDisplay, sealedCount, sealedName, shelveSealed, singleName } from '../game/sim';
+import { listInDisplay, listOnDesk, sealedCount, sealedName, shelveSealed, singleName } from '../game/sim';
 import { tryAct, useStore } from '../store';
 import { CardImage } from './CardImage';
 import { Button, Modal, PriceInput } from './common';
@@ -46,14 +46,14 @@ export function ShelveSheet({ set, kind, onClose }: { set: SetId; kind: SealedKi
   );
 }
 
-/** Put one card (raw or slab) in the display case at your price. */
-export function CaseSheet({ s, onClose }: { s: Single; onClose: () => void }) {
+/** Put one card (raw or slab) in the display case, or a slab on the slab desk, at your price. */
+export function CaseSheet({ s, onClose, desk }: { s: Single; onClose: () => void; desk?: boolean }) {
   const g = useStore((st) => st.g);
   const v = singleValue(g, s);
   const [price, setPrice] = useState(Math.max(0.1, Math.round(v * 1.1 * 100) / 100));
   return (
     <Modal title={singleName(s)} onClose={onClose} footer={
-      <Button kind="primary" wide onClick={() => { if (tryAct((st) => listInDisplay(st, s, price), 'In the display case.')) onClose(); }}>Put in the display case · {fmt(price)}</Button>
+      <Button kind="primary" wide onClick={() => { if (tryAct((st) => (desk ? listOnDesk(st, s, price) : listInDisplay(st, s, price)), desk ? 'On the slab desk.' : 'In the display case.')) onClose(); }}>{desk ? 'Put on the slab desk' : 'Put in the display case'} · {fmt(price)}</Button>
     }>
       <div className="sheet-hero card">{s.slab ? <Slab s={{ ...s, slab: s.slab }} /> : <CardImage id={s.cardId} foil={s.foil} />}</div>
       <div className="price-help">

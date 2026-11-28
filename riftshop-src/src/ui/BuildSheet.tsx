@@ -14,6 +14,7 @@ export function effectText(d: FurnitureDef, tier: number): string {
   const parts: string[] = [];
   if (d.shelf) parts.push(`${d.shelf[tier - 1]} shelf spots`);
   if (d.display) parts.push(`${d.display[tier - 1]} case spots`);
+  if (d.slabs) parts.push(`${d.slabs[tier - 1]} slab spots`);
   if (d.vibe) parts.push(`+${d.vibe[tier - 1]} atmosphere`);
   return parts.join(' · ');
 }

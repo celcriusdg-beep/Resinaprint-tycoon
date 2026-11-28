@@ -22,6 +22,8 @@ export interface FurnitureDef {
   shelf?: number[];
   /** Display case spots for singles and slabs per tier. */
   display?: number[];
+  /** Slab desk spots (graded slabs only) per tier. */
+  slabs?: number[];
   /** Atmosphere points per tier: more customers, slightly happier to pay. */
   vibe?: number[];
   text: string;
@@ -33,7 +35,7 @@ export const FURNITURE: FurnitureDef[] = [
   { type: 'case', name: 'Glass display case', icon: '🪟', size: 1, cost: 300, tiers: 3, display: [6, 10, 14], text: 'Holds singles and slabs.' },
   { type: 'endcap', name: 'Pack endcap', icon: '🛒', size: 1, cost: 600, tiers: 2, shelf: [2, 4], vibe: [1, 2], text: 'Impulse-buy rack by the till: kids and casual players come in more.', unlock: 'furn:endcap' },
   { type: 'table', name: 'Play table', icon: '🎲', size: 2, cost: 800, tiers: 3, vibe: [2, 3, 4], text: 'Competitive players hang out, buy singles and post card requests. +reputation every day.', unlock: 'furn:table' },
-  { type: 'slabcase', name: 'Slab showcase', icon: '💎', size: 1, cost: 1_500, tiers: 3, display: [4, 6, 8], vibe: [1, 2, 3], text: 'Lit showcase: collectors come in more and pay 8% more for slabs.', unlock: 'furn:slabcase' },
+  { type: 'slabcase', name: 'Slab desk', icon: '💎', size: 1, cost: 1_500, tiers: 3, slabs: [4, 6, 8], vibe: [1, 2, 3], text: 'A lit glass desk just for graded slabs. Collectors come in more and pay 8% more for slabs sold here.', unlock: 'furn:slabcase' },
   { type: 'plant', name: 'Potted plant', icon: '🪴', size: 1, cost: 80, tiers: 1, vibe: [1], text: 'A little nicer in here.' },
   { type: 'poster', name: 'Riftbound poster wall', icon: '🖼️', size: 1, cost: 250, tiers: 2, vibe: [3, 5], text: 'Art of the newest set on the wall.' },
   { type: 'neon', name: 'Neon sign', icon: '💡', size: 1, cost: 1_200, tiers: 2, vibe: [6, 9], text: 'People see it from the street.', unlock: 'furn:neon' },
@@ -67,7 +69,7 @@ export function floorUsed(g: GameState): number {
   return g.furniture.reduce((n, f) => n + FURN[f.type].size, 0);
 }
 
-const sum = (g: GameState, key: 'shelf' | 'display' | 'vibe') =>
+const sum = (g: GameState, key: 'shelf' | 'display' | 'slabs' | 'vibe') =>
   g.furniture.reduce((n, f) => n + (FURN[f.type][key]?.[f.tier - 1] ?? 0), 0);
 
 export function shelfSlots(g: GameState): number {
@@ -76,6 +78,11 @@ export function shelfSlots(g: GameState): number {
 
 export function displaySlots(g: GameState): number {
   return sum(g, 'display');
+}
+
+/** Spots on the slab desk(s): graded slabs only. */
+export function slabDeskSlots(g: GameState): number {
+  return sum(g, 'slabs');
 }
 
 /** Atmosphere points from decor, tables and showcases. */
@@ -130,6 +137,7 @@ export function sellFurniture(g: GameState, uid: number): string | null {
   const left = { ...g, furniture: after };
   if (shelfSlots(left) < g.shelf.length) return 'Take some products off the shelves first — they would not fit.';
   if (displaySlots(left) < g.display.length) return 'Take some cards out of the display case first — they would not fit.';
+  if (slabDeskSlots(left) < g.slabDesk.length) return 'Take some slabs off the slab desk first — they would not fit.';
   g.furniture = after;
   g.cash += resaleValue(f);
   return null;

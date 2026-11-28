@@ -106,6 +106,8 @@ export interface GameState {
   /** Shelf: sealed stacks and the display case of singles, with your prices. */
   shelf: SealedListing[];
   display: Listing[];
+  /** The slab desk: graded slabs only, at your prices. */
+  slabDesk: Listing[];
   online: Listing[];
   offers: Deal[];
   deals: Deal[];

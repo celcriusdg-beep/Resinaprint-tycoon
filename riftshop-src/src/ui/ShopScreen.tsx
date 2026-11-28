@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { SET_IDS } from '../data/cards';
 import { ADS_COST, CLERK_WAGE, SHOP_LEVELS, fmt, rawValue, sealedValue, singleValue } from '../game/economy';
-import { CUSTOMERS, FURN } from '../game/shop';
+import { CUSTOMERS, FURN, slabDeskSlots } from '../game/shop';
 import type { SealedKind, Single } from '../game/types';
 import {
   buyAds, buyDeal, buySingle, canFill, dealName, dealValue, declineOffer, displaySlots, fillRequest, sealedCount, sealedName, setListingPrice, setShelfPrice,
@@ -27,7 +27,8 @@ export function ShopScreen() {
   const next = SHOP_LEVELS[g.shopLevel];
   const [sheet, setSheet] = useState<
     | { t: 'pickSealed' } | { t: 'pickCard' } | { t: 'shelve'; set: (typeof SET_IDS)[number]; kind: SealedKind }
-    | { t: 'case'; s: Single } | { t: 'editShelf'; uid: number } | { t: 'editCase'; uid: number } | null
+    | { t: 'case'; s: Single } | { t: 'editShelf'; uid: number } | { t: 'editCase'; uid: number }
+    | { t: 'pickSlab' } | { t: 'desk'; s: Single } | { t: 'editDesk'; uid: number } | null
   >(null);
   const [logOpen, setLogOpen] = useState(false);
   const [manage, setManage] = useState(false);
@@ -95,6 +96,8 @@ export function ShopScreen() {
           </div>
         ))}
       </div>
+
+      <SlabDesk onPick={() => setSheet({ t: 'pickSlab' })} onEdit={(uid) => setSheet({ t: 'editDesk', uid })} onBuild={() => setBuild(true)} />
 
       <FloorStrip onBuild={() => setBuild(true)} />
 
@@ -170,6 +173,9 @@ export function ShopScreen() {
       {sheet?.t === 'case' && <CaseSheet s={sheet.s} onClose={close} />}
       {sheet?.t === 'editShelf' && <EditShelf uid={sheet.uid} onClose={close} />}
       {sheet?.t === 'editCase' && <EditCase uid={sheet.uid} onClose={close} />}
+      {sheet?.t === 'pickSlab' && <PickSlab onPick={(s) => setSheet({ t: 'desk', s })} onClose={close} />}
+      {sheet?.t === 'desk' && <CaseSheet s={sheet.s} desk onClose={close} />}
+      {sheet?.t === 'editDesk' && <EditCase uid={sheet.uid} where="slabDesk" onClose={close} />}
     </div>
   );
 }
@@ -177,7 +183,7 @@ export function ShopScreen() {
 /** Tables, decor and showcases standing in the shop (shelves and cases are drawn above and below). */
 function FloorStrip({ onBuild }: { onBuild: () => void }) {
   const g = useStore((s) => s.g);
-  const extras = g.furniture.filter((f) => f.type !== 'shelf' && f.type !== 'case');
+  const extras = g.furniture.filter((f) => f.type !== 'shelf' && f.type !== 'case' && f.type !== 'slabcase');
   return (
     <button className="floor-strip" onClick={onBuild}>
       {extras.length ? extras.map((f) => <span key={f.uid} title={FURN[f.type].name}>{FURN[f.type].icon}</span>)
@@ -222,6 +228,59 @@ function Requests() {
         })}
       </div>
     </div>
+  );
+}
+
+/** The slab desk: a lit glass counter that only holds graded slabs. */
+function SlabDesk({ onPick, onEdit, onBuild }: { onPick: () => void; onEdit: (uid: number) => void; onBuild: () => void }) {
+  const g = useStore((s) => s.g);
+  const spots = slabDeskSlots(g);
+  if (spots === 0) {
+    if (!g.slabs.length && !g.display.some((l) => l.slab)) return null;
+    return (
+      <button className="desk-cta" onClick={onBuild}>
+        💎 <span><b>Get a Slab desk</b> — a glass desk just for your slabs. Collectors pay 8% more for slabs sold there.{isUnlocked(g, 'furn:slabcase') ? ' Tap to build one.' : ` Unlocks at level ${unlockLevel('furn:slabcase')}.`}</span>
+      </button>
+    );
+  }
+  const cells = Array.from({ length: spots }, (_, i) => g.slabDesk[i] ?? null);
+  return (
+    <div className="slab-desk">
+      <div className="wall-title">💎 Slab desk <span>{g.slabDesk.length}/{spots}</span></div>
+      <div className="desk-grid">
+        {cells.map((l, i) =>
+          l ? (
+            <button className="case-spot" key={l.uid} onClick={() => onEdit(l.uid)}>
+              <Slab s={{ ...l, slab: l.slab! }} small />
+              <span className={`price-tag${l.price > singleValue(g, l) * 1.3 ? ' hi' : ''}`}>{fmt(l.price)}</span>
+            </button>
+          ) : (
+            <button className="case-spot empty desk-empty" key={`e${i}`} onClick={onPick}>＋<span>Slab</span></button>
+          ),
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PickSlab({ onPick, onClose }: { onPick: (s: Single) => void; onClose: () => void }) {
+  const g = useStore((s) => s.g);
+  const slabs = [...g.slabs].sort((a, b) => singleValue(g, b) - singleValue(g, a));
+  return (
+    <Modal title="Put a slab on the desk" onClose={onClose}>
+      {slabs.length === 0 ? (
+        <p className="muted">No slabs to put out. Send cards to PSA or Beckett from your binder — or take one out of the display case first.</p>
+      ) : (
+        <div className="pick-cards slabs">
+          {slabs.map((s) => (
+            <button key={s.uid} className="pick" onClick={() => onPick(s)}>
+              <Slab s={{ ...s, slab: s.slab! }} small />
+              <b>{fmt(singleValue(g, s))}</b>
+            </button>
+          ))}
+        </div>
+      )}
+    </Modal>
   );
 }
 
@@ -292,10 +351,10 @@ function EditShelf({ uid, onClose }: { uid: number; onClose: () => void }) {
   );
 }
 
-function EditCase({ uid, onClose }: { uid: number; onClose: () => void }) {
+function EditCase({ uid, onClose, where = 'display' }: { uid: number; onClose: () => void; where?: 'display' | 'slabDesk' }) {
   const g = useStore((s) => s.g);
   useStore((s) => s.rev);
-  const l = g.display.find((x) => x.uid === uid);
+  const l = g[where].find((x) => x.uid === uid);
   if (!l) return null;
   const v = singleValue(g, l);
   return (
@@ -305,8 +364,8 @@ function EditCase({ uid, onClose }: { uid: number; onClose: () => void }) {
         <div><span>Market</span><b>{fmt(v)}</b></div>
         <div><span>Your price</span><b className={l.price > v * 1.3 ? 'down' : 'up'}>{fmt(l.price)}</b></div>
       </div>
-      <PriceInput value={l.price} onChange={(p) => act((s) => setListingPrice(s, 'display', uid, p))} big />
-      <Button kind="ghost" wide onClick={() => { act((s) => unlist(s, 'display', uid)); onClose(); }}>Take it out of the case</Button>
+      <PriceInput value={l.price} onChange={(p) => act((s) => setListingPrice(s, where, uid, p))} big />
+      <Button kind="ghost" wide onClick={() => { act((s) => unlist(s, where, uid)); onClose(); }}>{where === 'slabDesk' ? 'Take it off the slab desk' : 'Take it out of the case'}</Button>
     </Modal>
   );
 }

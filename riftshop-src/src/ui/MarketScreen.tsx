@@ -147,7 +147,7 @@ export function GradingScreen() {
         })}
       </Section>
       <Section title={`Your slabs (${slabs.length})`}>
-        {slabs.length === 0 && <p className="muted small">Graded cards come back in PSA or Beckett slabs. High grades sell for a lot more — put them in your display case.</p>}
+        {slabs.length === 0 && <p className="muted small">Graded cards come back in PSA or Beckett slabs. High grades sell for a lot more — put them on a slab desk or in your display case.</p>}
         <div className="slab-grid">
           {slabs.map((s) => (
             <div key={s.uid} onClick={() => useStore.getState().showCard(s.cardId)}>

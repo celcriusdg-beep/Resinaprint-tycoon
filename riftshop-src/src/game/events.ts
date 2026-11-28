@@ -345,7 +345,7 @@ export function buyerCheck(g: GameState, offerId: number): void {
 function reprice(g: GameState): void {
   const m = g.staffCfg.markup;
   for (const l of g.shelf) l.price = Math.max(0.5, Math.round(sealedValue(g, l.set, l.kind) * m * 100) / 100);
-  for (const l of g.display) l.price = Math.max(0.05, Math.round(singleValue(g, l) * m * 100) / 100);
+  for (const l of [...g.display, ...g.slabDesk]) l.price = Math.max(0.05, Math.round(singleValue(g, l) * m * 100) / 100);
   if (g.shelf.length || g.display.length) log(g, 'info', `🏷️ Your price manager repriced everything to market ${m >= 1 ? '+' : ''}${Math.round((m - 1) * 100)}%.`);
 }
 

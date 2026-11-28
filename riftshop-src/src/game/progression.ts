@@ -42,7 +42,7 @@ export const UNLOCKS: Unlock[] = [
   { key: 'online', level: 2, title: 'Online marketplace', text: 'List cards online: they sell in a day or two near market price (12.5% fees).' },
   { key: 'grade:PSA', level: 3, title: 'PSA grading', text: 'Send cards to PSA (Value tier). A PSA 10 is worth 3–4× raw.' },
   { key: 'shop:2', level: 3, title: 'Corner Shop', text: 'You can move into a Corner Shop: more shelves, more customers.' },
-  { key: 'furn:slabcase', level: 3, title: 'Slab showcase', text: 'A lit showcase for slabs: collectors pay 8% more for slabs.' },
+  { key: 'furn:slabcase', level: 3, title: 'Slab desk', text: 'A glass desk just for slabs: collectors pay 8% more for slabs sold there.' },
   { key: 'furn:endcap', level: 4, title: 'Pack endcap', text: 'An impulse-buy rack: more kids and casual players.' },
   { key: 'set:UNL', level: 4, title: 'Unleashed distributor account', text: 'Buy Unleashed packs and boxes wholesale.' },
   { key: 'singles', level: 4, title: 'Singles market', text: 'Buy any single card online at market + 10%.' },
@@ -281,7 +281,7 @@ export function netWorth(g: GameState): { total: number; cash: number; sealed: n
   }
   for (const j of g.grading) cards += rawValue(g, j.cardId, j.foil);
   let slabs = 0;
-  for (const s of [...g.slabs, ...g.display.filter((l) => l.slab), ...g.online.filter((l) => l.slab)]) slabs += singleValue(g, s);
+  for (const s of [...g.slabs, ...g.slabDesk, ...g.display.filter((l) => l.slab), ...g.online.filter((l) => l.slab)]) slabs += singleValue(g, s);
   const total = g.cash + sealed + cards + slabs;
   return { total, cash: g.cash, sealed, cards, slabs };
 }

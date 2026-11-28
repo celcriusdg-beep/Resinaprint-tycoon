@@ -6,12 +6,12 @@ import { addXp, bump, canBuySealed, closeDay, isUnlocked, lockedText, newDailyGo
 import { between, gauss, pick, random, weighted } from './rng';
 import { CUSTOMERS, countFurniture, customerMix, roomFor, starterFurniture, vibe, vibeTraffic, type CustomerType } from './shop';
 import type { CardRequest, Company, Deal, GameState, Listing, SealedKey, SealedKind, SealedListing, Single } from './types';
-import { displaySlots, shelfSlots } from './shop';
+import { displaySlots, shelfSlots, slabDeskSlots } from './shop';
 import { autoList, buyerCheck, closeEvents, eventBudget, eventMix, eventTraffic, launchToday, openEvents, restock, wages } from './events';
 
 export { displaySlots, shelfSlots } from './shop';
 
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 export function newGame(): GameState {
   const g: GameState = {
@@ -30,6 +30,7 @@ export function newGame(): GameState {
     grading: [],
     shelf: [],
     display: [],
+    slabDesk: [],
     online: [],
     offers: [],
     deals: [],
@@ -117,6 +118,16 @@ export function migrate(raw: Record<string, unknown>): GameState {
   g.staffCfg = { ...newGame().staffCfg, ...((raw.staffCfg as object) ?? {}) };
   if (g.version < 5) {
     // v5: staff, events, tournaments, releases (fields come from newGame()).
+    g.version = 5;
+  }
+  if (g.version < 6) {
+    // v6: the slab desk. Slabs in the display case move onto it if there is room.
+    g.slabDesk = [];
+    for (const l of g.display.filter((x) => x.slab)) {
+      if (g.slabDesk.length >= slabDeskSlots(g)) break;
+      g.display = g.display.filter((x) => x.uid !== l.uid);
+      g.slabDesk.push(l);
+    }
     g.version = SAVE_VERSION;
   }
   return g;
@@ -367,6 +378,18 @@ export function listInDisplay(g: GameState, s: Single, price: number): string | 
   return null;
 }
 
+/** Put a slab on the slab desk at your price. */
+export function listOnDesk(g: GameState, s: Single, price: number): string | null {
+  if (!s.slab) return 'Only graded slabs go on the slab desk.';
+  if (slabDeskSlots(g) === 0) return 'You need a Slab desk first (Build mode on the Shop tab).';
+  if (g.slabDesk.length >= slabDeskSlots(g)) return 'Your slab desk is full. Upgrade it or add another in Build mode.';
+  const t = takeSingle(g, s);
+  if (!t) return 'You no longer have that slab.';
+  g.slabDesk.push({ ...t, price: Math.max(0.05, Math.round(price * 100) / 100) });
+  bump(g, 'listed');
+  return null;
+}
+
 export function listOnline(g: GameState, s: Single, price: number): string | null {
   if (!isUnlocked(g, 'online')) return `Online selling ${lockedText('online').toLowerCase()}.`;
   const t = takeSingle(g, s);
@@ -376,14 +399,16 @@ export function listOnline(g: GameState, s: Single, price: number): string | nul
   return null;
 }
 
-export function unlist(g: GameState, where: 'display' | 'online', uid: number): void {
+export type ListingPlace = 'display' | 'online' | 'slabDesk';
+
+export function unlist(g: GameState, where: ListingPlace, uid: number): void {
   const i = g[where].findIndex((x) => x.uid === uid);
   if (i < 0) return;
   const [l] = g[where].splice(i, 1);
   returnSingle(g, l);
 }
 
-export function setListingPrice(g: GameState, where: 'display' | 'online', uid: number, price: number): void {
+export function setListingPrice(g: GameState, where: ListingPlace, uid: number, price: number): void {
   const l = g[where].find((x) => x.uid === uid);
   if (l) l.price = Math.max(0.05, Math.round(price * 100) / 100);
 }
@@ -477,7 +502,7 @@ function willingness(g: GameState, type: CustomerType): number {
   return between(lo, hi) * (0.94 + g.rep / 800) * (1 + Math.min(0.1, vibe(g) / 400));
 }
 
-type Pickable = { where: 'shelf'; l: SealedListing } | { where: 'case'; l: Listing };
+type Pickable = { where: 'shelf'; l: SealedListing } | { where: 'case' | 'desk'; l: Listing };
 
 function interested(type: CustomerType, p: Pickable, g: GameState): boolean {
   if (p.where === 'shelf') {
@@ -513,7 +538,11 @@ const WANTS: Record<CustomerType, string> = {
 function shopper(g: GameState, type: CustomerType, who: string): void {
   const icon = CUSTOMERS[type].icon;
   const budget = customerBudget(g, type);
-  const all: Pickable[] = [...g.shelf.map((l) => ({ where: 'shelf' as const, l })), ...g.display.map((l) => ({ where: 'case' as const, l }))];
+  const all: Pickable[] = [
+    ...g.shelf.map((l) => ({ where: 'shelf' as const, l })),
+    ...g.display.map((l) => ({ where: 'case' as const, l })),
+    ...g.slabDesk.map((l) => ({ where: 'desk' as const, l })),
+  ];
   const want = all.filter((p) => interested(type, p, g));
   let affordable = want.filter((p) => p.l.price <= budget);
   // Launch day: people come for the new product first.
@@ -538,7 +567,7 @@ function shopper(g: GameState, type: CustomerType, who: string): void {
     const p = affordable.splice(Math.floor(random() * affordable.length), 1)[0];
     const v = value(g, p);
     let pay = v * willingness(g, type);
-    if (p.where === 'case' && p.l.slab) pay *= 1.05 + (countFurniture(g, 'slabcase') > 0 && type === 'collector' ? 0.08 : 0);
+    if (p.where !== 'shelf' && p.l.slab) pay *= 1.05 + (p.where === 'desk' && type === 'collector' ? 0.08 : 0);
     if (type === 'player' && p.where === 'case' && g.market.spike && CARD_BY_ID[p.l.cardId].name.includes(g.market.spike.champion)) pay *= 1.1;
     if (p.l.price <= pay) return buy(g, type, who, p, v, budget);
     last = { p, pay };
@@ -567,7 +596,8 @@ function buy(g: GameState, type: CustomerType, who: string, p: Pickable, v: numb
     log(g, 'sale', `${icon} ${who} bought ${sealedName(l.set, l.kind, n)}.`, l.price * n, type);
   } else {
     const l = p.l;
-    g.display = g.display.filter((x) => x.uid !== l.uid);
+    if (p.where === 'desk') g.slabDesk = g.slabDesk.filter((x) => x.uid !== l.uid);
+    else g.display = g.display.filter((x) => x.uid !== l.uid);
     earn(g, l.price);
     bump(g, 'singlesSold');
     if (type === 'collector') bump(g, 'collectorSales');

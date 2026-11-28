@@ -3,7 +3,8 @@ import { CARD_BY_ID, RARITY_ORDER, SET_IDS, SETS, kindLabel, setCards, type SetI
 import { BUYLIST_RATE, ONLINE_FEE, fmt, marketMult, rawValue, singleValue } from '../game/economy';
 import { COMPANIES, slabTitle } from '../game/grading';
 import { isUnlocked, unlockLevel } from '../game/progression';
-import { displaySlots, listInDisplay, listOnline, rawCount, sellToBuylist, sendToGrading } from '../game/sim';
+import { displaySlots, listInDisplay, listOnDesk, listOnline, rawCount, sellToBuylist, sendToGrading } from '../game/sim';
+import { slabDeskSlots } from '../game/shop';
 import type { Company, Single } from '../game/types';
 import { Slab } from './visuals';
 import { act, tryAct, useStore } from '../store';
@@ -124,7 +125,7 @@ export function CardModal() {
   const id = useStore((s) => s.cardId);
   const g = useStore((s) => s.g);
   useStore((s) => s.rev);
-  const [action, setAction] = useState<{ s: Single; mode: 'display' | 'online' | 'grade' } | null>(null);
+  const [action, setAction] = useState<{ s: Single; mode: 'display' | 'desk' | 'online' | 'grade' } | null>(null);
   const [price, setPrice] = useState(0);
   const [company, setCompany] = useState<Company>('PSA');
   const [tier, setTier] = useState('regular');
@@ -137,9 +138,9 @@ export function CardModal() {
     if (rawCount(g, id, foil) > 0) copies.push({ s: { uid: 0, cardId: id, foil }, label: `${foil && c.kind === 'std' ? 'Foil' : 'Raw'} ×${rawCount(g, id, foil)}` });
   }
   for (const sl of g.slabs.filter((x) => x.cardId === id)) copies.push({ s: sl, label: slabTitle(sl.slab!) });
-  const begin = (s: Single, mode: 'display' | 'online' | 'grade') => {
+  const begin = (s: Single, mode: 'display' | 'desk' | 'online' | 'grade') => {
     setAction({ s, mode });
-    setPrice(Math.max(0.1, Math.round(singleValue(g, s) * (mode === 'display' ? 1.1 : 1) * 100) / 100));
+    setPrice(Math.max(0.1, Math.round(singleValue(g, s) * (mode === 'display' || mode === 'desk' ? 1.1 : 1) * 100) / 100));
   };
   const tierOpen = (co: Company, id: string) => isUnlocked(g, `grade:${co}`) && isUnlocked(g, `tier:${co}:${id}`);
   const pickCompany = (co: Company) => { setCompany(co); setTier((COMPANIES[co].tiers.filter((x) => tierOpen(co, x.id)).pop() ?? COMPANIES[co].tiers[0]).id); };
@@ -165,6 +166,7 @@ export function CardModal() {
           {s.slab && <div className="copy-slab"><Slab s={{ ...s, slab: s.slab }} small /></div>}
           <div><b>{label}</b><div className="muted small">worth {fmt(singleValue(g, s))}</div></div>
           <div className="row wrap">
+            {s.slab && slabDeskSlots(g) > 0 && <Button small kind="gold" onClick={() => begin(s, 'desk')} disabled={g.slabDesk.length >= slabDeskSlots(g)}>Put on slab desk</Button>}
             <Button small kind="primary" onClick={() => begin(s, 'display')} disabled={g.display.length >= displaySlots(g)}>Put in display case</Button>
             <Button small disabled={!isUnlocked(g, 'online')} onClick={() => begin(s, 'online')}>{isUnlocked(g, 'online') ? 'Sell online' : `Sell online · Lv ${unlockLevel('online')}`}</Button>
             {!s.slab && <Button small kind="gold" disabled={!isUnlocked(g, 'grade:PSA')} onClick={() => { pickCompany('PSA'); begin(s, 'grade'); }}>{isUnlocked(g, 'grade:PSA') ? 'Grade it' : `Grade · Lv ${unlockLevel('grade:PSA')}`}</Button>}
@@ -177,16 +179,16 @@ export function CardModal() {
       ))}
       {action && action.mode !== 'grade' && (
         <div className="action-box">
-          <b>{action.mode === 'display' ? 'Put it in your display case' : 'List it on the online marketplace'}</b>
+          <b>{action.mode === 'desk' ? 'Put it on your slab desk' : action.mode === 'display' ? 'Put it in your display case' : 'List it on the online marketplace'}</b>
           <span>Your price</span>
           <PriceInput value={price} onChange={setPrice} />
           <p className="muted small">
             Market {fmt(singleValue(g, action.s))}.{' '}
-            {action.mode === 'online' ? `Sells in a day or two near market; fees ${Math.round(ONLINE_FEE * 100)}% (you get ${fmt(price * (1 - ONLINE_FEE))}).` : 'Customers who come in pay 0.85–1.35× market.'}
+            {action.mode === 'online' ? `Sells in a day or two near market; fees ${Math.round(ONLINE_FEE * 100)}% (you get ${fmt(price * (1 - ONLINE_FEE))}).` : action.mode === 'desk' ? 'Collectors pay 8% more for slabs on the slab desk.' : 'Customers who come in pay 0.85–1.35× market.'}
           </p>
           <div className="row">
             <Button kind="primary" onClick={() => {
-              const ok = tryAct((st) => (action.mode === 'display' ? listInDisplay(st, action.s, price) : listOnline(st, action.s, price)), action.mode === 'display' ? 'In the display case.' : 'Listed online.');
+              const ok = tryAct((st) => (action.mode === 'desk' ? listOnDesk(st, action.s, price) : action.mode === 'display' ? listInDisplay(st, action.s, price) : listOnline(st, action.s, price)), action.mode === 'desk' ? 'On the slab desk.' : action.mode === 'display' ? 'In the display case.' : 'Listed online.');
               if (ok) setAction(null);
             }}>Confirm</Button>
             <Button kind="ghost" onClick={() => setAction(null)}>Cancel</Button>
