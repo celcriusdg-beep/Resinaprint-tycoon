@@ -13,6 +13,8 @@ import { CardImage } from './CardImage';
 import { Button, Modal, PriceInput } from './common';
 import { CaseSheet, ShelveSheet } from './ShelveSheet';
 import { BuildSheet } from './BuildSheet';
+import { EventBanner, EventsSheet, StaffSheet } from './EventsSheet';
+import { wages } from '../game/events';
 import { ProductImage, Slab } from './visuals';
 
 const KINDS: SealedKind[] = ['case', 'box', 'pack'];
@@ -30,6 +32,8 @@ export function ShopScreen() {
   const [logOpen, setLogOpen] = useState(false);
   const [manage, setManage] = useState(false);
   const [build, setBuild] = useState(false);
+  const [staff, setStaff] = useState(false);
+  const [events, setEvents] = useState(false);
   const offer = g.offers[0];
   const close = () => setSheet(null);
 
@@ -45,11 +49,14 @@ export function ShopScreen() {
           <b>{lvl.name}</b>
           <span>{fmt(g.today.revenue)} today · {g.today.sales} sold · ★ {Math.round(g.rep)}</span>
         </div>
-        <div className="sign-right">
-          <span className="open-badge">OPEN</span>
-          <button className="build-btn" onClick={() => setBuild(true)}>🛠 Build</button>
-        </div>
+        <span className="open-badge">OPEN</span>
       </div>
+      <div className="toolbar">
+        <button onClick={() => setBuild(true)}>🛠 Build</button>
+        <button onClick={() => setStaff(true)}>👥 Staff{Object.keys(g.staff).length + (g.clerk ? 1 : 0) ? ` · ${Object.keys(g.staff).length + (g.clerk ? 1 : 0)}` : ''}</button>
+        <button onClick={() => setEvents(true)}>📅 Events{g.release && g.release.day > g.day ? ' •' : ''}</button>
+      </div>
+      <EventBanner onOpen={() => setEvents(true)} />
 
       {offer && (
         <div className="counter">
@@ -132,18 +139,12 @@ export function ShopScreen() {
             </div>
           )}
           <div className="manage-row">
-            <div><b>Clerk</b><span className="muted small">Sells from your shelves at your prices while the app is closed · {fmt(CLERK_WAGE)}/day</span></div>
-            {isUnlocked(g, 'clerk')
-              ? <Button kind={g.clerk ? 'primary' : 'default'} small onClick={() => act((s) => (s.clerk = !s.clerk))}>{g.clerk ? 'Hired ✓' : 'Hire'}</Button>
-              : <span className="locked-note">🔒 Lv {unlockLevel('clerk')}</span>}
-          </div>
-          <div className="manage-row">
             <div><b>Advertising</b><span className="muted small">60% more customers for a shop day</span></div>
             {isUnlocked(g, 'ads')
               ? <Button small disabled={g.cash < ADS_COST} onClick={() => tryAct(buyAds)}>{g.adsUntil > g.hours ? 'Running · +1 day' : fmt(ADS_COST)}</Button>
               : <span className="locked-note">🔒 Lv {unlockLevel('ads')}</span>}
           </div>
-          <p className="muted small">Rent {fmt(lvl.rent)} a day is paid at closing.</p>
+          <p className="muted small">Rent {fmt(lvl.rent)}{g.clerk || wages(g) ? ` and wages ${fmt((g.clerk ? CLERK_WAGE : 0) + wages(g))}` : ''} a day, paid at closing. Hire staff with the 👥 Staff button.</p>
         </div>
       )}
 
@@ -161,6 +162,8 @@ export function ShopScreen() {
       )}
 
       {build && <BuildSheet onClose={() => setBuild(false)} />}
+      {staff && <StaffSheet onClose={() => setStaff(false)} />}
+      {events && <EventsSheet onClose={() => setEvents(false)} />}
       {sheet?.t === 'pickSealed' && <PickSealed onPick={(set, kind) => setSheet({ t: 'shelve', set, kind })} onClose={close} />}
       {sheet?.t === 'shelve' && <ShelveSheet set={sheet.set} kind={sheet.kind} onClose={close} />}
       {sheet?.t === 'pickCard' && <PickCard onPick={(s) => setSheet({ t: 'case', s })} onClose={close} />}

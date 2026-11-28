@@ -22,7 +22,9 @@ export function levelReward(level: number): number {
 export type UnlockKey =
   | `set:${SetId}` | 'cases' | 'online' | 'singles' | 'ads' | 'clerk'
   | `grade:${Company}` | `tier:${Company}:${string}` | `shop:${number}`
-  | 'furn:table' | 'furn:slabcase' | 'furn:endcap' | 'furn:neon' | 'furn:sofa';
+  | 'furn:table' | 'furn:slabcase' | 'furn:endcap' | 'furn:neon' | 'furn:sofa'
+  | 'staff:cashier' | 'staff:stocker' | 'staff:buyer' | 'staff:pricer'
+  | 'tourney:casual' | 'tourney:weekly' | 'tourney:regional';
 
 export interface Unlock {
   key: UnlockKey;
@@ -36,6 +38,7 @@ export const UNLOCKS: Unlock[] = [
   { key: 'set:VEN', level: 1, title: 'Vendetta distributor account', text: 'Buy Vendetta packs and boxes wholesale.' },
   { key: 'set:RAD', level: 1, title: 'Radiance distributor account', text: 'Buy Radiance packs and boxes wholesale.' },
   { key: 'furn:table', level: 2, title: 'Play tables', text: 'Put play tables in the shop: competitive players come in, buy singles and ask for cards.' },
+  { key: 'tourney:casual', level: 2, title: 'Casual play nights', text: 'Host a play night at your tables: entry fees, reputation and XP.' },
   { key: 'online', level: 2, title: 'Online marketplace', text: 'List cards online: they sell in a day or two near market price (12.5% fees).' },
   { key: 'grade:PSA', level: 3, title: 'PSA grading', text: 'Send cards to PSA (Value tier). A PSA 10 is worth 3–4× raw.' },
   { key: 'shop:2', level: 3, title: 'Corner Shop', text: 'You can move into a Corner Shop: more shelves, more customers.' },
@@ -43,18 +46,24 @@ export const UNLOCKS: Unlock[] = [
   { key: 'furn:endcap', level: 4, title: 'Pack endcap', text: 'An impulse-buy rack: more kids and casual players.' },
   { key: 'set:UNL', level: 4, title: 'Unleashed distributor account', text: 'Buy Unleashed packs and boxes wholesale.' },
   { key: 'singles', level: 4, title: 'Singles market', text: 'Buy any single card online at market + 10%.' },
+  { key: 'staff:cashier', level: 5, title: 'Hire a cashier', text: 'Serves the queue faster: 20% more customers.' },
+  { key: 'tourney:weekly', level: 5, title: 'Weekly tournaments', text: 'Bigger events: the winner’s champion spikes in price.' },
   { key: 'tier:PSA:regular', level: 5, title: 'PSA Regular service', text: '3-day PSA turnaround.' },
   { key: 'ads', level: 5, title: 'Advertising', text: 'Run ads for 60% more customers for a shop day.' },
   { key: 'grade:BGS', level: 6, title: 'Beckett grading', text: 'Beckett (BGS) Base tier, with subgrades and the chance of a Black Label.' },
   { key: 'shop:3', level: 6, title: 'Game Store', text: 'You can move into a Game Store.' },
   { key: 'furn:neon', level: 6, title: 'Neon sign', text: 'Lots of atmosphere: more people walk in.' },
+  { key: 'staff:stocker', level: 7, title: 'Hire a stocker', text: 'Keeps your shelves topped up from the back room.' },
   { key: 'set:SFD', level: 7, title: 'Spiritforged distributor account', text: 'Buy Spiritforged packs and boxes (limited allocation).' },
   { key: 'tier:BGS:standard', level: 8, title: 'Beckett Standard service', text: '4-day Beckett turnaround.' },
   { key: 'cases', level: 8, title: 'Booster cases', text: 'Buy sealed cases of 6 booster boxes from the distributor.' },
+  { key: 'staff:buyer', level: 9, title: 'Hire a buyer', text: 'Snaps up cheap offers from walk-in sellers for you.' },
   { key: 'furn:sofa', level: 9, title: 'Collector lounge', text: 'Collectors and investors with big budgets come in more.' },
   { key: 'set:OGN', level: 10, title: 'Origins distributor account', text: 'Buy Origins packs and boxes (limited allocation).' },
   { key: 'clerk', level: 10, title: 'Hire a clerk', text: 'A clerk keeps selling from your shelves while the app is closed.' },
   { key: 'shop:4', level: 10, title: 'Card Emporium', text: 'You can move into a Card Emporium.' },
+  { key: 'staff:pricer', level: 11, title: 'Hire a price manager', text: 'Reprices everything to market + your markup every morning.' },
+  { key: 'tourney:regional', level: 12, title: 'Regional qualifiers', text: 'Huge events with up to 64 players. Needs lots of seats.' },
   { key: 'tier:PSA:express', level: 12, title: 'PSA Express', text: 'One-day PSA grading.' },
   { key: 'tier:BGS:express', level: 12, title: 'Beckett Express', text: 'One-day Beckett grading.' },
   { key: 'shop:5', level: 15, title: 'Flagship Store', text: 'You can move into a Flagship Store.' },
@@ -103,7 +112,8 @@ export function addXp(g: GameState, xp: number): void {
 export type Counter =
   | 'packsSold' | 'boxesSold' | 'singlesSold' | 'packsOpened' | 'boxesOpened' | 'graded' | 'dealsBought'
   | 'onlineSold' | 'altPulled' | 'overPulled' | 'sigPulled' | 'psa10' | 'bgs95' | 'blackLabel' | 'listed' | 'revenue'
-  | 'requestsFilled' | 'furnitureBought' | 'investorSales' | 'collectorSales';
+  | 'requestsFilled' | 'furnitureBought' | 'investorSales' | 'collectorSales'
+  | 'tournaments' | 'tournamentPlayers' | 'preorders';
 
 export function bump(g: GameState, key: Counter, n = 1): void {
   g.counts[key] = (g.counts[key] ?? 0) + n;
@@ -207,6 +217,10 @@ export const MILESTONES: Milestone[] = [
   count('req-1', 'At your service', 'Fill a customer\'s card request.', 'requestsFilled', 1, 100, 200),
   count('req-25', 'The card finder', 'Fill 25 card requests.', 'requestsFilled', 25, 1_500, 2_500),
   count('req-100', 'If we don\'t have it, nobody does', 'Fill 100 card requests.', 'requestsFilled', 100, 6_000, 9_000),
+  count('tourney-1', 'Game on!', 'Host your first tournament or play night.', 'tournaments', 1, 200, 400),
+  count('tourney-10', 'Local scene', 'Host 10 tournaments.', 'tournaments', 10, 2_000, 3_000),
+  count('players-500', 'The place to play', '500 tournament players in total.', 'tournamentPlayers', 500, 6_000, 8_000),
+  count('preorder', 'Ready for launch', 'Pre-order sealed product for a launch.', 'preorders', 1, 150, 300),
   count('furn-5', 'Interior designer', 'Buy or upgrade 5 pieces of furniture.', 'furnitureBought', 5, 300, 500),
   count('furn-25', 'Showroom', 'Buy or upgrade 25 pieces of furniture.', 'furnitureBought', 25, 3_000, 5_000),
   count('collector-10', 'Collector\'s favourite', 'Sell 10 cards to collectors.', 'collectorSales', 10, 800, 1_200),

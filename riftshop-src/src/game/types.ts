@@ -1,6 +1,7 @@
 import type { SetId } from '../data/cards';
 import type { Counter, DailyGoal } from './progression';
 import type { CustomerType, Furniture } from './shop';
+import type { Notice, Preorder, Release, StaffId, Tournament } from './events';
 
 export type SealedKind = 'pack' | 'box' | 'case';
 export type SealedKey = `${SetId}:${SealedKind}`;
@@ -130,6 +131,18 @@ export interface GameState {
   /** Storage racks in the back room. */
   racks: number;
   requests: CardRequest[];
+  /** Hired staff (the clerk is `clerk`). */
+  staff: Partial<Record<StaffId, true>>;
+  staffCfg: { buyerMax: number; markup: number };
+  /** Today's random event. */
+  event: { id: string; until: number; text: string } | null;
+  tournament: Tournament | null;
+  release: Release | null;
+  preorders: Preorder[];
+  /** Temporary sealed price boost per set (launches, viral videos). */
+  hype: Partial<Record<SetId, number>>;
+  /** Popups waiting to be shown. */
+  notices: Notice[];
   stats: { packsOpened: number; revenue: number; spent: number; sales: number; graded: number; bestPull: { cardId: string; foil: boolean; value: number } | null };
   today: { revenue: number; costs: number; sales: number };
   savedAt: number;

@@ -7,10 +7,11 @@ import { between, gauss, pick, random, weighted } from './rng';
 import { CUSTOMERS, countFurniture, customerMix, roomFor, starterFurniture, vibe, vibeTraffic, type CustomerType } from './shop';
 import type { CardRequest, Company, Deal, GameState, Listing, SealedKey, SealedKind, SealedListing, Single } from './types';
 import { displaySlots, shelfSlots } from './shop';
+import { buyerCheck, closeEvents, eventBudget, eventMix, eventTraffic, launchToday, openEvents, restock, wages } from './events';
 
 export { displaySlots, shelfSlots } from './shop';
 
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 
 export function newGame(): GameState {
   const g: GameState = {
@@ -48,6 +49,14 @@ export function newGame(): GameState {
     furniture: [],
     racks: 0,
     requests: [],
+    staff: {},
+    staffCfg: { buyerMax: 0.65, markup: 1.1 },
+    event: null,
+    tournament: null,
+    release: null,
+    preorders: [],
+    hype: {},
+    notices: [],
     nextUid: 1,
     stats: { packsOpened: 0, revenue: 0, spent: 0, sales: 0, graded: 0, bestPull: null },
     today: { revenue: 0, costs: 0, sales: 0 },
@@ -102,6 +111,10 @@ export function migrate(raw: Record<string, unknown>): GameState {
     g.requests = [];
     newRequest(g, 'player');
     newRequest(g, 'collector');
+    g.version = 4;
+  }
+  if (g.version < 5) {
+    // v5: staff, events, tournaments, releases (fields come from newGame()).
     g.version = SAVE_VERSION;
   }
   return g;
@@ -115,7 +128,7 @@ export function log(g: GameState, kind: GameState['feed'][number]['kind'], text:
   if (g.feed.length > 50) g.feed.length = 50;
 }
 
-function earn(g: GameState, amount: number, sale = true): void {
+export function earn(g: GameState, amount: number, sale = true): void {
   g.cash += amount;
   g.stats.revenue += amount;
   g.today.revenue += amount;
@@ -127,7 +140,7 @@ function earn(g: GameState, amount: number, sale = true): void {
   }
 }
 
-function spend(g: GameState, amount: number): void {
+export function spend(g: GameState, amount: number): void {
   g.cash -= amount;
   g.stats.spent += amount;
   g.today.costs += amount;
@@ -439,7 +452,7 @@ const NAMES = ['Alex', 'Sam', 'Jordan', 'Riley', 'Casey', 'Morgan', 'Jamie', 'Ta
 
 /** Customers per open hour. */
 export function trafficRate(g: GameState): number {
-  return 6 * SHOP_LEVELS[g.shopLevel - 1].traffic * (0.5 + g.rep / 100) * (g.adsUntil > g.hours ? 1.6 : 1) * vibeTraffic(g);
+  return 6 * SHOP_LEVELS[g.shopLevel - 1].traffic * (0.5 + g.rep / 100) * (g.adsUntil > g.hours ? 1.6 : 1) * vibeTraffic(g) * eventTraffic(g);
 }
 
 function repDelta(g: GameState, d: number): void {
@@ -450,7 +463,7 @@ const BUDGET: Record<CustomerType, number> = { kid: 16, casual: 45, player: 80, 
 
 /** How much this customer has to spend today. Bigger shops attract richer customers; now and then a whale walks in. */
 export function customerBudget(g: GameState, type: CustomerType): number {
-  let b = BUDGET[type] * Math.exp(gauss() * 0.7);
+  let b = BUDGET[type] * Math.exp(gauss() * 0.7) * eventBudget(g);
   if (type !== 'kid') b *= Math.sqrt(SHOP_LEVELS[g.shopLevel - 1].traffic);
   if ((type === 'collector' || type === 'investor') && random() < 0.05) b *= between(8, 25);
   return b;
@@ -500,7 +513,13 @@ function shopper(g: GameState, type: CustomerType, who: string): void {
   const budget = customerBudget(g, type);
   const all: Pickable[] = [...g.shelf.map((l) => ({ where: 'shelf' as const, l })), ...g.display.map((l) => ({ where: 'case' as const, l }))];
   const want = all.filter((p) => interested(type, p, g));
-  const affordable = want.filter((p) => p.l.price <= budget);
+  let affordable = want.filter((p) => p.l.price <= budget);
+  // Launch day: people come for the new product first.
+  const hot = launchToday(g);
+  if (hot && random() < 0.7) {
+    const launchItems = affordable.filter((p) => p.where === 'shelf' && p.l.set === hot);
+    if (launchItems.length) affordable = launchItems;
+  }
   if (!affordable.length) {
     if (!want.length) {
       if (random() < 0.35) log(g, 'leave', `${icon} ${who} wanted ${WANTS[type]}, but you had none out.`, undefined, type);
@@ -537,7 +556,7 @@ function buy(g: GameState, type: CustomerType, who: string, p: Pickable, v: numb
         : type === 'investor' ? weighted<number>([[1, 5], [2, 3], [3, 1.5], [6, 0.5]]) : 1;
     const n = Math.max(1, Math.min(wantN, l.qty, Math.floor(budget / l.price)));
     l.qty -= n;
-    if (l.qty <= 0) g.shelf = g.shelf.filter((x) => x.uid !== l.uid);
+    if (!restock(g, l)) g.shelf = g.shelf.filter((x) => x.uid !== l.uid);
     earn(g, l.price * n);
     bump(g, l.kind === 'pack' ? 'packsSold' : 'boxesSold', l.kind === 'case' ? 6 * n : n);
     if (type === 'investor') bump(g, 'investorSales');
@@ -571,11 +590,13 @@ function seller(g: GameState, who: string): void {
   d.price = Math.max(0.5, Math.round(dealValue(g, d) * between(0.45, 0.85) * 100) / 100);
   g.offers.push(d);
   log(g, 'offer', `🤝 ${who} wants to sell you ${dealName(d)} for ${fmt(d.price)}.`, undefined, 'seller');
+  buyerCheck(g, d.id);
 }
 
 function customer(g: GameState, offline: boolean): void {
   const who = pick(NAMES);
   const mix = customerMix(g, offline);
+  for (const k of Object.keys(mix) as CustomerType[]) mix[k] *= eventMix(g, k);
   const type = weighted<CustomerType>(Object.entries(mix) as [CustomerType, number][]);
   if (type === 'seller') seller(g, who);
   else shopper(g, type, who);
@@ -665,6 +686,7 @@ export function advance(g: GameState, dt: number, offline = false): void {
       customer(g, offline);
     }
     g.offers = g.offers.filter((o) => o.expires > g.hours);
+    if (g.staff.stocker) for (const l of g.shelf) restock(g, l);
     // Online marketplace: listings near market price sell within a day or two.
     for (const l of [...g.online]) {
       const v = singleValue(g, l);
@@ -698,9 +720,10 @@ export function advance(g: GameState, dt: number, offline = false): void {
 
 export function endOfDay(g: GameState): void {
   const lvl = SHOP_LEVELS[g.shopLevel - 1];
-  const bills = lvl.rent + (g.clerk ? CLERK_WAGE : 0);
+  closeEvents(g);
+  const bills = lvl.rent + (g.clerk ? CLERK_WAGE : 0) + wages(g);
   spend(g, bills);
-  log(g, g.today.revenue >= g.today.costs ? 'info' : 'bad', `Day ${g.day} closed: sales ${fmt(g.today.revenue)}, spent ${fmt(g.today.costs)} (rent ${fmt(bills)}).`);
+  log(g, g.today.revenue >= g.today.costs ? 'info' : 'bad', `Day ${g.day} closed: sales ${fmt(g.today.revenue)}, spent ${fmt(g.today.costs)} (rent and wages ${fmt(bills)}).`);
   closeDay(g, g.today.revenue);
   g.day++;
   g.today = { revenue: 0, costs: 0, sales: 0 };
@@ -713,6 +736,7 @@ export function endOfDay(g: GameState): void {
   expireRequests(g);
   const fresh = 1 + (random() < 0.5 ? 1 : 0);
   for (let i = 0; i < fresh; i++) newRequest(g, random() < 0.6 ? 'player' : 'collector');
+  openEvents(g);
 }
 
 /** Daily market movement: a random walk pulled back towards the real price, plus meta spikes. */

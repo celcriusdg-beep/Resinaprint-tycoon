@@ -133,6 +133,29 @@ check('requests board', await page.evaluate(() => !!document.querySelector('.req
 check('fill request', await click('Hand it over'));
 await page.waitForTimeout(200);
 check('request filled', await page.evaluate(() => (window.__store.getState().g.counts.requestsFilled ?? 0) >= 1));
+// Phase 3: staff, tournaments, notices
+await page.evaluate(() => document.querySelector('.content').scrollTo(0, 0));
+check('staff sheet', await click('👥 Staff'));
+await page.waitForTimeout(300);
+await page.evaluate(() => { const row = [...document.querySelectorAll('.staff-row')].find((r) => r.textContent.includes('Cashier')); row.querySelector('button').click(); });
+await page.waitForTimeout(200);
+check('hired cashier', await page.evaluate(() => !!window.__store.getState().g.staff.cashier));
+await shot('12e-staff');
+await page.click('.modal .x');
+await page.evaluate(() => { const s = window.__store; const g = s.getState().g; g.furniture.push({ uid: 9999, type: 'table', tier: 2 }); g.sealed['VEN:pack'] = (g.sealed['VEN:pack'] ?? 0) + 6; s.setState({ rev: s.getState().rev + 1 }); });
+check('events sheet', await click('📅 Events'));
+await page.waitForTimeout(300);
+await page.evaluate(() => { const b = [...document.querySelectorAll('.stepper button')].pop(); b?.click(); b?.click(); });
+await page.waitForTimeout(200);
+await shot('12f-events');
+check('host tournament', await click('Host it tomorrow'));
+await page.waitForTimeout(200);
+await page.click('.modal .x');
+await page.evaluate(() => window.__advance(24));
+await page.waitForTimeout(500);
+check('tournament result popup', await page.evaluate(() => [...document.querySelectorAll('.levelup-title')].some((b) => b.textContent.includes('results')) || window.__store.getState().g.notices.some((n) => n.title.includes('results'))));
+await shot('12g-notice');
+await page.evaluate(() => { const s = window.__store; const g = s.getState().g; g.notices = []; g.levelUps = []; s.setState({ rev: s.getState().rev + 1 }); });
 // Progression: Goals tab and a level-up popup
 await page.evaluate(() => { const s = window.__store; const g = s.getState().g; g.levelUps = []; s.setState({ rev: s.getState().rev + 1 }); });
 await click('Goals', 'nav button');

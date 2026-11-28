@@ -502,3 +502,26 @@ body.sheet-open .content { overflow: hidden; }
 .req-info { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; min-width: 0; }
 .req-name { font-size: 13.5px; line-height: 1.2; }
 .backroom-bar { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+
+/* ── Phase 3: staff, events, tournaments ────────────────────────────── */
+.toolbar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.toolbar button { background: var(--panel); border: 1px solid var(--line); color: var(--text); border-radius: 12px; padding: 9px 4px; font-weight: 700; font-size: 13.5px; }
+.event-banner { display: flex; flex-direction: column; gap: 4px; text-align: left; padding: 9px 12px; border-radius: 14px; border: 1px solid rgba(242, 193, 78, 0.4); background: linear-gradient(90deg, rgba(242, 193, 78, 0.16), rgba(155, 109, 255, 0.12)); color: var(--text); font-size: 13.5px; font-weight: 600; }
+.staff-block { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.staff-row { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; }
+.staff-row > div { display: flex; flex-direction: column; gap: 2px; }
+.chips-row { display: flex; flex-direction: column; gap: 5px; padding-left: 44px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips button { background: rgba(255, 255, 255, 0.06); border: 1px solid var(--line); color: var(--text); border-radius: 10px; padding: 6px 10px; font-size: 13px; font-weight: 600; }
+.chips button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.chips button:disabled { opacity: 0.4; }
+.stepper { display: flex; align-items: center; justify-content: center; gap: 16px; }
+.stepper button { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.06); color: var(--text); font-size: 20px; }
+.event-card { display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: 14px; background: linear-gradient(90deg, rgba(242, 193, 78, 0.14), rgba(155, 109, 255, 0.1)); border: 1px solid rgba(242, 193, 78, 0.35); }
+.event-card > div { display: flex; flex-direction: column; gap: 3px; }
+.preorder { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 14px; background: linear-gradient(180deg, rgba(79, 209, 139, 0.12), rgba(79, 209, 139, 0.03)); border: 1px solid rgba(79, 209, 139, 0.35); margin: 8px 0; }
+.preorder-row { display: grid; grid-template-columns: 52px 1fr auto; gap: 10px; align-items: center; }
+.preorder-row > div { display: flex; flex-direction: column; gap: 2px; }
+.preorder-row .product { width: 100%; }
+.notice-icon { font-size: 64px; line-height: 1; }
+.notice-text { text-align: center; line-height: 1.45; color: var(--text); }

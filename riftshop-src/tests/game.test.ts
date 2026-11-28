@@ -5,6 +5,7 @@ import { mulberry32, setRandom } from '../src/game/rng';
 import { SAVE_VERSION, addCard, advance, buySealed, endOfDay, fillRequest, newRequest, listInDisplay, migrate, newGame, openSealed, sellBulk, sendToGrading, shelveSealed } from '../src/game/sim';
 import { rollGrade, slabMult } from '../src/game/grading';
 import { buyFurniture, buyRack, displaySlots, floorSize, floorUsed, sellFurniture, shelfSlots, storageCap, storageUsed, upgradeFurniture } from '../src/game/shop';
+import { EVENTS, hire, hostTournament, preorder, preorderLimit, seats } from '../src/game/events';
 import { MILESTONES, addXp, claimGoal, claimMilestone, goalProgress, isUnlocked, milestoneState, netWorth, xpForLevel } from '../src/game/progression';
 import { rawValue, sealedValue, wholesale } from '../src/game/economy';
 
@@ -266,9 +267,76 @@ describe('building the shop', () => {
 
   it('furnishes an old save with the space it had', () => {
     const g = migrate({ version: 3, shopLevel: 3, level: 8, xp: 0, shelf: [], display: [], cards: {}, slabs: [], stats: { revenue: 0, packsOpened: 0, sales: 0 } });
-    expect(g.version).toBe(4);
+    expect(g.version).toBe(SAVE_VERSION);
     expect(shelfSlots(g)).toBeGreaterThanOrEqual(8);
     expect(displaySlots(g)).toBeGreaterThanOrEqual(24);
     expect(floorUsed(g)).toBeLessThanOrEqual(floorSize(g));
+  });
+});
+
+describe('events, tournaments, releases and staff', () => {
+  it('runs a tournament at your tables and pays entry fees', () => {
+    setRandom(mulberry32(31));
+    const g = newGame();
+    g.level = 5;
+    g.cash = 10_000;
+    g.rep = 70;
+    expect(hostTournament(g, 'casual', 5, null)).toMatch(/table/i);
+    g.furniture = [{ uid: 990, type: 'table', tier: 3 }];
+    expect(seats(g)).toBe(18);
+    g.sealed['VEN:pack'] = 12;
+    expect(hostTournament(g, 'weekly', 10, { set: 'VEN', packs: 8 })).toBeNull();
+    expect(g.sealed['VEN:pack']).toBe(4);
+    expect(g.tournament!.day).toBe(g.day + 1);
+    const cash = g.cash;
+    advance(g, 24); // tomorrow, then its close
+    expect(g.tournament).toBeNull();
+    expect(g.counts.tournaments).toBe(1);
+    expect(g.counts.tournamentPlayers!).toBeGreaterThan(1);
+    expect(g.counts.tournamentPlayers!).toBeLessThanOrEqual(18);
+    expect(g.market.spike).not.toBeNull();
+    expect(g.notices.some((n) => n.title.includes('results'))).toBe(true);
+    expect(g.cash).not.toBe(cash);
+  });
+
+  it('opens pre-orders, delivers on launch day and hypes the set', () => {
+    setRandom(mulberry32(12));
+    const g = newGame();
+    g.cash = 50_000;
+    while (!g.release) endOfDay(g);
+    const r = g.release;
+    expect(preorder(g, 'box', 2)).toBeNull();
+    expect(preorder(g, 'box', preorderLimit(g, 'box'))).toMatch(/limit/i);
+    const before = g.sealed[`${r.set}:box`] ?? 0;
+    const price = sealedValue(g, r.set, 'box');
+    while (g.day < r.day) endOfDay(g);
+    expect(g.sealed[`${r.set}:box`]).toBe(before + 2);
+    expect(g.hype[r.set]).toBeGreaterThan(1.2);
+    expect(sealedValue(g, r.set, 'box')).toBeGreaterThan(price);
+  });
+
+  it('a stocker refills shelves and staff wages are paid', () => {
+    setRandom(mulberry32(14));
+    const g = newGame();
+    g.level = 20;
+    g.cash = 5_000;
+    g.sealed = { 'VEN:pack': 100 };
+    shelveSealed(g, 'VEN', 'pack', 2, 0.5);
+    expect(hire(g, 'stocker', true)).toBeNull();
+    advance(g, 6);
+    expect(g.shelf.length).toBe(1);
+    expect(g.counts.packsSold!).toBeGreaterThan(2);
+    const cash = g.cash;
+    endOfDay(g);
+    expect(cash - g.cash).toBeGreaterThanOrEqual(25 + 90); // rent + the stocker's wage
+  });
+
+  it('random events come up and some have lasting effects', () => {
+    setRandom(mulberry32(3));
+    const g = newGame();
+    const seen = new Set<string>();
+    for (let i = 0; i < 80; i++) { endOfDay(g); if (g.event) seen.add(g.event.id); }
+    expect(seen.size).toBeGreaterThan(3);
+    expect(EVENTS.length).toBeGreaterThan(8);
   });
 });

@@ -37,7 +37,7 @@ The cloud sandbox cannot reach Riot's CDN, so screenshots show the drawn card fa
 - Sheets (`Modal` in `ui/common.tsx`) render through a React portal into <body> (inside the scrolling `.content` iOS trapped them under the tab bar and they couldn't scroll); `.modal-body` scrolls, optional `footer` prop pins the main button.
 - Packaging: TCGplayer product photos `tcgplayer-cdn.tcgplayer.com/product/{id}_in_1000x1000.jpg` (ids in `cards.json` `sets[].tcg`), drawn pack/box fallback.
 - Time: 1 game hour = 20 s, shop day 12 h. End of day: rent/clerk, market drift + meta spikes, new deals. Offline catch-up ≤ 5 days; only a hired clerk sells (from your shelves at your prices).
-- Save: localStorage `riftshop-save-v1`, `version` 4; `migrate()` upgrades v1 saves (RGC grades → PSA slabs), v2 saves (XP from past revenue + packs opened) and v3 saves (furniture matching the old shelf/case space, via `starterFurniture`).
+- Save: localStorage `riftshop-save-v1`, `version` 4; `migrate()` upgrades v1 saves (RGC grades → PSA slabs), v2 saves (XP from past revenue + packs opened) v3 saves (furniture matching the old shelf/case space, via `starterFurniture`) and v4 saves (phase 3 fields default from `newGame()`).
 - **Progression (`src/game/progression.ts`, `ui/GoalsScreen.tsx`, Goals tab)** — tycoon phase 1:
   - Levels 1–50, `xpForLevel(l) = 100·l^1.6`; XP from sales ($1 = 1 XP), packs (+5), boxes (+20), deals (+10), grading (+30 / +300 for a 10 / +3,000 Black Label), goals and milestones. Each level pays `levelReward` cash; `g.levelUps` queues the level-up popup (`LevelUp`).
   - `UNLOCKS` gate by level: Vendetta + Radiance at start, online selling 2, PSA + Corner Shop 3, Unleashed + singles market 4, PSA Regular + ads 5, Beckett + shop 3 at 6, Spiritforged 7, BGS Standard + cases 8, Origins + clerk + shop 4 at 10, express tiers 12, shop 5 at 15, shop 6 at 22. Sim functions return an error string when locked; the UI shows 🔒 Level N. Locked sets still appear on the deals board.
@@ -51,9 +51,15 @@ The cloud sandbox cannot reach Riot's CDN, so screenshots show the drawn card fa
   - Customers (`sim.ts` `shopper`): types kid / casual / player / collector / investor / seller with mix from `customerMix` (furniture shifts it; investors from shop level 3). Each has a lognormal budget (bigger shops richer; 5% whales for collectors/investors), interests (`interested`), and willingness range. Feed lines carry the type icon.
   - Card requests (`g.requests`, max 2 + shop level): players want playable Rares/Epics/Legends, collectors alt/overnumbered/foil Epics; pay 1.15–1.5× market; expire after 2–3 days (−rep). `fillRequest` takes a raw copy from the binder or the case. Shop tab shows the board with "Hand it over" / "Order it" (singles market).
 
+- **Events, tournaments, launches, staff (`src/game/events.ts`, `ui/EventsSheet.tsx`)** — tycoon phase 3. Hooks: `closeEvents` at the end of a shop day (resolves today's tournament), `openEvents` at the start (hype decay, price manager, launch delivery, release scheduling, random event roll). `eventTraffic` / `eventMix` / `eventBudget` feed the customer sim.
+  - Tournaments (`g.tournament`, planned for tomorrow): casual night (Lv 2, 1 table star), weekly (Lv 5, 2), regional qualifier (Lv 12, 4). Seats = 6 per play-table star. Turnout from rep, shop size, fee vs. usual fee and prize packs (taken from the back room when planned). On the day: +25% traffic, 3× competitive players. Result: entry fees, rep, XP, and the winner's champion becomes the market spike.
+  - Releases (`g.release`): announced on day 5 and every 12 days after for an unlocked set, launch 3 days later. Pre-orders (`g.preorders`) at 58% of MSRP per box, limited by shop level, delivered on launch day ignoring the back-room cap. Launch day: `g.hype[set]` ×1.35 (decays 20%/day; also used by viral video/spoiler events, applied in `sealedValue`), +40% traffic, shoppers go for the launch set first.
+  - Random events (`EVENTS`, ~40% of days from day 3): rain, sunny, school holiday, payday, card show, streamer, viral pull video, spoiler season, power cut, shoplifter, leaky roof. Popups queue in `g.notices` (`NoticePopup` in App, after level-ups).
+  - Staff (`g.staff`, optional, wages at closing): cashier (Lv 5, +20% customers), stocker (Lv 7, refills shelf stacks from the back room at your price via `restock`), buyer (Lv 9, auto-buys walk-in offers ≤ `staffCfg.buyerMax` of value, keeps $500), price manager (Lv 11, reprices everything to market × `staffCfg.markup` each morning). The clerk moved into the Staff sheet.
+
 ## Roadmap (agreed with the user)
 - Phase 2: done (above).
-- Phase 3: weekly tournaments, release days (pre-orders, launch rush), optional staff (cashier, stocker — automation only if hired), random events.
+- Phase 3: done (above).
 
 ## Ideas not done yet
 More sets as Riot releases them (rerun the data script), tournaments/events in the shop, trade-in nights, a price-history graph (riftdex-data has daily history), achievements.

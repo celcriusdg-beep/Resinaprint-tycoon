@@ -11,6 +11,7 @@ import { BinderScreen, CardModal } from './ui/BinderScreen';
 import { GradingScreen, MarketScreen } from './ui/MarketScreen';
 import { Button, Modal, Toast } from './ui/common';
 import { GoalsScreen, LevelUp } from './ui/GoalsScreen';
+import { NoticePopup } from './ui/EventsSheet';
 import { claimable, xpForLevel } from './game/progression';
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
@@ -80,6 +81,7 @@ export default function App() {
       )}
       {g.reveals.length > 0 && !useStore.getState().opening && <GradeReveal />}
       {g.levelUps.length > 0 && !g.reveals.length && !useStore.getState().opening && <LevelUp />}
+      {g.notices.length > 0 && !g.levelUps.length && !g.reveals.length && !useStore.getState().opening && <NoticePopup />}
       {g.stats.packsOpened === 0 && g.day === 1 && g.hours < 0.5 && !welcome && <FirstRun />}
     </div>
   );

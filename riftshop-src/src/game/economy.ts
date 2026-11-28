@@ -53,7 +53,7 @@ export function singleValue(g: GameState, s: Pick<Single, 'cardId' | 'foil' | 's
 
 /** Market price of sealed product. */
 export function sealedValue(g: GameState, set: SetId, kind: SealedKind): number {
-  return SETS[set][kind] * (g.market.sealed[set] ?? 1);
+  return SETS[set][kind] * (g.market.sealed[set] ?? 1) * (g.hype?.[set] ?? 1);
 }
 
 /** Distributor price. Stores buy at roughly 60% of MSRP; sets that trade above MSRP cost more. */
